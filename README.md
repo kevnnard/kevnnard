@@ -1,7 +1,6 @@
 <div>
   <h1>🧩 Indie hacker </h1>
-  <h1>🦊Developer in @foxracing COL</h3>  
- <hr>
+  <h2>🦊Developer in @foxracing COL</h2>  
   <h3> 🔭 I’m currently working on</h3>
  <ul>
    <li> 🚚 GrupoR: <a href="https://grupo-r.co" target="_blank">Link</a></li>
