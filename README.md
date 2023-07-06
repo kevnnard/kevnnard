@@ -1,16 +1,11 @@
-### Hi there 👋
-
-<!--
-**kevnnard/kevnnard** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
-
-Here are some ideas to get you started:
-
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+<div>
+  <h1>🧩 Indie hacker </h1>
+  <h1>🦊Developer in @foxracing COL</h3>  
+ <hr>
+  <h3> 🔭 I’m currently working on</h3>
+ <ul>
+   <li> 🚚 GrupoR: <a href="https://grupo-r.co" target="_blank">Link</a></li>
+   <li> 🏪 Digital Studio:  <a href="https://digitalstudio.com.co" target="_blank">Link</a>  (⭐new)</li>
+   <li> 🎭 Challenge Trackr <a href="https://challengetrackr.com" target="_blank">Link</a>  (⭐new) </li>
+ </ul>
+</div>
