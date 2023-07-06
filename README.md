@@ -1,5 +1,5 @@
 <div>
-  <h1>🧩 Indie hacker & 🦊Developer in @foxracing COL </h1>
+  <h1>🧩 Indie hacker & 🦊Developer in <a href="https://foxracing.com.co" target="_blank">@foxracing COL</a> </h1>
  
   <h3> 🔭 I’m currently working on</h3>
  <ul>
