@@ -3,7 +3,7 @@
  
   <h3> 🔭 I’m currently working on</h3>
  <ul>
-   <li> 🎭 <a href="https://challengetrackr.com" target="_blank">WhatsBot</a>  (⭐new) </li>
+   <li> 🎭 <a href="https://challengetrackr.com" target="_blank">ChallengeTrackr-Bot</a>  (⭐new) </li>
    <li> 🏪 <a href="https://digitalstudio.com.co" target="_blank">Digital Studio:</a>  (⭐new)</li>
  </ul>
 </div>
