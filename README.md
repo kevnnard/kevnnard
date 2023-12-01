@@ -26,7 +26,7 @@
 <tr border="none">
 <td width="50%" align="center">
   
-## Languages
+## Programming languages
 ![typescript](https://img.shields.io/badge/-TypeScript-05122A?style=flat&logo=typescript)&nbsp;
 ![JavaScript](https://img.shields.io/badge/-JavaScript-05122A?style=flat&logo=javascript)&nbsp;
 ![Go](https://img.shields.io/badge/-Go_Lang-05122A?style=flat&logo=go)&nbsp;
@@ -38,7 +38,9 @@
 <td width="50%" align="center">
 
 ## Backend
-![Node.js](https://img.shields.io/badge/-Node.js-05122A?style=flat&logo=node.js)&nbsp; 
+![Node.js](https://img.shields.io/badge/-Node.js-05122A?style=flat&logo=node.js)&nbsp;
+![Bun.js](https://img.shields.io/badge/-Bun-05122A?style=flat&logo=bun)&nbsp;
+![Deno.js](https://img.shields.io/badge/-Deno-05122A?style=flat&logo=deno)&nbsp;
 ![Nestjs](https://img.shields.io/badge/-Nestjs-05122A?style=flat&logo=nestjs)&nbsp;
 ![graphql](https://img.shields.io/badge/-GraphQL-05122A?style=flat&logo=graphql)&nbsp;
 ![Apollographql](https://img.shields.io/badge/-Apollo-05122A?style=flat&logo=apollographql)&nbsp;
