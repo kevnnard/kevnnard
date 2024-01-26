@@ -15,7 +15,7 @@
 </pre>
 
 <!-- TAGS GITHUB -->
-![Open To Work](https://img.shields.io/badge/Available-_to_work-05122A?logo=javascript&logoColor=fff)
+![Open To Work](https://img.shields.io/badge/Available-_to_work-05122A?logo=linkedin&logoColor=fff)
 
 
 
