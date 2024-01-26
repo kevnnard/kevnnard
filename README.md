@@ -1,18 +1,23 @@
 <!-- TEXT AUTOCOMPLETE -->
 [![Typing SVG](https://readme-typing-svg.demolab.com?font=Cascadia+Code&weight=900&size=50&pause=1000&color=64a861&center=true&random=false&width=1000&height=100&lines=Hi+I'm+Kevnnard+%F0%9F%91%8B;I'm+full+stack+dev+%F0%9F%92%BB;I'm+indie+hacker++%F0%9F%98%AE)](https://git.io/typing-svg)
 
-<pre>
-🔭 I’m currently working on
+<!-- TAGS GITHUB -->
+![GitHub User's stars](https://img.shields.io/github/stars/kevnnard?logo=github)
+![GitHub followers](https://img.shields.io/github/followers/kevnnard?logo=github)
 
-🎭 <a href="#">ThreeTrackr</a>              (⭐new)
-🏪 <a href="#">Digital Studio</a>           (⭐new)
+<pre>
+<h4>I’m currently working on</h4>
+
+🎭 <a href="#">Three Trackr</a>             (⭐ new)
+🏪 <a href="#">Kevnnard (Portfolio)</a>     (⭐ new)
   
-🦊 <a href="https://foxracing.com.co">Fox Racing Colombia</a>      (⭐⭐Current)
+🦊 <a href="https://foxracing.com.co" taget="_blank">Fox Racing Colombia</a>      (⭐⭐⭐ Current)
 </pre>
 
 <!-- TAGS GITHUB -->
-![GitHub followers](https://img.shields.io/github/followers/kevnnard?logo=github)
-![GitHub User's stars](https://img.shields.io/github/stars/kevnnard?logo=github)
+![Open To Work](https://img.shields.io/badge/Available-_to_work-05122A?logo=javascript&logoColor=fff)
+
+
 
 
 <!--- snake -->
@@ -20,9 +25,16 @@
   <img  src="https://github.com/1999AZZAR/1999AZZAR/blob/main/resources/img/grid-snake.svg">
 </div>
 
+
+<pre>
+  <h4>🚨 All my stack 🚨</h4>
+</pre>
+<details>
+  <summary>➡️ Click me ⬅️</summary>
+
 <table align="center">
 
-<h1 align="center">🚨 All my stacks 🚨</h1>
+
 <tr border="none">
 <td width="50%" align="center">
   
@@ -33,6 +45,7 @@
 ![Python](https://img.shields.io/badge/-Python-05122A?style=flat&logo=python)&nbsp;
 ![Rust](https://img.shields.io/badge/-Rust-05122A?style=flat&logo=rust)&nbsp;
 ![dart](https://img.shields.io/badge/-Dart-05122A?style=flat&logo=dart)&nbsp;
+![Ruby](https://img.shields.io/badge/-Ruby-05122A?style=flat&logo=ruby)&nbsp;
 
 </td>
 <td width="50%" align="center">
@@ -73,12 +86,15 @@
 ## Frontend
 ![React](https://img.shields.io/badge/-React-05122A?style=flat&logo=react)&nbsp;
 ![Netx.JS](https://img.shields.io/badge/-Next.js-05122A?style=flat&logo=next.js)&nbsp;
+![Astro](https://img.shields.io/badge/-Astro-05122A?style=flat&logo=astro)&nbsp;
 ![Remix](https://img.shields.io/badge/Remix-05122A?style=flat&logo=remix)&nbsp; 
 ![Vercel](https://img.shields.io/badge/Vercel-05122A?style=flat&logo=vercel)&nbsp; 
 ![netlify](https://img.shields.io/badge/Netlify-05122A?style=flat&logo=netlify)&nbsp;
+![Zustand](https://img.shields.io/badge/-Zustand-05122A?style=flat&logo=zustand)&nbsp;
 ![redux.JS](https://img.shields.io/badge/-Redux-05122A?style=flat&logo=redux)&nbsp;
 ![TailwindCSS](https://img.shields.io/badge/-Tailwind_CSS-05122A?style=flat&logo=tailwindcss)&nbsp;
 ![Radixui](https://img.shields.io/badge/-Radix_UI-05122A?style=flat&logo=radixui)&nbsp;
+![chadcn](https://img.shields.io/badge/-Shadcn_UI-05122A?style=flat&logo=shadcn/ui)&nbsp;
 ![mui](https://img.shields.io/badge/MUI-05122A?style=flat&logo=mui)&nbsp; 
 ![Bootstrap](https://img.shields.io/badge/-Bootstrap-05122A?style=flat&logo=bootstrap&logoColor=563D7C)&nbsp;
 ![HTML](https://img.shields.io/badge/-HTML-05122A?style=flat&logo=HTML5)&nbsp;
@@ -104,6 +120,8 @@
 <td width="50%" align="center">
   
 ## Tools
+![Neo Vim](https://img.shields.io/badge/-Neo_Vim-05122A?style=flat&logo=neovim)&nbsp;
+![fedora](https://img.shields.io/badge/-fedora-05122A?style=flat&logo=fedora)&nbsp;
 ![Visual Studio Code](https://img.shields.io/badge/-Visual%20Studio%20Code-05122A?style=flat&logo=visual-studio-code&logoColor=007ACC)&nbsp;
 ![GitHub](https://img.shields.io/badge/-GitHub-05122A?style=flat&logo=github)&nbsp;
 ![postman](https://img.shields.io/badge/-Postman-05122A?style=flat&logo=postman)&nbsp;
@@ -121,12 +139,14 @@
 ## Mobile
 ![react](https://img.shields.io/badge/-React_Native-05122A?style=flat&logo=react)&nbsp;
 ![flutter](https://img.shields.io/badge/-Flutter-05122A?style=flat&logo=flutter)&nbsp;
+![Swift](https://img.shields.io/badge/-Swift-05122A?style=flat&logo=swift)&nbsp;
 ![androidstudio](https://img.shields.io/badge/-Android_Studio-05122A?style=flat&logo=androidstudio)&nbsp;
 
 </td>
 </tr>
 </table>
 
+</details>
 
 
 
