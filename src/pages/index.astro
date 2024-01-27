@@ -1,5 +1,6 @@
 ---
-
+import '@/styles/globals.css'
+import { Button } from "@/components/ui/button"
 ---
 
 <html lang="en">
@@ -10,7 +11,8 @@
 		<meta name="generator" content={Astro.generator} />
 		<title>Astro</title>
 	</head>
-	<body>
-		<h1>Astro</h1>
+	<body class="flex flex-col gap-5 justify-center w-full min-h-screen items-center">
+		<h1 class="text-red-700 text-5xl">Kevnanrd</h1>
+    <Button>Hello World</Button>
 	</body>
 </html>
