@@ -15,26 +15,22 @@
 </pre>
 
 <!-- TAGS GITHUB -->
-![Open To Work](https://img.shields.io/badge/Available-_to_work-05122A?logo=linkedin&logoColor=fff)
+![Open To Work](https://img.shields.io/badge/Available_to_work-05122A?logo=linkedin&logoColor=fff)
 
-
-
-
+<pre></pre>
 <!--- snake -->
 <div align="center">
   <img  src="https://github.com/1999AZZAR/1999AZZAR/blob/main/resources/img/grid-snake.svg">
 </div>
 
 
-<pre>
-  <h4>🚨 All my stack 🚨</h4>
-</pre>
+<pre></pre>
 <details>
-  <summary>➡️ Click me ⬅️</summary>
+  <summary>
+    <h4>🚨 All my stack 🚨</h4>
+  </summary>
 
 <table align="center">
-
-
 <tr border="none">
 <td width="50%" align="center">
   
@@ -145,9 +141,14 @@
 </td>
 </tr>
 </table>
-
 </details>
 
+<details>
+  <summary>
+    <h4>📈 Latest Activity Graph 📈</h4>
+  </summary>
+  
+  [![Ashutosh's github activity graph](https://github-readme-activity-graph.vercel.app/graph?username=kevnnard&theme=github-compact)](https://github.com/kevnnard/github-readme-activity-graph)
+</details>
 
-
-
+<pre></pre>
