@@ -1,0 +1,59 @@
+---
+import { SvgComponentGlobal } from "./SvgIcons";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import projectData from "@/utils/projects.json";
+---
+
+<h2 class="text-2xl font-bold mb-5 mt-32 flex justify-start items-center gap-4">
+  <SvgComponentGlobal icon="BOOK" className="w-8 h-8" />
+  Projects
+</h2>
+
+<ol class="flex flex-col lg:flex-row flex-wrap gap-3">
+  {
+    projectData.map((project) => (
+      <Card className="relative flex-1">
+        <CardHeader>
+          <CardTitle className="mb-1">
+            {project.title}
+            {project.isWorkInProgress && (
+              <span class="ml-2 bg-blue-100 text-blue-800 text-sm font-medium me-2 pr-2 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300 ">
+                In Progress
+              </span>
+            )}
+          </CardTitle>
+          <CardDescription>{project.description}</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-2">
+          {project.tags.map((tag) => (
+            <img
+              alt={tag.title}
+              src={`https://img.shields.io/badge/${tag.title}-121212?logo=${tag.logo}`}
+            />
+          ))}
+        </CardContent>
+        <CardFooter className="absolute top-2 right-0 flex lg:flex-col gap-3">
+          {project?.url.map(
+            (urlData: { icon: string; url: string; isSolid: boolean }) => (
+              <a href={urlData.url} target="_blank" rel="noopener noreferrer">
+                <SvgComponentGlobal
+                  icon={urlData.icon}
+                  className="w-7 h-7 hover:text-blue-500 transition eases-in-out duration-300 hover:scale-105"
+                  isSolid={urlData.isSolid}
+                  strokeWidth={1.3}
+                />
+              </a>
+            ),
+          )}
+        </CardFooter>
+      </Card>
+    ))
+  }
+</ol>
