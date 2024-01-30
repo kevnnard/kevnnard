@@ -1,0 +1,69 @@
+[
+  {
+    "isCurrent": true,
+    "icon": "https://cdn.shopify.com/s/files/1/0264/9161/7361/files/logo_fox_racing_colombia.png?v=1655440904",
+    "title": "Software Engineer - ( Remote, Face-to-face )",
+    "company": "Fox Racing Colombia",
+    "location": "Bogotá, Colombia",
+    "duration": "June 1nd, 2021 -",
+    "description": "I designed and developed a comprehensive API to manage inventory, orders, branches, sales details, and more. The application allows downloading reports and real-time statistics, in addition to advanced analytics. We implemented integration with external APIs for extended functionality and ensured efficient server handling. This project was carried out using the MERN stack, ensuring a comprehensive and consistent approach from front-end to back-end. The resulting solution is authentic, providing effective and real-time management of essential business operations.",
+    "link": "https://foxracing.com.co",
+    "tags": [
+      {
+        "title": "Next JS",
+        "logo": "nextdotjs"
+      },
+      {
+        "title": "React JS",
+        "logo": "react"
+      },
+      {
+        "title": "Express JS",
+        "logo": "express"
+      },
+      {
+        "title": "Mongo DB",
+        "logo": "mongodb"
+      },
+      {
+        "title": "Shopify",
+        "logo": "shopify"
+      },
+      {
+        "title": "Redux Toolkit",
+        "logo": "redux"
+      },
+      {
+        "title": "Rest API",
+        "logo": "restapi"
+      },
+      {
+        "title": "Node JS",
+        "logo": "nodedotjs"
+      },
+      {
+        "title": "Digital Ocean",
+        "logo": "digitalocean"
+      },
+      {
+        "title": "S3",
+        "logo": "amazons3"
+      }
+    ]
+  },
+  {
+    "isCurrent": true,
+    "title": "Software Engineer freelance - ( Remote) ",
+    "company": "Kevnnard Labs",
+    "location": "Worldwide",
+    "duration": "January 1nd, 2021 -",
+    "description": "Development and design of mobile applications using React Native cross-platform technology (IOS - ANDROID), which involves creating tailor-made apps, either on a freelance basis or by commission. Development of web or mobile applications, E-commerce (NextJS or Shopify), and static pages, all under the freelance modality.",
+    "link": "https://kevnnard.com",
+    "tags": [
+      {
+        "title": "React Native",
+        "logo": "reactnative"
+      }
+    ]
+  }
+]
