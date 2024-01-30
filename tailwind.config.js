@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: ["class"],
+  darkMode: "media",
   content: [
     "./pages/**/*.{ts,tsx,js,jsx,mdx}",
     "./components/**/*.{ts,tsx,js,jsx,mdx}",
@@ -19,6 +19,9 @@ module.exports = {
     },
     extend: {
       colors: {
+        darker: "#121212",
+        ligth: "#f8f8f8",
+        mindnight: "#4b4b4b",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -76,4 +79,3 @@ module.exports = {
   },
   plugins: [require("tailwindcss-animate")],
 };
-
