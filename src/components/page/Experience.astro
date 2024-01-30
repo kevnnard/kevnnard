@@ -1,0 +1,54 @@
+---
+import { SvgComponentGlobal } from "./SvgIcons";
+import experienceData from "@/utils/experience.json";
+---
+
+<h2 class="text-2xl font-bold mb-5 mt-32 flex justify-start items-center gap-4">
+  <SvgComponentGlobal icon="JOB" className="w-8 h-8" />
+  Work Experience
+</h2>
+
+<ol class="relative border-s border-gray-200 dark:border-gray-700">
+  {
+    experienceData.map((data) => (
+      <li class="mb-10 ms-6">
+        <span class="absolute flex items-center justify-center w-6 h-6 bg-blue-100 rounded-full -start-3 ring-8 ring-white dark:ring-gray-900 dark:bg-blue-900 ring:animate-pulse">
+          <SvgComponentGlobal icon="SAVE" className="w-4 h-4 " />
+        </span>
+        <time class="block mb-2 text-sm font-normal leading-none text-gray-400 dark:text-gray-500">
+          {data.duration}
+          {data.isCurrent && (
+            <span class="bg-blue-100 text-blue-800 text-sm font-medium me-2 px-1 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300 ">
+              Current
+            </span>
+          )}
+        </time>
+        <a href={data.link} target="_blank" rel="noreferrer">
+          <h3 class="flex items-center mb-1 text-lg font-semibold text-gray-900 dark:text-white hover:text-red-400 transition ease-in-out">
+            {data.title}
+            <SvgComponentGlobal
+              icon="ARROW_LINK"
+              className="w-4 h-4 m-1 animate-pulse"
+            />
+          </h3>
+        </a>
+        <time class="block mb-2 text-sm font-normal leading-none text-gray-400 dark:text-gray-500">
+          {data.company} - {data.location}
+        </time>
+        <p class="mb-4 text-base font-normal text-gray-500 dark:text-gray-400">
+          {data.description}
+        </p>
+        {data.tags && (
+          <div class="mx-3 flex flex-wrap gap-3 ">
+            {data?.tags.map((tag: { title: string; logo: string }) => (
+              <img
+                alt={tag.title}
+                src={`https://img.shields.io/badge/${tag.title}-121212?logo=${tag.logo}`}
+              />
+            ))}
+          </div>
+        )}
+      </li>
+    ))
+  }
+</ol>
