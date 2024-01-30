@@ -1,0 +1,132 @@
+[
+  {
+    "title": "Three Trackr",
+    "description": "Three Trackr is a tool for tracking the progress of your three.js projects.",
+    "url": [
+      {
+        "icon": "GITHUB",
+        "url": "https://grupo-r.co",
+        "isSolid": true
+      },
+      {
+        "icon": "WEB",
+        "url": "https://three-trackr.herokuapp.com/",
+        "isSolid": false
+      }
+    ],
+    "isWorkInProgress": true,
+    "tags": [
+      {
+        "title": "Aws Kubernetes",
+        "logo": "amazoneks"
+      },
+      {
+        "title": "Typescript",
+        "logo": "typescript"
+      },
+      {
+        "title": "NestJS",
+        "logo": "nestjs"
+      },
+      {
+        "title": "Fastify",
+        "logo": "fastify"
+      },
+      {
+        "title": "GraphQL",
+        "logo": "graphql"
+      },
+      {
+        "title": "MongoDB",
+        "logo": "mongodb"
+      },
+      {
+        "title": "NextJS 14",
+        "logo": "nextdotjs"
+      },
+      {
+        "title": "Apollo Client",
+        "logo": "apollographql"
+      },
+      {
+        "title": "TailwindCSS",
+        "logo": "tailwindcss"
+      },
+      {
+        "title": "ShadcnUI",
+        "logo": "shadcnui"
+      },
+      {
+        "title": "Resend",
+        "logo": "resend"
+      },
+      {
+        "title": "Vercel",
+        "logo": "vercel"
+      }
+    ]
+  },
+  {
+    "title": "Grupor R Api",
+    "description": "API to manage inventory, orders, branches, sales details, and more.",
+    "url": [
+      {
+        "icon": "GITHUB",
+        "url": "https://github.com/kevnnard",
+        "isSolid": true
+      },
+      {
+        "icon": "WEB",
+        "url": "https://grupo-r.co",
+        "isSolid": false
+      }
+    ],
+    "isWorkInProgress": false,
+    "tags": [
+      {
+        "title": "Digital Ocean",
+        "logo": "digitalocean"
+      },
+      {
+        "title": "Aws S3",
+        "logo": "amazons3"
+      },
+      {
+        "title": "Rest API",
+        "logo": "restapi"
+      },
+      {
+        "title": "ExpressJS",
+        "logo": "express"
+      },
+      {
+        "title": "MongoDB",
+        "logo": "mongodb"
+      },
+      {
+        "title": "Socket.IO",
+        "logo": "socket.io"
+      },
+      {
+        "title": "NextJS 12",
+        "logo": "nextdotjs"
+      },
+      {
+        "title": "Redux Toolkit",
+        "logo": "redux"
+      },
+      {
+        "title": "TailwindCSS",
+        "logo": "tailwindcss"
+      },
+      {
+        "title": "MaterialUI",
+        "logo": "mui"
+      },
+      {
+        "title": "Vercel",
+        "logo": "vercel"
+      }
+    ]
+  }
+]
