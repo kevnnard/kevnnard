@@ -16,7 +16,7 @@ import projectData from "@/utils/projects.json";
   Projects
 </h2>
 
-<ol class="flex flex-col lg:flex-row flex-wrap gap-3">
+<ol class="flex flex-col lg:flex-row gap-3">
   {
     projectData.map((project) => (
       <Card className="relative flex-1">
@@ -24,20 +24,30 @@ import projectData from "@/utils/projects.json";
           <CardTitle className="mb-1">
             {project.title}
             {project.isWorkInProgress && (
-              <span class="ml-2 bg-blue-100 text-blue-800 text-sm font-medium me-2 pr-2 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300 ">
+              <span class="ml-2 bg-blue-100 text-blue-800 text-xs font-medium me-2 pr-2 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300 ">
                 In Progress
               </span>
             )}
           </CardTitle>
           <CardDescription>{project.description}</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
-          {project.tags.map((tag) => (
-            <img
-              alt={tag.title}
-              src={`https://img.shields.io/badge/${tag.title}-121212?logo=${tag.logo}`}
-            />
-          ))}
+        <CardContent className="overflow-hidden">
+          <div class="flex gap-5 justify-between animate-scroll-x ">
+            {project.tags.map((tag) => (
+              <img
+                class="slide"
+                alt={tag.title}
+                src={`https://img.shields.io/badge/${tag.title}-121212?logo=${tag.logo}`}
+              />
+            ))}
+            {project.tags.map((tag) => (
+              <img
+                class="slide"
+                alt={tag.title}
+                src={`https://img.shields.io/badge/${tag.title}-121212?logo=${tag.logo}`}
+              />
+            ))}
+          </div>
         </CardContent>
         <CardFooter className="absolute top-2 right-0 flex lg:flex-col gap-3">
           {project?.url.map(
