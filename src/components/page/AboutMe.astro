@@ -1,0 +1,61 @@
+---
+import { SvgComponentGlobal } from "@/components/page/SvgIcons.tsx";
+---
+
+<h2 class="text-2xl font-bold mb-5 mt-32 flex justify-start items-center gap-4">
+  <SvgComponentGlobal icon="PROFILE" className="w-8 h-8" />
+  About me
+</h2>
+
+<article class="flex flex-col md:flex-row justify-between items-center gap-5">
+  <paragraph class="flex-1 flex flex-col gap-10">
+    <p>
+      My name is Kevin Londoño, and I am recognized in the field as KEVNNARD.
+      Over the course of three years, I have worked as a Full Stack developer,
+      with a specialized focus on JavaScript and hybrid mobile applications.
+    </p>
+    <p>
+      Myexpertise spans both programming and development, and I am committed to
+      creating efficient and cutting-edge technological solutions. My background
+      includes diverse projects, allowing me to solidify strong skills and a
+      deep understanding of the challenges in web and mobile app development.
+    </p>
+    <p>
+      I am dedicated to staying updated on the latest trends and technologies to
+      deliver quality solutions to my clients.
+    </p>
+    <div
+      class="flex justify-between md:justify-start items-center gap-5 text-xs"
+    >
+      <a
+        href="https://kevnnard.s3.amazonaws.com/CV_ES.pdf"
+        target="_blank"
+        download
+      >
+        <button
+          class="bg-darker text-ligth dark:bg-ligth dark:text-darker font-bold py-2 px-4 rounded-full hover:bg-blue-700"
+        >
+          Download CV ES
+        </button>
+      </a>
+      <a
+        href="https://kevnnard.s3.amazonaws.com/CV_EN.pdf"
+        target="_blank"
+        download
+      >
+        <button
+          class="bg-darker text-ligth dark:bg-ligth dark:text-darker font-bold py-2 px-4 rounded-full hover:bg-blue-700"
+        >
+          Download CV EN
+        </button>
+      </a>
+    </div>
+  </paragraph>
+  <figure class="flex-1 flex justify-center">
+    <img
+      src="https://github.com/kevnnard.png"
+      alt="Kevnnard"
+      class="w-72 h-72 rounded-full hover:shadow-2xl transition-all duration-600 ease-in-out hover:scale-125"
+    />
+  </figure>
+</article>
