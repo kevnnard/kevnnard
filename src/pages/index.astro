@@ -1,15 +1,16 @@
 ---
-import Layout from "@/layouts/Layout.astro";
-import Main from "@/components/page/Main.astro";
+import AboutMe from "@/components/page/AboutMe.astro";
 import Experience from "@/components/page/Experience.astro";
-import Projects from "@/components/page/Projects.astro";
 import Github from "@/components/page/GithubMD.md";
+import Main from "@/components/page/Main.astro";
+import Projects from "@/components/page/Projects.astro";
 import { SvgComponentGlobal } from "@/components/page/SvgIcons";
+import Layout from "@/layouts/Layout.astro";
 ---
 
 <Layout
   title="®Kevnnard - Oficial site"
-  description="Kevnanrd Oficial site, all about me ,knowlegde, stack, projects, contact, etc"
+  description="Kevnnard Oficial site & Portfolio, all about me ,knowlegde, stacks,  Skills,  projects, etc"
 >
   <main class="py-10">
     <!-- Main component  -->
@@ -19,12 +20,15 @@ import { SvgComponentGlobal } from "@/components/page/SvgIcons";
     <!-- Projects component  -->
     <Projects />
     <!-- About me component  -->
+    <AboutMe />
+    <!-- Github component -->
     <h2
-      class="text-2xl font-bold mb-5 mt-32 flex justify-start items-center gap-4"
+      class="text-xl font-bold mb-5 mt-32 flex justify-start items-center gap-4"
     >
-      <SvgComponentGlobal icon="PROFILE" className="w-8 h-8" />
-      About me
+      <SvgComponentGlobal icon="GITHUB" className="w-8 h-8" isSolid />
+      Skills & Github Stats
     </h2>
+
     <Github />
   </main>
 </Layout>
