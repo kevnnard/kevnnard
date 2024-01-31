@@ -50,7 +50,7 @@ const menuIcons: MenuIconInterface[] = [
 
 export const HeaderComponent = () => {
   return (
-    <header className="sticky top-0 flex justify-between items-center py-5 backdrop-blur-sm z-50">
+    <header className="sticky top-0 flex justify-between items-center py-5 backdrop-blur-sm z-50 ">
       <Avatar>
         <AvatarImage
           src="https://github.com/kevnnard.png"
@@ -69,7 +69,6 @@ export const HeaderComponent = () => {
                     className={`${icon.size}`}
                     icon={icon.icon}
                     icon2={icon.icon2}
-                    fill="#545454"
                     strokeWidth={1}
                     isSolid={icon.isSolid}
                   />
