@@ -1,36 +1,3 @@
-<article
-      class="flex flex-col md:flex-row justify-between items-center gap-5 py-10"
-    >
-      <paragraph class="flex-1">
-        <p class="flex-1">
-          My name is Kevin Londoño, and I am recognized in the field as
-          KEVNNARD. Over the course of three years, I have worked as a Full
-          Stack developer, with a specialized focus on JavaScript and hybrid
-          mobile applications.
-        </p>
-        <br />
-        <p>
-          Myexpertise spans both programming and development, and I am committed
-          to creating efficient and cutting-edge technological solutions. My
-          background includes diverse projects, allowing me to solidify strong
-          skills and a deep understanding of the challenges in web and mobile
-          app development.
-        </p>
-        <br />
-        <p>
-          I am dedicated to staying updated on the latest trends and
-          technologies to deliver quality solutions to my clients.
-        </p>
-      </paragraph>
-      <figure class="flex-1 flex justify-center">
-        <img
-          src="https://github.com/kevnnard.png"
-          alt="Kevnnard"
-          class="w-72 h-72 rounded-full hover:shadow-2xl transition-all duration-600 ease-in-out hover:scale-125"
-        />
-      </figure>
-</article>
-
 <!-- TAGS GITHUB -->
 <details>
 <summary class="flex gap-5 py-10"><h4 class="text-blue-500 text-xl font-bold underline cursor-pointer"> Click Me </h4></summary>
