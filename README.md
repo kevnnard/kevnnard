@@ -11,7 +11,6 @@
 <h4>I’m currently working on</h4>
 
 🎭 <a href="https://challengetrackr.com">Three Trackr</a>             (⭐ New)
-🏪 <a href="https://kevnnard.com" target="_blank">Kevnnard (Portfolio)</a>     (⭐⭐ Fix)
   
 🦊 <a href="https://foxracing.com.co" taget="_blank">Fox Racing Colombia</a>      (⭐⭐⭐ Current)
 </pre>
