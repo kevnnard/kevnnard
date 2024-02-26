@@ -15,15 +15,10 @@
 🦊 <a href="https://foxracing.com.co" taget="_blank">Fox Racing Colombia</a>      (⭐⭐⭐ Current)
 </pre>
 
-<!-- TAGS GITHUB -->
+<!-- TAGS GITHUB 
 
 ![Open To Work](https://img.shields.io/badge/Available_to_work-05122A?logo=linkedin&logoColor=fff)
-
-<pre></pre>
-<!--- snake -->
-<div align="center">
-  <img  src="https://github.com/1999AZZAR/1999AZZAR/blob/main/resources/img/grid-snake.svg">
-</div>
+-->
 
 <pre></pre>
 <details>
