@@ -1,6 +1,25 @@
 [
   {
     "isCurrent": true,
+    "icon": "https://cdn.shopify.com/s/files/1/0264/9161/7361/files/logo_omni.png?v=1655440904",
+    "title": "Software Engineer - ( Remote )",
+    "company": "OCMI workers comp",
+    "location": "Miami, FL",
+    "duration": "February 24th, 2024 -",
+    "description": "I am responsible for developing and maintaining a comprehensive web application that provides a complete management system for workers' compensation claims. The application is designed to manage all aspects of the claims process, including the ability to track and manage claims, generate reports, and provide real-time analytics. I am also responsible for ensuring that the application is scalable, secure, and reliable. I have implemented a range of features, including a comprehensive dashboard, advanced search functionality, and integration with external APIs. I have also developed a range of tools to help streamline the claims process, including automated workflows, document management, and more. I have utilized a range of technologies, including React, Node.js, and MongoDB, to ensure that the application is efficient, reliable, and easy to use.",
+    "link": "https://ocmiworkerscomp.com",
+    "tags": [
+      "Frontend",
+      "Backend",
+      "API",
+      "Development",
+      "NestJs",
+      "NextJS",
+      "MySQL"
+    ]
+  },
+  {
+    "isCurrent": true,
     "icon": "https://cdn.shopify.com/s/files/1/0264/9161/7361/files/logo_fox_racing_colombia.png?v=1655440904",
     "title": "Software Engineer - ( Remote, Face-to-face )",
     "company": "Fox Racing Colombia",
