@@ -15,11 +15,6 @@
 🦊 <a href="https://foxracing.com.co" taget="_blank">Fox Racing Colombia</a>      (⭐⭐⭐ Current)
 </pre>
 
-<!-- TAGS GITHUB 
-
-![Open To Work](https://img.shields.io/badge/Available_to_work-05122A?logo=linkedin&logoColor=fff)
--->
-
 <pre></pre>
 <details>
   <summary>
