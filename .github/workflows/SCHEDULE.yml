@@ -1,0 +1,22 @@
+name: Update README.md
+
+on:
+  schedule:
+    - cron: "0 12 * * *"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
+      with:
+        node-version: '18'
+    - run: npm install
+    - run: |
+        git config user.name bot-kevnanrd
+        git config user.email londonokevin9@gmail.com
+        git add README.md
+        git diff --quiet && git diff --staged --quiet || git commit -m "[bot] Update README with latest info"
+        git push origin main
