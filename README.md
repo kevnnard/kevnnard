@@ -8,7 +8,6 @@
 ![GitHub User's stars](https://img.shields.io/github/stars/kevnnard?logo=github)
 ![GitHub followers](https://img.shields.io/github/followers/kevnnard?logo=github)
 
-
 <pre>
 <h4>I’m currently working on</h4>
 
@@ -16,8 +15,6 @@
   
 🦊 <a href="https://foxracing.com.co" taget="_blank">Fox Racing Colombia</a>      (⭐⭐⭐ Current)
 </pre>
-
-
 
 <pre></pre>
 <details>
