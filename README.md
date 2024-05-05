@@ -8,7 +8,6 @@
 ![GitHub followers](https://img.shields.io/github/followers/kevnnard?logo=github)
 
 <pre>
-  
 <h4>I’m currently working on</h4>
 
 🎭 <a href="https://challengetrackr.com">Three Trackr</a>             (⭐ New)
