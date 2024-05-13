@@ -14,16 +14,15 @@ jobs:
       matrix:
         node-version: [20.x]
     steps:
-      - run: git clone https://github.com/kevnnard/kevnnard.git && cd kevnnard
-
-      - run: ls
+      - run: |
+         git clone https://github.com/kevnnard/kevnnard.git
+         cd kevnnard
 
       - run: |
-          git init 
+          git remote add main https://github.com/kevnnard/kevnnard.git
           git config user.name bot-kevnanrd
           git config user.email londonokevin9@gmail.com
 
-      
       - run: echo ## Hello >> README.md
       
       - run: | 
