@@ -18,16 +18,12 @@ jobs:
          git clone https://github.com/kevnnard/kevnnard.git
          cd kevnnard
          ls -a
-         git remote add master https://github.com/kevnnard/kevnnard.git
+         git remote add main https://github.com/kevnnard/kevnnard.git
          git config --global user.name bot-kevnanrd
          git config --global user.email londonokevin9@gmail.com
 
          echo Hello >> README.md
          
-         git status
-         git branch
-         git log
-
          git add .
          git diff --quiet && git diff --staged --quiet || git commit -m "[bot] Update README with latest info"
-         git push 
+         git push origin main
