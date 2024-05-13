@@ -24,6 +24,8 @@ jobs:
 
       - run: |
          cd kevnnard
+
+         git branch patch-1
          
          echo Hello >> README.md
          git add README.md
@@ -32,7 +34,7 @@ jobs:
       - run: |
          cd kevnnard
          
-         git push https://github.com/kevnnard/kevnnard.git
+         git push
          env:
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             OWNER: ${{ github.repository_owner }}
