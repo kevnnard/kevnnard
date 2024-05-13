@@ -14,21 +14,22 @@ jobs:
       matrix:
         node-version: [20.x]
     steps:
+      - run: git clone https://github.com/kevnnard/kevnnard.git
+      
       - run: |
-         git clone https://github.com/kevnnard/kevnnard.git
          cd kevnnard
 
          git config --global user.name "bot-kevnanrd"
-         git config --global user.email londonokevin9@gmail.com
-        
-         echo Hello >> README.md
+         git config --global user.email "londonokevin9@gmail.com"
+
+      - run: |
+         cd kevnnard
          
+         echo Hello >> README.md
          git add README.md
          git diff --quiet && git diff --staged --quiet || git commit -m "[bot] Update README with latest info"
-
-         git branch
          
       - run: |
          cd kevnnard
-         git log
-         git push origin
+         
+         git push https://github.com/kevnnard/kevnnard.git
