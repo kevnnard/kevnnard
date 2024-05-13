@@ -28,4 +28,7 @@ jobs:
 
          git branch
          
-      - run: git push
+      - run: |
+         cd kevnnard
+         git log
+         git push origin
