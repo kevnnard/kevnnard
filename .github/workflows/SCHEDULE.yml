@@ -29,4 +29,5 @@ jobs:
          
          git add .
          git diff --quiet && git diff --staged --quiet || git commit -m "[bot] Update README with latest info"
-         git push origin main
+
+         git status
