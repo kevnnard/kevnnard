@@ -16,14 +16,13 @@ jobs:
     steps:
       - run: |
          git clone https://github.com/kevnnard/kevnnard.git
+         git remote add main https://github.com/kevnnard/kevnnard.git
          cd kevnnard
          ls -a
 
       - run: |
-         git init
-         git remote add main https://github.com/kevnnard/kevnnard.git
-         git config user.name bot-kevnanrd
-         git config user.email londonokevin9@gmail.com
+         git config --global user.name bot-kevnanrd
+         git config --global user.email londonokevin9@gmail.com
 
       - run: echo Hello >> README.md
       
