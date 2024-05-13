@@ -22,12 +22,10 @@ jobs:
          git config user.email londonokevin9@gmail.com
         
          git remote add main https://github.com/kevnnard/kevnnard.git
-
-         git config --list
         
          echo Hello >> README.md
          
-         git add .
+         git add README.md
          git diff --quiet && git diff --staged --quiet || git commit -m "[bot] Update README with latest info"
 
          git status
