@@ -17,7 +17,7 @@ jobs:
       - run: |
          git clone https://github.com/kevnnard/kevnnard.git
          cd kevnnard
-         la
+         lsa
 
       - run: |
          git init
