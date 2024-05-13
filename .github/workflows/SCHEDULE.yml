@@ -16,9 +16,9 @@ jobs:
     steps:
       - run: |
          git clone https://github.com/kevnnard/kevnnard.git
-         git remote add main https://github.com/kevnnard/kevnnard.git
          cd kevnnard
          ls -a
+         git remote add master https://github.com/kevnnard/kevnnard.git
 
       - run: |
          git config --global user.name bot-kevnanrd
