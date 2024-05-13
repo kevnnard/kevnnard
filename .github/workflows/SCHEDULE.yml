@@ -16,7 +16,10 @@ jobs:
     steps:
       - run: git clone https://github.com/kevnnard/kevnnard.git
 
-      - run: ll && cd kevnnard && l
+      - run: |
+          ls
+          cd kevnnard
+          ls
 
       - run: |
           git config user.name bot-kevnanrd
