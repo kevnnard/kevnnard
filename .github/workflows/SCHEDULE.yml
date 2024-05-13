@@ -8,15 +8,23 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        node-version: [20.x]
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v1
-      with:
-        node-version: '18'
-    - run: npm install
-    - run: |
-        git config user.name bot-kevnanrd
-        git config user.email londonokevin9@gmail.com
-        git add README.md
-        git diff --quiet && git diff --staged --quiet || git commit -m "[bot] Update README with latest info"
-        git push origin main
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+
+      - run: pnpm i
+      - run: |
+          echo ## Hello >> README.md
+      - run: |
+          git config user.name bot-kevnanrd
+          git config user.email londonokevin9@gmail.com
+          git add README.md
+          git diff --quiet && git diff --staged --quiet || git commit -m "[bot] Update README with latest info"
+          git push origin main
