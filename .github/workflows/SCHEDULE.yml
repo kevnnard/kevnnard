@@ -14,7 +14,7 @@ jobs:
       matrix:
         node-version: [20.x]
     steps:
-      - run: git clone https://github.com/kevnnard/kevnnard.git
+      - run: git clone https://github.com/kevnnard/kevnnard.git && cd kevnnard
 
       - run: |
           git config user.name bot-kevnanrd
