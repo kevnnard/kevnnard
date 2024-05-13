@@ -21,7 +21,7 @@ jobs:
          git config user.name "bot-kevnanrd"
          git config user.email londonokevin9@gmail.com
         
-         git remote add main https://github.com/kevnnard/kevnnard.git
+         git remote add origin https://github.com/kevnnard/kevnnard.git
         
          echo Hello >> README.md
          
