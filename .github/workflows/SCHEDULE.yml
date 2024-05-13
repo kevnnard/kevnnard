@@ -21,7 +21,7 @@ jobs:
          git config --global user.name "bot-kevnanrd"
          git config --global user.email londonokevin9@gmail.com
 
-         git remote set-url origin https://github.com/kevnnard/kevnnard.git
+         
         
          echo Hello >> README.md
          
