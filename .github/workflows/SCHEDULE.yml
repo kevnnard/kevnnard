@@ -19,19 +19,15 @@ jobs:
          cd kevnnard
          ls -a
          git remote add master https://github.com/kevnnard/kevnnard.git
-
-      - run: |
          git config --global user.name bot-kevnanrd
          git config --global user.email londonokevin9@gmail.com
 
-      - run: echo Hello >> README.md
-      
-      - run: |
+         echo Hello >> README.md
+         
          git status
          git branch
          git log
 
-      - run: |
          git add .
          git diff --quiet && git diff --staged --quiet || git commit -m "[bot] Update README with latest info"
-         git push origin main
+         git push 
