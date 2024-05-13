@@ -18,9 +18,11 @@ jobs:
       
       - run: |
          cd kevnnard
-
+         
          git config --global user.name "bot-kevnanrd"
          git config --global user.email "londonokevin9@gmail.com"
+
+         git remote set-url git@github.com:kevnnard/kevnnard.git
 
       - run: |
          cd kevnnard
@@ -35,7 +37,3 @@ jobs:
          cd kevnnard
          
          git push
-         env:
-            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            OWNER: ${{ github.repository_owner }}
-            REPO: ${{ github.event.repository.name }}
