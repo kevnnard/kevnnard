@@ -19,14 +19,17 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
+          cache: 'npm'
 
-      - run: pnpm i
+      - run: npm ci
       - run: |
-          echo ## Hello >> README.md
+         
       - run: |
           git config user.name bot-kevnanrd
           git config user.email londonokevin9@gmail.com
-          git add README.md
+          
+          echo ## Hello >> README.md
+          
+          git add .
           git diff --quiet && git diff --staged --quiet || git commit -m "[bot] Update README with latest info"
           git push origin main
