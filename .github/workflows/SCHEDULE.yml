@@ -16,22 +16,17 @@ jobs:
        with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
       
-     - run: |
-         cd kevnnard
-         
+     - run: |         
          git config --global user.name "bot-kevnanrd"
          git config --global user.email "londonokevin9@gmail.com"
 
      - run: |
-         cd kevnnard
-
          git branch patch-1
          
          echo "Today is $(date +'%Y-%m-%d %H:%M:%S')" >> README.md
+         
          git add README.md
          git diff --quiet && git diff --staged --quiet || git commit -m "[bot] Update README with latest info"
          
      - run: |
-         cd kevnnard
-         
          git push
