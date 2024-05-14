@@ -7,17 +7,14 @@ on:
     - cron: "0 1 * * *"
 
 jobs:
-  build:
+  update-readme:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [20.x]
     steps:
      - name: Checkout repository
        uses: actions/checkout@v2
-          
-     - run: git clone https://github.com/kevnnard/kevnnard.git
+       with:
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
       
      - run: |
          cd kevnnard
@@ -30,7 +27,7 @@ jobs:
 
          git branch patch-1
          
-         echo Hello >> README.md
+         echo "Today is $(date +'%Y-%m-%d %H:%M:%S')" >> README.md
          git add README.md
          git diff --quiet && git diff --staged --quiet || git commit -m "[bot] Update README with latest info"
          
