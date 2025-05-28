@@ -47,9 +47,6 @@ importers:
       clsx:
         specifier: 2.1.1
         version: 2.1.1
-      kevnnard_portfolio:
-        specifier: 'link:'
-        version: 'link:'
       react:
         specifier: 19.1.0
         version: 19.1.0
