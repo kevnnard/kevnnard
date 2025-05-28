@@ -19,7 +19,7 @@ import projectData from "@/utils/projects.json";
 <ol class="flex flex-col lg:flex-row gap-3">
   {
     projectData.map((project) => (
-      <Card className="relative flex-1">
+      <Card className="relative flex-1 relative pb-10 overflow-hidden">
         <CardHeader>
           <CardTitle className="mb-1">
             {project.title}
@@ -32,7 +32,7 @@ import projectData from "@/utils/projects.json";
           <CardDescription>{project.description}</CardDescription>
         </CardHeader>
         <CardContent className="overflow-hidden">
-          <div class="flex gap-5 justify-between animate-scroll-x ">
+          <div class="absolute bottom-5 left-0 flex gap-5 justify-between animate-scroll-x ">
             {project.tags.map((tag) => (
               <img
                 class="slide"
@@ -49,7 +49,7 @@ import projectData from "@/utils/projects.json";
             ))}
           </div>
         </CardContent>
-        <CardFooter className="absolute top-2 right-0 flex lg:flex-col gap-3">
+        <CardFooter className="absolute top-2 right-0 flex lg:-right-2.5 lg:flex-col gap-3">
           {project?.url.map(
             (urlData: { icon: string; url: string; isSolid: boolean }) => (
               <a href={urlData.url} target="_blank" rel="noopener noreferrer">
@@ -67,3 +67,5 @@ import projectData from "@/utils/projects.json";
     ))
   }
 </ol>
+
+

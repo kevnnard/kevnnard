@@ -1,5 +1,68 @@
 [
   {
+    "title": "LumiWall",
+    "description": "Cloud service that lets brands or individuals upload media, pay for time-slots, and stream it to a giant LED screen in Bogotá—everything managed from a simple web dashboard.",
+    "url": [
+      {
+        "icon": "GITHUB",
+        "url": "https://github.com/kevnnard",
+        "isSolid": true
+      },
+      {
+        "icon": "WEB",
+        "url": "https://lumiwall.co",
+        "isSolid": false
+      }
+    ],
+    "isWorkInProgress": true,
+    "tags": [
+      {
+        "title": "Digital Ocean",
+        "logo": "digitalocean"
+      },
+      {
+        "title": "Aws S3",
+        "logo": "amazons3"
+      },
+      {
+        "title": "Rest API",
+        "logo": "restapi"
+      },
+      {
+        "title": "NestJS",
+        "logo": "nestjs"
+      },
+      {
+        "title": "PostgreSQL",
+        "logo": "postgresql"
+      },
+      {
+        "title": "Neon",
+        "logo": "neonjs"
+      },
+      {
+        "title": "NextJS 15",
+        "logo": "nextdotjs"
+      },
+      {
+        "title": "Zod",
+        "logo": "zod"
+      },
+      {
+        "title": "TailwindCSS",
+        "logo": "tailwindcss"
+      },
+      {
+        "title": "ShadcnUI",
+        "logo": "shadcn/ui"
+      },
+      {
+        "title": "Vercel",
+        "logo": "vercel"
+      }
+    ]
+  },
+  {
     "title": "Three Trackr",
     "description": "Three Trackr is a tool for tracking orders and shipments from multiple carriers in one place.",
     "url": [
@@ -10,7 +73,7 @@
       },
       {
         "icon": "WEB",
-        "url": "https://challengetrackr.com",
+        "url": "https://www.threeelabs.com",
         "isSolid": false
       }
     ],
@@ -19,6 +82,10 @@
       {
         "title": "Aws Kubernetes",
         "logo": "amazoneks"
+      },
+      {
+        "title": "Astro",
+        "logo": "astro"
       },
       {
         "title": "Typescript",
@@ -37,11 +104,23 @@
         "logo": "graphql"
       },
       {
-        "title": "MongoDB",
-        "logo": "mongodb"
+        "title": "Supabase",
+        "logo": "supabase"
       },
       {
-        "title": "NextJS 14",
+        "title": "Turborepo",
+        "logo": "turborepo"
+      },
+      {
+        "title": "PostgreSQL",
+        "logo": "postgresql"
+      },
+      {
+        "title": "Neon",
+        "logo": "neonjs"
+      },
+      {
+        "title": "NextJS 15",
         "logo": "nextdotjs"
       },
       {
