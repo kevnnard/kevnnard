@@ -1,438 +1,189 @@
-<!-- TEXT AUTOCOMPLETE -->
+<p align="center">
+  <a href="https://kevnnard.com">
+    <img src="https://readme-typing-svg.demolab.com?font=Cascadia+Code&weight=900&size=40&pause=1000&color=10b981&center=true&vCenter=true&random=false&width=600&height=80&lines=Hey%2C+I'm+Kevnnard+%F0%9F%91%8B;I'm+an+Indie+Hacker+%F0%9F%9A%80;I'm+an+AI+Engineer+%F0%9F%A4%96" alt="Typing SVG" />
+  </a>
+</p>
 
-[![Typing SVG](https://readme-typing-svg.demolab.com?font=Cascadia+Code&weight=900&size=50&pause=1000&color=64a861&center=true&random=false&width=1000&height=100&lines=Hi+I'm+Kevnnard+%F0%9F%91%8B;I'm+full+stack+dev+%F0%9F%92%BB;I'm+indie+hacker++%F0%9F%98%AE)](https://git.io/typing-svg)
+<p align="center">
+  <a href="https://github.com/kevnnard">
+    <img src="https://img.shields.io/github/followers/kevnnard?style=flat&logo=github&logoColor=10b981&labelColor=0d1117&color=10b981" alt="followers" />
+  </a>
+  <a href="https://github.com/kevnnard">
+    <img src="https://img.shields.io/github/stars/kevnnard?style=flat&logo=github&logoColor=10b981&labelColor=0d1117&color=10b981" alt="stars" />
+  </a>
+  <a href="https://kevnnard.com">
+    <img src="https://img.shields.io/badge/Portfolio-kevnnard.com-10b981?style=flat&logo=safari&logoColor=10b981&labelColor=0d1117" alt="portfolio" />
+  </a>
+  <a href="https://linkedin.com/in/kevnnard">
+    <img src="https://img.shields.io/badge/LinkedIn-kevnnard-10b981?style=flat&logo=linkedin&logoColor=10b981&labelColor=0d1117" alt="linkedin" />
+  </a>
+</p>
 
-<!-- TAGS GITHUB -->
+<br/>
 
-![GitHub User's stars](https://img.shields.io/github/stars/kevnnard?logo=github)
-![GitHub followers](https://img.shields.io/github/followers/kevnnard?logo=github)
+<p align="center">
+  <img src="https://img.shields.io/badge/+6_years-building_things_that_work-10b981?style=for-the-badge&labelColor=0d1117" alt="experience" />
+</p>
 
-<pre>
-  
-<h4>I’m currently working on</h4>
+<p align="center">
+  <strong>Full Stack Engineer</strong> by mass, <em>AI Engineer by mass hallucination of my IDE</em>
+</p>
 
-🎭 <a href="https://challengetrackr.com">Three Trackr</a>             (⭐ New)
-  
-🦊 <a href="https://foxracing.com.co" taget="_blank">Fox Racing Colombia</a>      (⭐⭐⭐ Current)
+<p align="center">
+  <sub>I craft web & mobile experiences with modern stacks. Currently obsessed with TypeScript, React, Node.js, and pretending my copilot understands what I want.</sub>
+</p>
 
-</pre>
+---
 
-<pre></pre>
-<details>
-  <summary>
-    <h4>🚨 All my stack 🚨</h4>
-  </summary>
+### Currently Working On
 
-<table align="center">
-<tr border="none">
-<td width="50%" align="center">
-  
-## Programming languages
-![typescript](https://img.shields.io/badge/-TypeScript-05122A?style=flat&logo=typescript)&nbsp;
-![JavaScript](https://img.shields.io/badge/-JavaScript-05122A?style=flat&logo=javascript)&nbsp;
-![Go](https://img.shields.io/badge/-Go_Lang-05122A?style=flat&logo=go)&nbsp;
-![Python](https://img.shields.io/badge/-Python-05122A?style=flat&logo=python)&nbsp;
-![Rust](https://img.shields.io/badge/-Rust-05122A?style=flat&logo=rust)&nbsp;
-![dart](https://img.shields.io/badge/-Dart-05122A?style=flat&logo=dart)&nbsp;
-![Ruby](https://img.shields.io/badge/-Ruby-05122A?style=flat&logo=ruby)&nbsp;
+<table>
+<tr>
+<td width="50%">
 
-</td>
-<td width="50%" align="center">
+<a href="https://github.com/Three-Labss">
+  <img src="https://img.shields.io/badge/Three_Labs_S.A.S.-CEO_&_CTO-10b981?style=flat-square&logo=github&logoColor=10b981&labelColor=0d1117" alt="Three Labs" />
+</a>
 
-## Backend
-
-![Node.js](https://img.shields.io/badge/-Node.js-05122A?style=flat&logo=node.js)&nbsp;
-![Bun.js](https://img.shields.io/badge/-Bun-05122A?style=flat&logo=bun)&nbsp;
-![Deno.js](https://img.shields.io/badge/-Deno-05122A?style=flat&logo=deno)&nbsp;
-![Nestjs](https://img.shields.io/badge/-Nestjs-05122A?style=flat&logo=nestjs)&nbsp;
-![graphql](https://img.shields.io/badge/-GraphQL-05122A?style=flat&logo=graphql)&nbsp;
-![Apollographql](https://img.shields.io/badge/-Apollo-05122A?style=flat&logo=apollographql)&nbsp;
-![Django](https://img.shields.io/badge/-Django-05122A?style=flat&logo=django&logoColor=092E20)&nbsp;
+Software Agency - Worldwide
 
 </td>
-</tr>
-</table>
+<td width="50%">
 
-<table align="center">
-<tr border="none">
-<td width="50%" align="center">
+<a href="https://github.com/ocmiworkerscomp">
+  <img src="https://img.shields.io/badge/OCMI_Workers_Comp-Software_Engineer-3b82f6?style=flat-square&logo=github&logoColor=3b82f6&labelColor=0d1117" alt="OCMI" />
+</a>
 
-## Devops
-
-![Dokcer](https://img.shields.io/badge/-Docker-05122A?style=flat&logo=docker)&nbsp;
-![kubernetes](https://img.shields.io/badge/-Kubernetes-05122A?style=flat&logo=kubernetes)&nbsp;
-![nginx](https://img.shields.io/badge/-NGINX-05122A?style=flat&logo=nginx)&nbsp;
-![nginxproxymanager](https://img.shields.io/badge/-Nginx_Proxy_Manager-05122A?style=flat&logo=nginxproxymanager)&nbsp;
-![Git](https://img.shields.io/badge/-Git-05122A?style=flat&logo=git)&nbsp;
-![Amazon](https://img.shields.io/badge/-AWS-05122A?style=flat&logo=amazonaws)&nbsp;
-![AmazonEC2](https://img.shields.io/badge/-AWS_EC2-05122A?style=flat&logo=amazonec2)&nbsp;
-![amazoneks](https://img.shields.io/badge/-AWS_EKS-05122A?style=flat&logo=amazoneks)&nbsp;
-![amazons3](https://img.shields.io/badge/-AWS_S3-05122A?style=flat&logo=amazons3)&nbsp;
-![amazonroute53](https://img.shields.io/badge/-AWS_Route_53-05122A?style=flat&logo=amazonroute53)&nbsp;
-![digitalocean](https://img.shields.io/badge/-Digital_Ocean-05122A?style=flat&logo=digitalocean)&nbsp;
-
-</td>
-<td width="50%" align="center">
-  
-## Frontend
-![React](https://img.shields.io/badge/-React-05122A?style=flat&logo=react)&nbsp;
-![Netx.JS](https://img.shields.io/badge/-Next.js-05122A?style=flat&logo=next.js)&nbsp;
-![Astro](https://img.shields.io/badge/-Astro-05122A?style=flat&logo=astro)&nbsp;
-![Remix](https://img.shields.io/badge/Remix-05122A?style=flat&logo=remix)&nbsp; 
-![Vercel](https://img.shields.io/badge/Vercel-05122A?style=flat&logo=vercel)&nbsp; 
-![netlify](https://img.shields.io/badge/Netlify-05122A?style=flat&logo=netlify)&nbsp;
-![Zustand](https://img.shields.io/badge/-Zustand-05122A?style=flat&logo=zustand)&nbsp;
-![redux.JS](https://img.shields.io/badge/-Redux-05122A?style=flat&logo=redux)&nbsp;
-![TailwindCSS](https://img.shields.io/badge/-Tailwind_CSS-05122A?style=flat&logo=tailwindcss)&nbsp;
-![Radixui](https://img.shields.io/badge/-Radix_UI-05122A?style=flat&logo=radixui)&nbsp;
-![chadcn](https://img.shields.io/badge/-Shadcn_UI-05122A?style=flat&logo=shadcn/ui)&nbsp;
-![mui](https://img.shields.io/badge/MUI-05122A?style=flat&logo=mui)&nbsp; 
-![Bootstrap](https://img.shields.io/badge/-Bootstrap-05122A?style=flat&logo=bootstrap&logoColor=563D7C)&nbsp;
-![HTML](https://img.shields.io/badge/-HTML-05122A?style=flat&logo=HTML5)&nbsp;
-![CSS](https://img.shields.io/badge/-CSS-05122A?style=flat&logo=CSS3&logoColor=1572B6)&nbsp;
-![shopify](https://img.shields.io/badge/Shopify-05122A?style=flat&logo=shopify)&nbsp;
+Remote - Miami, FL
 
 </td>
 </tr>
 </table>
 
-<table align="center">
-<tr border="none">
-<td width="50%" align="center">
-  
-## Database
-![mongodb](https://img.shields.io/badge/-MongoDB-05122A?style=flat&logo=mongodb)&nbsp;
-![postgresql](https://img.shields.io/badge/-PostgreSQL-05122A?style=flat&logo=postgresql)&nbsp;
-![mysql](https://img.shields.io/badge/-MySQL-05122A?style=flat&logo=mysql)&nbsp;
-![redis](https://img.shields.io/badge/-Redis-05122A?style=flat&logo=redis)&nbsp;
-![sqlite](https://img.shields.io/badge/-SQLite-05122A?style=flat&logo=sqlite)&nbsp;
+---
+
+### Featured Projects
+
+<table>
+<tr>
+<td width="50%">
+
+**[Smart Window](https://github.com/kevnnard/smart-window)** `Open Source`
+
+macOS menu bar replacement inspired by Polybar. Built for faster window switching with numbered tabs and keyboard shortcuts.
+
+![Swift](https://img.shields.io/badge/Swift-05122A?style=flat&logo=swift&logoColor=F05138)
+![macOS](https://img.shields.io/badge/macOS-05122A?style=flat&logo=apple)
+![Homebrew](https://img.shields.io/badge/Homebrew-05122A?style=flat&logo=homebrew)
 
 </td>
-<td width="50%" align="center">
-  
-## Tools
-![Neo Vim](https://img.shields.io/badge/-Neo_Vim-05122A?style=flat&logo=neovim)&nbsp;
-![fedora](https://img.shields.io/badge/-fedora-05122A?style=flat&logo=fedora)&nbsp;
-![Visual Studio Code](https://img.shields.io/badge/-Visual%20Studio%20Code-05122A?style=flat&logo=visual-studio-code&logoColor=007ACC)&nbsp;
-![GitHub](https://img.shields.io/badge/-GitHub-05122A?style=flat&logo=github)&nbsp;
-![postman](https://img.shields.io/badge/-Postman-05122A?style=flat&logo=postman)&nbsp;
-![Illustrator](https://img.shields.io/badge/-Illustrator-05122A?style=flat&logo=adobe-illustrator)&nbsp;
-![Photoshop](https://img.shields.io/badge/-Photoshop-05122A?style=flat&logo=adobe-photoshop)&nbsp;
+<td width="50%">
 
-</td>
-</tr>
-</table>
+**[Smart Finance](https://github.com/kevnnard/smart-finance)** `In Progress`
 
-<table align="center">
-<tr border="none">
-<td width="50%" align="center">
-  
-## Mobile
-![react](https://img.shields.io/badge/-React_Native-05122A?style=flat&logo=react)&nbsp;
-![flutter](https://img.shields.io/badge/-Flutter-05122A?style=flat&logo=flutter)&nbsp;
-![Swift](https://img.shields.io/badge/-Swift-05122A?style=flat&logo=swift)&nbsp;
-![androidstudio](https://img.shields.io/badge/-Android_Studio-05122A?style=flat&logo=androidstudio)&nbsp;
+AI-powered personal finance platform. Full-stack monorepo with mobile app, web dashboard, and GraphQL API.
+
+![Next.js](https://img.shields.io/badge/Next.js_16-05122A?style=flat&logo=nextdotjs)
+![GraphQL](https://img.shields.io/badge/GraphQL-05122A?style=flat&logo=graphql&logoColor=E10098)
+![Turborepo](https://img.shields.io/badge/Turborepo-05122A?style=flat&logo=turborepo)
 
 </td>
 </tr>
 </table>
+
+---
+
+### Tech Stack
+
+<details open>
+<summary><strong>Languages</strong></summary>
+<br/>
+
+![TypeScript](https://img.shields.io/badge/TypeScript-05122A?style=flat&logo=typescript)
+![JavaScript](https://img.shields.io/badge/JavaScript-05122A?style=flat&logo=javascript)
+![Go](https://img.shields.io/badge/Go-05122A?style=flat&logo=go)
+![Python](https://img.shields.io/badge/Python-05122A?style=flat&logo=python)
+![Rust](https://img.shields.io/badge/Rust-05122A?style=flat&logo=rust)
+![Swift](https://img.shields.io/badge/Swift-05122A?style=flat&logo=swift)
+
 </details>
 
 <details>
-  <summary>
-    <h4>📈 Latest Activity Graph 📈</h4>
-  </summary>
-  
-  [![Ashutosh's github activity graph](https://github-readme-activity-graph.vercel.app/graph?username=kevnnard&theme=github-compact)](https://github.com/kevnnard/github-readme-activity-graph)
+<summary><strong>Frontend</strong></summary>
+<br/>
+
+![React](https://img.shields.io/badge/React-05122A?style=flat&logo=react)
+![Next.js](https://img.shields.io/badge/Next.js-05122A?style=flat&logo=nextdotjs)
+![Astro](https://img.shields.io/badge/Astro-05122A?style=flat&logo=astro)
+![TailwindCSS](https://img.shields.io/badge/Tailwind-05122A?style=flat&logo=tailwindcss)
+![Shadcn/ui](https://img.shields.io/badge/Shadcn/ui-05122A?style=flat&logo=shadcnui)
+
 </details>
 
-<pre></pre>
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
+<details>
+<summary><strong>Backend</strong></summary>
+<br/>
+
+![Node.js](https://img.shields.io/badge/Node.js-05122A?style=flat&logo=nodedotjs)
+![NestJS](https://img.shields.io/badge/NestJS-05122A?style=flat&logo=nestjs&logoColor=E0234E)
+![GraphQL](https://img.shields.io/badge/GraphQL-05122A?style=flat&logo=graphql&logoColor=E10098)
+![Bun](https://img.shields.io/badge/Bun-05122A?style=flat&logo=bun)
+
+</details>
+
+<details>
+<summary><strong>Mobile</strong></summary>
+<br/>
+
+![React Native](https://img.shields.io/badge/React_Native-05122A?style=flat&logo=react)
+![Flutter](https://img.shields.io/badge/Flutter-05122A?style=flat&logo=flutter&logoColor=02569B)
+![SwiftUI](https://img.shields.io/badge/SwiftUI-05122A?style=flat&logo=swift)
+
+</details>
+
+<details>
+<summary><strong>Database</strong></summary>
+<br/>
+
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-05122A?style=flat&logo=postgresql)
+![MongoDB](https://img.shields.io/badge/MongoDB-05122A?style=flat&logo=mongodb)
+![Redis](https://img.shields.io/badge/Redis-05122A?style=flat&logo=redis)
+![Supabase](https://img.shields.io/badge/Supabase-05122A?style=flat&logo=supabase)
+
+</details>
+
+<details>
+<summary><strong>DevOps</strong></summary>
+<br/>
+
+![Docker](https://img.shields.io/badge/Docker-05122A?style=flat&logo=docker)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-05122A?style=flat&logo=kubernetes)
+![AWS](https://img.shields.io/badge/AWS-05122A?style=flat&logo=amazonwebservices)
+![Vercel](https://img.shields.io/badge/Vercel-05122A?style=flat&logo=vercel)
+
+</details>
+
+---
+
+### GitHub Activity
+
+<p align="center">
+  <img src="https://github-readme-activity-graph.vercel.app/graph?username=kevnnard&theme=github-dark&hide_border=true&bg_color=0d1117&color=6b7280&line=10b981&point=10b981&area=true&area_color=10b981" width="100%" alt="activity graph" />
+</p>
+
+<p align="center">
+  <img src="https://github-readme-stats.vercel.app/api?username=kevnnard&show_icons=true&hide_border=true&bg_color=0d1117&title_color=10b981&icon_color=10b981&text_color=6b7280" width="48%" alt="stats" />
+  <img src="https://github-readme-streak-stats.herokuapp.com?user=kevnnard&theme=dark&hide_border=true&background=0d1117&ring=10b981&fire=10b981&currStreakLabel=10b981&sideLabels=6b7280&currStreakNum=ffffff&sideNums=ffffff&dates=6b7280" width="48%" alt="streak" />
+</p>
+
+---
+
+<p align="center">
+  <sub>Built with Astro + React + Tailwind</sub>
+</p>
+
+<p align="center">
+  <a href="https://kevnnard.com">
+    <img src="https://img.shields.io/badge/View_Portfolio-10b981?style=for-the-badge&logo=safari&logoColor=white" alt="portfolio" />
+  </a>
+</p>

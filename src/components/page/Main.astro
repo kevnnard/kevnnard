@@ -4,35 +4,209 @@ const year = date.getFullYear();
 const age = year - 2020;
 ---
 
-<h1
-	class="relative font-bold text-3xl md:text-5xl text-center py-5 md:text-left"
->
-	Hey, I'm Kevnnard
-	<a
-		href="https://linkedin.com/in/kevnnard"
-		target="_blank"
-		rel="noopener"
-		class="md:absolute md:top-2 md:left-[30.5rem] md:flex justify-center items-center hover:scale-105 transition"
-	>
-		<div>
-			<span class="relative flex overflow-hidden rounded-full p-[1px]">
-				<span
-					class="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]"
-				></span>
-				<div
-					class="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full px-3 py-1 text-xs font-medium text-ligth backdrop-blur-3xl whitespace-nowrap"
-				>
-					Working
-				</div>
-			</span>
-		</div>
-	</a>
-</h1>
+<div class="relative">
+  <div class="relative flex flex-col md:flex-row md:items-center gap-3">
+    <div class="relative">
+      <h1
+        class="font-bold text-3xl md:text-5xl text-center md:text-left typewriter"
+        id="typewriter-text"
+      >
+        <span id="typing-text">Hey, I'm Kevnnard</span><span
+          id="typing-emoji"
+          class="inline-block ml-2"></span>
+      </h1>
+    </div>
+    <a
+      href="https://linkedin.com/in/kevnnard"
+      target="_blank"
+      rel="noopener"
+      class="hidden md:flex items-center hover:scale-105 transition md:absolute md:left-[26rem] md:top-1/2 md:-translate-y-1/2"
+      id="badge-desktop"
+    >
+      <div
+        class="inline-flex items-center justify-center rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium whitespace-nowrap gap-1.5"
+      >
+        <span class="relative flex h-2 w-2">
+          <span
+            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"
+          ></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"
+          ></span>
+        </span>
+        <span class="text-emerald-400">Working</span>
+      </div>
+    </a>
+    <a
+      href="https://linkedin.com/in/kevnnard"
+      target="_blank"
+      rel="noopener"
+      class="flex md:hidden justify-center items-center hover:scale-105 transition"
+    >
+      <div
+        class="inline-flex items-center justify-center rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium whitespace-nowrap gap-1.5"
+      >
+        <span class="relative flex h-2 w-2">
+          <span
+            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"
+          ></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"
+          ></span>
+        </span>
+        <span class="text-emerald-400">Working</span>
+      </div>
+    </a>
+  </div>
 
-<p class="mt-4 max-w-4xl text-lg">
-	+{age} years of experience. I'm a <span
-		class="font-bold italic text-blue-500 underline">Software Engineer</span
-	>
-	who loves to create awesome and functional things. I'm passionate about the web,
-	and I'm always looking for new challenges.
-</p>
+  <p class="mt-6 max-w-3xl text-lg text-muted-foreground leading-relaxed">
+    <span
+      class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 font-bold"
+      >+{age} years</span
+    > building things that work. <span class="text-emerald-400 font-medium"
+      >Full Stack Engineer</span
+    > by mass, <span class="italic text-muted-foreground/80"
+      >AI Engineer by mass hallucination of my IDE.</span
+    >
+  </p>
+
+  <p class="mt-3 max-w-3xl text-base text-muted-foreground/80">
+    I craft web & mobile experiences with modern stacks. Currently obsessed with
+    TypeScript, React, Node.js, and pretending my copilot understands what I want.
+  </p>
+
+  <div class="flex justify-center mt-8">
+    <a
+      href="#experience"
+      class="group flex flex-col items-center gap-1 text-muted-foreground/40 hover:text-emerald-400 transition-colors"
+    >
+      <span class="text-[10px] uppercase tracking-widest">Scroll</span>
+      <div class="animate-bounce">
+        <svg
+          class="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+        </svg>
+      </div>
+    </a>
+  </div>
+</div>
+
+<script>
+  const texts = [
+    { text: "Hey, I'm Kevnnard", emoji: "" },
+    { text: "I'm an Indie Hacker", emoji: "🚀" },
+    { text: "I'm an AI Engineer", emoji: "🤖" },
+  ];
+
+  let currentIndex = 0;
+  const typingElement = document.getElementById("typing-text");
+  const emojiElement = document.getElementById("typing-emoji");
+  const badgeDesktop = document.getElementById("badge-desktop");
+  const typewriterContainer = document.getElementById("typewriter-text");
+
+  function updateBadgePosition() {
+    if (badgeDesktop && typewriterContainer) {
+      const containerWidth = typewriterContainer.offsetWidth;
+      badgeDesktop.style.left = `${containerWidth + 16}px`;
+    }
+  }
+
+  function typeText(text: string, emoji: string, callback: () => void) {
+    if (!typingElement || !emojiElement) return;
+
+    let i = 0;
+    typingElement.textContent = "";
+    emojiElement.textContent = "";
+
+    const typeInterval = setInterval(() => {
+      if (i < text.length) {
+        typingElement.textContent += text.charAt(i);
+        i++;
+        updateBadgePosition();
+      } else {
+        clearInterval(typeInterval);
+        if (emoji) {
+          emojiElement.textContent = emoji;
+          emojiElement.classList.add("animate-bounce");
+          setTimeout(() => {
+            emojiElement.classList.remove("animate-bounce");
+          }, 1000);
+        }
+        updateBadgePosition();
+        setTimeout(callback, 3000);
+      }
+    }, 80);
+  }
+
+  function deleteText(callback: () => void) {
+    if (!typingElement || !emojiElement) return;
+
+    emojiElement.textContent = "";
+    let text = typingElement.textContent || "";
+
+    const deleteInterval = setInterval(() => {
+      if (text.length > 0) {
+        text = text.slice(0, -1);
+        typingElement.textContent = text;
+        updateBadgePosition();
+      } else {
+        clearInterval(deleteInterval);
+        callback();
+      }
+    }, 40);
+  }
+
+  function loop() {
+    const { text, emoji } = texts[currentIndex];
+    typeText(text, emoji, () => {
+      deleteText(() => {
+        currentIndex = (currentIndex + 1) % texts.length;
+        loop();
+      });
+    });
+  }
+
+  setTimeout(() => {
+    loop();
+  }, 100);
+</script>
+
+<style>
+  .typewriter {
+    min-height: 1.2em;
+  }
+
+  .typewriter #typing-text {
+    border-right: 2px solid #10b981;
+    padding-right: 4px;
+    animation: blink-caret 0.75s step-end infinite;
+  }
+
+  @keyframes blink-caret {
+    from,
+    to {
+      border-color: transparent;
+    }
+    50% {
+      border-color: #10b981;
+    }
+  }
+
+  #badge-desktop {
+    transition: left 0.3s ease-out;
+  }
+
+  @media (max-width: 768px) {
+    .typewriter #typing-text {
+      border-right: none;
+      padding-right: 0;
+      animation: none;
+    }
+  }
+</style>

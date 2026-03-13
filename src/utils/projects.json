@@ -1,7 +1,89 @@
 [
   {
+    "title": "Smart Window",
+    "description": "macOS menu bar replacement inspired by Polybar and Waybar. Built for faster window switching with numbered tabs, keyboard shortcuts, and a cleaner tiling-WM-like workflow.",
+    "url": [
+      {
+        "icon": "GITHUB",
+        "url": "https://github.com/kevnnard/smart-window",
+        "isSolid": true
+      }
+    ],
+    "isWorkInProgress": false,
+    "isOpenSource": true,
+    "isFeatured": true,
+    "status": "released",
+    "tags": [
+      {
+        "title": "Swift",
+        "logo": "swift"
+      },
+      {
+        "title": "SwiftUI",
+        "logo": "swift"
+      },
+      {
+        "title": "macOS",
+        "logo": "apple"
+      },
+      {
+        "title": "Homebrew",
+        "logo": "homebrew"
+      },
+      {
+        "title": "Accessibility API",
+        "logo": "apple"
+      }
+    ]
+  },
+  {
+    "title": "Smart Finance",
+    "description": "AI-powered personal finance platform. Full-stack monorepo with mobile app, web dashboard, GraphQL API, and real-time analytics for smart money management.",
+    "url": [
+      {
+        "icon": "GITHUB",
+        "url": "https://github.com/kevnnard/smart-finance",
+        "isSolid": true
+      }
+    ],
+    "isWorkInProgress": true,
+    "isOpenSource": false,
+    "isFeatured": true,
+    "status": "in_progress",
+    "tags": [
+      {
+        "title": "Turborepo",
+        "logo": "turborepo"
+      },
+      {
+        "title": "Next.js 16",
+        "logo": "nextdotjs"
+      },
+      {
+        "title": "React Native",
+        "logo": "react"
+      },
+      {
+        "title": "GraphQL",
+        "logo": "graphql"
+      },
+      {
+        "title": "Supabase",
+        "logo": "supabase"
+      },
+      {
+        "title": "TypeScript",
+        "logo": "typescript"
+      },
+      {
+        "title": "Biome",
+        "logo": "biome"
+      }
+    ]
+  },
+  {
     "title": "LumiWall",
-    "description": "Cloud service that lets brands or individuals upload media, pay for time-slots, and stream it to a giant LED screen in Bogotá—everything managed from a simple web dashboard.",
+    "description": "Cloud service for brands to upload media, pay for time-slots, and stream to a giant LED screen in Bogota. Managed from a simple web dashboard.",
     "url": [
       {
         "icon": "GITHUB",
@@ -15,46 +97,29 @@
       }
     ],
     "isWorkInProgress": true,
+    "isOpenSource": false,
+    "isFeatured": false,
+    "status": "in_progress",
     "tags": [
-      {
-        "title": "Digital Ocean",
-        "logo": "digitalocean"
-      },
-      {
-        "title": "Aws S3",
-        "logo": "amazons3"
-      },
-      {
-        "title": "Rest API",
-        "logo": "restapi"
-      },
       {
         "title": "NestJS",
         "logo": "nestjs"
+      },
+      {
+        "title": "Next.js 15",
+        "logo": "nextdotjs"
       },
       {
         "title": "PostgreSQL",
         "logo": "postgresql"
       },
       {
-        "title": "Neon",
-        "logo": "neonjs"
-      },
-      {
-        "title": "NextJS 15",
-        "logo": "nextdotjs"
-      },
-      {
-        "title": "Zod",
-        "logo": "zod"
+        "title": "AWS S3",
+        "logo": "amazons3"
       },
       {
         "title": "TailwindCSS",
         "logo": "tailwindcss"
-      },
-      {
-        "title": "ShadcnUI",
-        "logo": "shadcn/ui"
       },
       {
         "title": "Vercel",
@@ -64,7 +129,7 @@
   },
   {
     "title": "Three Trackr",
-    "description": "Three Trackr is a tool for tracking orders and shipments from multiple carriers in one place.",
+    "description": "Multi-carrier shipment tracking platform. Track orders from multiple carriers in one unified dashboard with real-time updates and notifications.",
     "url": [
       {
         "icon": "GITHUB",
@@ -78,26 +143,21 @@
       }
     ],
     "isWorkInProgress": true,
+    "isOpenSource": false,
+    "isFeatured": false,
+    "status": "in_progress",
     "tags": [
       {
-        "title": "Aws Kubernetes",
-        "logo": "amazoneks"
+        "title": "Turborepo",
+        "logo": "turborepo"
       },
       {
         "title": "Astro",
         "logo": "astro"
       },
       {
-        "title": "Typescript",
-        "logo": "typescript"
-      },
-      {
         "title": "NestJS",
         "logo": "nestjs"
-      },
-      {
-        "title": "Fastify",
-        "logo": "fastify"
       },
       {
         "title": "GraphQL",
@@ -108,46 +168,14 @@
         "logo": "supabase"
       },
       {
-        "title": "Turborepo",
-        "logo": "turborepo"
-      },
-      {
-        "title": "PostgreSQL",
-        "logo": "postgresql"
-      },
-      {
-        "title": "Neon",
-        "logo": "neonjs"
-      },
-      {
-        "title": "NextJS 15",
-        "logo": "nextdotjs"
-      },
-      {
-        "title": "Apollo Client",
-        "logo": "apollographql"
-      },
-      {
-        "title": "TailwindCSS",
-        "logo": "tailwindcss"
-      },
-      {
-        "title": "ShadcnUI",
-        "logo": "shadcnui"
-      },
-      {
-        "title": "Resend",
-        "logo": "resend"
-      },
-      {
-        "title": "Vercel",
-        "logo": "vercel"
+        "title": "AWS EKS",
+        "logo": "amazoneks"
       }
     ]
   },
   {
-    "title": "Grupor R Api",
-    "description": "API to manage inventory, orders, branches, sales details, and more.",
+    "title": "Grupor R API",
+    "description": "Enterprise inventory management system. RESTful API for orders, branches, sales analytics, and real-time inventory tracking with Socket.IO.",
     "url": [
       {
         "icon": "GITHUB",
@@ -161,21 +189,12 @@
       }
     ],
     "isWorkInProgress": false,
+    "isOpenSource": false,
+    "isFeatured": false,
+    "status": "completed",
     "tags": [
       {
-        "title": "Digital Ocean",
-        "logo": "digitalocean"
-      },
-      {
-        "title": "Aws S3",
-        "logo": "amazons3"
-      },
-      {
-        "title": "Rest API",
-        "logo": "restapi"
-      },
-      {
-        "title": "ExpressJS",
+        "title": "Express.js",
         "logo": "express"
       },
       {
@@ -184,27 +203,19 @@
       },
       {
         "title": "Socket.IO",
-        "logo": "socket.io"
+        "logo": "socketdotio"
       },
       {
-        "title": "NextJS 12",
+        "title": "Next.js 12",
         "logo": "nextdotjs"
       },
       {
-        "title": "Redux Toolkit",
+        "title": "Redux",
         "logo": "redux"
       },
       {
-        "title": "TailwindCSS",
-        "logo": "tailwindcss"
-      },
-      {
-        "title": "MaterialUI",
-        "logo": "mui"
-      },
-      {
-        "title": "Vercel",
-        "logo": "vercel"
+        "title": "Digital Ocean",
+        "logo": "digitalocean"
       }
     ]
   }

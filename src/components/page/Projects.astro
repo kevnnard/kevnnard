@@ -1,71 +1,129 @@
 ---
-import { SvgComponentGlobal } from "./SvgIcons";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import projectData from "@/utils/projects.json";
+import { SvgComponentGlobal } from "./SvgIcons";
+
+type ProjectStatus = "released" | "in_progress" | "completed";
+
+const getStatusConfig = (status: ProjectStatus) => {
+  const configs = {
+    released: {
+      label: "Released",
+      className:
+        "bg-emerald-500/20 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/30",
+    },
+    in_progress: {
+      label: "In Progress",
+      className:
+        "bg-blue-500/20 text-blue-400 border-blue-500/30 hover:bg-blue-500/30",
+    },
+    completed: {
+      label: "Completed",
+      className:
+        "bg-zinc-500/20 text-zinc-400 border-zinc-500/30 hover:bg-zinc-500/30",
+    },
+  };
+  return configs[status] || configs.completed;
+};
 ---
 
-<h2 class="text-2xl font-bold mb-5 mt-32 flex justify-start items-center gap-4">
-  <SvgComponentGlobal icon="BOOK" className="w-8 h-8" />
-  Projects
-</h2>
+<section class="relative">
+  <h2
+    class="text-2xl font-bold mb-6 mt-20 flex justify-start items-center gap-3"
+  >
+    <div class="p-2 rounded-lg bg-emerald-500/10">
+      <SvgComponentGlobal icon="BOOK" className="w-5 h-5 text-emerald-400" />
+    </div>
+    <span>Projects</span>
+  </h2>
 
-<ol class="flex flex-col lg:flex-row gap-3">
-  {
-    projectData.map((project) => (
-      <Card className="relative flex-1 relative pb-10 overflow-hidden">
-        <CardHeader>
-          <CardTitle className="mb-1">
-            {project.title}
-            {project.isWorkInProgress && (
-              <span class="ml-2 bg-blue-100 text-blue-800 text-xs font-medium me-2 pr-2 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300 ">
-                In Progress
-              </span>
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+    {
+      projectData.map((project) => {
+        const statusConfig = getStatusConfig(project.status as ProjectStatus);
+        return (
+            <article class="group relative flex flex-col rounded-2xl border border-white/[0.08] bg-card/30 backdrop-blur-sm overflow-hidden transition-all duration-500 hover:border-emerald-500/20 hover:bg-card/50 hover:shadow-xl hover:shadow-emerald-500/5 hover:-translate-y-1">
+            {project.isFeatured && (
+              <div class="absolute top-0 right-0 w-24 h-24 overflow-hidden">
+                <div class="absolute top-3 -right-8 w-32 text-center text-[10px] font-semibold text-white bg-gradient-to-r from-amber-500 to-orange-500 transform rotate-45 py-1 shadow-lg">
+                  Featured
+                </div>
+              </div>
             )}
-          </CardTitle>
-          <CardDescription>{project.description}</CardDescription>
-        </CardHeader>
-        <CardContent className="overflow-hidden">
-          <div class="absolute bottom-5 left-0 flex gap-5 justify-between animate-scroll-x ">
-            {project.tags.map((tag) => (
-              <img
-                class="slide"
-                alt={tag.title}
-                src={`https://img.shields.io/badge/${tag.title}-121212?logo=${tag.logo}`}
-              />
-            ))}
-            {project.tags.map((tag) => (
-              <img
-                class="slide"
-                alt={tag.title}
-                src={`https://img.shields.io/badge/${tag.title}-121212?logo=${tag.logo}`}
-              />
-            ))}
-          </div>
-        </CardContent>
-        <CardFooter className="absolute top-2 right-0 flex lg:-right-2.5 lg:flex-col gap-3">
-          {project?.url.map(
-            (urlData: { icon: string; url: string; isSolid: boolean }) => (
-              <a href={urlData.url} target="_blank" rel="noopener noreferrer">
-                <SvgComponentGlobal
-                  icon={urlData.icon}
-                  className="w-7 h-7 hover:text-blue-500 transition eases-in-out duration-300 hover:scale-105"
-                  isSolid={urlData.isSolid}
-                  strokeWidth={1.3}
-                />
-              </a>
-            ),
-          )}
-        </CardFooter>
-      </Card>
-    ))
-  }
-</ol>
 
+            <div class="p-6 flex-1 flex flex-col">
+              <div class="flex items-start justify-between gap-3 mb-4">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap mb-2">
+                    <h3 class="text-lg font-semibold tracking-tight truncate">
+                      {project.title}
+                    </h3>
+                    <Badge className={statusConfig.className}>
+                      {statusConfig.label}
+                    </Badge>
+                    {project.isOpenSource && (
+                      <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+                        Open Source
+                      </Badge>
+                    )}
+                  </div>
+                </div>
 
+                <div class="flex gap-2 shrink-0">
+                  {project?.url.map(
+                    (urlData: {
+                      icon: string;
+                      url: string;
+                      isSolid: boolean;
+                    }) => (
+                      <a
+                        href={urlData.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="p-2 rounded-xl bg-secondary/50 border border-border/50 transition-all duration-300 hover:bg-primary hover:text-primary-foreground hover:border-primary hover:scale-110 hover:shadow-lg hover:shadow-primary/20"
+                      >
+                        <SvgComponentGlobal
+                          icon={urlData.icon}
+                          className="w-5 h-5"
+                          isSolid={urlData.isSolid}
+                          strokeWidth={1.5}
+                        />
+                      </a>
+                    )
+                  )}
+                </div>
+              </div>
+
+              <p class="text-sm text-muted-foreground leading-relaxed mb-6 line-clamp-3">
+                {project.description}
+              </p>
+
+              <div class="mt-auto pt-4">
+                <div class="relative overflow-hidden">
+                  <div class="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-card/80 to-transparent z-10 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div class="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card/80 to-transparent z-10 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                  <div class="flex gap-2 animate-scroll-x hover:pause-animation">
+                    {[...project.tags, ...project.tags].map((tag) => (
+                      <div class="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/[0.04] text-xs text-muted-foreground transition-colors hover:bg-white/[0.08] hover:text-foreground">
+                        <img
+                          class="w-3.5 h-3.5"
+                          alt={tag.title}
+                          src={`https://cdn.simpleicons.org/${tag.logo}`}
+                          loading="lazy"
+                        />
+                        <span>{tag.title}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="absolute inset-0 bg-gradient-to-t from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+          </article>
+        );
+      })
+    }
+  </div>
+</section>

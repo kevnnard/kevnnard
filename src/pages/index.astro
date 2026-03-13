@@ -1,34 +1,21 @@
 ---
 import AboutMe from "@/components/page/AboutMe.astro";
 import Experience from "@/components/page/Experience.astro";
-import Github from "@/components/page/GithubMD.md";
 import Main from "@/components/page/Main.astro";
 import Projects from "@/components/page/Projects.astro";
-import { SvgComponentGlobal } from "@/components/page/SvgIcons";
+import Skills from "@/components/page/Skills.astro";
 import Layout from "@/layouts/Layout.astro";
 ---
 
 <Layout
   title="®Kevnnard - Oficial site"
-  description="Kevnnard Oficial site & Portfolio, all about me ,knowlegde, stacks,  Skills,  projects, etc"
+  description="Kevnnard Oficial site & Portfolio, all about me, knowlegde, stacks, Skills, projects, etc"
 >
   <main class="py-10">
-    <!-- Main component  -->
     <Main />
-    <!-- Experience component  -->
     <Experience />
-    <!-- Projects component  -->
     <Projects />
-    <!-- About me component  -->
     <AboutMe />
-    <!-- Github component -->
-    <h2
-      class="text-xl font-bold mb-5 mt-32 flex justify-start items-center gap-4"
-    >
-      <SvgComponentGlobal icon="GITHUB" className="w-8 h-8" isSolid />
-      Skills & Github Stats
-    </h2>
-
-    <Github />
+    <Skills />
   </main>
 </Layout>

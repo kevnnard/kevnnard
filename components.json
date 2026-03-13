@@ -3,8 +3,9 @@
   "style": "new-york",
   "rsc": false,
   "tsx": true,
+  "iconLibrary": "lucide",
   "tailwind": {
-    "config": "tailwind.config.js",
+    "config": "",
     "css": "./src/styles/globals.css",
     "baseColor": "zinc",
     "cssVariables": true,

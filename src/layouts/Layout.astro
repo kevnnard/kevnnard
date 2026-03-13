@@ -5,8 +5,10 @@ interface Props {
 }
 
 const { title, description } = Astro.props;
-import { HeaderComponent } from "@/components/page/Header";
+
+import { ThemeProvider } from "@/components/app/theme-provider";
 import Footer from "@/components/page/Footer.astro";
+import { HeaderComponent } from "@/components/page/Header";
 import "@/styles/globals.css";
 ---
 
@@ -20,10 +22,18 @@ import "@/styles/globals.css";
     <title>{title}</title>
   </head>
   <body
-    class="bg-background text-mindnight dark:bg-darker dark:text-ligth max-w-7xl px-10 mx-auto"
+    class="bg-background text-foreground max-w-7xl px-10 mx-auto"
   >
-    <HeaderComponent client:load />
-    <slot />
-    <Footer />
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="dark"
+      enableSystem={false}
+      disableTransitionOnChange
+      client:load
+    >
+      <HeaderComponent client:load />
+      <slot />
+      <Footer />
+    </ThemeProvider>
   </body>
 </html>

@@ -1,7 +1,66 @@
 ---
+import { SvgComponentGlobal } from "./SvgIcons";
+
 const year = new Date().getFullYear();
+
+const socialLinks = [
+  {
+    icon: "GITHUB",
+    url: "https://github.com/kevnnard",
+    label: "GitHub",
+    isSolid: true,
+  },
+  {
+    icon: "LINKEDIN",
+    icon2: "LINKEDIN2",
+    url: "https://linkedin.com/in/kevnnard",
+    label: "LinkedIn",
+    isSolid: true,
+  },
+  {
+    icon: "TWITTER",
+    url: "https://x.com/kevnnard",
+    label: "X",
+    isSolid: true,
+  },
+];
 ---
 
-<footer class="flex justify-center my-10">
-  <p class="text-sm">© {year} Kevnnard Labs. All rights reserved</p>
+<footer class="mt-20 pb-10">
+  <div
+    class="flex flex-col items-center gap-6 pt-8 border-t border-white/[0.06]"
+  >
+    <div class="flex items-center gap-3">
+      {
+        socialLinks.map((link) => (
+          <a
+            href={link.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={link.label}
+            class="p-2.5 rounded-lg bg-white/[0.04] transition-all hover:bg-emerald-500/10 hover:text-emerald-400"
+          >
+            <SvgComponentGlobal
+              icon={link.icon}
+              icon2={link.icon2}
+              className="w-5 h-5"
+              isSolid={link.isSolid}
+              strokeWidth={1}
+            />
+          </a>
+        ))
+      }
+    </div>
+
+    <div class="flex flex-col items-center gap-2 text-center">
+      <p class="text-xs text-muted-foreground">
+        Built with <span class="text-emerald-400">Astro</span> + <span
+          class="text-emerald-400">React</span
+        > + <span class="text-emerald-400">Tailwind</span>
+      </p>
+      <p class="text-xs text-muted-foreground/60">
+        &copy; {year} Kevnnard. All rights reserved.
+      </p>
+    </div>
+  </div>
 </footer>

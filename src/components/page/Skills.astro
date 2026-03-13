@@ -1,0 +1,268 @@
+---
+import { SvgComponentGlobal } from "./SvgIcons";
+
+const skillCategories = [
+  {
+    title: "Languages",
+    skills: [
+      { name: "TypeScript", logo: "typescript" },
+      { name: "JavaScript", logo: "javascript" },
+      { name: "Go", logo: "go" },
+      { name: "Python", logo: "python" },
+      { name: "Rust", logo: "rust" },
+      { name: "Swift", logo: "swift" },
+    ],
+  },
+  {
+    title: "Frontend",
+    skills: [
+      { name: "React", logo: "react" },
+      { name: "Next.js", logo: "nextdotjs" },
+      { name: "Astro", logo: "astro" },
+      { name: "Tailwind", logo: "tailwindcss" },
+      { name: "Shadcn/ui", logo: "shadcnui" },
+    ],
+  },
+  {
+    title: "Backend",
+    skills: [
+      { name: "Node.js", logo: "nodedotjs" },
+      { name: "NestJS", logo: "nestjs" },
+      { name: "GraphQL", logo: "graphql" },
+      { name: "Bun", logo: "bun" },
+    ],
+  },
+  {
+    title: "Mobile",
+    skills: [
+      { name: "React Native", logo: "react" },
+      { name: "Flutter", logo: "flutter" },
+      { name: "SwiftUI", logo: "swift" },
+    ],
+  },
+  {
+    title: "Database",
+    skills: [
+      { name: "PostgreSQL", logo: "postgresql" },
+      { name: "MongoDB", logo: "mongodb" },
+      { name: "Redis", logo: "redis" },
+      { name: "Supabase", logo: "supabase" },
+    ],
+  },
+  {
+    title: "DevOps",
+    skills: [
+      { name: "Docker", logo: "docker" },
+      { name: "Kubernetes", logo: "kubernetes" },
+      { name: "AWS", logo: "amazonwebservices" },
+      { name: "Vercel", logo: "vercel" },
+    ],
+  },
+];
+---
+
+<section class="relative">
+  <h2
+    class="text-2xl font-bold mb-6 mt-20 flex justify-start items-center gap-3"
+  >
+    <div class="p-2 rounded-lg bg-emerald-500/10">
+      <SvgComponentGlobal icon="GITHUB" className="w-5 h-5 text-emerald-400" isSolid />
+    </div>
+    <span>Skills & GitHub</span>
+  </h2>
+
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
+    {
+      skillCategories.map((category) => (
+        <div class="group p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] transition-all duration-300 hover:bg-white/[0.04] hover:border-emerald-500/20">
+          <h3 class="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider">
+            {category.title}
+          </h3>
+          <div class="flex flex-wrap gap-2">
+            {category.skills.map((skill) => (
+              <div class="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/[0.04] transition-all hover:bg-emerald-500/10 group/skill">
+                <img
+                  src={`https://cdn.simpleicons.org/${skill.logo}`}
+                  alt={skill.name}
+                  class="w-3.5 h-3.5"
+                  loading="lazy"
+                />
+                <span class="text-[10px] text-muted-foreground group-hover/skill:text-emerald-400 transition-colors">
+                  {skill.name}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))
+    }
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+    <div
+      class="lg:col-span-2 p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] overflow-hidden"
+    >
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-sm font-medium text-muted-foreground">
+          Contribution Activity
+        </h3>
+        <a
+          href="https://github.com/kevnnard"
+          target="_blank"
+          rel="noopener"
+          class="text-xs text-emerald-400 hover:underline"
+        >
+          @kevnnard
+        </a>
+      </div>
+      <img
+        src="https://github-readme-activity-graph.vercel.app/graph?username=kevnnard&theme=github-dark&hide_border=true&bg_color=transparent&color=6b7280&line=10b981&point=10b981&area=true&area_color=10b981"
+        alt="GitHub Activity Graph"
+        class="w-full rounded-lg"
+        loading="lazy"
+      />
+    </div>
+
+    <div class="flex flex-col gap-4">
+      <div
+        class="flex-1 p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]"
+      >
+        <h3 class="text-sm font-medium text-muted-foreground mb-4">
+          GitHub Stats
+        </h3>
+        <img
+          src="https://github-readme-stats.vercel.app/api?username=kevnnard&show_icons=true&hide_border=true&bg_color=00000000&title_color=10b981&icon_color=10b981&text_color=6b7280&hide_title=true&hide_rank=true"
+          alt="GitHub Stats"
+          class="w-full"
+          loading="lazy"
+        />
+      </div>
+
+      <div
+        class="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]"
+      >
+        <h3 class="text-sm font-medium text-muted-foreground mb-3">
+          Quick Stats
+        </h3>
+        <div class="flex items-center justify-around">
+          <a
+            href="https://github.com/kevnnard?tab=repositories"
+            target="_blank"
+            class="flex flex-col items-center gap-1 group"
+          >
+            <img
+              src="https://img.shields.io/github/stars/kevnnard?style=flat&logo=github&logoColor=10b981&labelColor=transparent&color=10b981"
+              alt="Stars"
+              class="h-5"
+            />
+            <span
+              class="text-[10px] text-muted-foreground group-hover:text-emerald-400 transition-colors"
+              >Stars</span
+            >
+          </a>
+          <a
+            href="https://github.com/kevnnard?tab=followers"
+            target="_blank"
+            class="flex flex-col items-center gap-1 group"
+          >
+            <img
+              src="https://img.shields.io/github/followers/kevnnard?style=flat&logo=github&logoColor=10b981&labelColor=transparent&color=10b981"
+              alt="Followers"
+              class="h-5"
+            />
+            <span
+              class="text-[10px] text-muted-foreground group-hover:text-emerald-400 transition-colors"
+              >Followers</span
+            >
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <a
+      href="https://github.com/Three-Labss"
+      target="_blank"
+      rel="noopener"
+      class="group p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] transition-all hover:border-emerald-500/20 hover:bg-white/[0.04]"
+    >
+      <div class="flex items-center gap-3 mb-3">
+        <img
+          src="https://github.com/Three-Labss.png"
+          alt="Three Labs"
+          class="w-8 h-8 rounded-lg"
+        />
+        <div>
+          <h4 class="text-sm font-medium group-hover:text-emerald-400 transition-colors">
+            Three Labs S.A.S.
+          </h4>
+          <p class="text-[10px] text-muted-foreground">@Three-Labss</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 text-[10px] text-muted-foreground">
+        <span class="flex items-center gap-1">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          CEO & CTO
+        </span>
+        <span>Software Agency</span>
+      </div>
+    </a>
+
+    <a
+      href="https://github.com/ocmiworkerscomp"
+      target="_blank"
+      rel="noopener"
+      class="group p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] transition-all hover:border-blue-500/20 hover:bg-white/[0.04]"
+    >
+      <div class="flex items-center gap-3 mb-3">
+        <img
+          src="https://github.com/ocmiworkerscomp.png"
+          alt="OCMI"
+          class="w-8 h-8 rounded-lg"
+        />
+        <div>
+          <h4 class="text-sm font-medium group-hover:text-blue-400 transition-colors">
+            OCMI Workers Comp
+          </h4>
+          <p class="text-[10px] text-muted-foreground">@ocmiworkerscomp</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 text-[10px] text-muted-foreground">
+        <span class="flex items-center gap-1">
+          <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+          Software Engineer
+        </span>
+        <span>Miami, FL</span>
+      </div>
+    </a>
+
+    <a
+      href="https://github.com/kevnnard"
+      target="_blank"
+      rel="noopener"
+      class="group p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] transition-all hover:border-purple-500/20 hover:bg-white/[0.04]"
+    >
+      <div class="flex items-center gap-3 mb-3">
+        <img
+          src="https://github.com/kevnnard.png"
+          alt="Kevnnard"
+          class="w-8 h-8 rounded-full"
+        />
+        <div>
+          <h4 class="text-sm font-medium group-hover:text-purple-400 transition-colors">
+            Kevnnard
+          </h4>
+          <p class="text-[10px] text-muted-foreground">@kevnnard</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 text-[10px] text-muted-foreground">
+        <span class="flex items-center gap-1">
+          <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+          Personal
+        </span>
+        <span>Open Source</span>
+      </div>
+    </a>
+  </div>
+</section>
