@@ -187,3 +187,5 @@ AI-powered personal finance platform. Full-stack monorepo with mobile app, web d
     <img src="https://img.shields.io/badge/View_Portfolio-10b981?style=for-the-badge&logo=safari&logoColor=white" alt="portfolio" />
   </a>
 </p>
+
+<!-- last-sync: 2024-01-01T00:00:00Z -->
