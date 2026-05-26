@@ -188,4 +188,4 @@ AI-powered personal finance platform. Full-stack monorepo with mobile app, web d
   </a>
 </p>
 
-<!-- last-sync: 2026-05-25T13:15:07Z -->
+<!-- last-sync: 2026-05-26T13:06:02Z -->
