@@ -35,11 +35,11 @@
 
 ---
 
-### Currently Working On
+### Work & Open Source
 
 <table>
 <tr>
-<td width="50%">
+<td width="33%">
 
 <a href="https://github.com/Three-Labss">
   <img src="https://img.shields.io/badge/Three_Labs_S.A.S.-CEO_&_CTO-10b981?style=flat-square&logo=github&logoColor=10b981&labelColor=0d1117" alt="Three Labs" />
@@ -48,13 +48,22 @@
 Software Agency - Worldwide
 
 </td>
-<td width="50%">
+<td width="33%">
 
-<a href="https://github.com/ocmiworkerscomp">
-  <img src="https://img.shields.io/badge/OCMI_Workers_Comp-Software_Engineer-3b82f6?style=flat-square&logo=github&logoColor=3b82f6&labelColor=0d1117" alt="OCMI" />
+<a href="https://github.com/Gentleman-Programming">
+  <img src="https://img.shields.io/badge/Gentleman_Programming-Contributor-F59E0B?style=flat-square&logo=github&logoColor=F59E0B&labelColor=0d1117" alt="Gentleman Programming" />
 </a>
 
-Remote - Miami, FL
+Open Source Tools
+
+</td>
+<td width="33%">
+
+<a href="https://github.com/ocmiworkerscomp">
+  <img src="https://img.shields.io/badge/OCMI_Workers_Comp-Past_Contributor-6b7280?style=flat-square&logo=github&logoColor=6b7280&labelColor=0d1117" alt="OCMI" />
+</a>
+
+Ended August 2026 - Miami, FL
 
 </td>
 </tr>
@@ -68,24 +77,25 @@ Remote - Miami, FL
 <tr>
 <td width="50%">
 
-**[Smart Window](https://github.com/kevnnard/smart-window)** `Open Source`
-
-macOS menu bar replacement inspired by Polybar. Built for faster window switching with numbered tabs and keyboard shortcuts.
-
-![Swift](https://img.shields.io/badge/Swift-05122A?style=flat&logo=swift&logoColor=F05138)
-![macOS](https://img.shields.io/badge/macOS-05122A?style=flat&logo=apple)
-![Homebrew](https://img.shields.io/badge/Homebrew-05122A?style=flat&logo=homebrew)
-
-</td>
-<td width="50%">
-
-**[Smart Finance](https://github.com/kevnnard/smart-finance)** `In Progress`
+**[Smart Finance](https://github.com/kevnnard/smart-finance)** `Released`
 
 AI-powered personal finance platform. Full-stack monorepo with mobile app, web dashboard, and GraphQL API.
 
 ![Next.js](https://img.shields.io/badge/Next.js_16-05122A?style=flat&logo=nextdotjs)
 ![GraphQL](https://img.shields.io/badge/GraphQL-05122A?style=flat&logo=graphql&logoColor=E10098)
 ![Turborepo](https://img.shields.io/badge/Turborepo-05122A?style=flat&logo=turborepo)
+![React Native](https://img.shields.io/badge/React_Native-05122A?style=flat&logo=react)
+
+</td>
+<td width="50%">
+
+**[Three Trackr](https://www.threeelabs.com)** `Released`
+
+Multi-carrier shipment tracking platform. Track orders from multiple carriers in one unified dashboard.
+
+![Astro](https://img.shields.io/badge/Astro-05122A?style=flat&logo=astro)
+![NestJS](https://img.shields.io/badge/NestJS-05122A?style=flat&logo=nestjs&logoColor=E0234E)
+![Supabase](https://img.shields.io/badge/Supabase-05122A?style=flat&logo=supabase)
 
 </td>
 </tr>

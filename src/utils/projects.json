@@ -1,42 +1,5 @@
 [
   {
-    "title": "Smart Window",
-    "description": "macOS menu bar replacement inspired by Polybar and Waybar. Built for faster window switching with numbered tabs, keyboard shortcuts, and a cleaner tiling-WM-like workflow.",
-    "url": [
-      {
-        "icon": "GITHUB",
-        "url": "https://github.com/kevnnard/smart-window",
-        "isSolid": true
-      }
-    ],
-    "isWorkInProgress": false,
-    "isOpenSource": true,
-    "isFeatured": true,
-    "status": "released",
-    "tags": [
-      {
-        "title": "Swift",
-        "logo": "swift"
-      },
-      {
-        "title": "SwiftUI",
-        "logo": "swift"
-      },
-      {
-        "title": "macOS",
-        "logo": "apple"
-      },
-      {
-        "title": "Homebrew",
-        "logo": "homebrew"
-      },
-      {
-        "title": "Accessibility API",
-        "logo": "apple"
-      }
-    ]
-  },
-  {
     "title": "Smart Finance",
     "description": "AI-powered personal finance platform. Full-stack monorepo with mobile app, web dashboard, GraphQL API, and real-time analytics for smart money management.",
     "url": [
@@ -46,10 +9,10 @@
         "isSolid": true
       }
     ],
-    "isWorkInProgress": true,
+    "isWorkInProgress": false,
     "isOpenSource": false,
     "isFeatured": true,
-    "status": "in_progress",
+    "status": "released",
     "tags": [
       {
         "title": "Turborepo",
@@ -78,6 +41,89 @@
       {
         "title": "Biome",
         "logo": "biome"
+      }
+    ]
+  },
+  {
+    "title": "Three Trackr",
+    "description": "Multi-carrier shipment tracking platform. Track orders from multiple carriers in one unified dashboard with real-time updates and notifications.",
+    "url": [
+      {
+        "icon": "GITHUB",
+        "url": "https://github.com/kevnnard",
+        "isSolid": true
+      },
+      {
+        "icon": "WEB",
+        "url": "https://www.threeelabs.com",
+        "isSolid": false
+      }
+    ],
+    "isWorkInProgress": false,
+    "isOpenSource": false,
+    "isFeatured": true,
+    "status": "released",
+    "tags": [
+      {
+        "title": "Turborepo",
+        "logo": "turborepo"
+      },
+      {
+        "title": "Astro",
+        "logo": "astro"
+      },
+      {
+        "title": "NestJS",
+        "logo": "nestjs"
+      },
+      {
+        "title": "GraphQL",
+        "logo": "graphql"
+      },
+      {
+        "title": "Supabase",
+        "logo": "supabase"
+      },
+      {
+        "title": "AWS EKS",
+        "logo": "amazoneks"
+      }
+    ]
+  },
+  {
+    "title": "Smart Window",
+    "description": "macOS menu bar replacement inspired by Polybar and Waybar. Built for faster window switching with numbered tabs, keyboard shortcuts, and a cleaner tiling-WM-like workflow.",
+    "url": [
+      {
+        "icon": "GITHUB",
+        "url": "https://github.com/kevnnard/smart-window",
+        "isSolid": true
+      }
+    ],
+    "isWorkInProgress": false,
+    "isOpenSource": true,
+    "isFeatured": false,
+    "status": "released",
+    "tags": [
+      {
+        "title": "Swift",
+        "logo": "swift"
+      },
+      {
+        "title": "SwiftUI",
+        "logo": "swift"
+      },
+      {
+        "title": "macOS",
+        "logo": "apple"
+      },
+      {
+        "title": "Homebrew",
+        "logo": "homebrew"
+      },
+      {
+        "title": "Accessibility API",
+        "logo": "apple"
       }
     ]
   },
@@ -124,52 +170,6 @@
       {
         "title": "Vercel",
         "logo": "vercel"
-      }
-    ]
-  },
-  {
-    "title": "Three Trackr",
-    "description": "Multi-carrier shipment tracking platform. Track orders from multiple carriers in one unified dashboard with real-time updates and notifications.",
-    "url": [
-      {
-        "icon": "GITHUB",
-        "url": "https://github.com/kevnnard",
-        "isSolid": true
-      },
-      {
-        "icon": "WEB",
-        "url": "https://www.threeelabs.com",
-        "isSolid": false
-      }
-    ],
-    "isWorkInProgress": true,
-    "isOpenSource": false,
-    "isFeatured": false,
-    "status": "in_progress",
-    "tags": [
-      {
-        "title": "Turborepo",
-        "logo": "turborepo"
-      },
-      {
-        "title": "Astro",
-        "logo": "astro"
-      },
-      {
-        "title": "NestJS",
-        "logo": "nestjs"
-      },
-      {
-        "title": "GraphQL",
-        "logo": "graphql"
-      },
-      {
-        "title": "Supabase",
-        "logo": "supabase"
-      },
-      {
-        "title": "AWS EKS",
-        "logo": "amazoneks"
       }
     ]
   },

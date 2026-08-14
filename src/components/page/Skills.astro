@@ -128,13 +128,26 @@ const skillCategories = [
         class="flex-1 p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]"
       >
         <h3 class="text-sm font-medium text-muted-foreground mb-4">
-          GitHub Stats
+          Streak
         </h3>
         <img
-          src="https://github-readme-stats.vercel.app/api?username=kevnnard&show_icons=true&hide_border=true&bg_color=00000000&title_color=10b981&icon_color=10b981&text_color=6b7280&hide_title=true&hide_rank=true"
-          alt="GitHub Stats"
+          src="https://github-readme-streak-stats.herokuapp.com/?user=kevnnard&theme=dark&hide_border=true&background=00000000&ring=10b981&fire=10b981&currStreakLabel=10b981&sideLabels=6b7280&currStreakNum=ffffff&sideNums=ffffff&dates=6b7280"
+          alt="Streak"
           class="w-full"
           loading="lazy"
+        />
+      </div>
+
+      <div
+        class="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]"
+      >
+        <h3 class="text-sm font-medium text-muted-foreground mb-4">
+          Contribution Heatmap
+        </h3>
+        <img
+          src="https://ghchart.rshah.org/kevnnard"
+          alt="Contribution Heatmap"
+          class="w-full rounded-lg"
         />
       </div>
 
@@ -180,7 +193,7 @@ const skillCategories = [
     </div>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
     <a
       href="https://github.com/Three-Labss"
       target="_blank"
@@ -230,10 +243,38 @@ const skillCategories = [
       </div>
       <div class="flex items-center gap-3 text-[10px] text-muted-foreground">
         <span class="flex items-center gap-1">
-          <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-          Software Engineer
+          <span class="w-2 h-2 rounded-full bg-white/40"></span>
+          Past Contributor
         </span>
         <span>Miami, FL</span>
+      </div>
+    </a>
+
+    <a
+      href="https://github.com/Gentleman-Programming"
+      target="_blank"
+      rel="noopener"
+      class="group p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] transition-all hover:border-yellow-500/20 hover:bg-white/[0.04]"
+    >
+      <div class="flex items-center gap-3 mb-3">
+        <img
+          src="https://github.com/Gentleman-Programming.png"
+          alt="Gentleman Programming"
+          class="w-8 h-8 rounded-lg"
+        />
+        <div>
+          <h4 class="text-sm font-medium group-hover:text-yellow-400 transition-colors">
+            Gentleman Programming
+          </h4>
+          <p class="text-[10px] text-muted-foreground">@Gentleman-Programming</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 text-[10px] text-muted-foreground">
+        <span class="flex items-center gap-1">
+          <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+          Contributor
+        </span>
+        <span>Open Source Tools</span>
       </div>
     </a>
 
