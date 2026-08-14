@@ -22,7 +22,7 @@
 <br/>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/+6_years-building_things_that_work-10b981?style=for-the-badge&labelColor=0d1117" alt="experience" />
+  <img src="https://img.shields.io/badge/+6_years_Available_for_projects-10b981?style=for-the-badge&labelColor=0d1117" alt="availability" />
 </p>
 
 <p align="center">
