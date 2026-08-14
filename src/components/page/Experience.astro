@@ -53,9 +53,13 @@ import { SvgComponentGlobal } from "./SvgIcons";
                   <span class="text-xs text-muted-foreground font-medium">
                     {data.duration}
                   </span>
-                  {data.isCurrent && (
+                  {data.isCurrent ? (
                     <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px] px-2 py-0">
                       Active
+                    </Badge>
+                  ) : (
+                    <Badge className="bg-white/[0.06] text-muted-foreground/70 border-white/[0.1] text-[10px] px-2 py-0">
+                      Past
                     </Badge>
                   )}
                 </div>
