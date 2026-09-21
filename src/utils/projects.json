@@ -1,12 +1,12 @@
 [
   {
-    "title": "Smart Finance",
-    "description": "AI-powered personal finance platform. Full-stack monorepo with mobile app, web dashboard, GraphQL API, and real-time analytics for smart money management.",
+    "title": "Mis Gastos – Mis Cuentas",
+    "description": "Personal accounting app in production with real users — iOS live on the App Store, Android launching soon. Mobile app, web dashboard, and GraphQL API in a TypeScript monorepo — built solo. Handles multi-account tracking, expense categorization, and financial reporting end-to-end. Repo private to protect revenue.",
     "url": [
       {
-        "icon": "GITHUB",
-        "url": "https://github.com/kevnnard/smart-finance",
-        "isSolid": true
+        "icon": "WEB",
+        "url": "https://apps.apple.com/co/app/mis-gastos-mis-cuentas/id6796797708",
+        "isSolid": false
       }
     ],
     "isWorkInProgress": false,
@@ -46,16 +46,11 @@
   },
   {
     "title": "Three Trackr",
-    "description": "Multi-carrier shipment tracking platform. Track orders from multiple carriers in one unified dashboard with real-time updates and notifications.",
+    "description": "Multi-carrier shipment tracking SaaS in production with active e-commerce clients. Unified dashboard aggregating tracking events across multiple carriers with real-time updates, customer notifications, and operational reporting.",
     "url": [
       {
-        "icon": "GITHUB",
-        "url": "https://github.com/kevnnard",
-        "isSolid": true
-      },
-      {
         "icon": "WEB",
-        "url": "https://www.threeelabs.com",
+        "url": "https://app.threeelabs.com",
         "isSolid": false
       }
     ],
@@ -132,11 +127,6 @@
     "description": "Cloud service for brands to upload media, pay for time-slots, and stream to a giant LED screen in Bogota. Managed from a simple web dashboard.",
     "url": [
       {
-        "icon": "GITHUB",
-        "url": "https://github.com/kevnnard",
-        "isSolid": true
-      },
-      {
         "icon": "WEB",
         "url": "https://lumiwall.co",
         "isSolid": false
@@ -178,11 +168,6 @@
     "description": "Enterprise inventory management system. RESTful API for orders, branches, sales analytics, and real-time inventory tracking with Socket.IO.",
     "url": [
       {
-        "icon": "GITHUB",
-        "url": "https://github.com/kevnnard",
-        "isSolid": true
-      },
-      {
         "icon": "WEB",
         "url": "https://grupo-r.co",
         "isSolid": false
@@ -216,6 +201,43 @@
       {
         "title": "Digital Ocean",
         "logo": "digitalocean"
+      }
+    ]
+  },
+  {
+    "title": "Smart PC",
+    "description": "Custom PC e-commerce store — customers configure builds, team assembles and ships. Built with Astro, Supabase, and Stripe for catalog, cart, checkout, and order management.",
+    "url": [
+      {
+        "icon": "WEB",
+        "url": "https://smart-pc-eta.vercel.app/",
+        "isSolid": false
+      }
+    ],
+    "isWorkInProgress": false,
+    "isOpenSource": false,
+    "isFeatured": false,
+    "status": "released",
+    "tags": [
+      {
+        "title": "Astro",
+        "logo": "astro"
+      },
+      {
+        "title": "Supabase",
+        "logo": "supabase"
+      },
+      {
+        "title": "Stripe",
+        "logo": "stripe"
+      },
+      {
+        "title": "TailwindCSS",
+        "logo": "tailwindcss"
+      },
+      {
+        "title": "TypeScript",
+        "logo": "typescript"
       }
     ]
   }

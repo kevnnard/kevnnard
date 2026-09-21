@@ -5,57 +5,57 @@ const skillCategories = [
   {
     title: "Languages",
     skills: [
-      { name: "TypeScript", logo: "typescript" },
-      { name: "JavaScript", logo: "javascript" },
-      { name: "Go", logo: "go" },
-      { name: "Python", logo: "python" },
-      { name: "Rust", logo: "rust" },
-      { name: "Swift", logo: "swift" },
+      { name: "TypeScript", logo: "typescript", level: "core" },
+      { name: "JavaScript", logo: "javascript", level: "core" },
+      { name: "Python", logo: "python", level: "familiar" },
+      { name: "Go", logo: "go", level: "familiar" },
+      { name: "Swift", logo: "swift", level: "familiar" },
     ],
   },
   {
     title: "Frontend",
     skills: [
-      { name: "React", logo: "react" },
-      { name: "Next.js", logo: "nextdotjs" },
-      { name: "Astro", logo: "astro" },
-      { name: "Tailwind", logo: "tailwindcss" },
-      { name: "Shadcn/ui", logo: "shadcnui" },
+      { name: "React", logo: "react", level: "core" },
+      { name: "Next.js", logo: "nextdotjs", level: "core" },
+      { name: "Astro", logo: "astro", level: "core" },
+      { name: "Tailwind", logo: "tailwindcss", level: "core" },
+      { name: "Shadcn/ui", logo: "shadcnui", level: "core" },
     ],
   },
   {
     title: "Backend",
     skills: [
-      { name: "Node.js", logo: "nodedotjs" },
-      { name: "NestJS", logo: "nestjs" },
-      { name: "GraphQL", logo: "graphql" },
-      { name: "Bun", logo: "bun" },
+      { name: "Node.js", logo: "nodedotjs", level: "core" },
+      { name: "NestJS", logo: "nestjs", level: "core" },
+      { name: "GraphQL", logo: "graphql", level: "core" },
+      { name: "Express", logo: "express", level: "core" },
+      { name: "Bun", logo: "bun", level: "familiar" },
     ],
   },
   {
     title: "Mobile",
     skills: [
-      { name: "React Native", logo: "react" },
-      { name: "Flutter", logo: "flutter" },
-      { name: "SwiftUI", logo: "swift" },
+      { name: "React Native", logo: "react", level: "core" },
+      { name: "SwiftUI", logo: "swift", level: "familiar" },
+      { name: "Flutter", logo: "flutter", level: "familiar" },
     ],
   },
   {
     title: "Database",
     skills: [
-      { name: "PostgreSQL", logo: "postgresql" },
-      { name: "MongoDB", logo: "mongodb" },
-      { name: "Redis", logo: "redis" },
-      { name: "Supabase", logo: "supabase" },
+      { name: "PostgreSQL", logo: "postgresql", level: "core" },
+      { name: "Supabase", logo: "supabase", level: "core" },
+      { name: "MongoDB", logo: "mongodb", level: "core" },
+      { name: "Redis", logo: "redis", level: "familiar" },
     ],
   },
   {
     title: "DevOps",
     skills: [
-      { name: "Docker", logo: "docker" },
-      { name: "Kubernetes", logo: "kubernetes" },
-      { name: "AWS", logo: "amazonwebservices" },
-      { name: "Vercel", logo: "vercel" },
+      { name: "Docker", logo: "docker", level: "core" },
+      { name: "AWS", logo: "amazonwebservices", level: "core" },
+      { name: "Vercel", logo: "vercel", level: "core" },
+      { name: "Kubernetes", logo: "kubernetes", level: "familiar" },
     ],
   },
 ];
@@ -80,14 +80,32 @@ const skillCategories = [
           </h3>
           <div class="flex flex-wrap gap-2">
             {category.skills.map((skill) => (
-              <div class="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/[0.04] transition-all hover:bg-emerald-500/10 group/skill">
+              <div
+                class:list={[
+                  "flex items-center gap-1.5 px-2 py-1 rounded-md transition-all group/skill",
+                  skill.level === "core"
+                    ? "bg-white/[0.06] border border-white/[0.06] hover:bg-emerald-500/10 hover:border-emerald-500/20"
+                    : "bg-white/[0.02] opacity-55 hover:opacity-90 hover:bg-white/[0.04]",
+                ]}
+                title={skill.level === "core" ? "Production-proficient" : "Working knowledge"}
+              >
                 <img
                   src={`https://cdn.simpleicons.org/${skill.logo}`}
                   alt={skill.name}
-                  class="w-3.5 h-3.5"
+                  class:list={[
+                    "h-3.5 w-3.5",
+                    skill.level !== "core" && "grayscale",
+                  ]}
                   loading="lazy"
                 />
-                <span class="text-[10px] text-muted-foreground group-hover/skill:text-emerald-400 transition-colors">
+                <span
+                  class:list={[
+                    "transition-colors",
+                    skill.level === "core"
+                      ? "text-[10px] text-foreground/80 group-hover/skill:text-emerald-400"
+                      : "text-[10px] text-muted-foreground/70 group-hover/skill:text-foreground/80",
+                  ]}
+                >
                   {skill.name}
                 </span>
               </div>
@@ -116,7 +134,7 @@ const skillCategories = [
         </a>
       </div>
       <img
-        src="https://github-readme-activity-graph.vercel.app/graph?username=kevnnard&theme=github-dark&hide_border=true&bg_color=transparent&color=6b7280&line=10b981&point=10b981&area=true&area_color=10b981"
+        src="https://github-readme-activity-graph-eta.vercel.app/graph?username=kevnnard&theme=github-dark&hide_border=true&bg_color=transparent&color=6b7280&line=10b981&point=10b981&area=true&area_color=10b981"
         alt="GitHub Activity Graph"
         class="w-full rounded-lg"
         loading="lazy"
@@ -131,7 +149,7 @@ const skillCategories = [
           Streak
         </h3>
         <img
-          src="https://github-readme-streak-stats.herokuapp.com/?user=kevnnard&theme=dark&hide_border=true&background=00000000&ring=10b981&fire=10b981&currStreakLabel=10b981&sideLabels=6b7280&currStreakNum=ffffff&sideNums=ffffff&dates=6b7280"
+          src="https://streak-stats.demolab.com/?user=kevnnard&theme=dark&hide_border=true&background=00000000&ring=10b981&fire=10b981&currStreakLabel=10b981&sideLabels=6b7280&currStreakNum=ffffff&sideNums=ffffff&dates=6b7280"
           alt="Streak"
           class="w-full"
           loading="lazy"
@@ -216,7 +234,7 @@ const skillCategories = [
       <div class="flex items-center gap-3 text-[10px] text-muted-foreground">
         <span class="flex items-center gap-1">
           <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-          CEO & CTO
+          Lead & Founder
         </span>
         <span>Software Agency</span>
       </div>

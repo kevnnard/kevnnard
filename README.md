@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://kevnnard.com">
-    <img src="https://readme-typing-svg.demolab.com?font=Cascadia+Code&weight=900&size=40&pause=1000&color=10b981&center=true&vCenter=true&random=false&width=600&height=80&lines=Hey%2C+I'm+Kevnnard+%F0%9F%91%8B;I'm+an+Indie+Hacker+%F0%9F%9A%80;I'm+an+AI+Engineer+%F0%9F%A4%96" alt="Typing SVG" />
+    <img src="https://readme-typing-svg.demolab.com?font=Cascadia+Code&weight=900&size=40&pause=1000&color=10b981&center=true&vCenter=true&random=false&width=600&height=80&lines=Hey%2C+I'm+Kevnnard+%F0%9F%91%8B%3BI'm+a+Full+Stack+Engineer+%F0%9F%9B%A0%EF%B8%8F%3BIndie+Hacker+%26+Founder+%F0%9F%9A%80" alt="Typing SVG" />
   </a>
 </p>
 
@@ -26,11 +26,7 @@
 </p>
 
 <p align="center">
-  <strong>Full Stack Engineer</strong> by mass, <em>AI Engineer by mass hallucination of my IDE</em>
-</p>
-
-<p align="center">
-  <sub>I craft web & mobile experiences with modern stacks. Currently obsessed with TypeScript, React, Node.js, and pretending my copilot understands what I want.</sub>
+  <sub>Full Stack Engineer with 6+ years shipping production web and mobile products. TypeScript end-to-end — Next.js, NestJS, React Native.</sub>
 </p>
 
 ---
@@ -42,10 +38,12 @@
 <td width="33%">
 
 <a href="https://github.com/Three-Labss">
-  <img src="https://img.shields.io/badge/Three_Labs_S.A.S.-CEO_&_CTO-10b981?style=flat-square&logo=github&logoColor=10b981&labelColor=0d1117" alt="Three Labs" />
+  <img src="https://img.shields.io/badge/Three_Labs_S.A.S.-Lead_&_Founder-10b981?style=flat-square&logo=github&logoColor=10b981&labelColor=0d1117" alt="Three Labs" />
 </a>
 
-Software Agency - Worldwide
+Software Agency (B2B) — Worldwide
+
+5-person team · apps in production with real clients
 
 </td>
 <td width="33%">
@@ -63,7 +61,9 @@ Open Source Tools
   <img src="https://img.shields.io/badge/OCMI_Workers_Comp-Past_Contributor-6b7280?style=flat-square&logo=github&logoColor=6b7280&labelColor=0d1117" alt="OCMI" />
 </a>
 
-Ended August 2026 - Miami, FL
+INC 5000 #4727 (2023) · 20k+ clients
+
+Ended August 2026 — Miami, FL
 
 </td>
 </tr>
@@ -77,25 +77,31 @@ Ended August 2026 - Miami, FL
 <tr>
 <td width="50%">
 
-**[Smart Finance](https://github.com/kevnnard/smart-finance)** `Released`
+**[Mis Gastos – Mis Cuentas](https://apps.apple.com/co/app/mis-gastos-mis-cuentas/id6796797708)** `Released`
 
-AI-powered personal finance platform. Full-stack monorepo with mobile app, web dashboard, and GraphQL API.
+Personal accounting app in production with real users — iOS live on the App Store, Android launching soon. Mobile app, web dashboard, and GraphQL API in a TypeScript monorepo — built solo. Repo private to protect revenue.
 
-![Next.js](https://img.shields.io/badge/Next.js_16-05122A?style=flat&logo=nextdotjs)
-![GraphQL](https://img.shields.io/badge/GraphQL-05122A?style=flat&logo=graphql&logoColor=E10098)
 ![Turborepo](https://img.shields.io/badge/Turborepo-05122A?style=flat&logo=turborepo)
+![Next.js 16](https://img.shields.io/badge/Next.js_16-05122A?style=flat&logo=nextdotjs)
 ![React Native](https://img.shields.io/badge/React_Native-05122A?style=flat&logo=react)
+![GraphQL](https://img.shields.io/badge/GraphQL-05122A?style=flat&logo=graphql&logoColor=E10098)
+![Supabase](https://img.shields.io/badge/Supabase-05122A?style=flat&logo=supabase)
+![TypeScript](https://img.shields.io/badge/TypeScript-05122A?style=flat&logo=typescript)
+![Biome](https://img.shields.io/badge/Biome-05122A?style=flat&logo=biome)
 
 </td>
 <td width="50%">
 
-**[Three Trackr](https://www.threeelabs.com)** `Released`
+**[Three Trackr](https://app.threeelabs.com)** `Released`
 
-Multi-carrier shipment tracking platform. Track orders from multiple carriers in one unified dashboard.
+Multi-carrier shipment tracking SaaS in production with active e-commerce clients. Unified dashboard aggregating tracking events across multiple carriers with real-time updates and notifications.
 
+![Turborepo](https://img.shields.io/badge/Turborepo-05122A?style=flat&logo=turborepo)
 ![Astro](https://img.shields.io/badge/Astro-05122A?style=flat&logo=astro)
 ![NestJS](https://img.shields.io/badge/NestJS-05122A?style=flat&logo=nestjs&logoColor=E0234E)
+![GraphQL](https://img.shields.io/badge/GraphQL-05122A?style=flat&logo=graphql&logoColor=E10098)
 ![Supabase](https://img.shields.io/badge/Supabase-05122A?style=flat&logo=supabase)
+![AWS EKS](https://img.shields.io/badge/AWS_EKS-05122A?style=flat&logo=amazoneks)
 
 </td>
 </tr>
@@ -111,10 +117,6 @@ Multi-carrier shipment tracking platform. Track orders from multiple carriers in
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-05122A?style=flat&logo=typescript)
 ![JavaScript](https://img.shields.io/badge/JavaScript-05122A?style=flat&logo=javascript)
-![Go](https://img.shields.io/badge/Go-05122A?style=flat&logo=go)
-![Python](https://img.shields.io/badge/Python-05122A?style=flat&logo=python)
-![Rust](https://img.shields.io/badge/Rust-05122A?style=flat&logo=rust)
-![Swift](https://img.shields.io/badge/Swift-05122A?style=flat&logo=swift)
 
 </details>
 
@@ -137,7 +139,7 @@ Multi-carrier shipment tracking platform. Track orders from multiple carriers in
 ![Node.js](https://img.shields.io/badge/Node.js-05122A?style=flat&logo=nodedotjs)
 ![NestJS](https://img.shields.io/badge/NestJS-05122A?style=flat&logo=nestjs&logoColor=E0234E)
 ![GraphQL](https://img.shields.io/badge/GraphQL-05122A?style=flat&logo=graphql&logoColor=E10098)
-![Bun](https://img.shields.io/badge/Bun-05122A?style=flat&logo=bun)
+![Express](https://img.shields.io/badge/Express-05122A?style=flat&logo=express)
 
 </details>
 
@@ -146,8 +148,6 @@ Multi-carrier shipment tracking platform. Track orders from multiple carriers in
 <br/>
 
 ![React Native](https://img.shields.io/badge/React_Native-05122A?style=flat&logo=react)
-![Flutter](https://img.shields.io/badge/Flutter-05122A?style=flat&logo=flutter&logoColor=02569B)
-![SwiftUI](https://img.shields.io/badge/SwiftUI-05122A?style=flat&logo=swift)
 
 </details>
 
@@ -157,7 +157,6 @@ Multi-carrier shipment tracking platform. Track orders from multiple carriers in
 
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-05122A?style=flat&logo=postgresql)
 ![MongoDB](https://img.shields.io/badge/MongoDB-05122A?style=flat&logo=mongodb)
-![Redis](https://img.shields.io/badge/Redis-05122A?style=flat&logo=redis)
 ![Supabase](https://img.shields.io/badge/Supabase-05122A?style=flat&logo=supabase)
 
 </details>
@@ -167,9 +166,23 @@ Multi-carrier shipment tracking platform. Track orders from multiple carriers in
 <br/>
 
 ![Docker](https://img.shields.io/badge/Docker-05122A?style=flat&logo=docker)
-![Kubernetes](https://img.shields.io/badge/Kubernetes-05122A?style=flat&logo=kubernetes)
 ![AWS](https://img.shields.io/badge/AWS-05122A?style=flat&logo=amazonwebservices)
 ![Vercel](https://img.shields.io/badge/Vercel-05122A?style=flat&logo=vercel)
+
+</details>
+
+<details>
+<summary><strong>Familiar</strong> · working knowledge</summary>
+<br/>
+
+![Python](https://img.shields.io/badge/Python-05122A?style=flat&logo=python)
+![Go](https://img.shields.io/badge/Go-05122A?style=flat&logo=go)
+![Swift](https://img.shields.io/badge/Swift-05122A?style=flat&logo=swift)
+![Bun](https://img.shields.io/badge/Bun-05122A?style=flat&logo=bun)
+![SwiftUI](https://img.shields.io/badge/SwiftUI-05122A?style=flat&logo=swift)
+![Flutter](https://img.shields.io/badge/Flutter-05122A?style=flat&logo=flutter)
+![Redis](https://img.shields.io/badge/Redis-05122A?style=flat&logo=redis)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-05122A?style=flat&logo=kubernetes)
 
 </details>
 
@@ -178,12 +191,12 @@ Multi-carrier shipment tracking platform. Track orders from multiple carriers in
 ### GitHub Activity
 
 <p align="center">
-  <img src="https://github-readme-activity-graph.vercel.app/graph?username=kevnnard&theme=github-dark&hide_border=true&bg_color=0d1117&color=6b7280&line=10b981&point=10b981&area=true&area_color=10b981" width="100%" alt="activity graph" />
+  <img src="https://github-readme-activity-graph-eta.vercel.app/graph?username=kevnnard&theme=github-dark&hide_border=true&bg_color=0d1117&color=6b7280&line=10b981&point=10b981&area=true&area_color=10b981" width="100%" alt="activity graph" />
 </p>
 
 <p align="center">
-  <img src="https://github-readme-stats.vercel.app/api?username=kevnnard&show_icons=true&hide_border=true&bg_color=0d1117&title_color=10b981&icon_color=10b981&text_color=6b7280" width="48%" alt="stats" />
-  <img src="https://github-readme-streak-stats.herokuapp.com?user=kevnnard&theme=dark&hide_border=true&background=0d1117&ring=10b981&fire=10b981&currStreakLabel=10b981&sideLabels=6b7280&currStreakNum=ffffff&sideNums=ffffff&dates=6b7280" width="48%" alt="streak" />
+  <img src="https://github-readme-stats-eta.vercel.app/api?username=kevnnard&show_icons=true&hide_border=true&bg_color=0d1117&title_color=10b981&icon_color=10b981&text_color=6b7280" width="48%" alt="stats" />
+  <img src="https://streak-stats.demolab.com/?user=kevnnard&theme=dark&hide_border=true&background=0d1117&ring=10b981&fire=10b981&currStreakLabel=10b981&sideLabels=6b7280&currStreakNum=ffffff&sideNums=ffffff&dates=6b7280" width="48%" alt="streak" />
 </p>
 
 ---
