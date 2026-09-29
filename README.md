@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://kevnnard.com">
-    <img src="https://readme-typing-svg.demolab.com?font=Cascadia+Code&weight=900&size=40&pause=1000&color=10b981&center=true&vCenter=true&random=false&width=600&height=80&lines=Hey%2C+I'm+Kevnnard+%F0%9F%91%8B%3BI'm+a+Full+Stack+Engineer+%F0%9F%9B%A0%EF%B8%8F%3BIndie+Hacker+%26+Founder+%F0%9F%9A%80" alt="Typing SVG" />
+    <img src="https://readme-typing-svg.demolab.com?font=Cascadia+Code&weight=900&size=40&pause=1000&color=10b981&center=true&vCenter=true&random=false&width=600&height=80&lines=Hey%2C+I'm+Kevnnard+%F0%9F%91%8B%3BI'm+a+Software+Engineer+%F0%9F%9B%A0%EF%B8%8F%3BIndie+Hacker+%26+Founder+%F0%9F%9A%80" alt="Typing SVG" />
   </a>
 </p>
 
@@ -26,7 +26,7 @@
 </p>
 
 <p align="center">
-  <sub>Full Stack Engineer with 6+ years shipping production web and mobile products. TypeScript end-to-end — Next.js, NestJS, React Native.</sub>
+  <sub>Software Engineer with 6+ years shipping production web and mobile products. Specialized in TypeScript full-stack — Next.js, NestJS, React Native.</sub>
 </p>
 
 ---
