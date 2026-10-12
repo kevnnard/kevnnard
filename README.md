@@ -211,4 +211,4 @@ Multi-carrier shipment tracking SaaS in production with active e-commerce client
   </a>
 </p>
 
-<!-- last-sync: 2026-10-11T12:19:28Z -->
+<!-- last-sync: 2026-10-12T12:28:16Z -->
