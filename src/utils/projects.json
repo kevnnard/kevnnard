@@ -86,6 +86,51 @@
     ]
   },
   {
+    "title": "dots",
+    "description": "Cross-platform workstation provisioner and dotfiles backup engine written in Go. One-line bootstrap on a blank macOS or Linux machine, interactive Bubble Tea TUI dashboard, modular profiles (core, AI agents, mobile, infra), and a secret-sanitizing backup pipeline that snapshots configs to Git. Distributed via Homebrew tap.",
+    "url": [
+      {
+        "icon": "GITHUB",
+        "url": "https://github.com/kevnnard/dots",
+        "isSolid": true
+      }
+    ],
+    "isWorkInProgress": false,
+    "isOpenSource": true,
+    "isFeatured": false,
+    "status": "released",
+    "tags": [
+      {
+        "title": "Go",
+        "logo": "go"
+      },
+      {
+        "title": "Bubble Tea",
+        "logo": "go"
+      },
+      {
+        "title": "Homebrew",
+        "logo": "homebrew"
+      },
+      {
+        "title": "macOS",
+        "logo": "apple"
+      },
+      {
+        "title": "Linux",
+        "logo": "linux"
+      },
+      {
+        "title": "Neovim",
+        "logo": "neovim"
+      },
+      {
+        "title": "Zsh",
+        "logo": "zsh"
+      }
+    ]
+  },
+  {
     "title": "Smart Window",
     "description": "macOS menu bar replacement inspired by Polybar and Waybar. Built for faster window switching with numbered tabs, keyboard shortcuts, and a cleaner tiling-WM-like workflow.",
     "url": [

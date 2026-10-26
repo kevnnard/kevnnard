@@ -109,6 +109,40 @@ Multi-carrier shipment tracking SaaS in production with active e-commerce client
 
 ---
 
+### Open Source
+
+<table>
+<tr>
+<td width="50%">
+
+**[dots](https://github.com/kevnnard/dots)** `Released`
+
+Cross-platform workstation provisioner and dotfiles backup engine in Go. One-line bootstrap on a blank macOS or Linux machine, interactive TUI dashboard, modular profiles (core, AI agents, mobile, infra), and a secret-sanitizing backup pipeline that snapshots configs to Git. Available via Homebrew tap.
+
+![Go](https://img.shields.io/badge/Go-05122A?style=flat&logo=go)
+![Bubble Tea](https://img.shields.io/badge/Bubble_Tea-05122A?style=flat&logo=go)
+![Homebrew](https://img.shields.io/badge/Homebrew-05122A?style=flat&logo=homebrew)
+![macOS](https://img.shields.io/badge/macOS-05122A?style=flat&logo=apple)
+![Linux](https://img.shields.io/badge/Linux-05122A?style=flat&logo=linux)
+
+</td>
+<td width="50%">
+
+**[Smart Window](https://github.com/kevnnard/smart-window)** `Released`
+
+macOS menu bar replacement inspired by Polybar and Waybar. Faster window switching with numbered tabs, keyboard shortcuts, and a tiling-WM-like workflow.
+
+![Swift](https://img.shields.io/badge/Swift-05122A?style=flat&logo=swift)
+![SwiftUI](https://img.shields.io/badge/SwiftUI-05122A?style=flat&logo=swift)
+![macOS](https://img.shields.io/badge/macOS-05122A?style=flat&logo=apple)
+![Homebrew](https://img.shields.io/badge/Homebrew-05122A?style=flat&logo=homebrew)
+
+</td>
+</tr>
+</table>
+
+---
+
 ### Tech Stack
 
 <details open>
