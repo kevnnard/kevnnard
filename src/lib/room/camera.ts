@@ -89,3 +89,119 @@ export function focusView(
   ) as unknown as Vec3;
   return { position, target: screen.position };
 }
+
+/** Lowest the orbit camera may get above the ground, in world units. */
+export const MIN_EYE_HEIGHT = 1;
+const MIN_DISTANCE = 4;
+const MIN_POLAR = 0.2;
+const MAX_POLAR = 1.35;
+const MIN_FAR = 100;
+// Cameras stay on the open cutaway quadrant: from +z (azimuth 0) round to a
+// little past -x. sin(azimuth) <= 0 keeps every camera at or west of its target.
+const OVERVIEW_AZIMUTH = Math.atan2(
+  OVERVIEW_DIRECTION[0],
+  OVERVIEW_DIRECTION[2],
+);
+const AZIMUTH_RANGE = [OVERVIEW_AZIMUTH - Math.PI / 4 - 0.35, 0] as const;
+
+const center = (bounds: Bounds) =>
+  [0, 1, 2].map((i) => (bounds.min[i] + bounds.max[i]) / 2) as unknown as Vec3;
+const corners = (bounds: Bounds) =>
+  [0, 1, 2, 3, 4, 5, 6, 7].map((bits) =>
+    [0, 1, 2].map((i) => ((bits >> i) & 1 ? bounds.max[i] : bounds.min[i])),
+  );
+const dot = (a: readonly number[], b: readonly number[]) =>
+  a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+
+/**
+ * Closest camera along `direction` that keeps every corner of `bounds` inside
+ * the frustum, plus `margin`. Tighter than `overviewView` for wide, flat plots.
+ */
+export function fitView(
+  bounds: Bounds,
+  fovDegrees: number,
+  aspect: number,
+  direction: Vec3 = OVERVIEW_DIRECTION,
+  margin = 1.05,
+): CameraView {
+  const target = center(bounds);
+  const forward = direction.map((v) => -v);
+  const flat = Math.hypot(forward[0], forward[2]);
+  const right = [-forward[2] / flat, 0, forward[0] / flat];
+  const up = [
+    right[1] * forward[2] - right[2] * forward[1],
+    right[2] * forward[0] - right[0] * forward[2],
+    right[0] * forward[1] - right[1] * forward[0],
+  ];
+  const { vertical, horizontal } = fovs(fovDegrees, aspect);
+  const tanH = Math.tan(horizontal / 2);
+  const tanV = Math.tan(vertical / 2);
+  let distance = 0;
+  for (const corner of corners(bounds)) {
+    const offset = corner.map((v, i) => v - target[i]);
+    // Depth of the corner is distance + offset·forward; solve for distance.
+    distance = Math.max(
+      distance,
+      (Math.abs(dot(offset, right)) * margin) / tanH - dot(offset, forward),
+      (Math.abs(dot(offset, up)) * margin) / tanV - dot(offset, forward),
+    );
+  }
+  const position = target.map(
+    (v, i) => v + direction[i] * distance,
+  ) as unknown as Vec3;
+  return { position, target };
+}
+
+export interface OrbitLimits {
+  minDistance: number;
+  maxDistance: number;
+  minPolarAngle: number;
+  maxPolarAngle: number;
+  minAzimuthAngle: number;
+  maxAzimuthAngle: number;
+  /** Box the orbit target is clamped to while panning. */
+  boundary: Bounds;
+  /** Camera far plane that still reaches the whole scene at maxDistance. */
+  far: number;
+}
+
+/**
+ * User orbit limits for a finite plot. They only clamp user input: scripted
+ * `setLookAt` focus moves (PC/TV) are not limited by them.
+ */
+export function orbitLimits({
+  overview,
+  scene,
+  boundary,
+  groundY,
+}: {
+  overview: CameraView;
+  scene: Bounds;
+  boundary: Bounds;
+  groundY: number;
+}): OrbitLimits {
+  const distance = Math.hypot(
+    ...overview.position.map((v, i) => v - overview.target[i]),
+  );
+  // Lowest camera: lowest target at minDistance and maxPolar.
+  const lowest = (groundY + MIN_EYE_HEIGHT - boundary.min[1]) / MIN_DISTANCE;
+  const maxPolarAngle = Math.min(
+    MAX_POLAR,
+    Math.acos(Math.min(1, Math.max(-1, lowest))),
+  );
+  const maxDistance = distance * 1.2;
+  let reach = 0;
+  for (const a of corners(boundary))
+    for (const b of corners(scene))
+      reach = Math.max(reach, Math.hypot(...a.map((v, i) => v - b[i])));
+  return {
+    minDistance: MIN_DISTANCE,
+    maxDistance,
+    minPolarAngle: MIN_POLAR,
+    maxPolarAngle,
+    minAzimuthAngle: AZIMUTH_RANGE[0],
+    maxAzimuthAngle: AZIMUTH_RANGE[1],
+    boundary,
+    far: Math.max(MIN_FAR, Math.ceil(maxDistance + reach + 1)),
+  };
+}
