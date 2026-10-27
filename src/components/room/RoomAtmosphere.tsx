@@ -44,11 +44,13 @@ const ACCENTS: {
   { position: [2.5, 1.7, 0.5], color: "#90dfdc", intensity: 1.8, distance: 2 },
 ];
 
-// The sky moves with the camera, so these only need to sit inside `far`.
+// Sky, stars and moon draw first without writing depth, so a distant plot is
+// never hidden behind them; they only need to sit inside the camera `far`.
 const SKY_RADIUS = 40;
 const STAR_RADIUS = 35;
 const MOON_DISTANCE = 30;
 const STAR_COUNT = 220;
+const SHADOW_MAP = 1024;
 
 const setColor = (color: Color, [r, g, b]: RGB) =>
   color.setRGB(r, g, b, SRGBColorSpace);
@@ -107,16 +109,41 @@ function starGeometry() {
   return geometry;
 }
 
+/** Orthographic key-light shadow box around `center`. */
+export interface ShadowBox {
+  center: readonly [number, number, number];
+  halfSize: number;
+  /** Light distance from `center`; only the direction affects lighting. */
+  distance: number;
+  near: number;
+  far: number;
+}
+
+// The original room-only shadow box.
+const ROOM_SHADOW: ShadowBox = {
+  center: [0, 0, 0],
+  halfSize: 5,
+  distance: 9,
+  near: 0.5,
+  far: 20,
+};
+
 interface RoomAtmosphereProps {
   /** Target hour of the day; non-finite values fall back to the day preset. */
   hours: number;
   reducedMotion: boolean;
+  /** Keep stable (module-level) so the shadow camera is set up once. */
+  shadow?: ShadowBox;
 }
 
 // Sky, sun/moon key light, fill, indoor accents, reflections and exposure all
 // follow one `dayCycle` state. Time changes ease toward the new hour and only
 // request frames while moving; with reduced motion they jump.
-export function RoomAtmosphere({ hours, reducedMotion }: RoomAtmosphereProps) {
+export function RoomAtmosphere({
+  hours,
+  reducedMotion,
+  shadow = ROOM_SHADOW,
+}: RoomAtmosphereProps) {
   const { gl, scene, invalidate } = useThree();
   const target = wrapHours(Number.isFinite(hours) ? hours : PRESETS.day);
   const shown = useRef(target);
@@ -140,6 +167,7 @@ export function RoomAtmosphere({ hours, reducedMotion }: RoomAtmosphereProps) {
     }),
     [],
   );
+  const shadowCenter = useMemo(() => new Vector3(...shadow.center), [shadow]);
   const starPositions = useMemo(starGeometry, []);
   useEffect(() => () => starPositions.dispose(), [starPositions]);
 
@@ -180,7 +208,10 @@ export function RoomAtmosphere({ hours, reducedMotion }: RoomAtmosphereProps) {
       uniforms.glow.value = state.sun.glow;
 
       if (key.current) {
-        key.current.position.set(...state.key.position);
+        key.current.position
+          .set(...state.key.position)
+          .setLength(shadow.distance)
+          .add(shadowCenter);
         setColor(key.current.color, state.key.color);
         key.current.intensity = state.key.intensity;
       }
@@ -208,8 +239,17 @@ export function RoomAtmosphere({ hours, reducedMotion }: RoomAtmosphereProps) {
       scene.environmentIntensity = state.environment;
       gl.toneMappingExposure = state.exposure;
     },
-    [gl, scene, uniforms],
+    [gl, scene, uniforms, shadow, shadowCenter],
   );
+
+  // The light target is not in the scene graph, so update it by hand.
+  useLayoutEffect(() => {
+    const light = key.current;
+    if (!light) return;
+    light.target.position.copy(shadowCenter);
+    light.target.updateMatrixWorld();
+    light.shadow.camera.updateProjectionMatrix();
+  }, [shadowCenter]);
 
   useLayoutEffect(() => {
     apply(shown.current);
@@ -277,14 +317,15 @@ export function RoomAtmosphere({ hours, reducedMotion }: RoomAtmosphereProps) {
       <directionalLight
         ref={key}
         castShadow
-        shadow-mapSize={[1024, 1024]}
-        shadow-camera-left={-5}
-        shadow-camera-right={5}
-        shadow-camera-top={5}
-        shadow-camera-bottom={-5}
-        shadow-camera-near={0.5}
-        shadow-camera-far={20}
-        shadow-normalBias={0.035}
+        shadow-mapSize={[SHADOW_MAP, SHADOW_MAP]}
+        shadow-camera-left={-shadow.halfSize}
+        shadow-camera-right={shadow.halfSize}
+        shadow-camera-top={shadow.halfSize}
+        shadow-camera-bottom={-shadow.halfSize}
+        shadow-camera-near={shadow.near}
+        shadow-camera-far={shadow.far}
+        // About two shadow texels, never below the room-only bias.
+        shadow-normalBias={Math.max(0.035, (4 * shadow.halfSize) / SHADOW_MAP)}
         shadow-bias={-0.00015}
         shadow-radius={3}
       />

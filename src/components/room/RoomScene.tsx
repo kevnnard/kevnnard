@@ -6,6 +6,7 @@ import {
   type ReactNode,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -16,13 +17,15 @@ import {
   type Object3D,
   type PerspectiveCamera,
   type Texture,
+  Vector3,
 } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import {
   type Bounds,
   type CameraView,
+  fitView,
   focusView,
-  overviewView,
+  orbitLimits,
   SCREENS,
   type Screen,
 } from "@/lib/room/camera.ts";
@@ -31,6 +34,15 @@ import {
   featuredProjects,
   topStack,
 } from "@/lib/room/content.ts";
+import {
+  HOUSE_BOUNDS,
+  LEVELS,
+  SCENE_BOUNDS,
+  shadowFrustum,
+  TARGET_BOUNDS,
+  unionBounds,
+} from "@/lib/room/house-layout.ts";
+import { HouseDiorama } from "./HouseDiorama";
 import { RoomAtmosphere } from "./RoomAtmosphere";
 
 export type RoomView = "overview" | "pc" | "tv";
@@ -51,6 +63,7 @@ const pxScale = (worldWidth: number, pxWidth: number) =>
 const PC_PX = [560, 320] as const;
 const TV_PX = [660, 372] as const;
 const WALL_PX = 420;
+const SHADOW = shadowFrustum(HOUSE_BOUNDS);
 
 interface RoomProps {
   view: RoomView;
@@ -77,7 +90,11 @@ export default function RoomScene({ hours, ...props }: RoomSceneProps) {
       role="img"
     >
       <color attach="background" args={["#151923"]} />
-      <RoomAtmosphere hours={hours} reducedMotion={props.reducedMotion} />
+      <RoomAtmosphere
+        hours={hours}
+        reducedMotion={props.reducedMotion}
+        shadow={SHADOW}
+      />
       <Room {...props} />
     </Canvas>
   );
@@ -110,6 +127,23 @@ const Room = memo(function Room({
   const [bounds, setBounds] = useState<Bounds | null>(null);
   const camera = useThree((state) => state.camera) as PerspectiveCamera;
   const aspect = useThree((state) => state.size.width / state.size.height);
+  const invalidate = useThree((state) => state.invalidate);
+
+  // The overview frames the whole plot; the limits keep user orbiting above
+  // the ground and on the open side. They only clamp user input, not the
+  // setLookAt focus moves, so PC/TV framing is unchanged.
+  const rig = useMemo(() => {
+    if (!bounds) return null;
+    const scene = unionBounds([bounds, SCENE_BOUNDS]);
+    const overview = fitView(scene, camera.fov, aspect);
+    const limits = orbitLimits({
+      overview,
+      scene,
+      boundary: TARGET_BOUNDS,
+      groundY: LEVELS.terrainTop,
+    });
+    return { overview, limits };
+  }, [bounds, camera, aspect]);
 
   useEffect(
     () => () => {
@@ -133,13 +167,25 @@ const Room = memo(function Room({
     setBounds({ min: box.min.toArray(), max: box.max.toArray() });
   }, []);
 
+  useEffect(() => {
+    const controls = controlsRef.current;
+    if (!rig || !controls) return;
+    const { min, max } = rig.limits.boundary;
+    controls.setBoundary(
+      new Box3(new Vector3().fromArray(min), new Vector3().fromArray(max)),
+    );
+    camera.far = rig.limits.far;
+    camera.updateProjectionMatrix();
+    invalidate();
+  }, [rig, camera, invalidate]);
+
   const firstMove = useRef(true);
   useEffect(() => {
     const controls = controlsRef.current;
-    if (!bounds || !controls) return;
+    if (!rig || !controls) return;
     const target: CameraView =
       view === "overview"
-        ? overviewView(bounds, camera.fov, aspect)
+        ? rig.overview
         : focusView(SCREENS[view], camera.fov, aspect);
     const animate = !reducedMotion && !firstMove.current;
     const [x, y, z] = target.position;
@@ -149,7 +195,7 @@ const Room = memo(function Room({
       firstMove.current = false;
       onReady();
     }
-  }, [bounds, view, aspect, camera, reducedMotion, onReady]);
+  }, [rig, view, aspect, camera, reducedMotion, onReady]);
 
   return (
     <>
@@ -157,11 +203,18 @@ const Room = memo(function Room({
         ref={controlsRef}
         enabled={view === "overview"}
         smoothTime={reducedMotion ? 0 : 0.6}
-        minDistance={0.1}
-        maxDistance={40}
-        minPolarAngle={0.15}
-        maxPolarAngle={Math.PI / 2}
+        {...(rig
+          ? {
+              minDistance: rig.limits.minDistance,
+              maxDistance: rig.limits.maxDistance,
+              minPolarAngle: rig.limits.minPolarAngle,
+              maxPolarAngle: rig.limits.maxPolarAngle,
+              minAzimuthAngle: rig.limits.minAzimuthAngle,
+              maxAzimuthAngle: rig.limits.maxAzimuthAngle,
+            }
+          : {})}
       />
+      <HouseDiorama />
       <group ref={groupRef}>
         {gltfs.map((gltf, index) => (
           <primitive key={MODEL_URLS[index]} object={gltf.scene} />

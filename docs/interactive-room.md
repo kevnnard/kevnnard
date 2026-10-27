@@ -18,7 +18,8 @@ A browser-only 3D view of the original Blender room, linked from the static home
 | Day cycle | `src/lib/room/day-cycle.ts` | Pure 24-hour model: phases, sky colors, light positions/colors/intensities. |
 | Terminal UI | `src/components/room/Terminal.tsx` | Accessible input + log; used on the PC screen and as a mobile overlay. |
 | Terminal rules | `src/lib/room/terminal.ts` | Allowlisted commands, URL validation, session history. Never evaluates input. |
-| Camera math | `src/lib/room/camera.ts` | Overview framing from loaded bounds; focus framing for the PC and TV screens. |
+| Camera math | `src/lib/room/camera.ts` | Plot overview framing and orbit limits; focus framing for the PC and TV screens. |
+| House diorama | `src/components/room/HouseDiorama.tsx`, `src/lib/room/house-layout.ts` | Procedural cutaway house and finite plot around the room. See [house-diorama.md](house-diorama.md). |
 | Content | `src/lib/room/content.ts` | Reads `src/utils/projects.json` and `experience.json`, the same data as the homepage. |
 
 Models live in `public/models/room/{office,desk,chair,lounge}.glb` (meshopt + WebP). Each
@@ -42,7 +43,8 @@ a clickable link is also printed in case the popup is blocked.
 
 ## Sky and time of day
 
-- Drag the room to orbit (overview only). The mouse wheel over the room still zooms;
+- Drag the room to orbit (overview only). Orbit, zoom and pan stay above the ground and
+  on the house's open side; see [house-diorama.md](house-diorama.md#camera-limits). The mouse wheel over the room still zooms;
   the wheel **over the clock** changes the time instead and never reaches the room or page.
 - The time controller has a native range input (arrows, Home/End, PageUp/PageDown) and
   Day/Sunset/Night presets in every style; the Orbital clock adds a draggable dial (noon at
@@ -88,7 +90,7 @@ a clickable link is also printed in case the popup is blocked.
   `scene.environmentIntensity`. Exposure and environment intensity are restored on unmount.
 - No textures, HDRs, postprocessing or new dependencies. The GLB models are unchanged.
 - Not yet verified in a browser: colors/brightness per phase, low-sun shadow coverage
-  (shadow camera is ±5 units), and frame cost on mobile. Tune keyframes in `day-cycle.ts`
+  (the shadow camera now covers the house, about ±12.5 units), and frame cost on mobile. Tune keyframes in `day-cycle.ts`
   and lights in `RoomAtmosphere.tsx`.
 
 ## Tuning
@@ -100,7 +102,7 @@ checked in a browser after model changes.
 ## Tests
 
 ```bash
-pnpm test:room   # node --test tests/room/ (camera, terminal, day cycle, clock, controller style, static entry)
+pnpm test:room   # node --test tests/room/ (camera, house layout, terminal, day cycle, clock, controller style, static entry)
 # With pnpm dev running (development module/dependency and asset HTTP checks):
 node scripts/check-room-dev.mjs http://127.0.0.1:4321
 ```
