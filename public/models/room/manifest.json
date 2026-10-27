@@ -1,0 +1,31 @@
+{
+  "source": "https://github.com/kevnnard/FRONTEND_KEVNNARD",
+  "sourceCommit": "5adc922983db18cf0c69b1a28337da53f01546c0",
+  "optimizer": "@gltf-transform/cli@4.5.1",
+  "models": [
+    {
+      "file": "chair.glb",
+      "bytes": 10182328,
+      "sha256": "ab806f1ff6f0104fedab726f4b2cecabca70c5a3ea50eee2a018fdb148f9f494",
+      "vertices": 1113027
+    },
+    {
+      "file": "desk.glb",
+      "bytes": 3936916,
+      "sha256": "cc823c691a33e7836983d0feb72953621975158913bfdd58e8e7990ca29c863a",
+      "vertices": 1085220
+    },
+    {
+      "file": "lounge.glb",
+      "bytes": 3156876,
+      "sha256": "e8556c5f1879fa54642a75b11baec752948423c9a9a4ac15a41eaba0978e67d9",
+      "vertices": 205405
+    },
+    {
+      "file": "office.glb",
+      "bytes": 232448,
+      "sha256": "17f6d7f5521f56dfba8da6fc4faea9819e3db0404662c4f49b3cf8ce8e65510a",
+      "vertices": 1353
+    }
+  ]
+}
