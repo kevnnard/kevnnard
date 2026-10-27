@@ -1,0 +1,28 @@
+{
+  "title": "Day cycle controller",
+  "brief": "Time of day controller for the Kevnnard 3D room. Auto mode starts from the local PC time and advances one simulated minute per real second (60×, a full day in 24 minutes). Shows simulated time and PC time separately, Day/Sunset/Night presets, pause/resume, and a manual range; manual input pauses auto until resumed. Auto, manual and pause are proposed affordances.",
+  "feature": "odd/tasks/interactive-room.md",
+  "artboards": [
+    {
+      "file": "01-orbital-clock.html",
+      "title": "Orbital clock",
+      "tradeoff": "Large 24-hour dial makes day/night position instantly readable and drag feels physical; the side panel takes about 440px of width from the room, and fine minute control relies on the range below the dial.",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "02-timeline-dock.html",
+      "title": "Timeline dock",
+      "tradeoff": "Full-width 24-hour strip shows phases, the simulated playhead and the PC-time marker side by side, plus a countdown to the next phase; the dock permanently claims the bottom band of the viewport and reads more like a media player than part of the room.",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "03-compact-console.html",
+      "title": "Compact console",
+      "tradeoff": "Smallest footprint: a corner instrument that collapses to a one-line pill and leaves the room almost untouched, with offset and day progress for precise readers; the monospace density is less discoverable and less playful for first-time visitors.",
+      "width": 1440,
+      "height": 900
+    }
+  ]
+}

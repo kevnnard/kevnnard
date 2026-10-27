@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design system — kevnnard</title>
+<style>
+  :root {
+    --background: #09090b;
+    --foreground: #fafafa;
+    --primary: #fafafa;
+    --primary-foreground: #18181b;
+    --secondary: #27272a;
+    --muted: #27272a;
+    --muted-foreground: #a1a1aa;
+    --accent: #27272a;
+    --border: #27272a;
+    --input: #27272a;
+    --ring: #d4d4d8;
+    --destructive: #7f1d1d;
+    --emerald: #10b981;
+    --grid-line-strong: rgba(16, 185, 129, 0.1);
+    --grid-line-soft: rgba(16, 185, 129, 0.05);
+    --grid-line: rgba(16, 185, 129, 0.08);
+    --radius: 8px;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 12px;
+    --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; border-color: var(--border); }
+  body {
+    margin: 0;
+    width: 1440px;
+    min-height: 900px;
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 20px;
+    background-image:
+      linear-gradient(180deg, transparent 0%, var(--grid-line-strong) 50%, transparent 100%),
+      linear-gradient(180deg, transparent 0%, var(--grid-line-soft) 50%, transparent 100%),
+      linear-gradient(90deg, transparent 0%, var(--grid-line) 50%, transparent 100%);
+    background-size: 1px 100%, 1px 100%, 100% 1px;
+    background-position: 20% 0, 75% 0, 0 30%;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
+  header, main { padding: 0 64px; }
+  header { padding-top: 48px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
+  h1 { margin: 0 0 8px; font-size: 30px; line-height: 36px; font-weight: 600; }
+  h2 { margin: 48px 0 16px; font-size: 18px; line-height: 28px; font-weight: 600; }
+  h3 { margin: 0 0 8px; font-size: 14px; font-weight: 600; }
+  p, .muted { color: var(--muted-foreground); margin: 0; }
+  code { font-family: var(--font-mono); font-size: 12px; }
+  .grid { display: grid; gap: 16px; }
+  .swatches { grid-template-columns: repeat(6, 1fr); }
+  .swatch { border: 1px solid var(--border); border-radius: var(--radius-xl); overflow: hidden; }
+  .chip { height: 72px; border-bottom: 1px solid var(--border); }
+  .swatch div:last-child { padding: 8px 12px; font-size: 12px; line-height: 16px; }
+  .swatch strong { display: block; font-weight: 500; color: var(--foreground); }
+  .row { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
+  .type-row { display: grid; grid-template-columns: 220px 1fr; gap: 24px; align-items: baseline; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .space { background: rgba(16, 185, 129, 0.4); height: 16px; border-radius: var(--radius-sm); }
+  .radius-box { width: 96px; height: 64px; border: 1px solid var(--muted-foreground); }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 36px; padding: 0 16px; border-radius: var(--radius-md);
+    font: 500 14px/20px var(--font-sans); border: 1px solid transparent; cursor: pointer;
+    transition: background-color 150ms, box-shadow 150ms;
+  }
+  .btn:focus-visible { outline: none; border-color: var(--ring); box-shadow: 0 0 0 3px rgba(212, 212, 216, 0.5); }
+  .btn-default { background: var(--primary); color: var(--primary-foreground); }
+  .btn-default:hover { background: rgba(250, 250, 250, 0.9); }
+  .btn-secondary { background: var(--secondary); color: var(--foreground); }
+  .btn-secondary:hover { background: rgba(39, 39, 42, 0.8); }
+  .btn-outline { background: rgba(39, 39, 42, 0.3); color: var(--foreground); border-color: var(--input); }
+  .btn-outline:hover { background: rgba(39, 39, 42, 0.5); }
+  .btn-ghost { background: transparent; color: var(--foreground); }
+  .btn-ghost:hover { background: rgba(39, 39, 42, 0.5); }
+  .btn-sm { height: 32px; padding: 0 12px; gap: 6px; }
+  .btn-lg { height: 40px; padding: 0 24px; }
+  .btn:disabled { opacity: 0.5; pointer-events: none; }
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: var(--radius-md); border: 1px solid transparent; font-size: 12px; line-height: 16px; font-weight: 500; }
+  .badge-default { background: var(--primary); color: var(--primary-foreground); }
+  .badge-secondary { background: var(--secondary); color: var(--foreground); }
+  .badge-outline { border-color: var(--border); color: var(--foreground); }
+  .badge-success { background: var(--emerald); color: var(--primary-foreground); }
+  .card { border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 24px 0; display: flex; flex-direction: column; gap: 24px; background: var(--background); width: 380px; }
+  .card > * { padding: 0 24px; }
+  .card-title { font-weight: 600; line-height: 1; }
+  .sep { height: 1px; background: var(--border); }
+  .note { margin-top: 8px; font-size: 12px; line-height: 16px; }
+  footer { padding: 48px 64px; color: var(--muted-foreground); font-size: 12px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>kevnnard design system</h1>
+  <p>Dark theme tokens synced read-only from <code>src/styles/globals.css</code> and <code>src/components/ui/*</code>. Light theme values are listed in <code>design/system.md</code>.</p>
+</header>
+<main>
+  <section aria-labelledby="colors">
+    <h2 id="colors">Colors — <code>.dark</code></h2>
+    <div class="grid swatches">
+      <div class="swatch"><div class="chip" style="background:#09090b"></div><div><strong>background / card</strong><code>#09090b</code></div></div>
+      <div class="swatch"><div class="chip" style="background:#fafafa"></div><div><strong>foreground / primary</strong><code>#fafafa</code></div></div>
+      <div class="swatch"><div class="chip" style="background:#18181b"></div><div><strong>primary-foreground</strong><code>#18181b</code></div></div>
+      <div class="swatch"><div class="chip" style="background:#27272a"></div><div><strong>secondary / muted / accent / border / input</strong><code>#27272a</code></div></div>
+      <div class="swatch"><div class="chip" style="background:#a1a1aa"></div><div><strong>muted-foreground</strong><code>#a1a1aa</code></div></div>
+      <div class="swatch"><div class="chip" style="background:#d4d4d8"></div><div><strong>ring</strong><code>#d4d4d8</code></div></div>
+      <div class="swatch"><div class="chip" style="background:#7f1d1d"></div><div><strong>destructive</strong><code>#7f1d1d</code></div></div>
+      <div class="swatch"><div class="chip" style="background:#10b981"></div><div><strong>emerald grid channel</strong><code>rgb(16,185,129)</code></div></div>
+      <div class="swatch"><div class="chip" style="background:rgba(16,185,129,0.1)"></div><div><strong>--grid-line-strong</strong><code>0.1</code></div></div>
+      <div class="swatch"><div class="chip" style="background:rgba(16,185,129,0.08)"></div><div><strong>--grid-line</strong><code>0.08</code></div></div>
+      <div class="swatch"><div class="chip" style="background:rgba(16,185,129,0.05)"></div><div><strong>--grid-line-soft</strong><code>0.05</code></div></div>
+      <div class="swatch"><div class="chip" style="background:#121212"></div><div><strong>--color-darker</strong><code>#121212</code></div></div>
+      <div class="swatch"><div class="chip" style="background:#f8f8f8"></div><div><strong>--color-ligth</strong><code>#f8f8f8</code></div></div>
+      <div class="swatch"><div class="chip" style="background:#4b4b4b"></div><div><strong>--color-mindnight</strong><code>#4b4b4b</code></div></div>
+    </div>
+    <p class="note">Opacity steps found in sources: 0.05, 0.08, 0.1, 0.12, /20, /30, /40, /50, /80, /90.</p>
+  </section>
+
+  <section aria-labelledby="type">
+    <h2 id="type">Typography</h2>
+    <p class="note">No font family is declared in the sources. Stacks below are artboard fallbacks, not project tokens.</p>
+    <div class="type-row"><span class="muted">Sans fallback · 14/20 · 500</span><span style="font-weight:500">Time of day — Kevnnard room</span></div>
+    <div class="type-row"><span class="muted">text-xs · 12/16</span><span style="font-size:12px;line-height:16px">Drag the clock to change the time</span></div>
+    <div class="type-row"><span class="muted">font-semibold · 600 (card title)</span><span style="font-weight:600">PC terminal</span></div>
+    <div class="type-row"><span class="muted">Mono fallback · tabular-nums</span><span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums">17:30 · sunset</span></div>
+    <div class="type-row"><span class="muted">uppercase tracking-widest · emerald</span><span style="text-transform:uppercase;letter-spacing:0.1em;font-size:12px;color:#10b981">Time</span></div>
+  </section>
+
+  <section aria-labelledby="spacing">
+    <h2 id="spacing">Spacing (Tailwind default, 4px step)</h2>
+    <div class="grid" style="grid-template-columns:80px 1fr;max-width:600px;align-items:center">
+      <code>0.5 · 2</code><div class="space" style="width:2px"></div>
+      <code>1 · 4</code><div class="space" style="width:4px"></div>
+      <code>1.5 · 6</code><div class="space" style="width:6px"></div>
+      <code>2 · 8</code><div class="space" style="width:8px"></div>
+      <code>3 · 12</code><div class="space" style="width:12px"></div>
+      <code>4 · 16</code><div class="space" style="width:16px"></div>
+      <code>6 · 24</code><div class="space" style="width:24px"></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="radius">
+    <h2 id="radius">Radius</h2>
+    <div class="row">
+      <div><div class="radius-box" style="border-radius:4px"></div><p class="note">sm · 4px</p></div>
+      <div><div class="radius-box" style="border-radius:6px"></div><p class="note">md · 6px</p></div>
+      <div><div class="radius-box" style="border-radius:8px"></div><p class="note">lg · 8px (--radius)</p></div>
+      <div><div class="radius-box" style="border-radius:12px"></div><p class="note">xl · 12px</p></div>
+    </div>
+    <h2>Shadows</h2>
+    <p>shadow-xs, shadow-sm and shadow-lg are named in components with Tailwind default values; not declared in source and not used by artboards.</p>
+  </section>
+
+  <section aria-labelledby="components">
+    <h2 id="components">Components</h2>
+    <h3>Button — <code>src/components/ui/button.tsx</code></h3>
+    <div class="row">
+      <button class="btn btn-default" type="button">Default</button>
+      <button class="btn btn-secondary" type="button">Secondary</button>
+      <button class="btn btn-outline" type="button">Outline</button>
+      <button class="btn btn-ghost" type="button">Ghost</button>
+      <button class="btn btn-default btn-sm" type="button">Small</button>
+      <button class="btn btn-default btn-lg" type="button">Large</button>
+      <button class="btn btn-default" type="button" disabled>Disabled</button>
+    </div>
+    <h3 style="margin-top:24px">Badge — <code>src/components/ui/badge.tsx</code></h3>
+    <div class="row">
+      <span class="badge badge-default">Default</span>
+      <span class="badge badge-secondary">Secondary</span>
+      <span class="badge badge-outline">Outline</span>
+      <span class="badge badge-success">Success</span>
+    </div>
+    <h3 style="margin-top:24px">Card and separator — <code>src/components/ui/card.tsx</code>, <code>separator.tsx</code></h3>
+    <article class="card">
+      <div><div class="card-title">PC terminal</div><p style="margin-top:6px">Browse projects and technologies from the desk in the room.</p></div>
+      <div class="sep" role="separator" style="padding:0"></div>
+      <div><span class="badge badge-outline">Room</span></div>
+    </article>
+  </section>
+</main>
+<footer>Sources: src/styles/globals.css, components.json, src/components/ui/button.tsx, badge.tsx, card.tsx, separator.tsx, tooltip.tsx, src/components/room/TimeDial.tsx, src/lib/room/day-cycle.ts.</footer>
+</body>
+</html>

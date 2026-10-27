@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timeline dock — Kevnnard room time controller</title>
+<style>
+  /* Tokens: design/system.md (dark theme, src/styles/globals.css). */
+  :root {
+    --background: #09090b;
+    --foreground: #fafafa;
+    --primary: #fafafa;
+    --primary-foreground: #18181b;
+    --secondary: #27272a;
+    --muted-foreground: #a1a1aa;
+    --border: #27272a;
+    --ring: #d4d4d8;
+    --emerald: #10b981;
+    --emerald-20: rgba(16, 185, 129, 0.2);
+    --emerald-40: rgba(16, 185, 129, 0.4);
+    --grid-line-strong: rgba(16, 185, 129, 0.1);
+    --grid-line-soft: rgba(16, 185, 129, 0.05);
+    --grid-line: rgba(16, 185, 129, 0.08);
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-xl: 12px;
+    --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--background);
+    color: var(--foreground);
+    font: 14px/20px var(--font-sans);
+    background-image:
+      linear-gradient(180deg, transparent 0%, var(--grid-line-strong) 50%, transparent 100%),
+      linear-gradient(180deg, transparent 0%, var(--grid-line-soft) 50%, transparent 100%),
+      linear-gradient(90deg, transparent 0%, var(--grid-line) 50%, transparent 100%);
+    background-size: 1px 100%, 1px 100%, 100% 1px;
+    background-position: 20% 0, 75% 0, 0 30%;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
+  .frame { height: 900px; display: grid; grid-template-rows: 64px 1fr; }
+  .stage { display: grid; grid-template-rows: 1fr auto; min-height: 0; }
+  .site-header { display: flex; align-items: center; justify-content: space-between; padding: 0 40px; border-bottom: 1px solid var(--border); }
+  .brand { font-weight: 600; }
+  .brand span { color: var(--muted-foreground); font-weight: 500; }
+  .hint { color: var(--muted-foreground); font-size: 12px; line-height: 16px; margin: 0; }
+  .room { margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 40px; min-height: 0; }
+  .room svg { width: 100%; max-width: 980px; height: auto; max-height: 560px; }
+
+  /* Dock */
+  .dock { border-top: 1px solid var(--border); background: var(--background); padding: 20px 40px 24px; display: grid; grid-template-columns: 240px 1fr 320px; gap: 40px; align-items: center; }
+  .dock h2 { margin: 0 0 4px; font-size: 12px; line-height: 16px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--emerald); font-weight: 500; }
+  .sim { font: 600 40px/44px var(--font-mono); font-variant-numeric: tabular-nums; }
+  .meta { display: flex; gap: 12px; align-items: baseline; font-size: 12px; line-height: 16px; color: var(--muted-foreground); }
+  .meta strong { color: var(--emerald); font-weight: 500; text-transform: capitalize; }
+  .pc { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--foreground); }
+  .timeline { min-width: 0; }
+  .timeline-head { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px; line-height: 16px; color: var(--muted-foreground); }
+  .timeline-head label { color: var(--foreground); font-weight: 500; }
+  .track { position: relative; height: 56px; border-radius: var(--radius-md); }
+  .track:focus-within { outline: 2px solid var(--ring); outline-offset: 4px; }
+  .bands { position: absolute; inset: 0; display: flex; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border); }
+  .band { height: 100%; display: flex; align-items: flex-end; padding: 0 6px 6px; font-size: 12px; line-height: 16px; color: var(--muted-foreground); white-space: nowrap; overflow: hidden; }
+  .band.night { background: var(--secondary); }
+  .band.dawn, .band.sunset { background: var(--emerald-20); color: var(--foreground); }
+  .band.day { background: var(--emerald-40); color: var(--foreground); }
+  .marker { position: absolute; top: -6px; bottom: -6px; width: 0; pointer-events: none; }
+  .marker::before { content: ""; position: absolute; top: 0; bottom: 0; left: -1px; width: 2px; background: var(--foreground); }
+  .marker.pc-marker::before { width: 0; left: 0; border-left: 2px dashed var(--muted-foreground); background: none; }
+  .marker span { position: absolute; top: -22px; transform: translateX(-50%); font: 500 12px/16px var(--font-mono); font-variant-numeric: tabular-nums; padding: 0 4px; border-radius: var(--radius-sm); background: var(--primary); color: var(--primary-foreground); white-space: nowrap; }
+  .marker.pc-marker span { top: auto; bottom: -22px; background: var(--secondary); color: var(--foreground); }
+  .track input[type="range"] { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: ew-resize; }
+  .ticks { display: flex; justify-content: space-between; margin-top: 26px; font: 12px/16px var(--font-mono); color: var(--muted-foreground); }
+  .transport { display: flex; flex-direction: column; gap: 10px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 36px; padding: 0 16px; border-radius: var(--radius-md);
+    font: 500 14px/20px var(--font-sans); border: 1px solid transparent; cursor: pointer;
+    transition: background-color 150ms, box-shadow 150ms;
+  }
+  .btn:focus-visible { outline: none; border-color: var(--ring); box-shadow: 0 0 0 3px rgba(212, 212, 216, 0.5); }
+  .btn-default { background: var(--primary); color: var(--primary-foreground); min-width: 104px; }
+  .btn-default:hover { background: rgba(250, 250, 250, 0.9); }
+  .btn-outline { background: rgba(39, 39, 42, 0.3); color: var(--foreground); border-color: var(--border); }
+  .btn-outline:hover { background: rgba(39, 39, 42, 0.5); }
+  .btn-sm { height: 32px; padding: 0 12px; }
+  .btn[aria-pressed="true"] { background: rgba(16, 185, 129, 0.3); border-color: var(--emerald); }
+  .mode { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 12px; line-height: 16px; font-weight: 500; }
+  .mode::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--muted-foreground); }
+  .mode[data-mode="auto"]::before { background: var(--emerald); }
+  .status { margin: 0; font-size: 12px; line-height: 16px; color: var(--muted-foreground); }
+
+  /* Mobile behavior section */
+  .mobile { padding: 64px 40px; border-top: 1px solid var(--border); display: grid; grid-template-columns: 390px 1fr; gap: 48px; align-items: start; }
+  .mobile h2 { margin: 0 0 12px; font-size: 18px; line-height: 28px; font-weight: 600; }
+  .mobile p, .mobile li { color: var(--muted-foreground); }
+  .phone { width: 390px; height: 844px; margin: 0; border: 1px solid var(--border); border-radius: var(--radius-xl); overflow: hidden; display: grid; grid-template-rows: 56px 1fr auto; }
+  .phone-header { display: flex; align-items: center; padding: 0 16px; border-bottom: 1px solid var(--border); font-weight: 600; }
+  .phone-room { display: flex; align-items: center; padding: 16px; }
+  .phone-room svg { width: 100%; height: auto; }
+  .phone-dock { border-top: 1px solid var(--border); padding: 16px; display: grid; gap: 12px; }
+  .phone-dock .top { display: flex; justify-content: space-between; align-items: baseline; }
+  .phone-dock .mini { font: 600 28px/32px var(--font-mono); font-variant-numeric: tabular-nums; }
+  .phone-track { position: relative; height: 32px; }
+  .chip { display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 12px; }
+
+  @media (max-width: 960px) {
+    .frame { height: auto; min-height: 100vh; }
+    .room { padding: 16px; }
+    .hint { display: none; }
+    .dock { position: sticky; bottom: 0; grid-template-columns: 1fr; gap: 16px; padding: 16px; }
+    .sim { font-size: 28px; line-height: 32px; }
+    .band { font-size: 0; }
+    .mobile { grid-template-columns: 1fr; padding: 32px 16px; }
+    .phone { width: 100%; max-width: 390px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="frame">
+  <header class="site-header">
+    <div class="brand">kevnnard <span>/ room</span></div>
+    <p class="hint">Drag the room to orbit · Select the PC to open the terminal · Select the TV for projects</p>
+  </header>
+  <main class="stage">
+    <figure class="room" aria-labelledby="room-caption">
+      <svg viewBox="0 0 800 460" role="img" aria-label="Simplified outline of Kevnnard's room with a window, a TV on the wall and a desk with the PC terminal. Window light follows the simulated time.">
+        <g fill="none" stroke="#27272a" stroke-width="1.5">
+          <rect x="120" y="30" width="560" height="340"/>
+          <path d="M120 370 L40 450 M680 370 L760 450 M40 450 H760"/>
+        </g>
+        <clipPath id="win-clip"><rect x="170" y="80" width="160" height="130"/></clipPath>
+        <rect class="win-light" x="170" y="80" width="160" height="130" fill="#fafafa" fill-opacity="0.05"/>
+        <g clip-path="url(#win-clip)"><circle class="sky-body" cx="250" cy="170" r="12" fill="#fafafa"/></g>
+        <g fill="none" stroke="#a1a1aa" stroke-width="1.5" stroke-linejoin="round">
+          <rect x="170" y="80" width="160" height="130"/>
+          <path d="M250 80 V210 M170 145 H330"/>
+          <rect x="400" y="90" width="210" height="120" rx="4"/>
+          <path d="M490 210 V226 M465 226 H535"/>
+          <path d="M370 290 H650 M385 290 V370 M635 290 V370"/>
+          <rect x="455" y="220" width="110" height="64" rx="3"/>
+          <path d="M510 284 V290"/>
+          <path d="M300 270 V342 M300 342 H350 M300 310 H350 V370 M300 342 V370"/>
+          <path d="M150 270 H230 M150 270 V370 M230 270 V370 M150 320 H230"/>
+        </g>
+        <rect x="456" y="221" width="108" height="62" rx="2" fill="#10b981" fill-opacity="0.1"/>
+        <text x="470" y="246" fill="#10b981" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">&gt;_ projects</text>
+        <g fill="#a1a1aa" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" text-anchor="middle">
+          <text x="505" y="74">TV</text>
+          <text x="510" y="390">PC terminal</text>
+          <text x="250" y="66">Window</text>
+        </g>
+        <rect class="room-dim" x="40" y="30" width="720" height="420" fill="#09090b" fill-opacity="0.05" pointer-events="none"/>
+      </svg>
+      <figcaption id="room-caption" class="hint">Outline stands in for the live 3D room. The real scene keeps its own sky and lighting.</figcaption>
+    </figure>
+
+    <section class="dock" aria-labelledby="dock-title">
+      <div>
+        <h2 id="dock-title">Time of day</h2>
+        <div class="sim" id="sim-time" aria-describedby="sim-desc">--:--</div>
+        <div class="meta" id="sim-desc"><span>Simulated</span><strong id="sim-phase">&nbsp;</strong></div>
+        <div class="meta" style="margin-top:6px"><span>Your PC time</span><span class="pc" id="pc-time">--:--:--</span></div>
+      </div>
+
+      <div class="timeline">
+        <div class="timeline-head">
+          <label for="manual">Scrub the day</label>
+          <span id="next-phase">&nbsp;</span>
+        </div>
+        <div class="track">
+          <div class="bands" aria-hidden="true">
+            <div class="band night" style="width:20.833%">Night</div>
+            <div class="band dawn" style="width:8.333%">Dawn</div>
+            <div class="band day" style="width:39.583%">Day</div>
+            <div class="band sunset" style="width:12.5%">Sunset</div>
+            <div class="band night" style="width:18.75%">Night</div>
+          </div>
+          <div class="marker pc-marker" id="pc-marker" aria-hidden="true"><span>PC</span></div>
+          <div class="marker" id="sim-marker" aria-hidden="true"><span id="sim-tag">--:--</span></div>
+          <input type="range" id="manual" min="0" max="1439" step="1" value="0">
+        </div>
+        <div class="ticks" aria-hidden="true"><span>00</span><span>03</span><span>06</span><span>09</span><span>12</span><span>15</span><span>18</span><span>21</span><span>24</span></div>
+      </div>
+
+      <div class="transport">
+        <div class="row">
+          <button type="button" class="btn btn-default" id="toggle">Pause</button>
+          <button type="button" class="btn btn-outline" id="sync">Sync to PC time</button>
+          <span class="mode" data-mode="paused" id="mode-badge">Paused</span>
+        </div>
+        <div class="row" role="group" aria-label="Time presets">
+          <button type="button" class="btn btn-outline btn-sm" data-preset="day" aria-pressed="false">Day 13:00</button>
+          <button type="button" class="btn btn-outline btn-sm" data-preset="sunset" aria-pressed="false">Sunset 17:30</button>
+          <button type="button" class="btn btn-outline btn-sm" data-preset="night" aria-pressed="false">Night 23:00</button>
+        </div>
+        <p class="status">60× · 1 s = 1 min · full day in 24 min</p>
+        <p class="status" id="status" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<section class="mobile" aria-labelledby="mobile-title">
+  <figure class="phone" role="img" aria-label="Mobile layout at 390 by 844: the room fills the top and a compact timeline dock with simulated time, PC time and pause sits at the bottom.">
+    <div class="phone-header">kevnnard / room</div>
+    <div class="phone-room">
+      <svg viewBox="0 0 800 460" aria-hidden="true">
+        <g fill="none" stroke="#a1a1aa" stroke-width="3">
+          <rect x="120" y="30" width="560" height="340" stroke="#27272a"/>
+          <rect x="170" y="80" width="160" height="130"/>
+          <rect x="400" y="90" width="210" height="120" rx="4"/>
+          <path d="M370 290 H650 M385 290 V370 M635 290 V370"/>
+          <rect x="455" y="220" width="110" height="64" rx="3"/>
+        </g>
+        <rect class="win-light" x="170" y="80" width="160" height="130" fill="#fafafa" fill-opacity="0.05"/>
+      </svg>
+    </div>
+    <div class="phone-dock">
+      <div class="top"><span class="mini mirror-sim">--:--</span><span class="hint">PC <span class="mirror-pc">--:--:--</span></span></div>
+      <div class="phone-track">
+        <div class="bands">
+          <div class="band night" style="width:20.833%"></div>
+          <div class="band dawn" style="width:8.333%"></div>
+          <div class="band day" style="width:39.583%"></div>
+          <div class="band sunset" style="width:12.5%"></div>
+          <div class="band night" style="width:18.75%"></div>
+        </div>
+        <div class="marker mirror-marker"></div>
+      </div>
+      <div class="row"><span class="chip mirror-toggle">Pause</span><span class="chip">Sync</span><span class="chip">Presets</span></div>
+    </div>
+  </figure>
+  <div>
+    <h2 id="mobile-title">Mobile behavior</h2>
+    <p>Under 960 px the dock stacks into one sticky column: time readouts, then the full-width timeline, then transport.</p>
+    <ul>
+      <li>Band labels hide; the phase name stays next to the simulated time.</li>
+      <li>The whole track is the native range, so touch drag and keyboard arrows share one control.</li>
+      <li>Scrubbing or a preset switches to Manual and pauses auto until you press Resume.</li>
+      <li>With reduced motion on, the dock starts paused at your PC time; after Resume the playhead steps once per second.</li>
+    </ul>
+  </div>
+</section>
+
+<script>
+(() => {
+  const DAY = 1440;
+  const PRESETS = { day: 13 * 60, sunset: 17.5 * 60, night: 23 * 60 };
+  // Phase starts in minutes, same bounds as src/lib/room/day-cycle.ts.
+  const STARTS = [[300, "Dawn"], [420, "Day"], [990, "Sunset"], [1170, "Night"]];
+  const wrap = (m) => ((m % DAY) + DAY) % DAY;
+  const pad = (n) => String(n).padStart(2, "0");
+  const fmt = (m) => { const t = Math.floor(wrap(m)); return pad(Math.floor(t / 60)) + ":" + pad(t % 60); };
+  const fmtLocal = (d) => pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+  const localMinutes = (d) => d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60 + d.getMilliseconds() / 60000;
+  const phaseAt = (m) => {
+    const h = wrap(m) / 60;
+    if (h >= 5 && h < 7) return "dawn";
+    if (h >= 7 && h < 16.5) return "day";
+    if (h >= 16.5 && h < 19.5) return "sunset";
+    return "night";
+  };
+  const LIGHT = { night: [0.05, 0.5], dawn: [0.2, 0.3], day: [0.5, 0.05], sunset: [0.3, 0.2] };
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  // One simulated minute per real second, from timestamps, never from tick counts.
+  const clock = {
+    running: false,
+    mode: "paused",
+    anchorVirtual: localMinutes(new Date()),
+    anchorReal: performance.now(),
+    now(t) { return this.running ? wrap(this.anchorVirtual + (t - this.anchorReal) / 1000) : this.anchorVirtual; },
+    resume(t) { this.anchorVirtual = this.now(t); this.anchorReal = t; this.running = true; this.mode = "auto"; },
+    pause(t) { this.anchorVirtual = this.now(t); this.running = false; this.mode = "paused"; },
+    set(m) { this.anchorVirtual = wrap(m); this.running = false; this.mode = "manual"; },
+    sync(t) { this.anchorVirtual = localMinutes(new Date()); this.anchorReal = t; this.running = true; this.mode = "auto"; },
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const ui = {
+    sim: $("sim-time"), tag: $("sim-tag"), phase: $("sim-phase"), pc: $("pc-time"), next: $("next-phase"),
+    simMarker: $("sim-marker"), pcMarker: $("pc-marker"),
+    badge: $("mode-badge"), toggle: $("toggle"), sync: $("sync"), range: $("manual"), status: $("status"),
+    presets: document.querySelectorAll("[data-preset]"),
+    winLights: document.querySelectorAll(".win-light"), dim: document.querySelector(".room-dim"),
+    body: document.querySelector(".sky-body"),
+    mirrorSim: document.querySelector(".mirror-sim"), mirrorPc: document.querySelector(".mirror-pc"),
+    mirrorMarker: document.querySelector(".mirror-marker"), mirrorToggle: document.querySelector(".mirror-toggle"),
+  };
+
+  const STATUS = {
+    auto: "Auto: running from your PC time at 60×.",
+    paused: "Paused. Press Resume to continue from this time.",
+    manual: "Manual: auto is paused so it does not fight your scrub. Press Resume to continue from here.",
+    reduced: "Paused because reduced motion is on. Press Resume to run the 60× cycle.",
+  };
+  const MODE_LABEL = { auto: "Auto", paused: "Paused", manual: "Manual" };
+  let lastMode = "";
+  let reducedStart = false;
+  const setText = (el, text) => { if (el && el.textContent !== text) el.textContent = text; };
+  const pct = (m) => (wrap(m) / DAY) * 100 + "%";
+
+  function nextPhaseText(m) {
+    let best = null;
+    for (const [start, name] of STARTS) {
+      const dist = wrap(start - m) || DAY;
+      if (!best || dist < best[0]) best = [dist, name];
+    }
+    const [dist, name] = best;
+    if (!clock.running) return `${name} starts at ${fmt(m + dist)}`;
+    // Simulated minutes ahead equal real seconds ahead at 60×.
+    const secs = Math.ceil(dist);
+    return `${name} in ${Math.floor(secs / 60)} min ${pad(secs % 60)} s real time`;
+  }
+
+  function render(t) {
+    const m = clock.now(t);
+    const phase = phaseAt(m);
+    const time = fmt(m);
+    setText(ui.sim, time); setText(ui.tag, time); setText(ui.mirrorSim, time);
+    setText(ui.phase, phase);
+    const now = new Date();
+    const pc = fmtLocal(now);
+    setText(ui.pc, pc); setText(ui.mirrorPc, pc);
+    setText(ui.next, nextPhaseText(m));
+    ui.simMarker.style.left = pct(m);
+    ui.mirrorMarker.style.left = pct(m);
+    ui.pcMarker.style.left = pct(localMinutes(now));
+    if (document.activeElement !== ui.range) ui.range.value = String(Math.floor(m));
+    ui.range.setAttribute("aria-valuetext", `${time}, ${phase}`);
+    const [win, dim] = LIGHT[phase];
+    ui.winLights.forEach((el) => el.setAttribute("fill-opacity", win));
+    ui.dim.setAttribute("fill-opacity", dim);
+    const h = m / 60;
+    const arcPos = h >= 6 && h < 18 ? (h - 6) / 12 : (wrap(m - 18 * 60) / 60) / 12;
+    ui.body.setAttribute("cx", 180 + arcPos * 140);
+    ui.body.setAttribute("cy", 220 - Math.sin(arcPos * Math.PI) * 110);
+    ui.body.setAttribute("fill-opacity", h >= 6 && h < 18 ? 0.9 : 0.5);
+    ui.presets.forEach((b) => b.setAttribute("aria-pressed", String(phase === b.dataset.preset)));
+    if (clock.mode !== lastMode) {
+      lastMode = clock.mode;
+      ui.badge.dataset.mode = clock.mode;
+      setText(ui.badge, MODE_LABEL[clock.mode]);
+      const label = clock.running ? "Pause" : "Resume";
+      setText(ui.toggle, label); setText(ui.mirrorToggle, label);
+      setText(ui.status, clock.mode === "paused" && reducedStart ? STATUS.reduced : STATUS[clock.mode]);
+    }
+  }
+
+  function frame() { render(performance.now()); schedule(); }
+  function schedule() {
+    if (reduceMotion.matches) setTimeout(frame, 1000 - (Date.now() % 1000));
+    else requestAnimationFrame(frame);
+  }
+
+  ui.toggle.addEventListener("click", () => {
+    reducedStart = false;
+    const t = performance.now();
+    if (clock.running) clock.pause(t); else clock.resume(t);
+    render(t);
+  });
+  ui.sync.addEventListener("click", () => { reducedStart = false; clock.sync(performance.now()); render(performance.now()); });
+  ui.presets.forEach((b) => b.addEventListener("click", () => {
+    reducedStart = false; clock.set(PRESETS[b.dataset.preset]); render(performance.now());
+  }));
+  ui.range.addEventListener("input", () => {
+    reducedStart = false; clock.set(Number(ui.range.value)); render(performance.now());
+  });
+
+  if (reduceMotion.matches) reducedStart = true;
+  else clock.sync(performance.now());
+  frame();
+})();
+</script>
+</body>
+</html>

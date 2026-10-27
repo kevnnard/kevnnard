@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orbital clock — Kevnnard room time controller</title>
+<style>
+  /* Tokens: design/system.md (dark theme, src/styles/globals.css). */
+  :root {
+    --background: #09090b;
+    --foreground: #fafafa;
+    --primary: #fafafa;
+    --primary-foreground: #18181b;
+    --secondary: #27272a;
+    --muted-foreground: #a1a1aa;
+    --border: #27272a;
+    --ring: #d4d4d8;
+    --emerald: #10b981;
+    --emerald-20: rgba(16, 185, 129, 0.2);
+    --emerald-40: rgba(16, 185, 129, 0.4);
+    --grid-line-strong: rgba(16, 185, 129, 0.1);
+    --grid-line-soft: rgba(16, 185, 129, 0.05);
+    --grid-line: rgba(16, 185, 129, 0.08);
+    --radius-md: 6px;
+    --radius-xl: 12px;
+    --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--background);
+    color: var(--foreground);
+    font: 14px/20px var(--font-sans);
+    background-image:
+      linear-gradient(180deg, transparent 0%, var(--grid-line-strong) 50%, transparent 100%),
+      linear-gradient(180deg, transparent 0%, var(--grid-line-soft) 50%, transparent 100%),
+      linear-gradient(90deg, transparent 0%, var(--grid-line) 50%, transparent 100%);
+    background-size: 1px 100%, 1px 100%, 100% 1px;
+    background-position: 20% 0, 75% 0, 0 30%;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
+  .frame { height: 900px; display: grid; grid-template-rows: 64px 1fr; }
+  .site-header { display: flex; align-items: center; justify-content: space-between; padding: 0 40px; border-bottom: 1px solid var(--border); }
+  .brand { font-weight: 600; }
+  .brand span { color: var(--muted-foreground); font-weight: 500; }
+  .hint { color: var(--muted-foreground); font-size: 12px; line-height: 16px; margin: 0; }
+  .stage { display: grid; grid-template-columns: 1fr 440px; min-height: 0; }
+  .room { display: flex; flex-direction: column; justify-content: center; padding: 40px; min-width: 0; }
+  .room svg { width: 100%; height: auto; max-height: 640px; }
+  .room figcaption { margin-top: 8px; }
+
+  /* Controller */
+  .controller { border-left: 1px solid var(--border); padding: 32px 40px; display: flex; flex-direction: column; gap: 20px; justify-content: center; }
+  .controller h2 { margin: 0; font-size: 12px; line-height: 16px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--emerald); font-weight: 500; }
+  .heading-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .mode { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 12px; line-height: 16px; font-weight: 500; }
+  .mode::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--muted-foreground); }
+  .mode[data-mode="auto"]::before { background: var(--emerald); }
+  .dial-wrap { position: relative; width: 320px; height: 320px; align-self: center; }
+  .dial { width: 100%; height: 100%; touch-action: none; cursor: grab; user-select: none; }
+  .dial:active { cursor: grabbing; }
+  .dial-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; text-align: center; }
+  .sim-label { font-size: 12px; line-height: 16px; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.1em; }
+  .sim-time { font: 600 48px/52px var(--font-mono); font-variant-numeric: tabular-nums; }
+  .sim-phase { color: var(--emerald); font-weight: 500; text-transform: capitalize; }
+  .readouts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0; }
+  .readouts div { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 8px 12px; }
+  .readouts dt { font-size: 12px; line-height: 16px; color: var(--muted-foreground); }
+  .readouts dd { margin: 0; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 36px; padding: 0 16px; border-radius: var(--radius-md);
+    font: 500 14px/20px var(--font-sans); border: 1px solid transparent; cursor: pointer;
+    transition: background-color 150ms, box-shadow 150ms;
+  }
+  .btn:focus-visible { outline: none; border-color: var(--ring); box-shadow: 0 0 0 3px rgba(212, 212, 216, 0.5); }
+  .btn-default { background: var(--primary); color: var(--primary-foreground); }
+  .btn-default:hover { background: rgba(250, 250, 250, 0.9); }
+  .btn-outline { background: rgba(39, 39, 42, 0.3); color: var(--foreground); border-color: var(--border); }
+  .btn-outline:hover { background: rgba(39, 39, 42, 0.5); }
+  .btn-sm { height: 32px; padding: 0 12px; }
+  .btn[aria-pressed="true"] { background: rgba(16, 185, 129, 0.3); border-color: var(--emerald); }
+  .field label { display: flex; justify-content: space-between; font-size: 12px; line-height: 16px; color: var(--muted-foreground); margin-bottom: 6px; }
+  input[type="range"] { width: 100%; accent-color: var(--emerald); margin: 0; }
+  input[type="range"]:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; border-radius: var(--radius-md); }
+  .rate { margin: 0; color: var(--muted-foreground); font-size: 12px; line-height: 16px; }
+  .status { margin: 0; font-size: 12px; line-height: 16px; color: var(--muted-foreground); min-height: 32px; }
+
+  /* Mobile behavior section */
+  .mobile { padding: 64px 40px; border-top: 1px solid var(--border); display: grid; grid-template-columns: 390px 1fr; gap: 48px; align-items: start; }
+  .mobile h2 { margin: 0 0 12px; font-size: 18px; line-height: 28px; font-weight: 600; }
+  .mobile p, .mobile li { color: var(--muted-foreground); }
+  .phone { width: 390px; height: 844px; border: 1px solid var(--border); border-radius: var(--radius-xl); overflow: hidden; display: grid; grid-template-rows: 56px 1fr auto; }
+  .phone-header { display: flex; align-items: center; padding: 0 16px; border-bottom: 1px solid var(--border); font-weight: 600; }
+  .phone-room { display: flex; align-items: center; padding: 16px; }
+  .phone-room svg { width: 100%; height: auto; }
+  .sheet { border-top: 1px solid var(--border); border-radius: var(--radius-xl) var(--radius-xl) 0 0; padding: 16px; display: grid; grid-template-columns: 120px 1fr; gap: 16px; align-items: center; }
+  .sheet svg { width: 120px; height: 120px; }
+  .sheet .mini { font-family: var(--font-mono); font-size: 28px; line-height: 32px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .chip { display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 12px; }
+
+  @media (max-width: 960px) {
+    .frame { height: auto; min-height: 100vh; }
+    .stage { grid-template-columns: 1fr; }
+    .room { padding: 16px; }
+    .controller { border-left: 0; border-top: 1px solid var(--border); padding: 20px 16px; position: sticky; bottom: 0; background: var(--background); border-radius: var(--radius-xl) var(--radius-xl) 0 0; }
+    .dial-wrap { width: 200px; height: 200px; }
+    .sim-time { font-size: 32px; line-height: 36px; }
+    .hint { display: none; }
+    .mobile { grid-template-columns: 1fr; padding: 32px 16px; }
+    .phone { width: 100%; max-width: 390px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="frame">
+  <header class="site-header">
+    <div class="brand">kevnnard <span>/ room</span></div>
+    <p class="hint">Drag the room to orbit · Select the PC to open the terminal</p>
+  </header>
+  <main class="stage">
+    <figure class="room" aria-labelledby="room-caption">
+      <svg viewBox="0 0 800 520" role="img" aria-label="Simplified outline of Kevnnard's room with a window, a TV on the wall and a desk with the PC terminal. Window light follows the simulated time.">
+        <g fill="none" stroke="#a1a1aa" stroke-width="1.5" stroke-linejoin="round">
+          <rect x="120" y="60" width="560" height="340" stroke="#27272a"/>
+          <path d="M120 400 L40 480 M680 400 L760 480 M40 480 H760" stroke="#27272a"/>
+        </g>
+        <clipPath id="win-clip"><rect x="170" y="110" width="160" height="130"/></clipPath>
+        <rect class="win-light" x="170" y="110" width="160" height="130" fill="#fafafa" fill-opacity="0.05"/>
+        <g clip-path="url(#win-clip)">
+          <circle class="sky-body" cx="250" cy="200" r="12" fill="#fafafa"/>
+        </g>
+        <g fill="none" stroke="#a1a1aa" stroke-width="1.5">
+          <rect x="170" y="110" width="160" height="130"/>
+          <path d="M250 110 V240 M170 175 H330"/>
+          <rect x="400" y="120" width="210" height="120" rx="4"/>
+          <path d="M490 240 V256 M465 256 H535"/>
+          <path d="M370 320 H650 M385 320 V400 M635 320 V400"/>
+          <rect x="455" y="250" width="110" height="64" rx="3"/>
+          <path d="M510 314 V320"/>
+          <path d="M300 300 V372 M300 372 H350 M300 340 H350 V400 M300 372 V400"/>
+          <path d="M150 300 H230 M150 300 V400 M230 300 V400 M150 350 H230"/>
+        </g>
+        <rect x="456" y="251" width="108" height="62" rx="2" fill="#10b981" fill-opacity="0.1"/>
+        <text x="470" y="276" fill="#10b981" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">&gt;_ help</text>
+        <g fill="#a1a1aa" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13">
+          <text x="505" y="104" text-anchor="middle">TV</text>
+          <text x="510" y="420" text-anchor="middle">PC terminal</text>
+          <text x="250" y="96" text-anchor="middle">Window</text>
+        </g>
+        <rect class="room-dim" x="40" y="60" width="720" height="420" fill="#09090b" fill-opacity="0.05" pointer-events="none"/>
+      </svg>
+      <figcaption id="room-caption" class="hint">Outline stands in for the live 3D room. The real scene keeps its own sky and lighting.</figcaption>
+    </figure>
+
+    <section class="controller" aria-labelledby="ctrl-title">
+      <div class="heading-row">
+        <h2 id="ctrl-title">Time of day</h2>
+        <span class="mode" data-mode="paused" id="mode-badge">Paused</span>
+      </div>
+
+      <div class="dial-wrap">
+        <svg class="dial" id="dial" viewBox="-160 -160 320 320" aria-hidden="true">
+          <circle r="140" fill="none" stroke="#27272a" stroke-width="14"/>
+          <path id="arc-dawn" fill="none" stroke="rgba(16,185,129,0.2)" stroke-width="14"/>
+          <path id="arc-day" fill="none" stroke="rgba(16,185,129,0.4)" stroke-width="14"/>
+          <path id="arc-sunset" fill="none" stroke="rgba(16,185,129,0.2)" stroke-width="14"/>
+          <g id="ticks" stroke="#a1a1aa"></g>
+          <g id="tick-labels" fill="#a1a1aa" font-size="12" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle"></g>
+          <line id="hand" x1="0" y1="0" x2="0" y2="-118" stroke="#fafafa" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+          <circle id="knob" cx="0" cy="-140" r="11" fill="#10b981" stroke="#09090b" stroke-width="3"/>
+        </svg>
+        <div class="dial-center">
+          <span class="sim-label">Simulated</span>
+          <span class="sim-time" id="sim-time">--:--</span>
+          <span class="sim-phase" id="sim-phase">&nbsp;</span>
+        </div>
+      </div>
+
+      <dl class="readouts">
+        <div><dt>Simulated time</dt><dd id="sim-time-2">--:--</dd></div>
+        <div><dt>Your PC time</dt><dd id="pc-time">--:--:--</dd></div>
+      </dl>
+      <p class="rate">60× speed · 1 real second = 1 simulated minute · a full day takes 24 minutes. Auto starts from your PC time.</p>
+
+      <div class="row">
+        <button type="button" class="btn btn-default" id="toggle">Pause</button>
+        <button type="button" class="btn btn-outline" id="sync">Sync to PC time</button>
+      </div>
+
+      <div class="row" role="group" aria-label="Time presets">
+        <button type="button" class="btn btn-outline btn-sm" data-preset="day" aria-pressed="false">Day</button>
+        <button type="button" class="btn btn-outline btn-sm" data-preset="sunset" aria-pressed="false">Sunset</button>
+        <button type="button" class="btn btn-outline btn-sm" data-preset="night" aria-pressed="false">Night</button>
+      </div>
+
+      <div class="field">
+        <label for="manual"><span>Set time manually</span><span>Drag the dial or use arrow keys</span></label>
+        <input type="range" id="manual" min="0" max="1439" step="1" value="0">
+      </div>
+
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+</div>
+
+<section class="mobile" aria-labelledby="mobile-title">
+  <figure class="phone" role="img" aria-label="Mobile layout at 390 by 844: the room fills the top and the clock sits in a bottom sheet with simulated time, PC time and a pause control.">
+    <div class="phone-header">kevnnard / room</div>
+    <div class="phone-room">
+      <svg viewBox="0 0 800 520" aria-hidden="true">
+        <g fill="none" stroke="#a1a1aa" stroke-width="3">
+          <rect x="120" y="60" width="560" height="340" stroke="#27272a"/>
+          <rect x="170" y="110" width="160" height="130"/>
+          <rect x="400" y="120" width="210" height="120" rx="4"/>
+          <path d="M370 320 H650 M385 320 V400 M635 320 V400"/>
+          <rect x="455" y="250" width="110" height="64" rx="3"/>
+        </g>
+        <rect class="win-light" x="170" y="110" width="160" height="130" fill="#fafafa" fill-opacity="0.05"/>
+      </svg>
+    </div>
+    <div class="sheet">
+      <svg viewBox="-160 -160 320 320" aria-hidden="true">
+        <circle r="140" fill="none" stroke="#27272a" stroke-width="18"/>
+        <circle class="mini-knob" cx="0" cy="-140" r="16" fill="#10b981"/>
+      </svg>
+      <div>
+        <div class="sim-label">Simulated</div>
+        <div class="mini mirror-sim">--:--</div>
+        <div class="hint">PC <span class="mirror-pc">--:--:--</span></div>
+        <div class="row" style="margin-top:8px"><span class="chip mirror-toggle">Pause</span><span class="chip">Presets</span></div>
+      </div>
+    </div>
+  </figure>
+  <div>
+    <h2 id="mobile-title">Mobile behavior</h2>
+    <p>Under 960 px the controller becomes a sticky bottom sheet so the room keeps the top of the screen.</p>
+    <ul>
+      <li>The dial shrinks to 200 px; the native range stays as the precise and keyboard path.</li>
+      <li>Presets fold behind one button to keep the sheet one row tall.</li>
+      <li>Dragging the dial or the range switches to Manual and pauses auto until you press Resume.</li>
+      <li>With reduced motion on, the clock starts paused at your PC time and only runs after you press Resume; values then update once per second, with no smooth sweep.</li>
+    </ul>
+  </div>
+</section>
+
+<script>
+(() => {
+  const DAY = 1440;
+  const PRESETS = { day: 13 * 60, sunset: 17.5 * 60, night: 23 * 60 };
+  const wrap = (m) => ((m % DAY) + DAY) % DAY;
+  const pad = (n) => String(n).padStart(2, "0");
+  const fmt = (m) => { const t = Math.floor(wrap(m)); return pad(Math.floor(t / 60)) + ":" + pad(t % 60); };
+  const fmtLocal = (d) => pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+  const localMinutes = (d) => d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60 + d.getMilliseconds() / 60000;
+  // Same phase bounds as src/lib/room/day-cycle.ts.
+  const phaseAt = (m) => {
+    const h = wrap(m) / 60;
+    if (h >= 5 && h < 7) return "dawn";
+    if (h >= 7 && h < 16.5) return "day";
+    if (h >= 16.5 && h < 19.5) return "sunset";
+    return "night";
+  };
+  const LIGHT = { night: [0.05, 0.5], dawn: [0.2, 0.3], day: [0.5, 0.05], sunset: [0.3, 0.2] };
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  // One simulated minute per real second, from timestamps, never from tick counts.
+  const clock = {
+    running: false,
+    mode: "paused",
+    anchorVirtual: localMinutes(new Date()),
+    anchorReal: performance.now(),
+    now(t) { return this.running ? wrap(this.anchorVirtual + (t - this.anchorReal) / 1000) : this.anchorVirtual; },
+    resume(t) { this.anchorVirtual = this.now(t); this.anchorReal = t; this.running = true; this.mode = "auto"; },
+    pause(t) { this.anchorVirtual = this.now(t); this.running = false; this.mode = "paused"; },
+    set(m) { this.anchorVirtual = wrap(m); this.running = false; this.mode = "manual"; },
+    sync(t) { this.anchorVirtual = localMinutes(new Date()); this.anchorReal = t; this.running = true; this.mode = "auto"; },
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const ui = {
+    sim: $("sim-time"), sim2: $("sim-time-2"), phase: $("sim-phase"), pc: $("pc-time"),
+    badge: $("mode-badge"), toggle: $("toggle"), sync: $("sync"), range: $("manual"), status: $("status"),
+    hand: $("hand"), knob: $("knob"), dial: $("dial"),
+    presets: document.querySelectorAll("[data-preset]"),
+    winLights: document.querySelectorAll(".win-light"), dim: document.querySelector(".room-dim"),
+    body: document.querySelector(".sky-body"), miniKnob: document.querySelector(".mini-knob"),
+    mirrorSim: document.querySelector(".mirror-sim"), mirrorPc: document.querySelector(".mirror-pc"),
+    mirrorToggle: document.querySelector(".mirror-toggle"),
+  };
+
+  // Noon at the top, midnight at the bottom, clockwise (matches TimeDial.tsx).
+  const angleOf = (m) => ((m / 60 - 12) / 24) * Math.PI * 2;
+  const point = (m, r) => [Math.sin(angleOf(m)) * r, -Math.cos(angleOf(m)) * r];
+  const arc = (from, to, r) => {
+    const [x1, y1] = point(from, r); const [x2, y2] = point(to, r);
+    const large = wrap(to - from) > DAY / 2 ? 1 : 0;
+    return `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}`;
+  };
+  $("arc-dawn").setAttribute("d", arc(5 * 60, 7 * 60, 140));
+  $("arc-day").setAttribute("d", arc(7 * 60, 16.5 * 60, 140));
+  $("arc-sunset").setAttribute("d", arc(16.5 * 60, 19.5 * 60, 140));
+  const svgNS = "http://www.w3.org/2000/svg";
+  for (let h = 0; h < 24; h++) {
+    const [x1, y1] = point(h * 60, 124); const [x2, y2] = point(h * 60, h % 6 ? 120 : 114);
+    const tick = document.createElementNS(svgNS, "line");
+    tick.setAttribute("x1", x1); tick.setAttribute("y1", y1); tick.setAttribute("x2", x2); tick.setAttribute("y2", y2);
+    $("ticks").appendChild(tick);
+    if (h % 6 === 0) {
+      const [lx, ly] = point(h * 60, 100);
+      const label = document.createElementNS(svgNS, "text");
+      label.setAttribute("x", lx); label.setAttribute("y", ly + 4); label.textContent = pad(h);
+      $("tick-labels").appendChild(label);
+    }
+  }
+
+  const STATUS = {
+    auto: "Auto: running from your PC time at 60×.",
+    paused: "Paused. Press Resume to continue from this time.",
+    manual: "Manual: auto is paused so it does not fight your change. Press Resume to continue from here.",
+    reduced: "Paused because reduced motion is on. Press Resume to run the 60× cycle.",
+  };
+  const MODE_LABEL = { auto: "Auto", paused: "Paused", manual: "Manual" };
+  let lastMode = "";
+  const setText = (el, text) => { if (el && el.textContent !== text) el.textContent = text; };
+
+  function render(t) {
+    const m = clock.now(t);
+    const phase = phaseAt(m);
+    const time = fmt(m);
+    setText(ui.sim, time); setText(ui.sim2, time); setText(ui.mirrorSim, time);
+    setText(ui.phase, phase);
+    const pc = fmtLocal(new Date());
+    setText(ui.pc, pc); setText(ui.mirrorPc, pc);
+    const [kx, ky] = point(m, 140); const [hx, hy] = point(m, 118);
+    ui.knob.setAttribute("cx", kx); ui.knob.setAttribute("cy", ky);
+    ui.hand.setAttribute("x2", hx); ui.hand.setAttribute("y2", hy);
+    ui.miniKnob.setAttribute("cx", kx); ui.miniKnob.setAttribute("cy", ky);
+    if (document.activeElement !== ui.range) ui.range.value = String(Math.floor(m));
+    ui.range.setAttribute("aria-valuetext", `${time}, ${phase}`);
+    const [win, dim] = LIGHT[phase];
+    ui.winLights.forEach((el) => el.setAttribute("fill-opacity", win));
+    ui.dim.setAttribute("fill-opacity", dim);
+    // Sun by day, moon by night, rising and setting inside the window.
+    const h = m / 60;
+    const arcPos = h >= 6 && h < 18 ? (h - 6) / 12 : (wrap(m - 18 * 60) / 60) / 12;
+    ui.body.setAttribute("cx", 180 + arcPos * 140);
+    ui.body.setAttribute("cy", 250 - Math.sin(arcPos * Math.PI) * 110);
+    ui.body.setAttribute("fill-opacity", h >= 6 && h < 18 ? 0.9 : 0.5);
+    ui.presets.forEach((b) => b.setAttribute("aria-pressed", String(phase === b.dataset.preset)));
+    if (clock.mode !== lastMode) {
+      lastMode = clock.mode;
+      ui.badge.dataset.mode = clock.mode;
+      setText(ui.badge, MODE_LABEL[clock.mode]);
+      const label = clock.running ? "Pause" : "Resume";
+      setText(ui.toggle, label); setText(ui.mirrorToggle, label);
+      setText(ui.status, clock.mode === "paused" && reducedStart ? STATUS.reduced : STATUS[clock.mode]);
+    }
+  }
+
+  let reducedStart = false;
+  function frame() { render(performance.now()); schedule(); }
+  function schedule() {
+    // Reduced motion: step once per second instead of a continuous sweep.
+    if (reduceMotion.matches) setTimeout(frame, 1000 - (Date.now() % 1000));
+    else requestAnimationFrame(frame);
+  }
+
+  ui.toggle.addEventListener("click", () => {
+    reducedStart = false;
+    const t = performance.now();
+    if (clock.running) clock.pause(t); else clock.resume(t);
+    render(t);
+  });
+  ui.sync.addEventListener("click", () => { reducedStart = false; clock.sync(performance.now()); render(performance.now()); });
+  ui.presets.forEach((b) => b.addEventListener("click", () => {
+    reducedStart = false; clock.set(PRESETS[b.dataset.preset]); render(performance.now());
+  }));
+  ui.range.addEventListener("input", () => {
+    reducedStart = false; clock.set(Number(ui.range.value)); render(performance.now());
+  });
+
+  const fromPointer = (event) => {
+    const box = ui.dial.getBoundingClientRect();
+    const x = event.clientX - (box.left + box.width / 2);
+    const y = event.clientY - (box.top + box.height / 2);
+    if (x === 0 && y === 0) return;
+    const turn = Math.atan2(x, -y) / (Math.PI * 2);
+    reducedStart = false;
+    clock.set(Math.round(12 * 60 + turn * DAY));
+    render(performance.now());
+  };
+  ui.dial.addEventListener("pointerdown", (e) => { ui.dial.setPointerCapture(e.pointerId); fromPointer(e); });
+  ui.dial.addEventListener("pointermove", (e) => { if (ui.dial.hasPointerCapture(e.pointerId)) fromPointer(e); });
+  ui.dial.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    reducedStart = false;
+    clock.set(clock.now(performance.now()) + Math.sign(e.deltaY) * 15);
+    render(performance.now());
+  }, { passive: false });
+
+  if (reduceMotion.matches) reducedStart = true;
+  else clock.sync(performance.now());
+  frame();
+})();
+</script>
+</body>
+</html>
