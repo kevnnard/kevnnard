@@ -1,0 +1,25 @@
+---
+import RoomApp from "@/components/room/RoomApp";
+import "@/styles/globals.css";
+---
+
+<html lang="en" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="https://github.com/kevnnard.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Kevnnard's interactive 3D room: explore projects, stack and experience." />
+    <title>®Kevnnard - 3D room</title>
+  </head>
+  <body class="h-dvh overflow-hidden bg-background text-foreground">
+    <main class="h-full">
+      <!-- Browser-only island: WebGL, models and three.js load only on this page. -->
+      <RoomApp client:only="react" />
+      <noscript>
+        <p class="p-6 text-center">
+          The 3D room needs JavaScript. <a class="text-emerald-400 underline" href="/">Back to the portfolio</a>
+        </p>
+      </noscript>
+    </main>
+  </body>
+</html>

@@ -11,7 +11,8 @@
     "astro": "astro",
     "lint": "biome lint --write ./src",
     "format": "biome format --write ./src ",
-    "check": "biome check --write ./src "
+    "check": "biome check --write ./src ",
+    "test:room": "node --test tests/room/"
   },
   "dependencies": {
     "@astrojs/check": "0.9.10",
