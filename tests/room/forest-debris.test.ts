@@ -5,12 +5,13 @@ import {
   DEBRIS_MODELS,
   type DebrisPiece,
   debrisFootprint,
+  footprintGround,
   forestDebris,
 } from "../../src/lib/room/forest-debris.ts";
 import { lowFogFactor } from "../../src/lib/room/forest-fog.ts";
 import {
   forestTrees,
-  mountainHeight,
+  terrainHeight,
   WALK_DISC,
   WORLD,
 } from "../../src/lib/room/forest-layout.ts";
@@ -70,7 +71,25 @@ it("scatters a seeded, bounded set of individual logs, stumps and rocks", () => 
     assert.ok(piece.scale > 0.2 && piece.scale <= 1.2);
     // Partly buried, never floating and never fully sunk.
     assert.ok(piece.burial >= 0.05 && piece.burial <= 0.5);
-    assert.equal(piece.y, WORLD.groundY + mountainHeight(piece.x, piece.z));
+    // Rests on the lowest rendered ground under its whole footprint: never
+    // floating on a slope, and the uphill side is buried by a bounded amount.
+    const height = DEBRIS_MODELS[piece.kind][piece.variant].size[1];
+    const reach = debrisFootprint(piece);
+    let high = -Infinity;
+    for (let i = 0; i < 24; i++)
+      for (const r of [0, reach / 2, reach]) {
+        const angle = (i / 24) * Math.PI * 2;
+        const ground =
+          WORLD.groundY +
+          terrainHeight(
+            piece.x + Math.cos(angle) * r,
+            piece.z + Math.sin(angle) * r,
+          );
+        assert.ok(piece.y <= ground + 0.02, `${piece.kind} floats`);
+        high = Math.max(high, ground);
+      }
+    assert.equal(piece.y, footprintGround(piece).low);
+    assert.ok(high - piece.y <= height * piece.scale * 0.4, "not swallowed");
   }
 });
 

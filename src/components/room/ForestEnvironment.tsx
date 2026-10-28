@@ -16,7 +16,6 @@ import {
   Matrix4,
   type Mesh,
   type Object3D,
-  PlaneGeometry,
   Quaternion,
   Vector3,
 } from "three";
@@ -24,22 +23,30 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { applyLowFog } from "@/lib/room/forest-fog.ts";
 import {
   forestTrees,
-  mountainHeight,
+  forestUnderstory,
+  TREE_MODELS,
+  treeBase,
+  treeBatches,
   WORLD,
 } from "@/lib/room/forest-layout.ts";
 import { treeFrame } from "@/lib/room/forest-model.ts";
+import { terrainGeometry } from "@/lib/room/ground-materials.ts";
 import { ForestDebris } from "./ForestDebris";
 import { GroundSurface } from "./GroundSurface";
 
-const MODELS = ["pine-near", "pine-far", "fir-near", "fir-far"] as const;
 // Invalidate useLoader/browser caches after restoring the reduced canopies.
-const URLS = MODELS.map((name) => `/models/forest/${name}.glb?v=canopy-2`);
-const TREES = forestTrees();
+const URLS = TREE_MODELS.map((name) => `/models/forest/${name}.glb?v=canopy-2`);
+// Grown trees and the understory saplings share the instanced batches.
+const TREES = (() => {
+  const trees = forestTrees();
+  return [...trees, ...forestUnderstory(trees)];
+})();
+const BATCHES = treeBatches(TREES);
 const loaderOptions = (loader: GLTFLoader) =>
   loader.setMeshoptDecoder(MeshoptDecoder);
 
 function mountainGeometry() {
-  const geometry = new PlaneGeometry(800, 800, 96, 96).rotateX(-Math.PI / 2);
+  const geometry = terrainGeometry();
   const positions = geometry.getAttribute("position");
   const colors: number[] = [];
   const low = new Color("#405746");
@@ -48,16 +55,13 @@ function mountainGeometry() {
   for (let i = 0; i < positions.count; i++) {
     const x = positions.getX(i);
     const z = positions.getZ(i);
-    const height = mountainHeight(x, z);
-    positions.setY(i, WORLD.groundY + height);
+    const height = positions.getY(i) - WORLD.groundY;
     const rock = Math.min(1, Math.max(0, (height - 12) / 45));
     color.copy(low).lerp(high, rock);
     color.multiplyScalar(0.94 + Math.sin(x * 0.29) * Math.cos(z * 0.23) * 0.06);
     colors.push(color.r, color.g, color.b);
   }
   geometry.setAttribute("color", new Float32BufferAttribute(colors, 3));
-  geometry.computeVertexNormals();
-  geometry.computeBoundingSphere();
   return geometry;
 }
 
@@ -114,11 +118,7 @@ function TreeInstances({
     const up = new Vector3(0, 1, 0);
     indices.forEach((index, instance) => {
       const tree = TREES[index];
-      position.set(
-        tree.x,
-        WORLD.groundY + mountainHeight(tree.x, tree.z),
-        tree.z,
-      );
+      position.set(tree.x, treeBase(tree), tree.z);
       scale.setScalar(tree.height);
       rotation.setFromAxisAngle(up, tree.yaw);
       matrix.compose(position, rotation, scale).multiply(part.local);
@@ -142,9 +142,7 @@ function ForestModels() {
     () =>
       gltfs.map((gltf, model) => ({
         parts: normalizedParts(gltf.scene),
-        indices: TREES.flatMap((tree, i) =>
-          `${tree.species}-${tree.lod}` === MODELS[model] ? [i] : [],
-        ),
+        indices: BATCHES[model],
       })),
     [gltfs],
   );
@@ -165,7 +163,7 @@ function ForestModels() {
       {batches.flatMap((batch, model) =>
         batch.parts.map((part, index) => (
           <TreeInstances
-            key={`${MODELS[model]}-${index}`}
+            key={`${TREE_MODELS[model]}-${index}`}
             part={part}
             indices={batch.indices}
           />

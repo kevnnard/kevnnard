@@ -3,8 +3,8 @@
 // tested without WebGL.
 import {
   forestTrees,
-  mountainHeight,
   seeded,
+  terrainHeight,
   WALK_DISC,
   WORLD,
 } from "./forest-layout.ts";
@@ -59,6 +59,34 @@ export function debrisFootprint(
   const [x, , z] = DEBRIS_MODELS[piece.kind][piece.variant].size;
   return (Math.hypot(x, z) / 2) * piece.scale;
 }
+
+/**
+ * Lowest and highest rendered terrain under a piece's whole footprint
+ * (center, 8 points halfway out and 16 on its ground radius), in world units.
+ */
+export function footprintGround(
+  piece: Pick<DebrisPiece, "kind" | "variant" | "scale" | "x" | "z">,
+) {
+  const reach = debrisFootprint(piece);
+  const heights = [terrainHeight(piece.x, piece.z)];
+  for (let i = 0; i < 16; i++)
+    for (const r of i % 2 ? [reach] : [reach / 2, reach]) {
+      const angle = (i / 16) * Math.PI * 2;
+      heights.push(
+        terrainHeight(
+          piece.x + Math.cos(angle) * r,
+          piece.z + Math.sin(angle) * r,
+        ),
+      );
+    }
+  return {
+    low: WORLD.groundY + Math.min(...heights),
+    high: WORLD.groundY + Math.max(...heights),
+  };
+}
+
+/** Steepest terrain relief under a piece, as a share of its scaled height. */
+const MAX_RELIEF = 0.35;
 
 /** World height of the piece's highest point once partly buried. */
 export function debrisTop(
@@ -141,14 +169,16 @@ const NUDGES: readonly XZ[] = [
   }),
 ];
 
-// Midground clumps beside the view and around the zone, each led by a log
-// or stump with rocks gathered round it.
+// Midground clumps beside the view, around the zone and on the foothill toe
+// behind it, each led by a log or stump with rocks gathered round it.
 const CLUMPS: readonly { depth: number; side: number; kinds: DebrisKind[] }[] =
   [
     { depth: 14, side: -6, kinds: ["log", "rock", "rock", "rock"] },
     { depth: 20, side: -14, kinds: ["stump", "rock", "rock", "rock"] },
     { depth: 1, side: 8, kinds: ["log", "rock", "rock", "rock"] },
     { depth: -5, side: -8, kinds: ["log", "rock", "rock"] },
+    { depth: 6, side: 12, kinds: ["log", "rock", "rock"] },
+    { depth: -9, side: 3, kinds: ["stump", "rock", "rock"] },
   ];
 
 /** Fixed seed: identical on every mount, clock tick and camera move. */
@@ -161,7 +191,11 @@ export function forestDebris(trees = forestTrees()): DebrisPiece[] {
   const fits = (piece: DebrisPiece) => {
     const reach = debrisFootprint(piece);
     const { x, z } = piece;
+    const { low, high } = footprintGround(piece);
+    const height = DEBRIS_MODELS[piece.kind][piece.variant].size[1];
     return (
+      // Only on locally even ground, so the uphill side is not swallowed.
+      high - low <= height * piece.scale * MAX_RELIEF &&
       Math.hypot(x - hx, z - hz) <= 40 &&
       Math.hypot(x - WALK_DISC.x, z - WALK_DISC.z) - reach >
         WALK_DISC.radius + 0.5 &&
@@ -178,11 +212,16 @@ export function forestDebris(trees = forestTrees()): DebrisPiece[] {
       )
     );
   };
-  const ground = (x: number, z: number) => WORLD.groundY + mountainHeight(x, z);
+  // Rest on the lowest terrain under the footprint: never floating on a
+  // slope, partly buried on its uphill side.
+  const ground = (piece: Omit<DebrisPiece, "y">): DebrisPiece => ({
+    ...piece,
+    y: footprintGround(piece).low,
+  });
   for (const { depth, side, ...rest } of FOREGROUND)
     for (const [dd, ds] of NUDGES) {
       const [x, z] = viewPoint(depth + dd, side + ds);
-      const piece = { ...rest, x, y: ground(x, z), z };
+      const piece = ground({ ...rest, x, z });
       if (fits(piece)) {
         pieces.push(piece);
         break;
@@ -193,21 +232,20 @@ export function forestDebris(trees = forestTrees()): DebrisPiece[] {
     const [cx, cz] = viewPoint(depth, side);
     for (const kind of kinds) {
       const variant = kind === "rock" ? rock++ % DEBRIS_MODELS.rock.length : 0;
-      for (let attempt = 0; attempt < 40; attempt++) {
+      for (let attempt = 0; attempt < 80; attempt++) {
         const a = random() * Math.PI * 2;
         const d = attempt === 0 && kind !== "rock" ? 0 : 2 + random() * 3.5;
         const x = cx + Math.cos(a) * d;
         const z = cz + Math.sin(a) * d;
-        const piece: DebrisPiece = {
+        const piece = ground({
           kind,
           variant,
           x,
-          y: ground(x, z),
           z,
           yaw: random() * Math.PI * 2,
           scale: between(RANGES[kind].scale),
           burial: between(RANGES[kind].burial),
-        };
+        });
         if (fits(piece)) {
           pieces.push(piece);
           break;

@@ -14,13 +14,19 @@ import {
   Triangle,
   Vector3,
 } from "three";
-import { mountainHeight, WORLD } from "../../src/lib/room/forest-layout.ts";
+import {
+  mountainHeight,
+  TERRAIN_AXIS,
+  terrainHeight,
+  WORLD,
+} from "../../src/lib/room/forest-layout.ts";
 import {
   GROUND_SIZE,
   groundBlend,
   groundMaterial,
   groundShade,
   lawnMaterial,
+  terrainGeometry,
   terrainLayers,
   worldUv,
 } from "../../src/lib/room/ground-materials.ts";
@@ -149,7 +155,8 @@ it("shades the lawn and the surrounding terrain grass identically at shared worl
     assert.equal(color.getY(i), color.getZ(i));
     assert.ok(Math.abs(color.getX(i) - groundShade(world.x, world.z)) < 1e-6);
   }
-  // The same terrain grid ForestEnvironment builds (flat in the clearing).
+  // A coarser grid than the rendered one (flat in the clearing): the finer
+  // rendered grid interpolates the shade more closely still.
   const source = new PlaneGeometry(800, 800, 96, 96).rotateX(-Math.PI / 2);
   const grass = terrainLayers(source).grass;
   const shade = grass.getAttribute("color");
@@ -275,14 +282,57 @@ it("builds terrain layers that own copies of the topology and carry neutral vari
     }
   }
   assert.ok(alphas.forest.every((alpha) => alpha === 1));
+  const normals = source.getAttribute("normal");
   for (let i = 0; i < positions.count; i++) {
     const height = positions.getY(i) - WORLD.groundY;
-    const blend = groundBlend(positions.getX(i), positions.getZ(i), height);
+    const blend = groundBlend(
+      positions.getX(i),
+      positions.getZ(i),
+      height,
+      1 - normals.getY(i),
+    );
     assert.ok(Math.abs(alphas.grass[i] - blend.grass) < 1e-6);
     assert.ok(Math.abs(alphas.rock[i] - blend.rock) < 1e-6);
   }
   assert.ok(alphas.rock.some((alpha) => alpha === 1));
   assert.ok(alphas.grass.some((alpha) => alpha === 1));
+});
+
+it("renders the near hills on a fine grid that scenery placement reads exactly", () => {
+  const terrain = terrainGeometry();
+  const position = terrain.getAttribute("position");
+  const index = terrain.getIndex();
+  assert.ok(index);
+  // Cells stay under 2 units out to the near crests.
+  for (let i = 1; i < TERRAIN_AXIS.length; i++)
+    if (Math.abs(TERRAIN_AXIS[i]) <= 60)
+      assert.ok(TERRAIN_AXIS[i] - TERRAIN_AXIS[i - 1] < 2);
+  // Inside real rendered triangles (centroids, not just vertices), the
+  // placement height equals the mesh surface.
+  let checked = 0;
+  for (let i = 0; i < index.count; i += 3 * 29) {
+    const [a, b, c] = [0, 1, 2].map((k) =>
+      new Vector3().fromBufferAttribute(position, index.getX(i + k)),
+    );
+    const center = a.add(b).add(c).divideScalar(3);
+    if (Math.hypot(center.x, center.z) > 120) continue;
+    checked++;
+    const placed = WORLD.groundY + terrainHeight(center.x, center.z);
+    assert.ok(Math.abs(placed - center.y) < 1e-3, `${center.toArray()}`);
+  }
+  assert.ok(checked > 1000);
+  // Points anywhere on the foothills, interpolated like the rasterizer, and
+  // the mesh follows the analytic relief closely.
+  for (let i = 0; i < 12; i++) {
+    const angle = i * 2.39;
+    const r = 24 + i * 2.1;
+    const x = Math.cos(angle) * r + 0.37;
+    const z = Math.sin(angle) * r - 0.21;
+    const mesh = sampleAt(terrain, (v) => position.getY(v), x, z);
+    assert.ok(Math.abs(mesh - WORLD.groundY - terrainHeight(x, z)) < 1e-3);
+    assert.ok(Math.abs(terrainHeight(x, z) - mountainHeight(x, z)) < 0.6);
+  }
+  terrain.dispose();
 });
 
 it("binds sRGB color with linear OpenGL normal and roughness data on owned clones", () => {

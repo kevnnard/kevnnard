@@ -8,12 +8,18 @@ import {
   type Matrix4,
   MeshStandardMaterial,
   NoColorSpace,
+  PlaneGeometry,
   RepeatWrapping,
   SRGBColorSpace,
   type Texture,
   Vector3,
 } from "three";
-import { WORLD } from "./forest-layout.ts";
+import {
+  TERRAIN,
+  TERRAIN_AXIS,
+  terrainVertexHeights,
+  WORLD,
+} from "./forest-layout.ts";
 
 export type GroundLayer = "grass" | "forest" | "rock";
 export type MapKind = "color" | "normal" | "roughness";
@@ -78,7 +84,7 @@ export function macroVariation(x: number, z: number) {
 
 /**
  * Neutral brightness in [0.84, 1] shared by the lawn and the terrain. Periods
- * stay above ~70 m so the 4-vertex lawn top and the 8 m terrain grid
+ * stay above ~70 m so the 4-vertex lawn top and even an 8 m terrain grid
  * interpolate it to within one 8-bit step along the plot edge.
  */
 export const groundShade = (x: number, z: number) =>
@@ -87,13 +93,48 @@ export const groundShade = (x: number, z: number) =>
 /**
  * Overlay alphas over an opaque forest-soil base: rock is composited over
  * grass over soil, so weights are rock, (1 - rock)·grass, (1 - rock)(1 - grass).
+ * `steep` is `1 - normal.y` of the surface: grass leaves the foothills as
+ * they climb, and rock shows on steep slopes as well as on high ground.
  */
-export function groundBlend(x: number, z: number, height: number) {
+export function groundBlend(x: number, z: number, height: number, steep = 0) {
   const variation = macroVariation(x, z);
   return {
-    grass: 1 - smooth(20, 46, Math.hypot(x, z) + variation * 7),
-    rock: smooth(14, 34, height + variation * 6),
+    grass:
+      (1 - smooth(20, 46, Math.hypot(x, z) + variation * 7)) *
+      (1 - smooth(0.5, 4, height)),
+    rock: Math.max(
+      smooth(14, 34, height + variation * 6),
+      smooth(0.14, 0.32, steep + variation * 0.04),
+    ),
   };
+}
+
+/**
+ * Rendered terrain: a `PlaneGeometry` laid flat whose vertices move onto the
+ * warped `TERRAIN_AXIS` grid at `terrainVertexHeights`. Its triangles are the
+ * ones `terrainHeight` interpolates, so scenery stands on the drawn surface.
+ */
+export function terrainGeometry() {
+  const geometry = new PlaneGeometry(
+    TERRAIN.size,
+    TERRAIN.size,
+    TERRAIN.segments,
+    TERRAIN.segments,
+  ).rotateX(-Math.PI / 2);
+  const position = geometry.getAttribute("position");
+  const heights = terrainVertexHeights();
+  const n = TERRAIN_AXIS.length;
+  // PlaneGeometry rows run along +z (after laying flat), columns along +x.
+  for (let i = 0; i < position.count; i++)
+    position.setXYZ(
+      i,
+      TERRAIN_AXIS[i % n],
+      WORLD.groundY + heights[i],
+      TERRAIN_AXIS[Math.floor(i / n)],
+    );
+  geometry.computeVertexNormals();
+  geometry.computeBoundingSphere();
+  return geometry;
 }
 
 /**
@@ -104,6 +145,7 @@ export function groundBlend(x: number, z: number, height: number) {
  */
 export function terrainLayers(source: BufferGeometry) {
   const position = source.getAttribute("position");
+  const normal = source.getAttribute("normal");
   const colors = {
     forest: [] as number[],
     grass: [] as number[],
@@ -112,7 +154,12 @@ export function terrainLayers(source: BufferGeometry) {
   for (let i = 0; i < position.count; i++) {
     const x = position.getX(i);
     const z = position.getZ(i);
-    const blend = groundBlend(x, z, position.getY(i) - WORLD.groundY);
+    const blend = groundBlend(
+      x,
+      z,
+      position.getY(i) - WORLD.groundY,
+      normal ? 1 - normal.getY(i) : 0,
+    );
     const shade = groundShade(x, z);
     colors.forest.push(shade, shade, shade, 1);
     colors.grass.push(shade, shade, shade, blend.grass);

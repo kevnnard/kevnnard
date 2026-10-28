@@ -12,7 +12,7 @@ import { lowFogFactor } from "../../src/lib/room/forest-fog.ts";
 import {
   type ForestTree,
   forestTrees,
-  mountainHeight,
+  treeBase,
   WORLD,
 } from "../../src/lib/room/forest-layout.ts";
 import { ROOM_BOUNDS } from "../../src/lib/room/house-layout.ts";
@@ -71,11 +71,12 @@ function roomRect(camera: PerspectiveCamera) {
   };
 }
 
-const ground = (x: number, z: number) => WORLD.groundY + mountainHeight(x, z);
+// Where the renderer stands each tree: the lowest rendered ground under it.
+const ground = (tree: ForestTree) => treeBase(tree);
 
 function treePoints(tree: ForestTree): P[] {
   const points: P[] = [];
-  const base = ground(tree.x, tree.z);
+  const base = ground(tree);
   for (let i = 0; i <= 10; i++) {
     const t = i / 10;
     const radius = (t < BRANCHES ? TRUNK : CANOPY) * tree.height;
@@ -144,10 +145,10 @@ describe("home composition", () => {
       const camera = homeCamera(aspect);
       const room = roomRect(camera);
       const framing = forestTrees().filter((tree) => {
-        const base = project(camera, [tree.x, ground(tree.x, tree.z), tree.z]);
+        const base = project(camera, [tree.x, ground(tree), tree.z]);
         const top = project(camera, [
           tree.x,
-          ground(tree.x, tree.z) + tree.height,
+          ground(tree) + tree.height,
           tree.z,
         ]);
         // In front, trunk base inside the frame width, and the whole tree
@@ -156,7 +157,7 @@ describe("home composition", () => {
           base.z < 1 &&
           Math.abs(base.x) <= 1.05 &&
           top.y - base.y >= 2.2 &&
-          distance(camera, [tree.x, ground(tree.x, tree.z), tree.z]) < 20
+          distance(camera, [tree.x, ground(tree), tree.z]) < 20
         );
       });
       assert.ok(
@@ -228,7 +229,7 @@ describe("home composition", () => {
     const camera = homeCamera(16 / 9).position;
     const eye = { x: camera.x, y: camera.y, z: camera.z };
     for (const tree of forestTrees()) {
-      const base = { x: tree.x, y: ground(tree.x, tree.z), z: tree.z };
+      const base = { x: tree.x, y: ground(tree), z: tree.z };
       const d = Math.hypot(tree.x - eye.x, tree.z - eye.z);
       if (d < 20) assert.ok(lowFogFactor(base, eye) < 0.05, "near contrast");
       if (d > 60 && d < 110)
