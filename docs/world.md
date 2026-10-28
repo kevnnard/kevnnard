@@ -91,6 +91,10 @@ textures, no simplification) and writes `public/world/credits.json`.
 
 Every shipped model must have a credits entry: `tests/world/credits.test.ts`
 fails otherwise (S4). The credits are shown in the "Credits" dialog.
+Original procedural work (flowers, clouds, house, setup, living area, front
+garden) is listed under `original`, written from `ORIGINAL` in
+`scripts/prepare-world.py`; `tests/world/garden.test.ts` checks that list
+still matches the shipped garden entry.
 
 | Pack | Author | License | Used for |
 | --- | --- | --- | --- |
@@ -281,6 +285,56 @@ seen from the chair, facing the wall).
 - Bruno's chair bake: his TV and desk-lamp channels take our TV and lamp
   colors and follow the same gate and levels; his PC channel keeps our RGB.
 - Repaints are on demand (settings or hour change); nothing animates.
+
+## Front garden entrance (T7)
+
+Original procedural work (credited as `garden` in `public/world/credits.json`,
+no downloads): two wall lanterns beside the front door, a stepping-stone
+path from the porch step into the front lawn, a decorative mailbox and a
+garden sign. Nothing is interactive.
+
+| Piece | File |
+| --- | --- |
+| Gate reuse, fixtures, parts, path, clearing, sign text fitting | `src/lib/world/garden.ts` |
+| Meshes, lantern lights, sign canvas texture | `src/components/world/Garden.tsx` |
+| Tests | `tests/world/garden.test.ts` |
+
+### Change the sign text
+
+Edit one string, `GARDEN_SIGN.text` in `src/lib/world/garden.ts` (default
+`"OPEN TO WORK"`). The sign measures it with the canvas, wraps by word and
+shrinks it (160 to 48 px on a 1024x464 texture, at most three lines);
+spaces collapse, words too wide break by character, and text over
+`GARDEN_SIGN.maxChars` (60) ends with an ellipsis. Ink `#2b211c` on cream
+`#fff4e3` (contrast over 7:1), system fonts only.
+
+### Layout, materials and light
+
+- Lanterns: bronze carriage lanterns on the main front wall at x -0.04 and
+  1.04 (0.54 m each side of the door middle), between the door and window
+  trim. Rounded backplate, arm and brace, square cage on a pan with corner
+  posts and bands, frosted glass, a stepped round hood and brass finial and
+  socket; a sphere bulb. Each has one non-shadow spot (warm `#ffc27a`,
+  0.85 cd, 3.2 m, decay 2, 57° half-angle, penumbra 0.7) aimed out and down
+  at the porch: unlike a point light, it never reaches the floor inside
+  through the unshadowed wall. On from 18:00 through 05:59 by
+  `nightLightsOn`, the night lights gate, with no panel settings; by day the
+  intensity is 0, the bulb is grey and the glass stops glowing. The lantern
+  bodies hide while the front wall is cut away; the lights stay on.
+- Path: six irregular beveled stones (14-point seeded outlines, smooth rings
+  from a tucked foot to a rounded shoulder and domed top, 5.3 cm tall, sunk
+  8 mm) on a gentle S from the porch step (x 0.5, z 1.7) to (2.46, 3.8),
+  where the island's older KayKit trail continues. The first stone lies
+  wholly on the pad, the others wholly on the grass. Stone material: rough,
+  pitted `noise` normal map, darker toward the ground.
+- Mailbox at (-0.05, 2.55), sign at (1.72, 2.48), both turned toward the
+  home camera. Mailbox: planted post with collar, support plate on two
+  braces, sage body (the door's color) with a round hood, arched door with
+  letter slot and brass pull, raised coral flag. Sign: two planted posts, a
+  framed board with brass screws and a coral cap; the text is a canvas
+  texture. Wood uses the house's plank texture once the maps load.
+- Clearing: `clearOfGarden` drops only nature items and flowers whose
+  footprint meets a stone or prop (today three old KayKit path stones).
 
 ## Third-party notices
 

@@ -30,6 +30,7 @@ import {
 } from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import Garden from "@/components/world/Garden";
 import House from "@/components/world/House";
 import Living from "@/components/world/Living";
 import NightLights from "@/components/world/NightLights";
@@ -48,6 +49,7 @@ import {
   flowerLayout,
   flowerMesh,
 } from "@/lib/world/flowers.ts";
+import { clearOfGarden } from "@/lib/world/garden.ts";
 import {
   ISLAND,
   islandOutline,
@@ -75,8 +77,9 @@ import { normalizeWheel, wheelDolly } from "@/lib/world/wheel.ts";
 
 const KINDS = Object.keys(MODEL_FILES) as NatureKind[];
 const URLS = KINDS.map((kind) => MODEL_FILES[kind]);
-const LAYOUT = islandLayout(ISLAND.seed);
-const FLOWERS = flowerLayout(LAYOUT, ISLAND.seed);
+// Nature and flowers stay off the entrance path, mailbox and sign (T7).
+const LAYOUT = clearOfGarden(islandLayout(ISLAND.seed));
+const FLOWERS = clearOfGarden(flowerLayout(LAYOUT, ISLAND.seed), 0.06);
 const SKY_RADIUS = 90;
 const STAR_COUNT = 260;
 
@@ -123,6 +126,7 @@ export default function WorldScene({
         fallback={
           <>
             <House reducedMotion={reducedMotion} />
+            <Garden hours={hours} />
             <Setup
               hours={hours}
               reducedMotion={reducedMotion}
@@ -161,6 +165,7 @@ function TexturedHouse({
   return (
     <>
       <House reducedMotion={reducedMotion} maps={maps} />
+      <Garden hours={hours} maps={maps} />
       <Setup
         hours={hours}
         maps={maps}

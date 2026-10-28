@@ -166,6 +166,10 @@ ORIGINAL = [
      "asset": "Living area: TV, PS5-style controller, game cases and leafy potted plants (procedural)",
      "author": "Kevnnard", "license": "Original work (repository license)",
      "source": "src/lib/world/living.ts"},
+    {"id": "garden",
+     "asset": "Front garden: wall lanterns, stepping-stone path, mailbox and sign (procedural)",
+     "author": "Kevnnard", "license": "Original work (repository license)",
+     "source": "src/lib/world/garden.ts"},
 ]
 
 
