@@ -1,0 +1,294 @@
+/*
+ * Scene panel (T6b): the lower-left day controller mirrored to the bottom
+ * right. Plain scoped CSS with literal colors, so the look never depends on
+ * generated utilities or on the shadcn theme tokens, which hold bare HSL
+ * triplets in globals.css and compute to invalid colors under Tailwind v4.
+ * Palette: zinc-950 #09090b, zinc-900 #18181b, zinc-800 #27272a,
+ * zinc-700 #3f3f46, zinc-400 #a1a1aa, zinc-300 #d4d4d8, zinc-50 #fafafa,
+ * emerald-500 #10b981.
+ */
+.scene-panel {
+  position: absolute;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 320px;
+  max-width: calc(100% - 32px);
+  overflow: hidden;
+  border: 1px solid #27272a;
+  border-radius: 12px;
+  background: rgba(9, 9, 11, 0.9);
+  backdrop-filter: blur(8px);
+  color: #fafafa;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 12px;
+  line-height: 16px;
+  text-align: left;
+}
+
+.scene-panel *,
+.scene-panel *::before,
+.scene-panel *::after {
+  box-sizing: border-box;
+}
+
+.scene-panel h2,
+.scene-panel h3,
+.scene-panel p {
+  margin: 0;
+}
+
+.scene-panel .sp-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.scene-panel .sp-muted {
+  color: #a1a1aa;
+}
+
+.scene-panel .sp-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  margin: -1px;
+}
+
+/* Content first, above the bottom header; scrolls when the screen is short. */
+.scene-panel .sp-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px 12px 10px;
+  border-bottom: 1px solid #27272a;
+}
+
+.scene-panel .sp-head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  padding: 8px 8px 8px 16px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.scene-panel .sp-head h2 {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+}
+
+.scene-panel .sp-dot {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: #a1a1aa;
+}
+
+.scene-panel .sp-dot[data-on="true"] {
+  background: #10b981;
+}
+
+.scene-panel .sp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid #27272a;
+  border-radius: 6px;
+  background: #18181b;
+  color: #fafafa;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.scene-panel .sp-btn:hover {
+  background: #27272a;
+}
+
+.scene-panel .sp-head .sp-btn {
+  margin-left: auto;
+}
+
+/* Grouped cards (03-grouped-cards.html), one per zone, inside the console. */
+.scene-panel .sp-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #27272a;
+  border-radius: 8px;
+  background: #09090b;
+}
+
+.scene-panel .sp-card-head {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.scene-panel .sp-card-head h3 {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+}
+
+.scene-panel .sp-card-head .sp-mono {
+  margin-left: auto;
+}
+
+.scene-panel .sp-light {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.scene-panel .sp-light + .sp-light {
+  border-top: 1px solid #27272a;
+  padding-top: 10px;
+}
+
+.scene-panel .sp-light-head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.scene-panel .sp-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+}
+
+.scene-panel .sp-swatch {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 50%;
+}
+
+.scene-panel .sp-swatch[data-state="disabled"] {
+  opacity: 0.5;
+}
+
+.scene-panel .sp-chip {
+  margin-left: auto;
+  padding: 1px 6px;
+  border: 1px solid #27272a;
+  border-radius: 6px;
+  color: #a1a1aa;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.scene-panel .sp-chip[data-state="on"] {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.3);
+  color: #fafafa;
+}
+
+.scene-panel .sp-chip[data-state="disabled"] {
+  border-style: dashed;
+}
+
+.scene-panel .sp-switch {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  flex: none;
+  padding: 0;
+  border: 1px solid #3f3f46;
+  border-radius: 10px;
+  background: #27272a;
+  cursor: pointer;
+}
+
+.scene-panel .sp-switch span {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #a1a1aa;
+  transition: transform 150ms;
+}
+
+.scene-panel .sp-switch[aria-checked="true"] {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.3);
+}
+
+.scene-panel .sp-switch[aria-checked="true"] span {
+  transform: translateX(16px);
+  background: #fafafa;
+}
+
+.scene-panel .sp-controls {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.scene-panel input[type="color"] {
+  width: 32px;
+  height: 24px;
+  padding: 2px;
+  border: 1px solid #27272a;
+  border-radius: 6px;
+  background: #18181b;
+  cursor: pointer;
+}
+
+.scene-panel input[type="range"] {
+  width: 100%;
+  margin: 0;
+  accent-color: #10b981;
+}
+
+.scene-panel .sp-pct {
+  min-width: 36px;
+  text-align: right;
+}
+
+.scene-panel .sp-foot {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+.scene-panel button:focus-visible,
+.scene-panel input:focus-visible {
+  outline: 2px solid #d4d4d8;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-panel .sp-switch span {
+    transition: none;
+  }
+}

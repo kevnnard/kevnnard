@@ -200,8 +200,9 @@ repository may use the permission license (`licenseAllowed` in
 
 ## Night lights and scene settings (T6b)
 
-Four night lights, editable in a right-hand "Scene" panel built from the
-chosen Gentle Design artboard (`design/world-lighting/03-grouped-cards.html`):
+Four night lights, editable in a bottom-right "Scene" console with the zone
+cards of the chosen Gentle Design artboard
+(`design/world-lighting/03-grouped-cards.html`):
 TV backlight, setup backlight and left/right desk lamps (left and right as
 seen from the chair, facing the wall).
 
@@ -209,16 +210,27 @@ seen from the chair, facing the wall).
 | --- | --- |
 | Gate, settings, clamping, fixtures, lamp parts | `src/lib/world/lights.ts` |
 | Point lights, lamp models, LED strips, bulbs | `src/components/world/NightLights.tsx` |
-| Grouped-card panel | `src/components/world/ScenePanel.tsx` |
+| Scene console and its scoped styles | `src/components/world/ScenePanel.tsx`, `scene-panel.css` |
 | Settings state (session only, no persistence) | `src/components/world/WorldApp.tsx` |
 
 - Night gate: `nightLightsOn(hours)` floors the simulated clock to the
   minute and is on from 18:00 through 05:59, off from 06:00 through 17:59.
-  It never reads the stars level or the PC clock. The panel's boundary
-  buttons (17:59, 18:00, 05:59, 06:00) set the shared clock, which holds the
-  hour until it is resumed in the day controller.
-- Each light has a switch, a native color input and a 0-100 % slider.
-  Controls stay editable by day; their status reads "Off · daytime".
+  It never reads the stars level or the PC clock. The shared day controller
+  is the only time display and editor; the Scene panel shows no hours.
+- Scene console: the lower-left day controller mirrored to the bottom right.
+  One dark box, at most 320 px wide, header row ("Scene", lights on/off,
+  Show/Hide) at the bottom and the TV wall and Desk setup cards opening
+  upward above it, then one "Reset lights" action. It starts folded, scrolls
+  inside below the top buttons, and lifts above the day controller when that
+  spans under it (narrow screens, timeline dock).
+- Styling lives in `scene-panel.css` with literal colors. The shadcn theme
+  tokens in `globals.css` are bare HSL triplets (`--background: 240 10%
+  3.9%`) that `@theme inline` maps without `hsl()`, so `bg-background`,
+  `text-foreground` and `border-border` compute to invalid colors
+  (transparent background, black text). Do not use them in /world UI.
+- Each light has a switch, a native color input and a 0-100 % slider, with
+  its color and location as the hint. Controls stay editable by day; their
+  status reads "Off · day".
   `updateLight` clamps intensity, rounds it, and ignores non-hex colors.
 - Scene: four point lights at most, never shadow-casting, `decay` 2 and a
   finite `distance` (1.2-1.6 m), intensities under 1 cd at 100 %. They stay

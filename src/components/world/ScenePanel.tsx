@@ -1,35 +1,18 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import {
-  clockMinute,
   LIGHT_IDS,
   LIGHT_INFO,
   type LightId,
   type LightSetting,
   type LightSettings,
-  NIGHT_GATE,
   nightLightsOn,
 } from "@/lib/world/lights.ts";
-
-const DAY = 24 * 60;
-const pad = (n: number) => String(n).padStart(2, "0");
-const clock = (minute: number) =>
-  `${pad(Math.floor(minute / 60))}:${pad(minute % 60)}`;
-const span = (n: number) =>
-  n >= 60 ? `${Math.floor(n / 60)} h ${pad(n % 60)} min` : `${n} min`;
-const wrap = (n: number) => ((n % DAY) + DAY) % DAY;
-
-/** Boundary previews: they set the simulated clock, like the day controller. */
-const PREVIEWS = [
-  { minute: NIGHT_GATE.on - 1, caption: "last off" },
-  { minute: NIGHT_GATE.on, caption: "first on" },
-  { minute: NIGHT_GATE.off - 1, caption: "last on" },
-  { minute: NIGHT_GATE.off, caption: "first off" },
-] as const;
+import "./scene-panel.css";
 
 type State = "on" | "standby" | "disabled";
 const STATE_LABEL: Record<State, string> = {
   on: "On",
-  standby: "Off · daytime",
+  standby: "Off · day",
   disabled: "Disabled",
 };
 
@@ -41,10 +24,11 @@ const ZONES = [
   { id: "desk", title: "Desk setup" },
 ] as const;
 
-const card = "grid gap-3.5 rounded-xl border border-border bg-background p-4";
-const focus =
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
-const button = `inline-flex h-8 items-center justify-center rounded-md border border-border bg-input/30 px-3 text-xs font-medium text-foreground transition-colors hover:bg-input/50 ${focus}`;
+/** Gap to the viewport edges and to the day controller, in px. */
+const EDGE = 16;
+const GAP = 8;
+/** Panel width on wide screens (scene-panel.css). */
+const WIDTH = 320;
 
 function LightRow({
   id,
@@ -60,36 +44,19 @@ function LightRow({
   const uid = useId();
   const { name, where } = LIGHT_INFO[id];
   const state = stateOf(light, night);
-  const hint = {
-    on: `${where}. On until 06:00.`,
-    standby: `${where}. Turns on at 18:00 with these settings.`,
-    disabled: `${where}. Disabled, stays off at night.`,
-  }[state];
   return (
-    <div
-      role="group"
-      aria-labelledby={`${uid}-name`}
-      className="grid gap-2.5 border-border [&+&]:border-t [&+&]:pt-3.5"
-    >
-      <div className="flex items-center gap-2.5">
+    <div role="group" aria-labelledby={`${uid}-name`} className="sp-light">
+      <div className="sp-light-head">
         <span
           aria-hidden="true"
-          className="size-2.5 shrink-0 rounded-full"
-          style={{
-            background: light.color,
-            opacity: state === "disabled" ? 0.5 : 1,
-          }}
+          className="sp-swatch"
+          data-state={state}
+          style={{ background: light.color }}
         />
-        <span id={`${uid}-name`} className="font-medium">
+        <span id={`${uid}-name`} className="sp-name">
           {name}
         </span>
-        <span
-          className={`ml-auto whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-medium ${
-            state === "on"
-              ? "border-emerald-500 bg-emerald-500/30 text-foreground"
-              : "border-border text-muted-foreground"
-          } ${state === "disabled" ? "border-dashed" : ""}`}
-        >
+        <span className="sp-chip" data-state={state}>
           {STATE_LABEL[state]}
         </span>
         <button
@@ -98,30 +65,18 @@ function LightRow({
           aria-checked={light.enabled}
           aria-label={`${name} enabled`}
           onClick={() => onChange(id, { enabled: !light.enabled })}
-          className={`relative h-5 w-9 shrink-0 rounded-full border ${
-            light.enabled
-              ? "border-emerald-500 bg-emerald-500/30"
-              : "border-border bg-secondary"
-          } ${focus}`}
+          className="sp-switch"
         >
-          <span
-            aria-hidden="true"
-            className={`absolute top-0.5 left-0.5 size-3.5 rounded-full transition-transform motion-reduce:transition-none ${
-              light.enabled
-                ? "translate-x-4 bg-foreground"
-                : "bg-muted-foreground"
-            }`}
-          />
+          <span aria-hidden="true" />
         </button>
       </div>
-      <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2.5">
+      <div className="sp-controls">
         <input
           type="color"
           value={light.color}
           aria-label={`${name} color`}
-          aria-describedby={`${uid}-hex`}
+          aria-describedby={`${uid}-hint`}
           onChange={(event) => onChange(id, { color: event.target.value })}
-          className={`h-7 w-9 cursor-pointer rounded-md border border-border bg-input/30 p-0.5 ${focus}`}
         />
         <input
           type="range"
@@ -134,69 +89,91 @@ function LightRow({
           onChange={(event) =>
             onChange(id, { intensity: Number(event.target.value) })
           }
-          className={`m-0 w-full accent-emerald-500 ${focus}`}
         />
-        <span
-          aria-hidden="true"
-          className="min-w-10 text-right font-mono text-xs tabular-nums text-muted-foreground"
-        >
+        <span aria-hidden="true" className="sp-pct sp-mono sp-muted">
           {light.intensity}%
         </span>
       </div>
-      <p className="m-0 text-xs text-muted-foreground">
-        <span id={`${uid}-hex`} className="font-mono tabular-nums">
-          {light.color}
-        </span>{" "}
-        · {hint}
+      <p id={`${uid}-hint`} className="sp-muted">
+        <span className="sp-mono">{light.color}</span> · {where}
       </p>
     </div>
   );
 }
 
 /**
- * Scene settings (T6b, design/world-lighting/03-grouped-cards.html): a stack
- * of cards on the right edge. The night gate card shows the simulated time
- * and previews the boundaries; zone cards hold every light's switch, color
- * and intensity, all visible and editable by day. "Hide settings" folds the
- * stack to its header line. On narrow screens it starts folded.
+ * Scene settings (T6b): the lower-left day controller mirrored to the bottom
+ * right, one console whose header row stays at the bottom and whose content
+ * opens upward above it. Inside, the zone cards of
+ * design/world-lighting/03-grouped-cards.html, without its night gate card:
+ * the shared day controller is the only time display and editor; this panel
+ * only reads the simulated hour to show each light's state. When the day
+ * controller spans under the panel (narrow screens, timeline dock), the panel
+ * lifts above it.
  */
 export function ScenePanel({
   hours,
   lights,
   narrow,
+  controllerStyle,
   onChange,
   onReset,
-  onPreview,
 }: {
   hours: number;
   lights: LightSettings;
   narrow: boolean;
+  /** The day controller remounts on a style switch; re-measure it then. */
+  controllerStyle: string;
   onChange: (id: LightId, patch: Partial<LightSetting>) => void;
   onReset: () => void;
-  /** Sets the simulated clock to an hour (boundary previews). */
-  onPreview: (hours: number) => void;
 }) {
-  const [open, setOpen] = useState(!narrow);
+  // Starts folded to its header row so the scene stays clear.
+  const [open, setOpen] = useState(false);
   const [status, setStatus] = useState("");
+  const [lift, setLift] = useState(EDGE);
+  const rootRef = useRef<HTMLElement>(null);
   const uid = useId();
-  const minute = clockMinute(hours);
   const night = nightLightsOn(hours);
-  const time = clock(minute);
   const onCount = LIGHT_IDS.filter(
     (id) => stateOf(lights[id], night) === "on",
   ).length;
 
-  // Announce the gate opening and closing, not the first render.
+  // Sit above the day controller whenever it reaches under the panel.
+  // Re-measured after the controller remounts or the layout switches.
+  useLayoutEffect(() => {
+    const parent = rootRef.current?.parentElement;
+    const clock = parent?.querySelector<HTMLElement>(
+      'section[aria-label="Time of day"]',
+    );
+    if (!parent || !clock) {
+      setLift(EDGE);
+      return;
+    }
+    const update = () => {
+      const box = parent.getBoundingClientRect();
+      const dock = clock.getBoundingClientRect();
+      const width = Math.min(WIDTH, box.width - 2 * EDGE);
+      const left = box.right - EDGE - width;
+      setLift(dock.right + GAP > left ? box.bottom - dock.top + GAP : EDGE);
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(parent);
+    observer.observe(clock);
+    return () => observer.disconnect();
+  }, [narrow, controllerStyle]);
+
+  // Announce the night lights switching, not the first render.
   const last = useRef(night);
   useEffect(() => {
     if (last.current === night) return;
     last.current = night;
     setStatus(
       night
-        ? `${time}: night gate open, ${onCount} of ${LIGHT_IDS.length} lights on.`
-        : `${time}: daytime, all night lights off.`,
+        ? `Night lights on, ${onCount} of ${LIGHT_IDS.length}.`
+        : "Night lights off.",
     );
-  }, [night, time, onCount]);
+  }, [night, onCount]);
 
   const change = (id: LightId, patch: Partial<LightSetting>) => {
     onChange(id, patch);
@@ -208,148 +185,40 @@ export function ScenePanel({
 
   return (
     <section
+      ref={rootRef}
       aria-labelledby={`${uid}-title`}
-      className={`pointer-events-none absolute flex flex-col gap-3 ${
-        narrow
-          ? `inset-x-2 top-[4.5rem] ${open ? "max-h-[55vh]" : ""}`
-          : `top-20 right-4 w-[23rem] ${open ? "bottom-4" : ""}`
-      }`}
+      className="scene-panel"
+      style={{
+        bottom: lift,
+        // Below the top action buttons (5rem), above the bottom offset.
+        maxHeight: `calc(100% - 5rem - ${lift}px)`,
+      }}
     >
-      <p role="status" aria-live="polite" className="sr-only">
+      <p role="status" aria-live="polite" className="sp-sr">
         {status}
       </p>
-      <div className="pointer-events-auto flex items-center gap-2.5 rounded-xl border border-border bg-background/90 px-3 py-2 backdrop-blur">
-        <span
-          aria-hidden="true"
-          className={`size-2 shrink-0 rounded-full ${night ? "bg-emerald-500" : "bg-muted-foreground"}`}
-        />
-        <h2 id={`${uid}-title`} className="m-0 text-base font-semibold">
-          Scene
-        </h2>
-        <span className="font-mono text-xs tabular-nums text-muted-foreground">
-          {night
-            ? `${onCount}/${LIGHT_IDS.length} lights on`
-            : "lights off · day"}
-        </span>
-        <button
-          type="button"
-          aria-expanded={open}
-          aria-controls={`${uid}-cards`}
-          onClick={() => setOpen((value) => !value)}
-          className={`${button} ml-auto bg-background`}
-        >
-          {open ? "Hide settings" : "Show settings"}
-        </button>
-      </div>
-
-      <div
-        id={`${uid}-cards`}
-        hidden={!open}
-        className="pointer-events-auto -m-0.5 grid min-h-0 content-start gap-3 overflow-y-auto p-0.5 text-sm"
-      >
-        <section aria-labelledby={`${uid}-gate`} className={card}>
-          <div className="flex items-baseline gap-2">
-            <h3 id={`${uid}-gate`} className="m-0 text-sm font-semibold">
-              Night gate
-            </h3>
-            <span className="ml-auto font-mono text-xs tabular-nums text-muted-foreground">
-              18:00–05:59
-            </span>
-          </div>
-          <div className="flex items-center gap-2.5 font-mono text-xs tabular-nums">
-            <span
-              aria-hidden="true"
-              className={`size-2 shrink-0 rounded-full ${night ? "bg-emerald-500" : "bg-muted-foreground"}`}
-            />
-            <strong className="text-2xl font-semibold">{time}</strong>
-            <span
-              className={`uppercase tracking-widest ${night ? "text-emerald-500" : "text-muted-foreground"}`}
-            >
-              {night ? "Open" : "Closed"}
-            </span>
-            <span className="ml-auto text-muted-foreground">
-              {night
-                ? `off in ${span(wrap(NIGHT_GATE.off - minute))}`
-                : `on in ${span(wrap(NIGHT_GATE.on - minute))}`}
-            </span>
-          </div>
-          <div aria-hidden="true">
-            <div className="relative h-6 overflow-hidden rounded-md border border-border bg-input/30">
-              <span className="absolute inset-y-0 left-0 w-1/4 bg-emerald-500/20" />
-              <span className="absolute inset-y-0 left-3/4 w-1/4 bg-emerald-500/20" />
-              <span
-                className="absolute -inset-y-px w-0.5 bg-foreground"
-                style={{ left: `calc(${(minute / DAY) * 100}% - 1px)` }}
-              />
-            </div>
-            <div className="mt-1 flex justify-between font-mono text-xs tabular-nums text-muted-foreground">
-              <span>00</span>
-              <span>06</span>
-              <span>12</span>
-              <span>18</span>
-              <span>24</span>
-            </div>
-          </div>
-          <div>
-            <div
-              role="group"
-              aria-label="Preview the night boundary"
-              className="grid grid-cols-4 overflow-hidden rounded-md border border-border"
-            >
-              {PREVIEWS.map(({ minute: at }) => (
-                <button
-                  key={at}
-                  type="button"
-                  aria-pressed={minute === at}
-                  aria-describedby={`${uid}-cap-${at}`}
-                  onClick={() => onPreview(at / 60)}
-                  className={`h-8 border-border font-mono text-xs font-medium tabular-nums text-foreground [&+&]:border-l ${
-                    minute === at
-                      ? "bg-emerald-500/30"
-                      : "bg-input/30 hover:bg-input/50"
-                  } focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring`}
-                >
-                  {clock(at)}
-                </button>
-              ))}
-            </div>
-            <div className="mt-1 grid grid-cols-4 text-center text-xs text-muted-foreground">
-              {PREVIEWS.map(({ minute: at, caption }) => (
-                <span key={at} id={`${uid}-cap-${at}`}>
-                  {caption}
-                </span>
-              ))}
-            </div>
-          </div>
-          <p className="m-0 text-xs text-muted-foreground">
-            Uses the simulated time from the day controller, not your PC clock.
-            Previews pause the clock; resume it there.
-          </p>
-        </section>
-
-        {ZONES.map((zone) => {
-          const ids = LIGHT_IDS.filter((id) => LIGHT_INFO[id].zone === zone.id);
-          const on = ids.filter(
-            (id) => stateOf(lights[id], night) === "on",
-          ).length;
-          return (
-            <section
-              key={zone.id}
-              aria-labelledby={`${uid}-${zone.id}`}
-              className={card}
-            >
-              <div className="flex items-baseline gap-2">
-                <h3
-                  id={`${uid}-${zone.id}`}
-                  className="m-0 text-sm font-semibold"
-                >
-                  {zone.title}
-                </h3>
-                <span className="ml-auto font-mono text-xs tabular-nums text-muted-foreground">
-                  {on} of {ids.length} on
-                </span>
-              </div>
-              <div>
+      {/* Content before the header row, so it opens upward above it. */}
+      {open && (
+        <div id={`${uid}-cards`} className="sp-body">
+          {ZONES.map((zone) => {
+            const ids = LIGHT_IDS.filter(
+              (id) => LIGHT_INFO[id].zone === zone.id,
+            );
+            const on = ids.filter(
+              (id) => stateOf(lights[id], night) === "on",
+            ).length;
+            return (
+              <section
+                key={zone.id}
+                aria-labelledby={`${uid}-${zone.id}`}
+                className="sp-card"
+              >
+                <div className="sp-card-head">
+                  <h3 id={`${uid}-${zone.id}`}>{zone.title}</h3>
+                  <span className="sp-mono sp-muted">
+                    {on} of {ids.length} on
+                  </span>
+                </div>
                 {ids.map((id) => (
                   <LightRow
                     key={id}
@@ -359,32 +228,38 @@ export function ScenePanel({
                     onChange={change}
                   />
                 ))}
-              </div>
-            </section>
-          );
-        })}
-
-        <div className={`${card} border-dashed py-3`}>
-          <p className="m-0 text-xs text-muted-foreground">
-            Light colors are scene data you pick for each light. New scene
-            settings arrive as their own cards in this stack.
-          </p>
-          <div className="flex flex-wrap items-center gap-1.5">
+              </section>
+            );
+          })}
+          <div className="sp-foot">
             <button
               type="button"
               onClick={() => {
                 onReset();
                 setStatus("Lights reset to their defaults.");
               }}
-              className={button}
+              className="sp-btn"
             >
               Reset lights
             </button>
           </div>
-          <p aria-hidden="true" className="m-0 text-muted-foreground">
-            {status}
-          </p>
         </div>
+      )}
+      <div className="sp-head">
+        <span aria-hidden="true" className="sp-dot" data-on={onCount > 0} />
+        <h2 id={`${uid}-title`}>Scene</h2>
+        <span className="sp-muted">
+          {night ? `${onCount}/${LIGHT_IDS.length} lights on` : "lights off"}
+        </span>
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls={`${uid}-cards`}
+          onClick={() => setOpen((value) => !value)}
+          className="sp-btn"
+        >
+          {open ? "Hide" : "Show"}
+        </button>
       </div>
     </section>
   );

@@ -189,9 +189,9 @@ export default function WorldApp() {
           hours={clock.hours}
           lights={lights}
           narrow={narrow}
+          controllerStyle={controllerStyle}
           onChange={changeLight}
           onReset={resetLights}
-          onPreview={clock.setHours}
         />
       )}
     </div>
