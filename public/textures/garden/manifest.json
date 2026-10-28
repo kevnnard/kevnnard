@@ -1,0 +1,148 @@
+{
+  "provider": "Poly Haven",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://polyhaven.com/license",
+  "runtimeExternalRequests": false,
+  "encoder": "cwebp 1.6.0",
+  "processing": "Official 1K PNG maps verified against API MD5 and byte size, re-encoded once to 1024px WebP without metadata. Color is sRGB lossy; OpenGL normals are lossless; roughness is lossy grayscale linear data. No website preview renders are used.",
+  "totalBytes": 5478554,
+  "sourceBytes": 27787039,
+  "sourceBudgetNote": "Raw official PNG sources total 27787039 bytes, above the 20 MB raw source guidance; accepted for this build-time-only step. Sources stay in the ignored cache and never ship.",
+  "materials": [
+    {
+      "layer": "stone",
+      "asset": "stone_pathway_02",
+      "name": "Stone Pathway 02",
+      "source": "https://polyhaven.com/a/stone_pathway_02",
+      "filesApi": "https://api.polyhaven.com/files/stone_pathway_02",
+      "infoApi": "https://api.polyhaven.com/info/stone_pathway_02",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "authors": {
+        "Amal Kumar": "All"
+      },
+      "realWorldSizeMeters": 1.9500000476837158,
+      "maps": {
+        "color": {
+          "path": "stone-color.webp",
+          "colorSpace": "srgb",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/stone_pathway_02/stone_pathway_02_diff_1k.png",
+          "sourceMd5": "59eeaba98822dfe33663ef7cd20cc0cf",
+          "sourceBytes": 5478368,
+          "sourceSha256": "77ede75bce0ffe6fce4c77a1dd54915dfac9dea91cee42af2521aef97b59c6e8",
+          "sourcePng": {
+            "bitDepth": 16,
+            "colorType": 2
+          },
+          "encoding": "cwebp -metadata none -q 86 -m 6 -sharp_yuv",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 170926,
+          "sha256": "741c506047179f98b69a525f82ea4ff98a356c31a9572b34d31a3230c16cac1d"
+        },
+        "normal": {
+          "path": "stone-normal.webp",
+          "colorSpace": "linear",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/stone_pathway_02/stone_pathway_02_nor_gl_1k.png",
+          "sourceMd5": "b5182aa1e2313ef89a1c15e8fd456a5f",
+          "sourceBytes": 5808984,
+          "sourceSha256": "f222c3986ab2971170c01959d4a7f06a632bd06900aee2658416b75f35e3589c",
+          "sourcePng": {
+            "bitDepth": 16,
+            "colorType": 2
+          },
+          "encoding": "cwebp -metadata none -lossless -exact -z 9",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 2069338,
+          "sha256": "d81c5e6739ae37eb49666900817bb49006af49e7e5e8ecf2cdadedb4e2a205f1"
+        },
+        "roughness": {
+          "path": "stone-roughness.webp",
+          "colorSpace": "linear",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/stone_pathway_02/stone_pathway_02_rough_1k.png",
+          "sourceMd5": "b2f4dbe54630c5af235f113210d57196",
+          "sourceBytes": 1779266,
+          "sourceSha256": "cf753768ce4d7faca32f29760ebfae519f1b6f18a53dd07f05fd731c7c2d2301",
+          "sourcePng": {
+            "bitDepth": 16,
+            "colorType": 0
+          },
+          "encoding": "cwebp -metadata none -q 90 -m 6",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 118834,
+          "sha256": "cec9059216c07602605bd60d997b2bfbefd4e6fe4eec7c4d94fa3755667e6a6c"
+        }
+      }
+    },
+    {
+      "layer": "gravel",
+      "asset": "gravel_floor_02",
+      "name": "Gravel Floor 02",
+      "source": "https://polyhaven.com/a/gravel_floor_02",
+      "filesApi": "https://api.polyhaven.com/files/gravel_floor_02",
+      "infoApi": "https://api.polyhaven.com/info/gravel_floor_02",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "authors": {
+        "Jenelle van Heerden": "Processing",
+        "Dimitrios Savva": "Photography"
+      },
+      "realWorldSizeMeters": 2.0,
+      "maps": {
+        "color": {
+          "path": "gravel-color.webp",
+          "colorSpace": "srgb",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/gravel_floor_02/gravel_floor_02_diff_1k.png",
+          "sourceMd5": "e7932e026e53ef57be869dd29bf543a6",
+          "sourceBytes": 6066297,
+          "sourceSha256": "f23f82fd58312c0998b4c33c11269fee507a6ae5703b3400f5e04ed7b0015d78",
+          "sourcePng": {
+            "bitDepth": 16,
+            "colorType": 2
+          },
+          "encoding": "cwebp -metadata none -q 86 -m 6 -sharp_yuv",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 491894,
+          "sha256": "c00c9c5742cf7077762531a35f254eb749e0908e04bccbd7e34cf50abdc7f535"
+        },
+        "normal": {
+          "path": "gravel-normal.webp",
+          "colorSpace": "linear",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/gravel_floor_02/gravel_floor_02_nor_gl_1k.png",
+          "sourceMd5": "4492b4c93c241d44ffb23277147a9aaf",
+          "sourceBytes": 6128277,
+          "sourceSha256": "314288fafaedafe7ddf53c6789e35539c8ab347cd7dc3d1355cbbd38eb062ae8",
+          "sourcePng": {
+            "bitDepth": 16,
+            "colorType": 2
+          },
+          "encoding": "cwebp -metadata none -lossless -exact -z 9",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 2368204,
+          "sha256": "a3237830e762705dbfed8feafe81cb281b113ae4de47556ca01f2a8c1bbf8019"
+        },
+        "roughness": {
+          "path": "gravel-roughness.webp",
+          "colorSpace": "linear",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/gravel_floor_02/gravel_floor_02_rough_1k.png",
+          "sourceMd5": "8dbf78c4616eb57451efc491ec8f2291",
+          "sourceBytes": 2525847,
+          "sourceSha256": "0ec6867b95829f60be3e46286c2a1b522a3fbe01af3e4e8024c226dfc97ebec0",
+          "sourcePng": {
+            "bitDepth": 16,
+            "colorType": 2
+          },
+          "encoding": "cwebp -metadata none -q 90 -m 6",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 259358,
+          "sha256": "dccda48b753ef264ba2bdb73bfd1afca909a0cd6cce7d6d214500a6f571bf2ba"
+        }
+      }
+    }
+  ]
+}
