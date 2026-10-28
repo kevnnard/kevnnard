@@ -1,0 +1,28 @@
+{
+  "title": "Stylized house",
+  "brief": "Stylized house and room with more accessories, guided camera, day cycle kept. References: Bruno Simon, Jesse Zhou, Henry Heffernan.",
+  "feature": "odd/tasks/stylized-house.md",
+  "artboards": [
+    {
+      "file": "01-warm-baked.html",
+      "title": "Warm baked low-poly",
+      "tradeoff": "Closest to Bruno Simon: rounded toy-like shapes and baked light. Cheapest to render and very readable; less intimate at night.",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "02-cozy-diorama.html",
+      "title": "Cozy diorama",
+      "tradeoff": "Closest to Jesse Zhou: warm lamps, dense accessories, hand-painted textures. Most personality; needs the most modeling and texture work.",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "03-night-neon.html",
+      "title": "Lofi night neon",
+      "tradeoff": "Lofi-hip-hop mood: dusk palette with neon accents and soft bloom. Strong at night; day needs a separate palette to avoid looking flat.",
+      "width": 1440,
+      "height": 900
+    }
+  ]
+}
