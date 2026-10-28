@@ -1,7 +1,9 @@
 // Original procedural gaming setup (T4d, S8), the main room's centerpiece:
 // a white-top desk on a black frame with a cable tray, a wide and a side
 // monitor, keyboard, mouse on a pad, a glass-sided PC with a subtle RGB
-// strip, two speakers and a black and white gaming chair pulled out. It backs
+// strip, two speakers and a chair pulled out: an original five-star base under
+// Bruno Simon's top chair (T4k), plus original bodies for his Elgato light,
+// Google Home Mini and Loupedeck overlays (BrunoProps.tsx). It backs
 // onto the main room's left wall, which has no openings and faces the home
 // camera from inside. Pure numbers; Setup.tsx merges the solid parts into one
 // mesh per material (T4g, S11), plus glow (screens and RGB) and glass.
@@ -36,6 +38,8 @@ export const SETUP_COLORS = {
   rgb: "#b48cff",
   rgbCool: "#7fd8ff",
   rgbWarm: "#ff9ad5",
+  home: "#d9d4ce",
+  keyLight: "#ffe7c4",
 } as const;
 
 const M = HOUSE.main;
@@ -220,6 +224,8 @@ export interface SetupMeshes {
   solid: SetupPart[];
   glow: SetupPart[];
   glass: SetupPart[];
+  /** Bruno's top chair as swivel boxes: tested, never drawn (T4k). */
+  hull: SetupPart[];
 }
 
 function desk(solid: SetupPart[]) {
@@ -614,31 +620,23 @@ function tower(solid: SetupPart[], glow: SetupPart[], glass: SetupPart[]) {
   );
 }
 
+/** Chair frame: `lx` metres behind the seat (away from the desk), `ly` up, `lz` across. */
+function chairFrame(lx: number, ly: number, lz: number): Vec3 {
+  const [px, , pz] = w(CHAIR.d, 0, CHAIR.u);
+  const [cos, sin] = [Math.cos(CHAIR.yaw), Math.sin(CHAIR.yaw)];
+  return [px + lx * cos + lz * sin, Y0 + ly, pz - lx * sin + lz * cos];
+}
+
+/** Top of the gas column, where Bruno's seat mechanism sits. */
+const COLUMN_TOP = 0.31;
+
+/** Original five-star base and gas column: they stay while the seat swivels. */
 function chair(solid: SetupPart[]) {
   const first = solid.length;
   const C = SETUP_COLORS;
-  const { yaw, tilt } = CHAIR;
   const [px, , pz] = w(CHAIR.d, 0, CHAIR.u);
-  const cos = Math.cos(yaw);
-  const sin = Math.sin(yaw);
-  // Chair frame: +x is behind the seat, away from the desk.
-  const c = (lx: number, ly: number, lz: number): Vec3 => [
-    px + lx * cos + lz * sin,
-    Y0 + ly,
-    pz - lx * sin + lz * cos,
-  ];
-  const turn: Vec3 = [0, yaw, 0];
-  const side: Vec3 = [0, yaw + Math.PI / 2, Math.PI / 2];
-  const lean: Vec3 = [0, yaw, -tilt];
-  // A point on the reclined back: `h` up it, `o` out of its front face.
-  const back = (h: number, o: number, lz: number) =>
-    c(
-      0.22 + h * Math.sin(tilt) - o * Math.cos(tilt),
-      0.52 + h * Math.cos(tilt) + o * Math.sin(tilt),
-      lz,
-    );
   for (let k = 0; k < 5; k++) {
-    const a = yaw + (k * 2 * Math.PI) / 5;
+    const a = CHAIR.yaw + (k * 2 * Math.PI) / 5;
     const [dx, dz] = [Math.cos(a), Math.sin(a)];
     solid.push(
       part(
@@ -661,99 +659,278 @@ function chair(solid: SetupPart[]) {
     );
   }
   solid.push(
-    part("base", "round", c(0, 0.08, 0), [0.12, 0.06, 0.12], C.chair),
-    part("powder", "round", c(0, 0.26, 0), [0.05, 0.3, 0.05], C.cone),
-    part("base", "round", c(0, 0.18, 0), [0.07, 0.12, 0.07], C.chair),
-  );
-  // Star base and gas column stay; everything above swivels (T4i).
-  const top = solid.length;
-  solid.push(
-    part("powder", "box", c(0, 0.42, 0), [0.3, 0.04, 0.3], C.frame, turn),
-    rounded("leather", 0.045, c(0, 0.48, 0), [0.52, 0.1, 0.5], C.chair, turn),
+    part("base", "round", chairFrame(0, 0.08, 0), [0.12, 0.06, 0.12], C.chair),
     part(
-      "leather",
+      "powder",
       "round",
-      c(-0.25, 0.49, 0),
-      [0.1, 0.48, 0.1],
-      C.chair,
-      side,
-      1.08,
+      chairFrame(0, (0.11 + COLUMN_TOP) / 2, 0),
+      [0.05, COLUMN_TOP - 0.11, 0.05],
+      C.cone,
     ),
-    part("powder", "box", c(0.2, 0.5, 0), [0.06, 0.1, 0.18], C.frame, turn),
-    rounded("leather", 0.045, back(0.4, 0, 0), [0.1, 0.8, 0.48], C.chair, lean),
-    part(
-      "leather",
+    part("base", "round", chairFrame(0, 0.16, 0), [0.07, 0.1, 0.07], C.chair),
+  );
+  for (const item of solid.slice(first)) item.rig = "chair";
+}
+
+/** Bruno Simon's room units to metres (T4k): his top chair fits our seat. */
+export const BRUNO_SCALE = 0.3;
+
+// Slabs [x0, x1, y0, y1, z0, z1] around his chair pivot, in his units,
+// measured by scripts/prepare-world.py from the shipped model (credits.json).
+const CHAIR_HULL = [
+  [-0.767, 0.693, -0.343, 0.028, -0.871, 0.871],
+  [-0.767, 0.75, 0.027, 0.399, -0.888, 0.888],
+  [-0.797, 0.757, 0.398, 0.769, -0.985, 0.985],
+  [0.112, 0.757, 0.768, 1.14, -0.692, 0.692],
+  [0.283, 0.757, 1.139, 1.51, -0.803, 0.803],
+  [0.223, 0.757, 1.509, 1.881, -0.866, 0.866],
+  [0.224, 0.753, 1.88, 2.251, -0.865, 0.865],
+  [0.399, 0.694, 2.25, 2.622, -0.513, 0.513],
+];
+
+/**
+ * Bruno's top chair (topChairModel.glb, T4k): seat, back, armrests and
+ * headrest. His seat faces his -x like ours, so it only takes our chair's yaw;
+ * his pivot sits on our column, its mechanism just over the column's top.
+ */
+export const BRUNO_CHAIR = {
+  hull: CHAIR_HULL,
+  yaw: CHAIR.yaw,
+  /** World height of his pivot. */
+  y: Y0 + COLUMN_TOP - 0.01 - CHAIR_HULL[0][2] * BRUNO_SCALE,
+} as const;
+
+/** The chair's collision hull as swivel boxes, for the sway sweep and bounds. */
+function chairHull(): SetupPart[] {
+  const s = BRUNO_SCALE;
+  const lift = BRUNO_CHAIR.y - Y0;
+  return CHAIR_HULL.map(([x0, x1, y0, y1, z0, z1]) => ({
+    ...part(
+      "powder",
       "box",
-      back(0.4, 0.052, 0),
-      [0.01, 0.5, 0.08],
-      C.trim,
-      lean,
+      chairFrame(
+        ((x0 + x1) / 2) * s,
+        lift + ((y0 + y1) / 2) * s,
+        ((z0 + z1) / 2) * s,
+      ),
+      [(x1 - x0) * s, (y1 - y0) * s, (z1 - z0) * s],
+      SETUP_COLORS.chair,
+      [0, CHAIR.yaw, 0],
+    ),
+    rig: "swivel" as const,
+  }));
+}
+
+type Mat3 = [Vec3, Vec3, Vec3];
+
+const yawMatrix = (b: number): Mat3 => [
+  [Math.cos(b), 0, Math.sin(b)],
+  [0, 1, 0],
+  [-Math.sin(b), 0, Math.cos(b)],
+];
+
+function quatMatrix([x, y, z, q]: readonly [
+  number,
+  number,
+  number,
+  number,
+]): Mat3 {
+  return [
+    [1 - 2 * (y * y + z * z), 2 * (x * y - z * q), 2 * (x * z + y * q)],
+    [2 * (x * y + z * q), 1 - 2 * (x * x + z * z), 2 * (y * z - x * q)],
+    [2 * (x * z - y * q), 2 * (y * z + x * q), 1 - 2 * (x * x + y * y)],
+  ];
+}
+
+const times = (a: Mat3, b: Mat3): Mat3 =>
+  a.map((row) =>
+    [0, 1, 2].map(
+      (j) => row[0] * b[0][j] + row[1] * b[1][j] + row[2] * b[2][j],
+    ),
+  ) as Mat3;
+
+const apply = (m: Mat3, v: Vec3): Vec3 =>
+  m.map((row) => row[0] * v[0] + row[1] * v[1] + row[2] * v[2]) as Vec3;
+
+/** Euler XYZ angles (Object3D order) of a rotation matrix. */
+function euler(m: Mat3): Vec3 {
+  const b = Math.asin(Math.min(Math.max(m[0][2], -1), 1));
+  return [Math.atan2(-m[1][2], m[2][2]), b, Math.atan2(-m[0][1], m[0][0])];
+}
+
+/** Heading of a horizontal direction, as Object3D.rotation.y adds to it. */
+const heading = (v: Vec3) => Math.atan2(-v[2], v[0]);
+
+/**
+ * One of Bruno's overlay models moved from his room onto an original body:
+ * his node at `from` (his world coordinates) lands on `to`, turned `yaw`
+ * around +y and scaled by BRUNO_SCALE, his own orientation kept.
+ */
+export interface BrunoOverlay {
+  from: Vec3;
+  to: Vec3;
+  yaw: number;
+}
+
+// Elgato key light: his glowing plane (elgatoLightModel, node Plane.034),
+// turned so its face looks at our chair from the desk's back-left corner.
+const ELGATO_ROTATION = quatMatrix([
+  0.7829142212867737, 0.10722018778324127, -0.14074204862117767,
+  0.5964401364326477,
+]);
+const ELGATO_HALF = 0.3433 * 1.1041581630706787 * BRUNO_SCALE;
+const ELGATO_FROM: Vec3 = [
+  -0.06248994544148445, 4.58691930770874, -4.555070400238037,
+];
+const ELGATO_TO = w(0.125, 1.42, -2.13);
+const ELGATO_YAW = (() => {
+  const face = apply(ELGATO_ROTATION, [0, 1, 0]);
+  const chairAt = w(CHAIR.d, 0, CHAIR.u);
+  const look: Vec3 = [chairAt[0] - ELGATO_TO[0], 0, chairAt[2] - ELGATO_TO[2]];
+  return heading(look) - heading(face);
+})();
+
+// Google Home Mini: his four LEDs (googleHomeLedsModel, led0..led3) on the
+// top of an original fabric puck, beside the right speaker.
+const HOME = { at: w(0.42, DESK.height, -0.42), radius: 0.049, height: 0.042 };
+
+// Loupedeck console: his fourteen button screens (loupedeckButtonsModel),
+// tilted 2 * asin(0.1447) about his x like his, left of the keyboard.
+const LOUPEDECK_TILT = 2 * Math.asin(0.14466357231140137);
+const LOUPEDECK_SCREENS = { width: 0.3203, depth: 0.1691 };
+const LOUPEDECK_BODY = {
+  at: w(0.57, DESK.height, -1.79),
+  length:
+    (LOUPEDECK_SCREENS.depth / Math.cos(LOUPEDECK_TILT)) * BRUNO_SCALE + 0.03,
+  width: LOUPEDECK_SCREENS.width * BRUNO_SCALE + 0.03,
+  height: 0.018,
+};
+const LOUPEDECK_CENTER: Vec3 = [
+  LOUPEDECK_BODY.at[0],
+  LOUPEDECK_BODY.at[1] +
+    (LOUPEDECK_BODY.length / 2) * Math.sin(LOUPEDECK_TILT) +
+    (LOUPEDECK_BODY.height / 2) * Math.cos(LOUPEDECK_TILT),
+  LOUPEDECK_BODY.at[2],
+];
+/** Up out of the console's sloped face (toward the chair, +x). */
+const LOUPEDECK_UP: Vec3 = [
+  Math.sin(LOUPEDECK_TILT),
+  Math.cos(LOUPEDECK_TILT),
+  0,
+];
+const along = (p: Vec3, d: Vec3, k: number): Vec3 => [
+  p[0] + d[0] * k,
+  p[1] + d[1] * k,
+  p[2] + d[2] * k,
+];
+
+export const BRUNO_OVERLAYS = {
+  elgato: { from: ELGATO_FROM, to: ELGATO_TO, yaw: ELGATO_YAW },
+  googleHome: {
+    from: [1.0239909887313843, 1.1137, 0.98043],
+    to: [HOME.at[0], HOME.at[1] + HOME.height + 0.0005, HOME.at[2]],
+    yaw: 0,
+  },
+  loupedeck: {
+    from: [0.14945, 2.45555, -4.35065],
+    to: along(
+      LOUPEDECK_CENTER,
+      LOUPEDECK_UP,
+      LOUPEDECK_BODY.height / 2 + 0.0012,
+    ),
+    // His users sit toward his +z; ours toward +x.
+    yaw: Math.PI / 2,
+  },
+} as const satisfies Record<string, BrunoOverlay>;
+
+/** Original bodies under Bruno's overlays (T4k): key light, speaker, console. */
+function brunoBodies(solid: SetupPart[]) {
+  const C = SETUP_COLORS;
+  // Key light: a dark panel behind his glowing plane, on an arm and a pole
+  // clamped to the desk's back edge.
+  const turn = times(yawMatrix(ELGATO_YAW), ELGATO_ROTATION);
+  const face = apply(turn, [0, 1, 0]);
+  const flat = Math.hypot(face[0], face[2]);
+  const out: Vec3 = [face[0] / flat, 0, face[2] / flat];
+  const panel = along(ELGATO_TO, face, -0.014);
+  const pole: Vec3 = [
+    ELGATO_TO[0] - out[0] * 0.07,
+    0,
+    ELGATO_TO[2] - out[2] * 0.07,
+  ];
+  const top = Y0 + DESK.height;
+  const side = 2 * ELGATO_HALF + 0.02;
+  solid.push(
+    rounded("satin", 0.008, panel, [side, 0.022, side], C.bezel, euler(turn)),
+    part(
+      "powder",
+      "box",
+      [(pole[0] + panel[0]) / 2, ELGATO_TO[1], (pole[2] + panel[2]) / 2],
+      [0.07, 0.02, 0.02],
+      C.frame,
+      [0, heading(out), 0],
     ),
     part(
-      "leather",
+      "powder",
       "round",
-      back(0.68, 0.08, 0),
-      [0.12, 0.3, 0.12],
-      C.trim,
-      side,
+      [pole[0], (top + ELGATO_TO[1] + 0.02) / 2, pole[2]],
+      [0.022, ELGATO_TO[1] + 0.02 - top, 0.022],
+      C.frame,
     ),
-    part(
-      "leather",
-      "round",
-      back(0.18, 0.07, 0),
-      [0.1, 0.3, 0.1],
-      C.chair,
-      side,
-      1.15,
+    rounded(
+      "base",
+      0.006,
+      [pole[0], top + 0.015, pole[2]],
+      [0.05, 0.03, 0.05],
+      C.frame,
     ),
   );
-  for (const s of [1, -1])
-    solid.push(
-      rounded(
-        "leather",
-        0.035,
-        c(0, 0.505, s * 0.22),
-        [0.5, 0.08, 0.08],
-        C.trim,
-        turn,
-      ),
-      rounded(
-        "leather",
-        0.035,
-        back(0.38, 0.04, s * 0.2),
-        [0.1, 0.72, 0.08],
-        C.trim,
-        lean,
-      ),
-      part(
-        "base",
-        "box",
-        c(0.02, 0.47, s * 0.27),
-        [0.05, 0.04, 0.06],
-        C.frame,
-        turn,
-      ),
-      part(
-        "base",
-        "box",
-        c(0.02, 0.6, s * 0.29),
-        [0.05, 0.2, 0.05],
-        C.chair,
-        turn,
-      ),
-      rounded(
-        "leather",
-        0.018,
-        c(-0.02, 0.715, s * 0.29),
-        [0.26, 0.04, 0.09],
-        C.chair,
-        turn,
-        1.1,
-      ),
-    );
-  solid.slice(first).forEach((item, index) => {
-    item.rig = first + index < top ? "chair" : "swivel";
-  });
+  // Google Home Mini: rubber foot, fabric-covered body and a domed top.
+  const [hx, hy, hz] = HOME.at;
+  const d = 2 * HOME.radius;
+  solid.push(
+    part(
+      "base",
+      "round",
+      [hx, hy + 0.002, hz],
+      [d - 0.01, 0.004, d - 0.01],
+      C.frame,
+    ),
+    part("fabric", "round", [hx, hy + 0.019, hz], [d, 0.03, d], C.home),
+    part(
+      "fabric",
+      "round",
+      [hx, hy + 0.038, hz],
+      [d - 0.01, 0.008, d - 0.01],
+      C.home,
+      undefined,
+      1.04,
+    ),
+  );
+  // Loupedeck: a rounded dark slab sloped like his screens, on a rear foot.
+  const { length, width, height } = LOUPEDECK_BODY;
+  const rise = length * Math.sin(LOUPEDECK_TILT);
+  solid.push(
+    rounded(
+      "satin",
+      0.006,
+      LOUPEDECK_CENTER,
+      [length, height, width],
+      C.frame,
+      [0, 0, -LOUPEDECK_TILT],
+    ),
+    part(
+      "base",
+      "box",
+      [
+        LOUPEDECK_CENTER[0] - (length / 2 - 0.015) * Math.cos(LOUPEDECK_TILT),
+        LOUPEDECK_BODY.at[1] + rise / 2,
+        LOUPEDECK_CENTER[2],
+      ],
+      [0.02, rise, width - 0.02],
+      C.frame,
+    ),
+  );
 }
 
 /** Column axis the seat swivels around (world x, z). */
@@ -794,12 +971,18 @@ export const SETUP_PROPS = {
 
 /** Every setup part, by material. */
 export function setupMeshes(): SetupMeshes {
-  const meshes: SetupMeshes = { solid: [], glow: [], glass: [] };
+  const meshes: SetupMeshes = {
+    solid: [],
+    glow: [],
+    glass: [],
+    hull: chairHull(),
+  };
   desk(meshes.solid);
   monitors(meshes.solid, meshes.glow);
   deskTop(meshes.solid, meshes.glow);
   tower(meshes.solid, meshes.glow, meshes.glass);
   chair(meshes.solid);
+  brunoBodies(meshes.solid);
   return meshes;
 }
 
@@ -834,9 +1017,12 @@ export function partBounds(p: Part) {
 
 const solidParts = setupMeshes();
 const chairBack = Math.max(
-  ...[...solidParts.solid, ...solidParts.glow, ...solidParts.glass].map(
-    (p) => partBounds(p).x1,
-  ),
+  ...[
+    ...solidParts.solid,
+    ...solidParts.glow,
+    ...solidParts.glass,
+    ...solidParts.hull,
+  ].map((p) => partBounds(p).x1),
 );
 
 export const SETUP = {
@@ -881,6 +1067,23 @@ export function setupOcclusion(
   if (underDesk) ao *= 0.85;
   return Math.max(ao, 0.5);
 }
+
+/** Bruno's shipped models and maps (T4k), credited in public/world/credits.json. */
+export const BRUNO_FILES = {
+  chair: "/world/models/bruno-chair.glb",
+  elgato: "/world/models/bruno-elgato-light.glb",
+  googleHome: "/world/models/bruno-google-home-leds.glb",
+  loupedeck: "/world/models/bruno-loupedeck-buttons.glb",
+} as const;
+
+/** The chair's baked maps, cropped to its UV islands, and the LED mask. */
+export const BRUNO_MAPS = {
+  day: "/world/bruno/chair-day.webp",
+  night: "/world/bruno/chair-night.webp",
+  neutral: "/world/bruno/chair-neutral.webp",
+  lightMap: "/world/bruno/chair-light-map.webp",
+  ledMask: "/world/bruno/google-home-led-mask.png",
+} as const;
 
 /** Screen and RGB brightness: soft by day, brighter at night. */
 export function setupGlow(hours: number): number {

@@ -40,15 +40,11 @@ describe("gaming setup materials (T4g, S11)", () => {
     assert.ok(using("powder").length >= 10, "desk frame and legs");
     assert.ok(using("laminate").length === 2, "desk top and front edge");
     assert.ok(using("keycap").length === 4, "key rows");
-    assert.ok(using("fabric").length === 1, "mousepad");
+    assert.ok(using("fabric").length === 3, "mousepad and Google Home Mini");
     assert.ok(using("base").length >= 10, "chair star base and casters");
-    assert.ok(using("leather").length >= 2, "seat and back");
-    for (const part of meshes.solid)
-      if (part.color === SETUP_COLORS.trim)
-        assert.equal(part.material, "leather", "white trim is leather");
-    assert.ok(
-      using("leather").some((part) => part.color === SETUP_COLORS.trim),
-    );
+    // Bruno Simon's top chair (T4k) replaced the leather seat and white trim.
+    assert.equal(using("leather").length, 0, "no procedural seat");
+    assert.ok(!meshes.solid.some((part) => part.color === SETUP_COLORS.trim));
     assert.ok(using("satin").length >= 10, "bezels and cabinets");
   });
 

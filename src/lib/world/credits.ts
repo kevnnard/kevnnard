@@ -105,6 +105,8 @@ export interface Credits {
   textures?: TextureCredit[];
   original?: OriginalCredit[];
   ported?: PortedCredit[];
+  /** Bruno Simon's chair maps and LED mask (T4k), under public/world/bruno/. */
+  maps?: TextureCredit[];
 }
 
 function officialHttps(url: string): boolean {
@@ -147,7 +149,11 @@ export function creditProblems(credits: Credits): string[] {
   const problems: string[] = [];
   const packs = new Set(credits.packs.map((pack) => pack.id));
   const seen = new Set<string>();
-  for (const entry of [...credits.assets, ...(credits.textures ?? [])]) {
+  for (const entry of [
+    ...credits.assets,
+    ...(credits.textures ?? []),
+    ...(credits.maps ?? []),
+  ]) {
     const name = entry.file;
     if (seen.has(name)) {
       problems.push(`${name}: credited twice`);

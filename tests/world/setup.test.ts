@@ -15,7 +15,12 @@ import {
 
 const EPS = 1e-6;
 const meshes = setupMeshes();
-const parts = [...meshes.solid, ...meshes.glow, ...meshes.glass];
+const parts = [
+  ...meshes.solid,
+  ...meshes.glow,
+  ...meshes.glass,
+  ...meshes.hull,
+];
 const apart = (
   a: { x0: number; x1: number; z0: number; z1: number },
   b: { x0: number; x1: number; z0: number; z1: number },

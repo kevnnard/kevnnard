@@ -72,19 +72,6 @@
       }
     },
     {
-      "id": "bruno-my-room-in-3d",
-      "pack": "My Room in 3D",
-      "author": "Bruno Simon",
-      "authorUrl": "https://bruno-simon.com",
-      "license": "used with the author's permission (private message to the site owner)",
-      "licenseUrl": "https://github.com/brunosimon/my-room-in-3d/tree/5d00b3f870da81f103e901e0d12e20bbcc816834",
-      "source": "https://github.com/brunosimon/my-room-in-3d/tree/5d00b3f870da81f103e901e0d12e20bbcc816834",
-      "licenseEvidence": {
-        "url": "https://github.com/brunosimon/my-room-in-3d/tree/5d00b3f870da81f103e901e0d12e20bbcc816834",
-        "quote": "No license file at this commit; used with the author's permission (private message to the site owner), recorded in odd/tasks/stylized-house.md L25"
-      }
-    },
-    {
       "id": "kaykit-furniture-bits",
       "pack": "KayKit Furniture Bits 1.0",
       "author": "Kay Lousberg",
@@ -95,6 +82,19 @@
       "licenseEvidence": {
         "url": "https://raw.githubusercontent.com/KayKit-Game-Assets/KayKit-Furniture-Bits-1.0/96d5930a8dbdb363409bbc2d3341718b00e17c9c/LICENSE.txt",
         "quote": "License: (Creative Commons Zero, CC0)"
+      }
+    },
+    {
+      "id": "bruno-my-room-in-3d",
+      "pack": "My Room in 3D",
+      "author": "Bruno Simon",
+      "authorUrl": "https://bruno-simon.com",
+      "license": "used with the author's permission (private message to the site owner)",
+      "licenseUrl": "https://github.com/brunosimon/my-room-in-3d/tree/5d00b3f870da81f103e901e0d12e20bbcc816834",
+      "source": "https://github.com/brunosimon/my-room-in-3d/tree/5d00b3f870da81f103e901e0d12e20bbcc816834",
+      "licenseEvidence": {
+        "url": "https://github.com/brunosimon/my-room-in-3d/tree/5d00b3f870da81f103e901e0d12e20bbcc816834",
+        "quote": "No license file at this commit; used with the author's permission (private message to the site owner), recorded in odd/tasks/stylized-house.md L25"
       }
     }
   ],
@@ -375,25 +375,6 @@
       ]
     },
     {
-      "file": "models/coffee-steam.glb",
-      "asset": "coffeeSteamModel",
-      "pack": "bruno-my-room-in-3d",
-      "author": "Bruno Simon",
-      "license": "used with the author's permission (private message to the site owner)",
-      "licenseUrl": "https://github.com/brunosimon/my-room-in-3d/tree/5d00b3f870da81f103e901e0d12e20bbcc816834",
-      "source": "https://github.com/brunosimon/my-room-in-3d/blob/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/coffeeSteamModel.glb",
-      "bytes": 4384,
-      "sha256": "d9303e18ae073b93214c1952887d69af285db9bda253e3da3d7c2022ec190c5c",
-      "triangles": 528,
-      "sourceFiles": [
-        {
-          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/coffeeSteamModel.glb",
-          "bytes": 1576,
-          "sha256": "e79bf273fa039859ac9758ae216269922435c6d71ba35ed6c43747148e82d88f"
-        }
-      ]
-    },
-    {
       "file": "models/sofa.glb",
       "asset": "couch_pillows",
       "pack": "kaykit-furniture-bits",
@@ -564,6 +545,172 @@
           "url": "https://raw.githubusercontent.com/KayKit-Game-Assets/KayKit-Furniture-Bits-1.0/96d5930a8dbdb363409bbc2d3341718b00e17c9c/addons/kaykit_furniture_bits/Assets/gltf/furniturebits_texture.png",
           "bytes": 15605,
           "sha256": "de62db37a80d1801c3d9eb674890ae04b04469e0c149481a51fa250562c628dc"
+        }
+      ]
+    },
+    {
+      "file": "models/coffee-steam.glb",
+      "asset": "coffeeSteamModel",
+      "pack": "bruno-my-room-in-3d",
+      "author": "Bruno Simon",
+      "license": "used with the author's permission (private message to the site owner)",
+      "licenseUrl": "https://github.com/brunosimon/my-room-in-3d/tree/5d00b3f870da81f103e901e0d12e20bbcc816834",
+      "source": "https://github.com/brunosimon/my-room-in-3d/blob/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/coffeeSteamModel.glb",
+      "bytes": 4384,
+      "sha256": "d9303e18ae073b93214c1952887d69af285db9bda253e3da3d7c2022ec190c5c",
+      "triangles": 528,
+      "sourceFiles": [
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/coffeeSteamModel.glb",
+          "bytes": 1576,
+          "sha256": "e79bf273fa039859ac9758ae216269922435c6d71ba35ed6c43747148e82d88f"
+        }
+      ]
+    },
+    {
+      "file": "models/bruno-chair.glb",
+      "pack": "bruno-my-room-in-3d",
+      "author": "Bruno Simon",
+      "license": "used with the author's permission (private message to the site owner)",
+      "licenseUrl": "https://github.com/brunosimon/my-room-in-3d/tree/5d00b3f870da81f103e901e0d12e20bbcc816834",
+      "source": "https://github.com/brunosimon/my-room-in-3d/blob/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/topChairModel.glb",
+      "bytes": 78512,
+      "sha256": "5dcbcfaa3c202245faab5df74a6dcaf6f9b6b6b88d2307f3699327a3f5d6d0f5",
+      "asset": "topChairModel",
+      "triangles": 14068,
+      "hull": [
+        [
+          -0.767,
+          0.693,
+          -0.343,
+          0.028,
+          -0.871,
+          0.871
+        ],
+        [
+          -0.767,
+          0.75,
+          0.027,
+          0.399,
+          -0.888,
+          0.888
+        ],
+        [
+          -0.797,
+          0.757,
+          0.398,
+          0.769,
+          -0.985,
+          0.985
+        ],
+        [
+          0.112,
+          0.757,
+          0.768,
+          1.14,
+          -0.692,
+          0.692
+        ],
+        [
+          0.283,
+          0.757,
+          1.139,
+          1.51,
+          -0.803,
+          0.803
+        ],
+        [
+          0.223,
+          0.757,
+          1.509,
+          1.881,
+          -0.866,
+          0.866
+        ],
+        [
+          0.224,
+          0.753,
+          1.88,
+          2.251,
+          -0.865,
+          0.865
+        ],
+        [
+          0.399,
+          0.694,
+          2.25,
+          2.622,
+          -0.513,
+          0.513
+        ]
+      ],
+      "pivot": [
+        0.811715,
+        1.304666,
+        -1.532907
+      ],
+      "sourceFiles": [
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/topChairModel.glb",
+          "bytes": 32936,
+          "sha256": "3e061b18c62a734c484ed88cc9bae64e813c1f1b4338c3e0c492d09d626ac3c1"
+        }
+      ]
+    },
+    {
+      "file": "models/bruno-elgato-light.glb",
+      "pack": "bruno-my-room-in-3d",
+      "author": "Bruno Simon",
+      "license": "used with the author's permission (private message to the site owner)",
+      "licenseUrl": "https://github.com/brunosimon/my-room-in-3d/tree/5d00b3f870da81f103e901e0d12e20bbcc816834",
+      "source": "https://github.com/brunosimon/my-room-in-3d/blob/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/elgatoLightModel.glb",
+      "bytes": 1648,
+      "sha256": "5f57d52a8d1d3a8a3c0299e28dcb8413ef060c5318fa3da6081b0d35782f6a18",
+      "asset": "elgatoLightModel",
+      "triangles": 26,
+      "sourceFiles": [
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/elgatoLightModel.glb",
+          "bytes": 1424,
+          "sha256": "d2a557c6d50d30c99dc720890cf32710b9f38bfd21afaa60e78828a31c1d0cec"
+        }
+      ]
+    },
+    {
+      "file": "models/bruno-google-home-leds.glb",
+      "pack": "bruno-my-room-in-3d",
+      "author": "Bruno Simon",
+      "license": "used with the author's permission (private message to the site owner)",
+      "licenseUrl": "https://github.com/brunosimon/my-room-in-3d/tree/5d00b3f870da81f103e901e0d12e20bbcc816834",
+      "source": "https://github.com/brunosimon/my-room-in-3d/blob/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/googleHomeLedsModel.glb",
+      "bytes": 2672,
+      "sha256": "7e452cc56bdce86ad3fdbee74e0b10ffbbb8e79e64b86a3dc035661a67acee38",
+      "asset": "googleHomeLedsModel",
+      "triangles": 2,
+      "sourceFiles": [
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/googleHomeLedsModel.glb",
+          "bytes": 3096,
+          "sha256": "009a58f71e9447e81338555f170e0c067551090eaac830ce5e67bd59d58178de"
+        }
+      ]
+    },
+    {
+      "file": "models/bruno-loupedeck-buttons.glb",
+      "pack": "bruno-my-room-in-3d",
+      "author": "Bruno Simon",
+      "license": "used with the author's permission (private message to the site owner)",
+      "licenseUrl": "https://github.com/brunosimon/my-room-in-3d/tree/5d00b3f870da81f103e901e0d12e20bbcc816834",
+      "source": "https://github.com/brunosimon/my-room-in-3d/blob/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/loupedeckButtonsModel.glb",
+      "bytes": 11788,
+      "sha256": "ab4245ab7a14296982a4e92674b424bfeabc498df83eba6bf26b66da8cb98864",
+      "asset": "loupedeckButtonsModel",
+      "triangles": 28,
+      "sourceFiles": [
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/loupedeckButtonsModel.glb",
+          "bytes": 12544,
+          "sha256": "ad3aa228e61c24a04ff078ab43a9d3d577b7a5d33a88b014cb3620e01767c124"
         }
       ]
     }
@@ -1134,6 +1281,204 @@
           "sha256": "e2b0c0508c5da33a25e58829c654dc3f540e3e0b0f191ee254f68cc05b791351"
         }
       ]
+    },
+    {
+      "id": "baked-shader",
+      "asset": "Baked day, night and neutral mix with the light map (chair material)",
+      "author": "Bruno Simon",
+      "license": "used with the author's permission (private message to the site owner)",
+      "source": "https://github.com/brunosimon/my-room-in-3d/blob/5d00b3f870da81f103e901e0d12e20bbcc816834/src/Experience/Baked.js",
+      "port": "src/components/world/BrunoProps.tsx",
+      "sourceFiles": [
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/src/Experience/Baked.js",
+          "bytes": 5129,
+          "sha256": "9f147b2827bef11bab8bcc7d2eacb24fe87df395ec2d46e5b72f16e40ee945ae"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/src/Experience/shaders/baked/vertex.glsl",
+          "bytes": 262,
+          "sha256": "d2bde594cc23a190bfbe59219c792c988fbab5e5ba8627ccb662cdb515f1d0e1"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/src/Experience/shaders/baked/fragment.glsl",
+          "bytes": 1462,
+          "sha256": "71989ebc6f588f2835c024663d8009d5c007a6c74202793c729a0511d0a4f9d9"
+        }
+      ]
+    },
+    {
+      "id": "elgato-light",
+      "asset": "Elgato key light glow",
+      "author": "Bruno Simon",
+      "license": "used with the author's permission (private message to the site owner)",
+      "source": "https://github.com/brunosimon/my-room-in-3d/blob/5d00b3f870da81f103e901e0d12e20bbcc816834/src/Experience/ElgatoLight.js",
+      "port": "src/components/world/BrunoProps.tsx",
+      "sourceFiles": [
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/src/Experience/ElgatoLight.js",
+          "bytes": 582,
+          "sha256": "626b56efee0995f51a42c8658db65007797875aafb831ac92d91e7fe357b8dc5"
+        }
+      ]
+    },
+    {
+      "id": "google-home-leds",
+      "asset": "Google Home LED colors and alpha mask",
+      "author": "Bruno Simon",
+      "license": "used with the author's permission (private message to the site owner)",
+      "source": "https://github.com/brunosimon/my-room-in-3d/blob/5d00b3f870da81f103e901e0d12e20bbcc816834/src/Experience/GoogleLeds.js",
+      "port": "src/components/world/BrunoProps.tsx",
+      "sourceFiles": [
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/src/Experience/GoogleLeds.js",
+          "bytes": 2294,
+          "sha256": "d83c341937f55356d44d51224f8cffaee3f53a4ed5ed2fbd3ba50d14dd74efb2"
+        }
+      ]
+    },
+    {
+      "id": "loupedeck-buttons",
+      "asset": "Loupedeck button colors and timing",
+      "author": "Bruno Simon",
+      "license": "used with the author's permission (private message to the site owner)",
+      "source": "https://github.com/brunosimon/my-room-in-3d/blob/5d00b3f870da81f103e901e0d12e20bbcc816834/src/Experience/LoupedeckButtons.js",
+      "port": "src/lib/world/motion.ts",
+      "sourceFiles": [
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/src/Experience/LoupedeckButtons.js",
+          "bytes": 4349,
+          "sha256": "71cf8a136bb3732f9d6ab45052973b08bda45cf5b6bd0aff450110af569f6a96"
+        }
+      ]
     }
-  ]
+  ],
+  "maps": [
+    {
+      "file": "bruno/chair-day.webp",
+      "pack": "bruno-my-room-in-3d",
+      "author": "Bruno Simon",
+      "license": "used with the author's permission (private message to the site owner)",
+      "licenseUrl": "https://github.com/brunosimon/my-room-in-3d/tree/5d00b3f870da81f103e901e0d12e20bbcc816834",
+      "source": "https://github.com/brunosimon/my-room-in-3d/blob/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/bakedDay.jpg",
+      "bytes": 67654,
+      "sha256": "9b2e2e4051c9d7c394620ff6e63ec311f18a486c8239897e109a8430cf7c975a",
+      "asset": "bakedDay",
+      "map": "day",
+      "width": 2048,
+      "height": 736,
+      "sourceFiles": [
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/bakedDay.jpg",
+          "bytes": 1449831,
+          "sha256": "0970ba2f0f07061db2b0a4099422c72fe8a074264a733652e36a23144ede9f82"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/topChairModel.glb",
+          "bytes": 32936,
+          "sha256": "3e061b18c62a734c484ed88cc9bae64e813c1f1b4338c3e0c492d09d626ac3c1"
+        }
+      ]
+    },
+    {
+      "file": "bruno/chair-night.webp",
+      "pack": "bruno-my-room-in-3d",
+      "author": "Bruno Simon",
+      "license": "used with the author's permission (private message to the site owner)",
+      "licenseUrl": "https://github.com/brunosimon/my-room-in-3d/tree/5d00b3f870da81f103e901e0d12e20bbcc816834",
+      "source": "https://github.com/brunosimon/my-room-in-3d/blob/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/bakedNight.jpg",
+      "bytes": 52900,
+      "sha256": "82ffc2c49fa7f1d88246068137801fa653aa60d67f16b7d1a8a8404e38a84a60",
+      "asset": "bakedNight",
+      "map": "night",
+      "width": 2048,
+      "height": 736,
+      "sourceFiles": [
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/bakedNight.jpg",
+          "bytes": 1254801,
+          "sha256": "45f7d2419fde9c33d32557876121b913faadc6a2610f06011eb6b83703e3bfb7"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/topChairModel.glb",
+          "bytes": 32936,
+          "sha256": "3e061b18c62a734c484ed88cc9bae64e813c1f1b4338c3e0c492d09d626ac3c1"
+        }
+      ]
+    },
+    {
+      "file": "bruno/chair-neutral.webp",
+      "pack": "bruno-my-room-in-3d",
+      "author": "Bruno Simon",
+      "license": "used with the author's permission (private message to the site owner)",
+      "licenseUrl": "https://github.com/brunosimon/my-room-in-3d/tree/5d00b3f870da81f103e901e0d12e20bbcc816834",
+      "source": "https://github.com/brunosimon/my-room-in-3d/blob/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/bakedNeutral.jpg",
+      "bytes": 81142,
+      "sha256": "bf6ce511464e3f76576ef37fef508a1cad761ec649260c170eb600eb422df180",
+      "asset": "bakedNeutral",
+      "map": "neutral",
+      "width": 2048,
+      "height": 736,
+      "sourceFiles": [
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/bakedNeutral.jpg",
+          "bytes": 1533821,
+          "sha256": "2bcdfbaa7bb623d9719532dc3031c1e5b3875468a23edcdd69f0e5ec41a12917"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/topChairModel.glb",
+          "bytes": 32936,
+          "sha256": "3e061b18c62a734c484ed88cc9bae64e813c1f1b4338c3e0c492d09d626ac3c1"
+        }
+      ]
+    },
+    {
+      "file": "bruno/chair-light-map.webp",
+      "pack": "bruno-my-room-in-3d",
+      "author": "Bruno Simon",
+      "license": "used with the author's permission (private message to the site owner)",
+      "licenseUrl": "https://github.com/brunosimon/my-room-in-3d/tree/5d00b3f870da81f103e901e0d12e20bbcc816834",
+      "source": "https://github.com/brunosimon/my-room-in-3d/blob/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/lightMap.jpg",
+      "bytes": 24970,
+      "sha256": "f155685afa74f7f3946c4d2b0b9b3b00b1657382316b1cc6dbb836e02d0c1b0a",
+      "asset": "lightMap",
+      "map": "light-map",
+      "width": 2048,
+      "height": 736,
+      "sourceFiles": [
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/lightMap.jpg",
+          "bytes": 866346,
+          "sha256": "56c29133447fb588e3ace83ee27a71def7536711f0e544028c3971abadd17750"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/topChairModel.glb",
+          "bytes": 32936,
+          "sha256": "3e061b18c62a734c484ed88cc9bae64e813c1f1b4338c3e0c492d09d626ac3c1"
+        }
+      ]
+    },
+    {
+      "file": "bruno/google-home-led-mask.png",
+      "pack": "bruno-my-room-in-3d",
+      "author": "Bruno Simon",
+      "license": "used with the author's permission (private message to the site owner)",
+      "licenseUrl": "https://github.com/brunosimon/my-room-in-3d/tree/5d00b3f870da81f103e901e0d12e20bbcc816834",
+      "source": "https://github.com/brunosimon/my-room-in-3d/blob/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/googleHomeLedMask.png",
+      "bytes": 910,
+      "sha256": "d59d642a3a000626650c835b1f4dae4f9b58aeae1290eef8b4d0f2a921c35f66",
+      "asset": "googleHomeLedMask",
+      "map": "alpha",
+      "width": 32,
+      "height": 32,
+      "sourceFiles": [
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/googleHomeLedMask.png",
+          "bytes": 910,
+          "sha256": "d59d642a3a000626650c835b1f4dae4f9b58aeae1290eef8b4d0f2a921c35f66"
+        }
+      ]
+    }
+  ],
+  "mapBytes": 227576
 }

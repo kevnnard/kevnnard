@@ -35,6 +35,68 @@ export function ledLevel(t: number, index: number, base: number): number {
   return base * (LED_MIN + (1 - LED_MIN) * wave);
 }
 
+/** GoogleLeds.update: each LED's opacity, `sin(t * 0.002 - index * 0.5) * 0.5 + 0.5`. */
+export function googleLedOpacity(t: number, index: number): number {
+  return Math.sin(t * 0.002 - index * 0.5) * 0.5 + 0.5;
+}
+
+/** GoogleLeds' colors, sorted like his led0..led3. */
+export const GOOGLE_LED_COLORS = [
+  "#196aff",
+  "#ff0000",
+  "#ff5d00",
+  "#7db81b",
+] as const;
+
+/** Google Home LED opacity at rest (reduced motion or far away). */
+export const GOOGLE_LED_REST = 0.8;
+
+/**
+ * LoupedeckButtons' animation (T4k): every 5 s about half the buttons light
+ * in one of his colors, staggered 50 ms, fade in over 200 ms, hold 3 s and
+ * fade out over 500 ms (gsap's default power1.out). His Math.random picks are
+ * replaced by a hash of the cycle, so a frame is a pure function of time.
+ */
+export const LOUPEDECK = {
+  buttons: 14,
+  period: 5000,
+  stagger: 50,
+  fadeIn: 200,
+  hold: 3000,
+  fadeOut: 500,
+  colors: ["#af55cf", "#dbd85d", "#e86b24", "#b81b54"],
+} as const;
+
+const unit = (cycle: number, index: number, salt: number) => {
+  const x = Math.sin(cycle * 127.1 + index * 311.7 + salt * 74.7) * 43758.5453;
+  return x - Math.floor(x);
+};
+const easeOut = (p: number) => 1 - (1 - Math.min(Math.max(p, 0), 1)) ** 2;
+
+/** One Loupedeck button at `t` ms: its color and opacity. */
+export function loupedeckButton(
+  t: number,
+  index: number,
+): { color: (typeof LOUPEDECK.colors)[number]; opacity: number } {
+  const cycle = Math.floor(t / LOUPEDECK.period);
+  const local = t - cycle * LOUPEDECK.period;
+  const { colors } = LOUPEDECK;
+  const color = colors[Math.floor(unit(cycle, index, 2) * colors.length)];
+  if (unit(cycle, index, 1) >= 0.5) return { color, opacity: 0 };
+  let order = 0;
+  for (let i = 0; i < index; i++) if (unit(cycle, i, 1) < 0.5) order++;
+  const start = order * LOUPEDECK.stagger;
+  const fading = start + LOUPEDECK.fadeIn + LOUPEDECK.hold;
+  const opacity =
+    local < fading
+      ? easeOut((local - start) / LOUPEDECK.fadeIn)
+      : 1 - easeOut((local - fading) / LOUPEDECK.fadeOut);
+  return { color, opacity };
+}
+
+/** The Loupedeck's still frame: mid-hold of the first cycle. */
+export const LOUPEDECK_REST = 1500;
+
 export interface BounceState {
   x: number;
   y: number;

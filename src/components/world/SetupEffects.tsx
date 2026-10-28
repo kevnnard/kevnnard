@@ -174,7 +174,8 @@ function steamGeometry(scene: Object3D): BufferGeometry {
   return geometry;
 }
 
-const extendLoader = (loader: GLTFLoader) => {
+/** Meshopt-compressed GLBs (scripts/prepare-world.py): no Draco decoder. */
+export const extendLoader = (loader: GLTFLoader) => {
   loader.setMeshoptDecoder(MeshoptDecoder);
 };
 

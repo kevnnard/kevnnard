@@ -10,6 +10,7 @@ import {
   PERMISSION_LICENSE,
 } from "../../src/lib/world/credits.ts";
 import { MODEL_FILES, PROP_FILES } from "../../src/lib/world/models.ts";
+import { BRUNO_CHAIR, BRUNO_MAPS } from "../../src/lib/world/setup.ts";
 import { PUBLIC, shippedModels } from "./glb.ts";
 
 const credits = (): Credits =>
@@ -106,6 +107,27 @@ describe("Bruno Simon's my-room-in-3d (T4i, L25: used with permission)", () => {
     "src/Experience/shaders/coffeeSteam/fragment.glsl",
     "src/Experience/shaders/partials/perlin2d.glsl",
     "static/assets/coffeeSteamModel.glb",
+    // T4k: his chair with its baked shader, and the desk overlays.
+    "src/Experience/Baked.js",
+    "src/Experience/shaders/baked/vertex.glsl",
+    "src/Experience/shaders/baked/fragment.glsl",
+    "src/Experience/ElgatoLight.js",
+    "src/Experience/LoupedeckButtons.js",
+    "static/assets/topChairModel.glb",
+    "static/assets/elgatoLightModel.glb",
+    "static/assets/googleHomeLedsModel.glb",
+    "static/assets/loupedeckButtonsModel.glb",
+    "static/assets/bakedDay.jpg",
+    "static/assets/bakedNight.jpg",
+    "static/assets/bakedNeutral.jpg",
+    "static/assets/lightMap.jpg",
+    "static/assets/googleHomeLedMask.png",
+  ];
+  const BRUNO_MODELS = [
+    "models/bruno-chair.glb",
+    "models/bruno-elgato-light.glb",
+    "models/bruno-google-home-leds.glb",
+    "models/bruno-loupedeck-buttons.glb",
   ];
 
   it("credits every ported file to Bruno Simon at the pinned commit, with its hash", () => {
@@ -115,6 +137,7 @@ describe("Bruno Simon's my-room-in-3d (T4i, L25: used with permission)", () => {
       ...data.assets
         .filter((entry) => entry.author === "Bruno Simon")
         .flatMap((entry) => entry.sourceFiles),
+      ...(data.maps ?? []).flatMap((entry) => entry.sourceFiles),
     ];
     for (const file of FILES) {
       const url = `https://raw.githubusercontent.com/brunosimon/my-room-in-3d/${COMMIT}/${file}`;
@@ -134,6 +157,52 @@ describe("Bruno Simon's my-room-in-3d (T4i, L25: used with permission)", () => {
     );
     assert.equal(steam?.author, "Bruno Simon");
     assert.equal(steam?.license, PERMISSION_LICENSE);
+  });
+
+  it("ships his chair and desk overlays as meshopt GLBs credited to him (T4k)", () => {
+    const data = credits();
+    for (const file of BRUNO_MODELS) {
+      const entry = data.assets.find((item) => item.file === file);
+      assert.ok(entry, `${file} credited`);
+      assert.equal(entry.author, "Bruno Simon");
+      assert.equal(entry.license, PERMISSION_LICENSE);
+      assert.ok(entry.source.includes(COMMIT), file);
+      assert.ok(shippedModels().includes(file), `${file} ships`);
+    }
+  });
+
+  it("ships the chair's cropped baked maps under 600 KB, hashed and credited", () => {
+    const maps = credits().maps ?? [];
+    assert.deepEqual(
+      maps.map((entry) => entry.file).sort(),
+      Object.values(BRUNO_MAPS)
+        .map((url) => url.replace("/world/", ""))
+        .sort(),
+    );
+    let chair = 0;
+    for (const entry of maps) {
+      const data = readFileSync(new URL(entry.file, PUBLIC));
+      assert.equal(entry.bytes, data.length, entry.file);
+      assert.equal(
+        entry.sha256,
+        createHash("sha256").update(data).digest("hex"),
+        entry.file,
+      );
+      assert.equal(entry.author, "Bruno Simon");
+      assert.ok(licenseAllowed(entry), entry.file);
+      if (entry.file.includes("chair-")) {
+        chair += data.length;
+        assert.equal(data.toString("latin1", 8, 12), "WEBP", entry.file);
+      }
+    }
+    assert.ok(chair > 0 && chair <= 600_000, `${chair} bytes`);
+  });
+
+  it("sways the chair hull measured from the shipped model", () => {
+    const chair = credits().assets.find(
+      (entry) => entry.file === "models/bruno-chair.glb",
+    ) as { hull?: number[][] } | undefined;
+    assert.deepEqual(chair?.hull, BRUNO_CHAIR.hull);
   });
 
   it("accepts the permission license only for Bruno Simon's repository", () => {

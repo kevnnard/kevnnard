@@ -22,6 +22,12 @@ refreshes the coffee steam model and the credits for the effects ported from
 his my-room-in-3d (used with his permission, odd/tasks/stylized-house.md L25).
 Sources are cached in node_modules/.cache/world/bruno/<path>; the Draco steam
 model is re-encoded with meshopt, so the runtime needs no Draco decoder.
+T4k adds his top chair and desk overlays (Elgato light, Google Home LEDs,
+Loupedeck buttons), also re-encoded with meshopt. The chair's UV islands are
+repacked into a small atlas: each baked map (day, night, neutral, light map,
+4096 JPEGs shared with his whole room) is decoded with djpeg (DJPEG overrides
+/opt/homebrew/bin/djpeg), cropped island by island and encoded with cwebp
+into public/world/bruno/, so only the chair's texels ship.
 
 Living area step (T4j): `python3 scripts/prepare-world.py --living` only
 refreshes the KayKit Furniture Bits models of the living area (sofa, coffee
@@ -29,6 +35,7 @@ table, TV bench, rug, books, cactus) and their credits.
 """
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import shlex
@@ -194,8 +201,42 @@ BRUNO_PORTS = [
      "src/lib/world/motion.ts"),
     ("wheel-zoom", "Normalized wheel zoom", [EXPERIENCE + "Navigation.js"],
      "src/lib/world/wheel.ts"),
+    ("baked-shader", "Baked day, night and neutral mix with the light map (chair material)",
+     [EXPERIENCE + "Baked.js", EXPERIENCE + "shaders/baked/vertex.glsl",
+      EXPERIENCE + "shaders/baked/fragment.glsl"],
+     "src/components/world/BrunoProps.tsx"),
+    ("elgato-light", "Elgato key light glow", [EXPERIENCE + "ElgatoLight.js"],
+     "src/components/world/BrunoProps.tsx"),
+    ("google-home-leds", "Google Home LED colors and alpha mask", [EXPERIENCE + "GoogleLeds.js"],
+     "src/components/world/BrunoProps.tsx"),
+    ("loupedeck-buttons", "Loupedeck button colors and timing",
+     [EXPERIENCE + "LoupedeckButtons.js"], "src/lib/world/motion.ts"),
 ]
 BRUNO_STEAM = "static/assets/coffeeSteamModel.glb"
+BRUNO_ASSETS = "static/assets/"
+# Shipped name, his model (T4k).
+BRUNO_MODELS = [
+    ("bruno-chair", "topChairModel"),
+    ("bruno-elgato-light", "elgatoLightModel"),
+    ("bruno-google-home-leds", "googleHomeLedsModel"),
+    ("bruno-loupedeck-buttons", "loupedeckButtonsModel"),
+]
+# Chair atlas maps: shipped name, his baked JPEG, cwebp flags.
+BRUNO_BAKED = [
+    ("day", "bakedDay.jpg", ["-q", "80"]),
+    ("night", "bakedNight.jpg", ["-q", "80"]),
+    ("neutral", "bakedNeutral.jpg", ["-q", "80"]),
+    ("light-map", "lightMap.jpg", ["-q", "85"]),
+]
+BRUNO_MASK = "googleHomeLedMask.png"
+BRUNO_FLAGS = ["--simplify", "false", "--join", "false", "--instance", "false",
+               "--palette", "false", "--flatten", "false"]
+# Source atlas size, island padding (source texels), packed shelf width and
+# the shipped scale of the packed atlas.
+ATLAS = {"source": 4096, "pad": 8, "width": 2048, "scale": 1}
+# Horizontal slabs of the chair's collision hull (his units, around his pivot).
+HULL_SLABS = 8
+DJPEG = os.environ.get("DJPEG", "/opt/homebrew/bin/djpeg")
 
 
 def bruno_cached(path):
@@ -207,6 +248,264 @@ def bruno_cached(path):
         target.write_bytes(fetch(url))
     data = target.read_bytes()
     return target, {"url": url, "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
+
+
+def glb_split(data):
+    length = struct.unpack_from("<I", data, 12)[0]
+    gltf = json.loads(data[20:20 + length])
+    start = 20 + length
+    size = struct.unpack_from("<I", data, start)[0]
+    return gltf, bytearray(data[start + 8:start + 8 + size])
+
+
+def glb_join(gltf, binary):
+    text = json.dumps(gltf, separators=(",", ":")).encode("utf-8")
+    text += b" " * (-len(text) % 4)
+    binary = bytes(binary) + b"\0" * (-len(binary) % 4)
+    total = 12 + 8 + len(text) + 8 + len(binary)
+    return (struct.pack("<III", 0x46546C67, 2, total)
+            + struct.pack("<I4s", len(text), b"JSON") + text
+            + struct.pack("<I4s", len(binary), b"BIN\0") + binary)
+
+
+def accessor_slots(gltf, index, count):
+    """Byte offsets of each element of a float accessor."""
+    accessor = gltf["accessors"][index]
+    if accessor["componentType"] != 5126:
+        raise ValueError("expected a float accessor")
+    view = gltf["bufferViews"][accessor["bufferView"]]
+    stride = view.get("byteStride", 4 * count)
+    base = view.get("byteOffset", 0) + accessor.get("byteOffset", 0)
+    return [base + i * stride for i in range(accessor["count"])]
+
+
+def read_indices(gltf, binary, index):
+    accessor = gltf["accessors"][index]
+    view = gltf["bufferViews"][accessor["bufferView"]]
+    fmt = {5121: "B", 5123: "H", 5125: "I"}[accessor["componentType"]]
+    base = view.get("byteOffset", 0) + accessor.get("byteOffset", 0)
+    return list(struct.unpack_from("<%d%s" % (accessor["count"], fmt), binary, base))
+
+
+def node_transform(node):
+    """3x4 local matrix of a glTF node (TRS)."""
+    t = node.get("translation", [0, 0, 0])
+    x, y, z, w = node.get("rotation", [0, 0, 0, 1])
+    s = node.get("scale", [1, 1, 1])
+    r = [[1 - 2 * (y * y + z * z), 2 * (x * y - z * w), 2 * (x * z + y * w)],
+         [2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w)],
+         [2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y)]]
+    return [[r[i][0] * s[0], r[i][1] * s[1], r[i][2] * s[2], t[i]] for i in range(3)]
+
+
+def decompress(source, target):
+    """His Draco GLB as plain float attributes, hierarchy untouched."""
+    target.parent.mkdir(parents=True, exist_ok=True)
+    subprocess.run([*CLI, "optimize", str(source), str(target), "--compress", "false",
+                    "--weld", "false", "--prune", "false", *BRUNO_FLAGS],
+                   check=True, stdout=subprocess.DEVNULL, cwd=ROOT)
+
+
+def chair_islands(gltf, binary, primitive):
+    """UV islands (connected triangles) and each one's padded texel rectangle."""
+    slots = accessor_slots(gltf, primitive["attributes"]["TEXCOORD_0"], 2)
+    uvs = [struct.unpack_from("<ff", binary, offset) for offset in slots]
+    indices = read_indices(gltf, binary, primitive["indices"])
+    parent = list(range(len(uvs)))
+
+    def root(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    for t in range(0, len(indices), 3):
+        a = root(indices[t])
+        for k in (1, 2):
+            b = root(indices[t + k])
+            if a != b:
+                parent[b] = a
+    size, pad = ATLAS["source"], ATLAS["pad"]
+    rects = {}
+    for i in set(indices):
+        u, v = uvs[i]
+        rect = rects.setdefault(root(i), [u, v, u, v])
+        rect[:] = [min(rect[0], u), min(rect[1], v), max(rect[2], u), max(rect[3], v)]
+    islands = {key: (max(int(r[0] * size) - pad, 0), max(int(r[1] * size) - pad, 0),
+                     min(int(r[2] * size) + 1 + pad, size), min(int(r[3] * size) + 1 + pad, size))
+               for key, r in rects.items()}
+    return uvs, slots, root, islands
+
+
+def shelf_pack(islands, width):
+    """Tallest first, left to right in rows: island -> (x, y), and the height."""
+    order = sorted(islands, key=lambda key: (islands[key][1] - islands[key][3], key))
+    x = y = row = 0
+    places = {}
+    for key in order:
+        x0, y0, x1, y1 = islands[key]
+        if x + x1 - x0 > width:
+            x, y, row = 0, y + row, 0
+        places[key] = (x, y)
+        x += x1 - x0
+        row = max(row, y1 - y0)
+    step = int(4 / ATLAS["scale"])
+    return places, -(-(y + row) // step) * step
+
+
+def chair_hull(gltf, binary, mesh_node, primitive):
+    """Per-slab bounds [x0, x1, y0, y1, z0, z1] of the chair around his pivot."""
+    matrix = node_transform(mesh_node)
+    slots = accessor_slots(gltf, primitive["attributes"]["POSITION"], 3)
+    points = []
+    for offset in slots:
+        p = struct.unpack_from("<fff", binary, offset)
+        points.append([sum(matrix[r][c] * p[c] for c in range(3)) + matrix[r][3] for r in range(3)])
+    indices = read_indices(gltf, binary, primitive["indices"])
+    low = min(p[1] for p in points)
+    high = max(p[1] for p in points)
+    step = (high - low) / HULL_SLABS
+    slabs = [[1e9, -1e9, low + k * step, low + (k + 1) * step, 1e9, -1e9] for k in range(HULL_SLABS)]
+    for t in range(0, len(indices), 3):
+        tri = [points[indices[t + k]] for k in range(3)]
+        y0, y1 = min(p[1] for p in tri), max(p[1] for p in tri)
+        for slab in slabs:
+            if y1 >= slab[2] and y0 <= slab[3]:
+                slab[0] = min(slab[0], *(p[0] for p in tri))
+                slab[1] = max(slab[1], *(p[0] for p in tri))
+                slab[4] = min(slab[4], *(p[2] for p in tri))
+                slab[5] = max(slab[5], *(p[2] for p in tri))
+    # Rounded outwards, so the hull always contains the mesh.
+    down = lambda value: math.floor(value * 1000) / 1000
+    up = lambda value: math.ceil(value * 1000) / 1000
+    return [[down(s[0]), up(s[1]), down(s[2]), up(s[3]), down(s[4]), up(s[5])] for s in slabs]
+
+
+def read_ppm(path):
+    data = path.read_bytes()
+    tokens, position = [], 0
+    while len(tokens) < 4:
+        while data[position:position + 1].isspace():
+            position += 1
+        end = position
+        while not data[end:end + 1].isspace():
+            end += 1
+        tokens.append(data[position:end])
+        position = end
+    if tokens[0] != b"P6" or tokens[3] != b"255":
+        raise ValueError("%s is not an 8-bit PPM" % path)
+    return int(tokens[1]), int(tokens[2]), data[position + 1:]
+
+
+def bake_atlas(jpeg, islands, places, height, target, flags):
+    """Copies each island's texels from his atlas into the packed one, as WebP."""
+    work = CACHE / "bruno" / "atlas"
+    work.mkdir(parents=True, exist_ok=True)
+    source_ppm = work / (target.stem + "-source.ppm")
+    subprocess.run([DJPEG, "-pnm", "-outfile", str(source_ppm), str(jpeg)], check=True)
+    size, size_y, pixels = read_ppm(source_ppm)
+    if (size, size_y) != (ATLAS["source"], ATLAS["source"]):
+        raise ValueError("%s is %dx%d" % (jpeg.name, size, size_y))
+    width = ATLAS["width"]
+    packed = bytearray(width * height * 3)
+    for key, (x0, y0, x1, y1) in islands.items():
+        px, py = places[key]
+        span = (x1 - x0) * 3
+        for row in range(y1 - y0):
+            src = ((y0 + row) * size + x0) * 3
+            dst = ((py + row) * width + px) * 3
+            packed[dst:dst + span] = pixels[src:src + span]
+    packed_ppm = work / (target.stem + ".ppm")
+    packed_ppm.write_bytes(b"P6\n%d %d\n255\n" % (width, height) + bytes(packed))
+    out = [round(width * ATLAS["scale"]), round(height * ATLAS["scale"])]
+    target.parent.mkdir(parents=True, exist_ok=True)
+    subprocess.run([CWEBP, *flags, "-metadata", "none", "-resize", str(out[0]), str(out[1]),
+                    str(packed_ppm), "-o", str(target)], check=True, capture_output=True)
+    data = target.read_bytes()
+    if list(webp_size(data)) != out:
+        raise ValueError("%s is not %dx%d" % (target.name, *out))
+    return data, out
+
+
+def bruno_entry(name, info_path, data, sources, **extra):
+    return {"file": name, "pack": BRUNO_PACK["id"], "author": "Bruno Simon",
+            "license": BRUNO_LICENSE, "licenseUrl": BRUNO_PACK["licenseUrl"],
+            "source": "%s/blob/%s/%s" % (BRUNO_REPO, BRUNO_COMMIT, info_path),
+            "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest(),
+            **extra, "sourceFiles": sources}
+
+
+def meshopt_bruno(name, entry, model, info, **extra):
+    target = OUTPUT / "models" / (name + ".glb")
+    subprocess.run([*CLI, "optimize", str(entry), str(target), "--compress", "meshopt",
+                    *BRUNO_FLAGS], check=True, stdout=subprocess.DEVNULL, cwd=ROOT)
+    data = target.read_bytes()
+    output = glb_json(data)
+    triangles = sum(output["accessors"][p["indices"]]["count"] // 3
+                    for mesh in output["meshes"] for p in mesh["primitives"])
+    print(name, "<-", model, triangles, "triangles,", len(data), "bytes", flush=True)
+    return bruno_entry("models/" + target.name, BRUNO_ASSETS + model + ".glb", data, [info],
+                       asset=model, triangles=triangles, **extra)
+
+
+def prepare_bruno_chair():
+    """His top chair with its UVs moved onto a packed atlas of its own texels."""
+    source, info = bruno_cached(BRUNO_ASSETS + "topChairModel.glb")
+    plain = CACHE / "bruno" / "plain" / "topChairModel.glb"
+    decompress(source, plain)
+    gltf, binary = glb_split(plain.read_bytes())
+    pivot = gltf["nodes"][gltf["scenes"][0]["nodes"][0]]
+    if len(pivot.get("children", [])) != 1 or "mesh" in pivot:
+        raise ValueError("topChairModel: expected one pivot with one mesh child")
+    mesh_node = gltf["nodes"][pivot["children"][0]]
+    primitive = gltf["meshes"][mesh_node["mesh"]]["primitives"][0]
+    uvs, slots, root, islands = chair_islands(gltf, binary, primitive)
+    places, height = shelf_pack(islands, ATLAS["width"])
+    size = ATLAS["source"]
+    for i, offset in enumerate(slots):
+        u, v = uvs[i]
+        x0, y0, _, _ = islands[root(i)]
+        px, py = places[root(i)]
+        struct.pack_into("<ff", binary, offset, (u * size - x0 + px) / ATLAS["width"],
+                         (v * size - y0 + py) / height)
+    accessor = gltf["accessors"][primitive["attributes"]["TEXCOORD_0"]]
+    accessor.pop("min", None)
+    accessor.pop("max", None)
+    remapped = CACHE / "bruno" / "plain" / "topChairModel-atlas.glb"
+    remapped.write_bytes(glb_join(gltf, binary))
+    print("chair atlas:", len(islands), "islands,", ATLAS["width"], "x", height, "texels", flush=True)
+    maps = []
+    for kind, jpeg, flags in BRUNO_BAKED:
+        path, jpeg_info = bruno_cached(BRUNO_ASSETS + jpeg)
+        target = OUTPUT / "bruno" / ("chair-%s.webp" % kind)
+        data, (width, out_height) = bake_atlas(path, islands, places, height, target, flags)
+        print(target.name, len(data), "bytes", flush=True)
+        maps.append(bruno_entry("bruno/" + target.name, BRUNO_ASSETS + jpeg, data,
+                                [jpeg_info, info], asset=Path(jpeg).stem, map=kind,
+                                width=width, height=out_height))
+    model = meshopt_bruno("bruno-chair", remapped, "topChairModel", info,
+                          hull=chair_hull(gltf, binary, mesh_node, primitive),
+                          pivot=[round(value, 6) for value in pivot.get("translation", [0, 0, 0])])
+    return model, maps
+
+
+def prepare_bruno_props():
+    """The chair, the three desk overlays and the Google Home LED mask (T4k)."""
+    chair, maps = prepare_bruno_chair()
+    models = [chair]
+    for name, model in BRUNO_MODELS[1:]:
+        entry, info = bruno_cached(BRUNO_ASSETS + model + ".glb")
+        models.append(meshopt_bruno(name, entry, model, info))
+    mask, info = bruno_cached(BRUNO_ASSETS + BRUNO_MASK)
+    data = mask.read_bytes()
+    if data[:8] != b"\x89PNG\r\n\x1a\n":
+        raise ValueError("googleHomeLedMask is not a PNG")
+    target = OUTPUT / "bruno" / "google-home-led-mask.png"
+    target.write_bytes(data)
+    width, height = struct.unpack_from(">II", data, 16)
+    maps.append(bruno_entry("bruno/" + target.name, BRUNO_ASSETS + BRUNO_MASK, data, [info],
+                            asset="googleHomeLedMask", map="alpha", width=width, height=height))
+    return models, maps
 
 
 def prepare_bruno():
@@ -231,15 +530,16 @@ def prepare_bruno():
         "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest(),
         "triangles": triangles, "sourceFiles": [info],
     }
-    return asset, ported
+    models, maps = prepare_bruno_props()
+    return [asset, *models], ported, maps
 
 
 def with_bruno(credits, bruno):
-    asset, ported = bruno
+    assets_bruno, ported, maps = bruno
     packs = [pack for pack in credits["packs"] if pack["id"] != BRUNO_PACK["id"]]
     assets = [a for a in credits["assets"] if a["pack"] != BRUNO_PACK["id"]]
-    return {**credits, "packs": [*packs, BRUNO_PACK], "assets": [*assets, asset],
-            "ported": ported}
+    return {**credits, "packs": [*packs, BRUNO_PACK], "assets": [*assets, *assets_bruno],
+            "ported": ported, "maps": maps, "mapBytes": sum(m["bytes"] for m in maps)}
 
 
 TEXTURE_PACK = {

@@ -66,7 +66,7 @@ fails otherwise (S4). The credits are shown in the "Credits" dialog.
 | Kenney Mini Arena 1.0 | Kenney, Tony Schär | CC0 1.0 | tree |
 | Kenney Starter Kit 3D Platformer | Kenney | CC0 1.0 | grass tufts |
 | KayKit Furniture Bits 1.0 | Kay Lousberg | CC0 1.0 | sofa, coffee table, TV bench, rug, books, cactus |
-| StylizedTextures | CreativeTrio | CC0 1.0 | wall planks, floor, roof shingles, chair leather, speaker grilles, PC panels |
+| StylizedTextures | CreativeTrio | CC0 1.0 | wall planks, floor, roof shingles, chair leather (shipped, unused since T4k), speaker grilles, PC panels |
 
 ### Textures (T4e)
 
@@ -166,12 +166,35 @@ React Three Fiber, keeping his math:
 | "KV" initials bouncing on the side screen | `motion.ts`, `SetupEffects.tsx` | `BouncingLogo.js` |
 | Normalized wheel zoom | `wheel.ts`, `WorldScene.tsx` | `Navigation.js` (normalize-wheel) |
 
+### Bruno's chair and desk gadgets (T4k)
+
+| Piece | Ours | His |
+| --- | --- | --- |
+| Top chair (seat, back, armrests, headrest) on our five-star base and column | `BrunoProps.tsx` `BrunoChair`, `models/bruno-chair.glb` | `topChairModel.glb`, `TopChair.js` |
+| Chair material: day/night/neutral bake mix plus light map | `BrunoProps.tsx` (night mix from `worldLight(hours).stars`, neutral 0.12, PC channel tinted with our RGB) | `Baked.js`, baked shaders, glsl-blend lighten (inlined) |
+| Elgato key light glow on an original panel, arm and pole | `models/bruno-elgato-light.glb`, `setup.ts` body | `elgatoLightModel.glb`, `ElgatoLight.js` |
+| Google Home Mini LEDs on an original fabric puck, breathing | `models/bruno-google-home-leds.glb`, `bruno/google-home-led-mask.png`, `motion.ts` | `googleHomeLedsModel.glb`, `googleHomeLedMask.png`, `GoogleLeds.js` |
+| Loupedeck button screens on an original sloped console | `models/bruno-loupedeck-buttons.glb`, `motion.ts` (seeded, no gsap) | `loupedeckButtonsModel.glb`, `LoupedeckButtons.js` |
+
+His baked maps are 4096 atlases shared with his whole room. The `--bruno`
+step decodes the chair, groups its triangles into UV islands, packs each
+island's texels (plus 8 texels of padding) into a 2048x736 atlas, rewrites
+the chair's UVs onto it and encodes the four maps as WebP under
+`public/world/bruno/` (about 227 KB in total). His overlays are placed as his
+classes add them: each model keeps his node transforms, moved from his room
+onto our body by `BRUNO_OVERLAYS` (`from` in his coordinates, `to`, `yaw`,
+`BRUNO_SCALE` = 0.3 m per unit). His `pcScreenModel` and `macScreenModel` are
+not used: our monitors already have screens, and his are video planes sized
+for his monitors. The chair's sway clearance is tested on a hull of eight
+slabs measured from the shipped model (`hull` in its credit).
+
 `/world` renders on demand. The setup requests frames continuously only while
 the camera is within 16 m of it, and never with reduced motion. Otherwise it rests: chair
 centred, LEDs at the hour's glow, logo still, steam frozen (hidden with
 reduced motion). `python3 scripts/prepare-world.py --bruno` re-encodes the
-Draco steam model with meshopt and writes the Bruno Simon credits (pack,
-asset and `ported` entries with each source file's sha256). Only Bruno Simon's
+Draco steam, chair and overlay models with meshopt, builds the chair atlas and
+writes the Bruno Simon credits (pack, asset, `maps` and `ported` entries with
+each source file's sha256). Only Bruno Simon's
 repository may use the permission license (`licenseAllowed` in
 `src/lib/world/credits.ts`).
 

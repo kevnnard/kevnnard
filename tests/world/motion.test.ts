@@ -6,8 +6,11 @@ import {
   bounceStep,
   CHAIR_SWAY,
   chairSway,
+  googleLedOpacity,
   LED_MIN,
+  LOUPEDECK,
   ledLevel,
+  loupedeckButton,
   setupAnimates,
 } from "../../src/lib/world/motion.ts";
 import {
@@ -52,8 +55,16 @@ describe("setup animations (T4i, ported from Bruno Simon's my-room-in-3d)", () =
   });
 
   it("keeps the swaying chair clear of the desk, monitors, PC and props", () => {
-    const swivel = meshes.solid.filter((part) => part.rig === "swivel");
-    assert.ok(swivel.length > 10, "seat, back and armrests swivel");
+    // Bruno's top chair (T4k) swivels as a hull of boxes around its mesh.
+    const swivel = [
+      ...meshes.solid.filter((part) => part.rig === "swivel"),
+      ...meshes.hull,
+    ];
+    assert.ok(meshes.hull.length >= 6, "Bruno's seat, back and armrests");
+    assert.ok(
+      meshes.hull.every((part) => part.rig === "swivel"),
+      "hull swivels",
+    );
     const fixed = [...meshes.solid, ...meshes.glow, ...meshes.glass].filter(
       (part) => !part.rig,
     );
@@ -85,6 +96,38 @@ describe("setup animations (T4i, ported from Bruno Simon's my-room-in-3d)", () =
       meshes.glow.filter((part) => part.led !== undefined).length >= 4,
       "keyboard underglow and PC strips",
     );
+  });
+
+  it("breathes the Google Home LEDs with Bruno's phased wave", () => {
+    for (let t = 0; t < 10_000; t += 17)
+      for (const index of [0, 1, 2, 3]) {
+        const level = googleLedOpacity(t, index);
+        assert.ok(level >= 0 && level <= 1);
+        assert.ok(
+          Math.abs(level - (Math.sin(t * 0.002 - index * 0.5) * 0.5 + 0.5)) <
+            1e-12,
+        );
+      }
+  });
+
+  it("lights a seeded half of the Loupedeck buttons every 5 s, then fades them", () => {
+    for (let cycle = 0; cycle < 6; cycle++) {
+      const start = cycle * LOUPEDECK.period;
+      let lit = 0;
+      for (let index = 0; index < LOUPEDECK.buttons; index++) {
+        const held = loupedeckButton(start + 1500, index);
+        assert.ok(held.opacity === 0 || held.opacity === 1, `${held.opacity}`);
+        assert.ok(LOUPEDECK.colors.includes(held.color));
+        if (held.opacity === 1) lit++;
+        assert.equal(loupedeckButton(start + 4900, index).opacity, 0, "faded");
+        assert.equal(
+          loupedeckButton(start + 1500, index).opacity,
+          held.opacity,
+          "deterministic",
+        );
+      }
+      assert.ok(lit > 0 && lit < LOUPEDECK.buttons, `${lit} lit`);
+    }
   });
 
   it("bounces the logo inside the side screen", () => {

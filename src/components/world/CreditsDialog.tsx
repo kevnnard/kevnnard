@@ -112,7 +112,11 @@ export function CreditsDialog() {
                 pack={pack}
                 files={[
                   ...new Set(
-                    [...credits.assets, ...(credits.textures ?? [])]
+                    [
+                      ...credits.assets,
+                      ...(credits.textures ?? []),
+                      ...(credits.maps ?? []),
+                    ]
                       .filter((entry) => entry.pack === pack.id)
                       .map((entry) => entry.asset),
                   ),

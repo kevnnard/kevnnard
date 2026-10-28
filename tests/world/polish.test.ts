@@ -50,16 +50,11 @@ describe("setup and house polish (T4h, S12)", () => {
     assert.ok(Math.abs(Math.max(...ys) - 0.01) < EPS);
   });
 
-  it("rounds the desk top, bezels, speakers, PC case, chair and keycaps", () => {
+  it("rounds the desk top, bezels, speakers, PC case, desk gadgets and keycaps", () => {
     const { solid } = setupMeshes();
     const rounded = solid.filter((part) => part.shape === "rounded");
-    for (const id of [
-      "laminate",
-      "satin",
-      "panel",
-      "leather",
-      "keycap",
-    ] as const)
+    // The leather seat gave way to Bruno Simon's top chair (T4k).
+    for (const id of ["laminate", "satin", "panel", "keycap"] as const)
       assert.ok(
         rounded.some((part) => part.material === id),
         `${id} rounded`,
