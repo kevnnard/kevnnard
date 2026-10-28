@@ -1,0 +1,69 @@
+{
+  "license": "CC0-1.0",
+  "provider": "Poly Haven",
+  "runtimeExternalRequests": false,
+  "attributionEvidence": "https://api.polyhaven.com/info/{asset}",
+  "processing": "Selected one source variant using verified HTTP ranges; meshopt geometry, WebP 1024px near/512px far textures. Full binary source MD5 is declared, not verified; selected ranges have locally recorded SHA-256.",
+  "assets": [
+    {
+      "species": "pine",
+      "source": "https://polyhaven.com/a/pine_tree_01",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "authors": {
+        "Rob Tuytel": "photography",
+        "Rico Cilliers": "modeling"
+      },
+      "selectedVariant": "pine_tree_01_b_LOD0",
+      "gltfUrl": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/pine_tree_01/pine_tree_01_1k.gltf",
+      "gltfSha256": "c81e8eebbda722313f07bed37b8b9156ce520f7fa95488d83a694d02fffdb469",
+      "extractedGeometryBytes": 233090004,
+      "extractedRangesSha256": "a0c68f52cfa7fc20014ac151d89d0d57a7bcf7b66ed3eb3cb55edaaa58aec151",
+      "sourceBinaryMd5DeclaredNotFullyVerified": "3079e56cc48c57d8ba530d005e86bae6",
+      "files": [
+        {
+          "path": "pine-near.glb",
+          "bytes": 1593056,
+          "sha256": "3620d15ac30b48bdfc7b17854b367f95cb9e201c5c03508d56c19b0d8f18af49",
+          "triangles": 16795
+        },
+        {
+          "path": "pine-far.glb",
+          "bytes": 399536,
+          "sha256": "e6c99ee18a208738d787ce14b8463bf21cf6d30056739d0f5374dc778b4dc148",
+          "triangles": 2802
+        }
+      ]
+    },
+    {
+      "species": "fir",
+      "source": "https://polyhaven.com/a/fir_tree_01",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "authors": {
+        "Rob Tuytel": "photography",
+        "Rico Cilliers": "modeling"
+      },
+      "selectedVariant": "fir_tree_01_c_LOD0",
+      "gltfUrl": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/fir_tree_01/fir_tree_01_1k.gltf",
+      "gltfSha256": "72e49eefb4ed4db6a8ca5e17fb10980f8463dd300d94589ac774cde95ade7709",
+      "extractedGeometryBytes": 33249936,
+      "extractedRangesSha256": "441df9085f78ba1089fce6bb958ffaa721af6abaa76a530e104c36628843a42a",
+      "sourceBinaryMd5DeclaredNotFullyVerified": "26d2bf6d4d2e32d3524e8fa3760f643f",
+      "files": [
+        {
+          "path": "fir-near.glb",
+          "bytes": 1000456,
+          "sha256": "e36bf8e1759319589cab27948da732cae1e2cf670130b9adfe6c563c8a127a92",
+          "triangles": 11393
+        },
+        {
+          "path": "fir-far.glb",
+          "bytes": 252200,
+          "sha256": "bd86483b0947e9045f5de40acdc8f1d5d69745d740ef7d1f983876485760e83c",
+          "triangles": 1314
+        }
+      ]
+    }
+  ]
+}
