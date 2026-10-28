@@ -1,17 +1,13 @@
-// Pure grounded walking camera around the house. The camera stays at a fixed
-// eye height, inside a disc around the plot and outside every solid that
-// reaches that height. PC/TV focus views are scripted and not limited by this.
+// Pure grounded walking camera in front of the room cutaway. The camera stays
+// at a fixed eye height, inside the small shared view zone and outside every
+// solid that reaches that height. PC/TV focus views are scripted and not
+// limited by this.
 
-import { type Bounds, type CameraView, fitView, type Vec3 } from "./camera.ts";
-import {
-  LEVELS,
-  PARTS,
-  ROOF,
-  ROOM_BOUNDS,
-  SCENE_BOUNDS,
-} from "./house-layout.ts";
+import type { Bounds, CameraView, Vec3 } from "./camera.ts";
+import { EYE_HEIGHT, VIEW_ZONE, type XZ } from "./forest-view.ts";
+import { LEVELS, PARTS, ROOF, ROOM_BOUNDS } from "./house-layout.ts";
 
-export type XZ = readonly [number, number];
+export type { XZ };
 
 export interface Rect {
   min: XZ;
@@ -52,7 +48,7 @@ export interface WalkArea {
 
 export const WALK = {
   /** Eye height above the grass, in world units. */
-  eyeHeight: 2,
+  eyeHeight: EYE_HEIGHT,
   /** Clearance kept between the camera and any solid. */
   bodyRadius: 0.45,
   /** Look target distance; smaller than bodyRadius so it never enters a solid. */
@@ -68,15 +64,13 @@ export const WALK = {
   maxFrame: 0.1,
   /** Longest single wheel/pinch step, in units. */
   maxStep: 0.6,
-  /** Extra walking room around the plot's half-diagonal. */
-  margin: 3,
 } as const;
 
-// Directions from the room to where the cutaway is open (-x/+z).
-const OPEN_SIDE: Vec3 = [-Math.SQRT1_2, 0, Math.SQRT1_2];
-// The eye sits below the room center, so the near top corner needs more room
-// than a level fit.
-const HOME_MARGIN = 1.3;
+// On wide screens the home view looks left of the room by up to this share
+// of the half field of view, leaving the left of the frame to the forest,
+// while the room's right edge stays inside this share of it.
+const ROOM_SHIFT = 0.35;
+const ROOM_EDGE = 0.9;
 const EPSILON = 1e-6;
 
 const clamp = (value: number, lo: number, hi: number) =>
@@ -86,7 +80,7 @@ const center3 = (box: Bounds) =>
   [0, 1, 2].map((i) => (box.min[i] + box.max[i]) / 2);
 
 export function walkArea(): WalkArea {
-  const eyeY = LEVELS.terrainTop + WALK.eyeHeight;
+  const eyeY = VIEW_ZONE.eyeY;
   // Anything taller than waist height blocks: walls, facade, posts, roofs and
   // the room. Hedges, furniture and paving pass under the eye.
   const waist = LEVELS.terrainTop + WALK.eyeHeight / 2;
@@ -106,24 +100,13 @@ export function walkArea(): WalkArea {
       max: [box.max[0] + r, box.max[2] + r],
     }),
   );
-  const [cx, , cz] = center3(SCENE_BOUNDS);
-  const radius =
-    Math.hypot(SCENE_BOUNDS.max[0] - cx, SCENE_BOUNDS.max[2] - cz) +
-    WALK.margin;
-  const area = {
-    center: [cx, cz] as XZ,
-    radius,
+  return {
+    center: VIEW_ZONE.center,
+    radius: VIEW_ZONE.radius,
     eyeY,
     blockers,
-    spawn: [0, 0] as XZ,
+    spawn: VIEW_ZONE.home,
   };
-  // Halfway out from the room on the open side is clear of every solid.
-  const [rx, , rz] = center3(ROOM_BOUNDS);
-  area.spawn = intoDisc(area, [
-    rx + OPEN_SIDE[0] * radius * 0.6,
-    rz + OPEN_SIDE[2] * radius * 0.6,
-  ]);
-  return area;
 }
 
 export const WALK_AREA = walkArea();
@@ -287,8 +270,9 @@ export function walkView(area: WalkArea, pose: WalkPose): CameraView {
 }
 
 /**
- * Starting pose: from the open -x/+z side, as close as fits `room` on screen
- * (limited by the disc on narrow screens), looking at the room center.
+ * Starting pose: always the zone's spawn on the open -x/+z side, facing the
+ * room. Wide screens place the room right of center so the forest frames the
+ * left; narrow screens center it.
  */
 export function homePose(
   area: WalkArea,
@@ -296,10 +280,27 @@ export function homePose(
   aspect: number,
   room: Bounds = ROOM_BOUNDS,
 ): WalkPose {
-  const fit = fitView(room, fovDegrees, aspect, OPEN_SIDE, HOME_MARGIN);
-  const [x, z] = settle(area, [fit.position[0], fit.position[2]]);
+  const [x, z] = settle(area, area.spawn);
   const [rx, ry, rz] = center3(room);
-  const yaw = Math.atan2(rx - x, rz - z);
+  const toRoom = Math.atan2(rx - x, rz - z);
+  const half = Math.atan(Math.tan((fovDegrees * Math.PI) / 360) * aspect);
+  // Screen-right angles of the room's ground corners (yaw grows leftward).
+  const right = Math.max(
+    ...[0, 1, 2, 3].map((bits) =>
+      wrap(
+        toRoom -
+          Math.atan2(
+            (bits & 1 ? room.max[0] : room.min[0]) - x,
+            (bits & 2 ? room.max[2] : room.min[2]) - z,
+          ),
+      ),
+    ),
+  );
+  const shift = Math.max(
+    0,
+    Math.min(half * ROOM_SHIFT, half * ROOM_EDGE - right),
+  );
+  const yaw = wrap(toRoom + shift);
   const pitch = clamp(
     Math.atan2(ry - area.eyeY, Math.hypot(rx - x, rz - z)),
     WALK.minPitch,

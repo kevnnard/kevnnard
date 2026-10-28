@@ -47,7 +47,7 @@ a clickable link is also printed in case the popup is blocked.
 ## Sky and time of day
 
 - In overview, drag the scene to look around from a low eye height. Wheel or pinch steps
-  forward/back within the house's bounded exterior walking area. Focus the scene for
+  forward/back within a small walking zone in front of the open cutaway. Focus the scene for
   W/A/S/D movement, arrow-key movement/turning and Page Up/Down look. Looking nearly
   straight up does not lower the camera under the terrain; see [room-walk-camera.md](room-walk-camera.md).
   The wheel **over the clock** changes the time instead and never reaches the scene or page.

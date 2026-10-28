@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { PerspectiveCamera, Vector3 } from "three";
 import { fitView } from "../../src/lib/room/camera.ts";
+import { VIEW_ZONE } from "../../src/lib/room/forest-view.ts";
 import {
   LEVELS,
   PARTS,
@@ -18,6 +19,7 @@ import {
   stepWalk,
   WALK,
   WALK_AREA,
+  type WalkArea,
   type WalkPose,
   walk,
   walkReach,
@@ -78,19 +80,14 @@ function assertPhysical(pose: WalkPose, label: string) {
 }
 
 describe("walk area", () => {
-  it("is a disc around the plot derived from the scene bounds, not the forest", () => {
-    const cx = (SCENE_BOUNDS.min[0] + SCENE_BOUNDS.max[0]) / 2;
-    const cz = (SCENE_BOUNDS.min[2] + SCENE_BOUNDS.max[2]) / 2;
-    assert.deepEqual(area.center, [cx, cz]);
-    const halfDiagonal = Math.hypot(
-      SCENE_BOUNDS.max[0] - cx,
-      SCENE_BOUNDS.max[2] - cz,
-    );
-    // Covers every plot corner, but stays close to the house.
-    assert.ok(area.radius >= halfDiagonal && area.radius <= halfDiagonal + 4);
+  it("is a small ground-level zone in front of the cutaway, not the whole plot", () => {
+    assert.deepEqual(area.center, VIEW_ZONE.center);
+    assert.equal(area.radius, VIEW_ZONE.radius);
+    assert.ok(area.radius <= 4);
+    // The plot corners are out of reach: no walking around the house.
     for (const x of [PLOT.min[0], PLOT.max[0]])
       for (const z of [PLOT.min[2], PLOT.max[2]])
-        assert.ok(fromCenter(x, z) <= area.radius);
+        assert.ok(fromCenter(x, z) > area.radius);
     assert.ok(Math.abs(area.eyeY - EYE_Y) < 1e-12);
     assert.ok(WALK.eyeHeight >= 1.5 && WALK.eyeHeight <= 2.2);
   });
@@ -103,7 +100,7 @@ describe("walk area", () => {
       const z = area.center[1] + Math.cos(angle) * area.radius;
       assert.ok(Math.hypot(x, z) + WALK.lookDistance <= reach + 1e-9);
     }
-    assert.ok(reach < 25);
+    assert.ok(reach < 20);
   });
 
   it("blocks the room, wing shell, roofs and posts but not low hedges or furniture", () => {
@@ -112,12 +109,23 @@ describe("walk area", () => {
     for (const solid of SHELL) {
       const [x, z] = center(solid);
       assert.ok(!isWalkable(area, x, z), `solid at ${x}, ${z} is walkable`);
+      assert.ok(
+        area.blockers.some(
+          (b) => x > b.min[0] && x < b.max[0] && z > b.min[1] && z < b.max[1],
+        ),
+        `solid at ${x}, ${z} is not a blocker`,
+      );
     }
     for (const id of ["hedge-front-west", "patio-bench", "patio-table"]) {
       const part = PARTS.find((p) => p.id === id);
       assert.ok(part);
       const [x, z] = center(part);
-      assert.ok(isWalkable(area, x, z), `${id} blocks walking`);
+      assert.ok(
+        !area.blockers.some(
+          (b) => x > b.min[0] && x < b.max[0] && z > b.min[1] && z < b.max[1],
+        ),
+        `${id} blocks walking`,
+      );
     }
     assert.ok(!isWalkable(area, NaN, 0));
     assert.ok(!isWalkable(area, 0, Infinity));
@@ -130,6 +138,8 @@ describe("home pose", () => {
       const pose = homePose(area, 45, aspect);
       assertPhysical(pose, `home ${aspect}`);
       const { position, target } = walkView(area, pose);
+      // One deterministic spot; only the aim adapts to the screen shape.
+      assert.deepEqual([position[0], position[2]], [...VIEW_ZONE.home]);
       assert.equal(position[1], area.eyeY);
       assert.ok(position[0] < ROOM_BOUNDS.min[0]);
       assert.ok(position[2] > ROOM_BOUNDS.max[2]);
@@ -142,7 +152,13 @@ describe("home pose", () => {
       camera.lookAt(new Vector3().fromArray(target));
       camera.updateMatrixWorld();
       const ndc = new Vector3().fromArray(ROOM_CENTER).project(camera);
-      assert.ok(Math.abs(ndc.x) < 0.2 && Math.abs(ndc.y) < 0.5, `${ndc}`);
+      // Landscape leaves the room right of center so the forest can frame
+      // the left; narrow screens center it.
+      assert.ok(
+        ndc.x > -0.05 && ndc.x < 0.45 && Math.abs(ndc.y) < 0.5,
+        `${ndc}`,
+      );
+      if (aspect < 1) assert.ok(Math.abs(ndc.x) < 0.05, `${ndc}`);
       assert.ok(ndc.z > -1 && ndc.z < 1);
     }
   });
@@ -175,7 +191,12 @@ describe("home pose", () => {
 });
 
 describe("looking", () => {
-  const start: WalkPose = { x: -8, z: 10, yaw: 0.4, pitch: 0 };
+  const start: WalkPose = {
+    x: VIEW_ZONE.home[0],
+    z: VIEW_ZONE.home[1],
+    yaw: 0.4,
+    pitch: 0,
+  };
 
   it("looks almost straight up but barely down, even for huge input", () => {
     assert.ok(WALK.maxPitch > 1.35 && WALK.maxPitch < Math.PI / 2);
@@ -211,6 +232,16 @@ describe("looking", () => {
   });
 });
 
+// A disc with one solid crossing it exercises collision independently of
+// where the shipped zone sits.
+const WALLED: WalkArea = {
+  center: [0, 0],
+  radius: 8,
+  eyeY: EYE_Y,
+  blockers: [{ min: [-6, -1], max: [6, 1] }],
+  spawn: [0, -4],
+};
+
 describe("walking and collision", () => {
   it("never leaves the disc or enters a solid, for any direction and magnitude", () => {
     for (const start of STARTS)
@@ -231,26 +262,26 @@ describe("walking and collision", () => {
         }
   });
 
-  it("caps one wheel/pinch step and does not tunnel through the house", () => {
-    const north: WalkPose = { x: 6, z: -5, yaw: 0, pitch: 0 };
-    assert.ok(isWalkable(area, north.x, north.z));
-    let pose = walk(area, north, 1e9, 0);
+  it("caps one wheel/pinch step and does not tunnel through a solid", () => {
+    const north: WalkPose = { x: 2, z: -3, yaw: 0, pitch: 0 };
+    assert.ok(isWalkable(WALLED, north.x, north.z));
+    let pose = walk(WALLED, north, 1e9, 0);
     assert.ok(
       Math.hypot(pose.x - north.x, pose.z - north.z) <= WALK.maxStep + 1e-9,
     );
-    for (let i = 0; i < 100; i++) pose = walk(area, pose, 1e9, 0);
-    // Pushed straight at the back wall, it stops behind it, never south of it.
-    assert.ok(pose.z < ROOF.z[0], `tunneled to ${pose.z}`);
-    const [, z] = moveWithin(area, [north.x, north.z], [north.x, 1e9]);
-    assert.ok(z < ROOF.z[0]);
+    for (let i = 0; i < 100; i++) pose = walk(WALLED, pose, 1e9, 0);
+    // Pushed straight at the wall, it stops in front of it, never beyond.
+    assert.ok(pose.z <= -1, `tunneled to ${pose.z}`);
+    const [, z] = moveWithin(WALLED, [north.x, north.z], [north.x, 1e9]);
+    assert.ok(z <= -1);
   });
 
   it("slides along walls instead of sticking", () => {
-    const north: WalkPose = { x: 6, z: -5, yaw: Math.PI / 4, pitch: 0 };
+    const north: WalkPose = { x: -2, z: -3, yaw: Math.PI / 4, pitch: 0 };
     let pose = north;
-    for (let i = 0; i < 20; i++) pose = walk(area, pose, 0.5, 0);
+    for (let i = 0; i < 20; i++) pose = walk(WALLED, pose, 0.5, 0);
     assert.ok(pose.x > north.x + 2, `stuck at ${pose.x}`);
-    assert.ok(pose.z < ROOF.z[0]);
+    assert.ok(pose.z <= -1);
   });
 
   it("slides along the disc edge", () => {
@@ -262,7 +293,12 @@ describe("walking and collision", () => {
   });
 
   it("strafes to the camera's right", () => {
-    const pose: WalkPose = { x: -8, z: 10, yaw: 0, pitch: 0 };
+    const pose: WalkPose = {
+      x: VIEW_ZONE.home[0],
+      z: VIEW_ZONE.home[1],
+      yaw: 0,
+      pitch: 0,
+    };
     // Facing +z, right is -x in a right-handed y-up scene.
     assert.ok(walk(area, pose, 0, 0.5).x < pose.x);
   });
@@ -281,7 +317,12 @@ describe("walking and collision", () => {
 });
 
 describe("stepWalk", () => {
-  const start: WalkPose = { x: -8, z: 10, yaw: 0, pitch: 0 };
+  const start: WalkPose = {
+    x: VIEW_ZONE.home[0],
+    z: VIEW_ZONE.home[1],
+    yaw: 0,
+    pitch: 0,
+  };
   const input = { forward: 1, strafe: 0, turn: 0, tilt: 0 };
 
   it("clamps the frame time after a pause or resume", () => {
