@@ -21,12 +21,14 @@ import {
   Vector3,
 } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { applyLowFog } from "@/lib/room/forest-fog.ts";
 import {
   forestTrees,
   mountainHeight,
   WORLD,
 } from "@/lib/room/forest-layout.ts";
 import { treeFrame } from "@/lib/room/forest-model.ts";
+import { ForestDebris } from "./ForestDebris";
 import { GroundSurface } from "./GroundSurface";
 
 const MODELS = ["pine-near", "pine-far", "fir-near", "fir-far"] as const;
@@ -80,7 +82,8 @@ function normalizedParts(root: Object3D): TreePart[] {
       material.opacity = 1;
       material.alphaTest = 0.4;
       material.depthWrite = true;
-      return material;
+      // Distant trunks dissolve into the lowland fog; crowns rise above it.
+      return applyLowFog(material);
     };
     parts.push({
       geometry: mesh.geometry,
@@ -182,6 +185,7 @@ export const ForestEnvironment = memo(function ForestEnvironment() {
       <Suspense fallback={null}>
         <ForestModels />
       </Suspense>
+      <ForestDebris />
     </group>
   );
 });

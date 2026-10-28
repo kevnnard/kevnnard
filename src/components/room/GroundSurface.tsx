@@ -10,6 +10,7 @@ import {
   TextureLoader,
   Vector3,
 } from "three";
+import { applyLowFog } from "@/lib/room/forest-fog.ts";
 import { WORLD } from "@/lib/room/forest-layout.ts";
 import {
   type GroundLayer,
@@ -48,7 +49,7 @@ function TexturedTerrain({ terrain }: { terrain: BufferGeometry }) {
     const outer = worldUv(flat);
     flat.dispose();
     const options = { anisotropy, vertexColors: true };
-    return {
+    const owned = {
       outer,
       layers: terrainLayers(terrain),
       outerSoil: groundMaterial("forest", pick(textures, "forest"), {
@@ -64,6 +65,11 @@ function TexturedTerrain({ terrain }: { terrain: BufferGeometry }) {
         overlay: true,
       }),
     };
+    // Terrain only: every layer gets the same lowland fog so overlays blend
+    // consistently. The house lawn (LawnSurface) is never fogged.
+    for (const layer of [owned.outerSoil, owned.soil, owned.grass, owned.rock])
+      applyLowFog(layer.material);
+    return owned;
   }, [terrain, textures, anisotropy]);
   useEffect(() => {
     // Demand rendering: draw once the loaded textures replace the fallback.

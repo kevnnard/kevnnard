@@ -144,9 +144,9 @@ const Room = memo(function Room({
   const camera = useThree((state) => state.camera) as PerspectiveCamera;
   const aspect = useThree((state) => state.size.width / state.size.height);
 
-  // The overview is a grounded walk: low eye, inside a disc around the plot,
-  // outside the house. Focus moves are scripted with setLookAt and keep their
-  // exact PC/TV framing.
+  // The overview is a grounded walk: low eye, inside a small zone in front of
+  // the open cutaway, outside the house. Focus moves are scripted with
+  // setLookAt and keep their exact PC/TV framing.
   const home = useMemo(
     () => (bounds ? homePose(WALK_AREA, camera.fov, aspect, bounds) : null),
     [bounds, camera, aspect],

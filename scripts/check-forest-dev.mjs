@@ -16,6 +16,9 @@ for (const path of [
   "/src/components/room/ForestEnvironment.tsx",
   "/src/lib/room/forest-layout.ts",
   "/src/lib/room/forest-model.ts",
+  "/src/components/room/ForestDebris.tsx",
+  "/src/lib/room/forest-debris.ts",
+  "/src/lib/room/forest-fog.ts",
 ]) {
   const source = await (await request(path)).text();
   const dependencies = [
@@ -25,14 +28,23 @@ for (const path of [
   ].map((match) => match[1]);
   for (const dependency of new Set(dependencies)) await request(dependency);
 }
+async function integrity(path, file) {
+  const bytes = Buffer.from(await (await request(path)).arrayBuffer());
+  assert.equal(bytes.length, file.bytes);
+  assert.equal(bytes.toString("utf8", 0, 4), "glTF");
+  assert.equal(createHash("sha256").update(bytes).digest("hex"), file.sha256);
+  process.stdout.write(`PASS integrity ${path}\n`);
+}
 const manifest = await (await request("/models/forest/manifest.json")).json();
 for (const asset of manifest.assets)
-  for (const file of asset.files) {
-    const bytes = Buffer.from(
-      await (await request(`/models/forest/${file.path}`)).arrayBuffer(),
-    );
-    assert.equal(bytes.length, file.bytes);
-    assert.equal(bytes.toString("utf8", 0, 4), "glTF");
-    assert.equal(createHash("sha256").update(bytes).digest("hex"), file.sha256);
-    process.stdout.write(`PASS integrity ${file.path}\n`);
-  }
+  for (const file of asset.files)
+    await integrity(`/models/forest/${file.path}`, file);
+// Forest-floor debris, at the cache-busting URLs the runtime requests.
+const debris = await (
+  await request("/models/forest-debris/manifest.json")
+).json();
+for (const asset of debris.assets)
+  await integrity(
+    `/models/forest-debris/${asset.file.path}?v=debris-1`,
+    asset.file,
+  );
