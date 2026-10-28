@@ -14,6 +14,11 @@ import {
 } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { extendLoader } from "@/components/world/SetupEffects";
+import {
+  DEFAULT_LIGHTS,
+  type LightSettings,
+  lightLevel,
+} from "@/lib/world/lights.ts";
 import { worldLight } from "@/lib/world/palette.ts";
 import {
   BRUNO_CHAIR,
@@ -138,13 +143,39 @@ function bakedMaterial([day, night, neutral, lightMap]: Texture[]) {
   });
 }
 
-/** Day/night mix from our clock: his night bake as the stars come out. */
-function setHours(material: ShaderMaterial, hours: number) {
+/** Share of his light channels at full intensity of our night lights. */
+const CHANNEL = 0.6;
+
+/**
+ * Day/night mix from our clock: his night bake as the stars come out. His TV
+ * and desk lamp channels follow our night lights (T6b): their colors, and
+ * strengths gated to 18:00-05:59 like the real lights.
+ */
+function setHours(
+  material: ShaderMaterial,
+  hours: number,
+  lights: LightSettings,
+) {
   const night = worldLight(hours).stars;
   const { uniforms } = material;
   uniforms.uNightMix.value = night;
-  uniforms.uLightTvStrength.value = STRENGTH.tv * night * 0.5;
-  uniforms.uLightDeskStrength.value = STRENGTH.desk * night * 0.5;
+  const tv = lightLevel(lights.tv, hours);
+  uniforms.uLightTvColor.value.setStyle(lights.tv.color, LinearSRGBColorSpace);
+  uniforms.uLightTvStrength.value = STRENGTH.tv * CHANNEL * tv;
+  // His single desk channel: the lit lamps' colors, weighted by level.
+  const lamps = [lights.lampLeft, lights.lampRight].map((lamp) => ({
+    color: raw(lamp.color),
+    level: lightLevel(lamp, hours),
+  }));
+  const total = lamps[0].level + lamps[1].level;
+  const desk = uniforms.uLightDeskColor.value as Color;
+  if (total > 0)
+    desk
+      .copy(lamps[0].color)
+      .multiplyScalar(lamps[0].level / total)
+      .add(lamps[1].color.multiplyScalar(lamps[1].level / total));
+  uniforms.uLightDeskStrength.value =
+    STRENGTH.desk * CHANNEL * Math.max(lamps[0].level, lamps[1].level);
   uniforms.uLightPcStrength.value = STRENGTH.pc * (0.4 + 0.6 * night);
   // His bake is brighter than our daylight interior: dim it by day.
   uniforms.uShade.value = 0.8 + 0.2 * night;
@@ -154,7 +185,13 @@ function setHours(material: ShaderMaterial, hours: number) {
  * TopChair.js: his chair, his pivot on our column. Rendered inside the
  * setup's swivel, which sways it (motion.ts chairSway).
  */
-export function BrunoChair({ hours }: { hours: number }) {
+export function BrunoChair({
+  hours,
+  lights = DEFAULT_LIGHTS,
+}: {
+  hours: number;
+  lights?: LightSettings;
+}) {
   const { invalidate } = useThree();
   const gltf = useLoader(GLTFLoader, BRUNO_FILES.chair, extendLoader);
   const maps = useLoader(TextureLoader, [
@@ -190,9 +227,9 @@ export function BrunoChair({ hours }: { hours: number }) {
   }, [gltf, maps]);
 
   useLayoutEffect(() => {
-    setHours(material, hours);
+    setHours(material, hours, lights);
     invalidate();
-  }, [material, hours, invalidate]);
+  }, [material, hours, lights, invalidate]);
   useEffect(() => () => material.dispose(), [material]);
 
   return <primitive object={group} />;

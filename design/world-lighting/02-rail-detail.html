@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rail and detail — Kevnnard world lighting settings</title>
+<style>
+  /* Tokens: design/system.md (dark theme, src/styles/globals.css). */
+  :root {
+    --background: #09090b;
+    --foreground: #fafafa;
+    --primary: #fafafa;
+    --primary-foreground: #18181b;
+    --secondary: #27272a;
+    --muted-foreground: #a1a1aa;
+    --border: #27272a;
+    --ring: #d4d4d8;
+    --emerald: #10b981;
+    --emerald-30: rgba(16, 185, 129, 0.3);
+    --emerald-20: rgba(16, 185, 129, 0.2);
+    --input-30: rgba(39, 39, 42, 0.3);
+    --input-50: rgba(39, 39, 42, 0.5);
+    --ring-50: rgba(212, 212, 216, 0.5);
+    --grid-line-strong: rgba(16, 185, 129, 0.1);
+    --grid-line-soft: rgba(16, 185, 129, 0.05);
+    --grid-line: rgba(16, 185, 129, 0.08);
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-xl: 12px;
+    --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--background);
+    color: var(--foreground);
+    font: 14px/20px var(--font-sans);
+    background-image:
+      linear-gradient(180deg, transparent 0%, var(--grid-line-strong) 50%, transparent 100%),
+      linear-gradient(180deg, transparent 0%, var(--grid-line-soft) 50%, transparent 100%),
+      linear-gradient(90deg, transparent 0%, var(--grid-line) 50%, transparent 100%);
+    background-size: 1px 100%, 1px 100%, 100% 1px;
+    background-position: 20% 0, 75% 0, 0 30%;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; margin: -1px; }
+  .frame { height: 900px; display: grid; grid-template-rows: 64px 1fr; }
+  .site-header { display: flex; align-items: center; justify-content: space-between; padding: 0 40px; border-bottom: 1px solid var(--border); }
+  .brand { font-weight: 600; }
+  .brand span { color: var(--muted-foreground); font-weight: 500; }
+  .hint { color: var(--muted-foreground); font-size: 12px; line-height: 16px; margin: 0; }
+  .stage { position: relative; min-height: 0; }
+  .room { margin: 0; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 480px 96px 40px; transition: padding 200ms; }
+  .stage[data-collapsed="true"] .room { padding-right: 112px; }
+  .room svg { width: 100%; max-width: 980px; height: auto; max-height: 660px; }
+  .room figcaption { position: absolute; top: 24px; left: 40px; }
+  .glow, .shade { transition: opacity 200ms, fill-opacity 200ms; }
+
+  /* Existing lower-left day controller, shown as a static schematic */
+  .clock { position: absolute; left: 24px; bottom: 24px; display: grid; gap: 6px; }
+  .clock-pill { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-xl); background: var(--background); font: 12px/16px var(--font-mono); font-variant-numeric: tabular-nums; }
+  .clock-pill strong { font-size: 16px; line-height: 20px; }
+  .sum-phase { color: var(--emerald); text-transform: uppercase; letter-spacing: 0.1em; }
+  .sum-mode { color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.1em; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted-foreground); flex: none; }
+  .dot[data-on="true"] { background: var(--emerald); }
+
+  /* Panel: rail of sections + detail pane */
+  .panel { position: absolute; top: 24px; right: 24px; bottom: 24px; width: 432px; display: grid; grid-template-columns: 64px 1fr; border: 1px solid var(--border); border-radius: var(--radius-xl); background: var(--background); font-family: var(--font-mono); font-size: 12px; line-height: 16px; overflow: hidden; }
+  .panel[data-collapsed="true"] { width: 66px; bottom: auto; }
+  .panel[data-collapsed="true"] .detail { display: none; }
+  .rail { display: flex; flex-direction: column; align-items: stretch; gap: 4px; padding: 8px; border-right: 1px solid var(--border); }
+  .panel[data-collapsed="true"] .rail { border-right: 0; }
+  .tabs { display: flex; flex-direction: column; gap: 4px; }
+  .rail-btn { display: grid; justify-items: center; gap: 4px; padding: 8px 0; border: 1px solid transparent; border-radius: var(--radius-md); background: none; color: var(--muted-foreground); font: 500 12px/16px var(--font-sans); cursor: pointer; }
+  .rail-btn svg { width: 20px; height: 20px; }
+  .rail-btn:hover { background: var(--input-50); color: var(--foreground); }
+  .rail-btn[aria-selected="true"] { color: var(--foreground); background: var(--emerald-20); border-color: var(--emerald); }
+  .panel[data-collapsed="true"] .rail-btn[aria-selected="true"] { background: none; border-color: transparent; color: var(--muted-foreground); }
+  .rail-btn:focus-visible, .collapse:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
+  .collapse { margin-top: auto; height: 32px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--input-30); color: var(--muted-foreground); cursor: pointer; font: 500 12px/16px var(--font-sans); }
+  .panel[data-collapsed="true"] .collapse { margin-top: 4px; }
+  .collapse:hover { background: var(--input-50); color: var(--foreground); }
+
+  .detail { display: grid; grid-template-rows: auto 1fr auto; min-height: 0; }
+  .gatebar { padding: 12px 16px; border-bottom: 1px solid var(--border); display: grid; gap: 10px; }
+  .gate-row { display: flex; align-items: center; gap: 10px; font-variant-numeric: tabular-nums; }
+  .gate-row strong { font-size: 16px; line-height: 20px; }
+  .gate-row .next { margin-left: auto; color: var(--muted-foreground); }
+  .gate-state { text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted-foreground); }
+  .gate-state[data-on="true"] { color: var(--emerald); }
+  .tabpanel { overflow: auto; padding: 16px; display: grid; gap: 16px; align-content: start; }
+  .tabpanel[hidden] { display: none; }
+  h3 { margin: 0; font: 600 14px/20px var(--font-sans); }
+  .eyebrow { color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 6px; }
+
+  /* Master list */
+  .master { display: grid; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; }
+  .master label { position: relative; display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer; font: 500 14px/20px var(--font-sans); }
+  .master label + label { border-top: 1px solid var(--border); }
+  .master input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+  .master label:hover { background: var(--input-30); }
+  .master label:has(input:checked) { background: var(--emerald-20); box-shadow: inset 2px 0 0 var(--emerald); }
+  .master label:has(input:focus-visible) { outline: 2px solid var(--ring); outline-offset: -2px; }
+  .swatch { width: 14px; height: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); flex: none; }
+  .swatch[data-state="disabled"] { opacity: 0.5; }
+  .chip { margin-left: auto; padding: 2px 8px; border: 1px solid var(--border); border-radius: var(--radius-md); font: 500 12px/16px var(--font-sans); color: var(--muted-foreground); white-space: nowrap; }
+  .chip[data-state="on"] { background: var(--emerald-30); border-color: var(--emerald); color: var(--foreground); }
+  .chip[data-state="disabled"] { border-style: dashed; }
+
+  /* Detail editor */
+  .editor { border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 16px; display: grid; gap: 14px; }
+  .ed-head { display: flex; align-items: center; gap: 12px; }
+  .preview { width: 44px; height: 44px; border-radius: var(--radius-md); border: 1px solid var(--border); flex: none; }
+  .preview[data-state="disabled"] { opacity: 0.5; }
+  .ed-head .titles { display: grid; gap: 2px; }
+  .ed-head .switch { margin-left: auto; }
+  .field { display: grid; gap: 6px; }
+  .field-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; color: var(--muted-foreground); font-family: var(--font-sans); }
+  .field-row output { color: var(--foreground); font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .color-row { display: flex; align-items: center; gap: 8px; }
+  input[type="range"] { width: 100%; accent-color: var(--emerald); margin: 0; }
+  input[type="color"] { width: 56px; height: 32px; padding: 2px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--input-30); cursor: pointer; }
+  input:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  .switch { position: relative; width: 36px; height: 20px; border-radius: 10px; border: 1px solid var(--border); background: var(--secondary); cursor: pointer; padding: 0; flex: none; }
+  .switch span { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--muted-foreground); transition: transform 150ms; }
+  .switch[aria-checked="true"] { background: var(--emerald-30); border-color: var(--emerald); }
+  .switch[aria-checked="true"] span { transform: translateX(16px); background: var(--foreground); }
+  .switch:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  .ed-state { margin: 0; padding: 8px 10px; border-radius: var(--radius-md); background: var(--input-30); color: var(--muted-foreground); font-family: var(--font-sans); }
+  .ed-state[data-state="on"] { color: var(--foreground); box-shadow: inset 2px 0 0 var(--emerald); }
+
+  /* Schedule */
+  .lines { margin: 0; display: grid; grid-template-columns: 80px 1fr; row-gap: 6px; font-variant-numeric: tabular-nums; }
+  .lines dt { color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.1em; }
+  .lines dd { margin: 0; }
+  .strip { position: relative; height: 28px; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; background: var(--input-30); }
+  .strip .night { position: absolute; top: 0; bottom: 0; background: var(--emerald-20); }
+  .strip .head { position: absolute; top: -1px; bottom: -1px; width: 2px; background: var(--foreground); }
+  .ticks { display: flex; justify-content: space-between; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+
+  .row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 32px; padding: 0 10px; border-radius: var(--radius-md);
+    font: 500 12px/16px var(--font-sans); border: 1px solid var(--border); cursor: pointer;
+    background: var(--input-30); color: var(--foreground);
+    transition: background-color 150ms, box-shadow 150ms;
+  }
+  .btn.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .btn:hover { background: var(--input-50); }
+  .btn:focus-visible { outline: none; border-color: var(--ring); box-shadow: 0 0 0 3px var(--ring-50); }
+  .btn[aria-pressed="true"] { background: var(--emerald-30); border-color: var(--emerald); }
+  .foot { border-top: 1px solid var(--border); padding: 12px 16px; display: grid; gap: 8px; }
+  .status { margin: 0; color: var(--muted-foreground); font-family: var(--font-sans); min-height: 20px; }
+  .note { margin: 0; color: var(--muted-foreground); font-family: var(--font-sans); font-size: 12px; line-height: 16px; }
+
+  .notes { padding: 48px 40px 64px; border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+  .notes h2 { margin: 0 0 8px; font-size: 16px; line-height: 24px; font-weight: 600; }
+  .notes p, .notes li { color: var(--muted-foreground); }
+  .notes ul { margin: 0; padding-left: 18px; }
+
+  @media (max-width: 960px) {
+    .frame { height: auto; min-height: 100vh; }
+    .site-header { padding: 0 16px; }
+    .site-header .hint { display: none; }
+    .panel, .panel[data-collapsed="true"] { left: 12px; right: 12px; top: 12px; bottom: auto; width: auto; max-height: 72vh; grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+    .rail, .tabs { flex-direction: row; }
+    .tabs { flex: 1; }
+    .rail { border-right: 0; border-bottom: 1px solid var(--border); }
+    .panel[data-collapsed="true"] .rail { border-bottom: 0; }
+    .rail-btn { flex: 1; grid-auto-flow: column; justify-content: center; align-items: center; }
+    .collapse, .panel[data-collapsed="true"] .collapse { margin: 0 0 0 auto; padding: 0 12px; }
+    .room, .stage[data-collapsed="true"] .room { padding: 88px 16px 96px; }
+    .room figcaption { position: static; order: 2; margin-top: 8px; }
+    .clock { left: 12px; bottom: 12px; }
+    .notes { grid-template-columns: 1fr; padding: 32px 16px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="frame">
+  <header class="site-header">
+    <div class="brand">kevnnard <span>/ world</span></div>
+    <p class="hint">Drag to orbit · Zoom in to see the room · Scene settings on the right</p>
+  </header>
+  <main class="stage" id="stage">
+    <figure class="room">
+      <svg viewBox="0 0 800 480" role="img" aria-labelledby="scene-title scene-desc">
+        <title id="scene-title">Room schematic with night lights</title>
+        <desc id="scene-desc">Outline of the room: window on the left wall, desk setup with a monitor and two desk lamps, TV on the wall above its cabinet. Colored glows show which lights the night gate turns on.</desc>
+        <defs>
+          <filter id="blur" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="14"/></filter>
+          <clipPath id="win-clip"><rect x="150" y="80" width="100" height="90"/></clipPath>
+        </defs>
+        <g fill="none" stroke="#27272a" stroke-width="1.5">
+          <rect x="120" y="40" width="560" height="340"/>
+          <path d="M120 380 L40 460 M680 380 L760 460 M40 460 H760"/>
+        </g>
+        <rect class="win-light" x="150" y="80" width="100" height="90" fill="#fafafa" fill-opacity="0.05"/>
+        <g clip-path="url(#win-clip)"><circle class="sky-body" cx="200" cy="140" r="9" fill="#fafafa"/></g>
+        <rect class="room-dim" x="40" y="40" width="720" height="420" fill="#09090b" fill-opacity="0.5" pointer-events="none"/>
+        <g filter="url(#blur)">
+          <rect class="glow" data-glow="tv" x="496" y="84" width="188" height="124" rx="16" opacity="0"/>
+          <rect class="glow" data-glow="setup" x="266" y="184" width="168" height="104" rx="16" opacity="0"/>
+          <ellipse class="glow" data-glow="lampL" cx="250" cy="270" rx="42" ry="36" opacity="0"/>
+          <ellipse class="glow" data-glow="lampR" cx="450" cy="270" rx="42" ry="36" opacity="0"/>
+        </g>
+        <path class="shade" data-shade="lampL" d="M234 250 H266 L258 230 H242 Z" fill-opacity="0"/>
+        <path class="shade" data-shade="lampR" d="M434 250 H466 L458 230 H442 Z" fill-opacity="0"/>
+        <g fill="none" stroke="#a1a1aa" stroke-width="1.5" stroke-linejoin="round">
+          <rect x="150" y="80" width="100" height="90"/>
+          <path d="M200 80 V170 M150 125 H250"/>
+          <rect x="510" y="96" width="160" height="100" rx="4"/>
+          <rect x="500" y="320" width="180" height="60" rx="3"/>
+          <path d="M590 320 V380"/>
+          <path d="M210 300 H490 M225 300 V380 M475 300 V380"/>
+          <rect x="280" y="196" width="140" height="80" rx="3"/>
+          <path d="M350 276 V298 M332 298 H368"/>
+          <path d="M236 298 H264 M250 298 V250 M234 250 H266 L258 230 H242 Z"/>
+          <path d="M436 298 H464 M450 298 V250 M434 250 H466 L458 230 H442 Z"/>
+        </g>
+        <g fill="#a1a1aa" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" text-anchor="middle">
+          <text x="590" y="74">TV backlight</text>
+          <text x="350" y="176">Setup backlight</text>
+          <text x="250" y="220">Left lamp</text>
+          <text x="450" y="220">Right lamp</text>
+        </g>
+      </svg>
+      <figcaption class="hint">Schematic outline, not the live 3D render. Glow color and strength follow the panel.</figcaption>
+    </figure>
+
+    <div class="clock" role="group" aria-labelledby="clock-tag">
+      <p class="hint" id="clock-tag">Existing day controller · schematic</p>
+      <div class="clock-pill"><span class="dot" aria-hidden="true"></span><strong id="clock-time">--:--</strong><span class="sum-phase" id="clock-phase"></span><span class="sum-mode">Paused</span></div>
+    </div>
+
+    <section class="panel" id="panel" aria-labelledby="panel-title" data-collapsed="false">
+      <h2 id="panel-title" class="sr">Scene settings</h2>
+      <div class="rail">
+        <div role="tablist" aria-orientation="vertical" aria-label="Scene setting sections" id="tabs" class="tabs">
+          <button type="button" class="rail-btn" role="tab" id="tab-lights" aria-controls="tp-lights" aria-selected="true">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M7 15h6M8 18h4M10 2a5 5 0 0 0-3 9v2h6v-2a5 5 0 0 0-3-9Z"/></svg>
+            Lights
+          </button>
+          <button type="button" class="rail-btn" role="tab" id="tab-schedule" aria-controls="tp-schedule" aria-selected="false" tabindex="-1">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="7.5"/><path d="M10 5.5V10l3 2"/></svg>
+            Schedule
+          </button>
+        </div>
+        <button type="button" class="collapse" id="collapse" aria-expanded="true" aria-controls="detail" aria-label="Collapse scene settings">«</button>
+      </div>
+
+      <div class="detail" id="detail">
+        <div class="gatebar">
+          <div class="gate-row" aria-live="off">
+            <span class="dot" id="gate-dot" aria-hidden="true"></span>
+            <strong id="gate-time">--:--</strong>
+            <span class="gate-state" id="gate-state"></span>
+            <span class="next" id="gate-next"></span>
+          </div>
+          <div class="row" role="group" aria-label="Preview the night boundary">
+            <button type="button" class="btn mono" data-preview="1079" aria-pressed="false">17:59</button>
+            <button type="button" class="btn mono" data-preview="1080" aria-pressed="false">18:00</button>
+            <button type="button" class="btn mono" data-preview="359" aria-pressed="false">05:59</button>
+            <button type="button" class="btn mono" data-preview="360" aria-pressed="false">06:00</button>
+          </div>
+        </div>
+
+        <div class="tabpanel" role="tabpanel" id="tp-lights" aria-labelledby="tab-lights" tabindex="0">
+          <fieldset style="border:0;margin:0;padding:0">
+            <legend class="eyebrow">Night lights</legend>
+            <div class="master" id="master"></div>
+          </fieldset>
+          <div class="editor" id="editor" role="group" aria-labelledby="ed-name">
+            <div class="ed-head">
+              <span class="preview" id="ed-preview" aria-hidden="true"></span>
+              <div class="titles">
+                <h3 id="ed-name"></h3>
+                <span class="chip" id="ed-chip" style="margin-left:0;justify-self:start"></span>
+              </div>
+              <button type="button" class="switch" role="switch" id="ed-switch" aria-checked="true" aria-labelledby="ed-en-label ed-name"><span></span></button>
+              <span id="ed-en-label" class="sr">Enabled</span>
+            </div>
+            <div class="field-row"><label for="ed-color">Color</label>
+              <span class="color-row"><output for="ed-color" id="ed-hex"></output><input type="color" id="ed-color"></span>
+            </div>
+            <div class="field">
+              <div class="field-row"><label for="ed-int">Intensity</label><output for="ed-int" id="ed-int-out"></output></div>
+              <input type="range" id="ed-int" min="0" max="100" step="5">
+            </div>
+            <p class="ed-state" id="ed-state"></p>
+          </div>
+          <p class="note">Swatches are scene data you pick for each light, not theme colors.</p>
+        </div>
+
+        <div class="tabpanel" role="tabpanel" id="tp-schedule" aria-labelledby="tab-schedule" tabindex="0" hidden>
+          <div>
+            <p class="eyebrow">Night window</p>
+            <div class="strip" aria-hidden="true">
+              <span class="night" style="left:0;width:25%"></span>
+              <span class="night" style="left:75%;width:25%"></span>
+              <span class="head" id="strip-head"></span>
+            </div>
+            <div class="ticks" aria-hidden="true"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
+          </div>
+          <dl class="lines">
+            <dt>Rule</dt><dd>On from 18:00 through 05:59</dd>
+            <dt>Off</dt><dd>06:00 through 17:59</dd>
+            <dt>Clock</dt><dd>Simulated time from the day controller</dd>
+            <dt>Gate</dt><dd id="sched-gate"></dd>
+          </dl>
+          <div class="field">
+            <div class="field-row"><label for="scrub">Preview time</label><output id="scrub-out" for="scrub">--:--</output></div>
+            <input type="range" id="scrub" min="0" max="1439" step="1" value="1320">
+          </div>
+          <p class="note">The window is fixed for now; this section is where its future options will live.</p>
+        </div>
+
+        <div class="foot">
+          <div class="row">
+            <button type="button" class="btn" id="copy">Copy as prompt</button>
+            <button type="button" class="btn" id="reset">Reset lights</button>
+          </div>
+          <p class="status" id="status" role="status" aria-live="polite"></p>
+          <p class="note">New scene settings get their own entry in the rail.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<section class="notes" aria-label="Design notes">
+  <div>
+    <h2>Night gate</h2>
+    <p>Lights follow the simulated clock, not the PC clock. They can be on from 18:00 through 05:59 and are always off from 06:00 through 17:59. Each light also has its own switch: a disabled light stays off at night.</p>
+  </div>
+  <div>
+    <h2>Rail and detail</h2>
+    <ul>
+      <li>The rail lists sections (Lights, Schedule); Arrow Up/Down, Home and End move between them.</li>
+      <li>Pick a light with the arrow keys in the list; the editor below always shows one light in full.</li>
+      <li>Collapse (or Escape inside the panel) folds it down to the rail; choosing a section opens it again.</li>
+    </ul>
+  </div>
+  <div>
+    <h2>Mobile</h2>
+    <p>Under 960 px the rail turns into a tab row along the top edge and the panel starts collapsed to that row. The lower-left day controller stays in place below the room.</p>
+  </div>
+</section>
+
+<script>
+(() => {
+  const DAY = 1440;
+  const ON_AT = 18 * 60;
+  const OFF_AT = 6 * 60;
+  const pad = (n) => String(n).padStart(2, "0");
+  const wrap = (m) => ((m % DAY) + DAY) % DAY;
+  const fmt = (m) => { const t = Math.floor(wrap(m)); return pad(Math.floor(t / 60)) + ":" + pad(t % 60); };
+  const dur = (n) => (n >= 60 ? `${Math.floor(n / 60)} h ${pad(n % 60)} min` : `${n} min`);
+  // Night gate on simulated minutes: on at >= 18:00 or < 06:00.
+  const isNight = (m) => m >= ON_AT || m < OFF_AT;
+  // Same phase bounds as src/lib/room/day-cycle.ts (drives the window only).
+  const phaseAt = (m) => {
+    const h = wrap(m) / 60;
+    if (h >= 5 && h < 7) return "dawn";
+    if (h >= 7 && h < 16.5) return "day";
+    if (h >= 16.5 && h < 19.5) return "sunset";
+    return "night";
+  };
+  const WINDOW = { night: [0.05, 0.55], dawn: [0.2, 0.3], day: [0.5, 0.05], sunset: [0.3, 0.2] };
+
+  // Scene data: user-editable light colors, not design-system theme colors.
+  const DEFAULTS = [
+    { id: "tv", name: "TV backlight", color: "#7c6cff", intensity: 70, enabled: true },
+    { id: "setup", name: "Setup backlight", color: "#22d3ee", intensity: 60, enabled: true },
+    { id: "lampL", name: "Left desk lamp", color: "#ffb36b", intensity: 80, enabled: true },
+    { id: "lampR", name: "Right desk lamp", color: "#ffb36b", intensity: 80, enabled: false },
+  ];
+  let lights = DEFAULTS.map((l) => ({ ...l }));
+  let minutes = 22 * 60;
+  let selected = "tv";
+  let lastNight = null;
+
+  const STATE_LABEL = { on: "On", standby: "Off · daytime", disabled: "Disabled" };
+  const stateOf = (l) => (!l.enabled ? "disabled" : isNight(minutes) ? "on" : "standby");
+  const stateHint = (l) => ({
+    on: `On now at ${l.intensity}%. Turns off at 06:00.`,
+    standby: "Off for daytime. Turns on at 18:00 with these settings.",
+    disabled: "Disabled. Stays off at night until you switch it on.",
+  })[stateOf(l)];
+
+  const $ = (id) => document.getElementById(id);
+  const status = $("status");
+  const byId = (id) => lights.find((l) => l.id === id);
+
+  $("master").innerHTML = lights.map((l) => `
+    <label><input type="radio" name="light" value="${l.id}" ${l.id === selected ? "checked" : ""}>
+      <span class="swatch" data-swatch="${l.id}" aria-hidden="true"></span>
+      <span>${l.name}</span>
+      <span class="chip" data-chip="${l.id}"></span>
+    </label>`).join("");
+
+  function renderEditor() {
+    const l = byId(selected);
+    const state = stateOf(l);
+    $("ed-name").textContent = l.name;
+    $("ed-preview").style.background = l.color;
+    $("ed-preview").dataset.state = state;
+    $("ed-chip").textContent = STATE_LABEL[state];
+    $("ed-chip").dataset.state = state;
+    $("ed-switch").setAttribute("aria-checked", String(l.enabled));
+    $("ed-hex").textContent = l.color;
+    const c = $("ed-color");
+    if (c.value !== l.color) c.value = l.color;
+    c.setAttribute("aria-label", `${l.name} color`);
+    const r = $("ed-int");
+    if (Number(r.value) !== l.intensity) r.value = String(l.intensity);
+    r.setAttribute("aria-label", `${l.name} intensity`);
+    r.setAttribute("aria-valuetext", `${l.intensity} percent`);
+    $("ed-int-out").textContent = l.intensity + "%";
+    $("ed-state").textContent = stateHint(l);
+    $("ed-state").dataset.state = state;
+  }
+
+  function renderLight(l) {
+    const state = stateOf(l);
+    document.querySelectorAll(`[data-swatch="${l.id}"]`).forEach((el) => { el.style.background = l.color; el.dataset.state = state; });
+    document.querySelectorAll(`[data-chip="${l.id}"]`).forEach((el) => { el.textContent = STATE_LABEL[state]; el.dataset.state = state; });
+    const on = state === "on";
+    document.querySelectorAll(`[data-glow="${l.id}"]`).forEach((el) => { el.setAttribute("fill", l.color); el.setAttribute("opacity", on ? (0.15 + 0.65 * l.intensity / 100).toFixed(2) : "0"); });
+    document.querySelectorAll(`[data-shade="${l.id}"]`).forEach((el) => { el.setAttribute("fill", l.color); el.setAttribute("fill-opacity", on ? (0.2 + 0.5 * l.intensity / 100).toFixed(2) : "0"); });
+  }
+
+  function render() {
+    const night = isNight(minutes);
+    const time = fmt(minutes);
+    const phase = phaseAt(minutes);
+    const onCount = lights.filter((l) => stateOf(l) === "on").length;
+    $("gate-dot").dataset.on = String(night);
+    $("gate-time").textContent = time;
+    $("gate-state").textContent = night ? `Night · ${onCount}/${lights.length} on` : "Day · lights off";
+    $("gate-state").dataset.on = String(night);
+    $("gate-next").textContent = night ? `off in ${dur(wrap(OFF_AT - minutes))}` : `on in ${dur(wrap(ON_AT - minutes))}`;
+    $("sched-gate").textContent = night ? "Open · night window" : "Closed · daytime";
+    $("strip-head").style.left = `calc(${(minutes / DAY) * 100}% - 1px)`;
+    $("scrub-out").textContent = time;
+    const scrub = $("scrub");
+    if (Number(scrub.value) !== minutes) scrub.value = String(minutes);
+    scrub.setAttribute("aria-valuetext", `${time}, lights ${night ? "on" : "off"}`);
+    document.querySelectorAll("[data-preview]").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.preview) === minutes)));
+    $("clock-time").textContent = time;
+    $("clock-phase").textContent = phase;
+    const [win, dim] = WINDOW[phase];
+    document.querySelector(".win-light").setAttribute("fill-opacity", win);
+    document.querySelector(".room-dim").setAttribute("fill-opacity", dim);
+    const h = minutes / 60;
+    const day = h >= 6 && h < 18;
+    const arc = day ? (h - 6) / 12 : wrap(minutes - ON_AT) / 60 / 12;
+    const body = document.querySelector(".sky-body");
+    body.setAttribute("cx", (160 + arc * 80).toFixed(1));
+    body.setAttribute("cy", (178 - Math.sin(arc * Math.PI) * 70).toFixed(1));
+    body.setAttribute("fill-opacity", day ? 0.9 : 0.5);
+    lights.forEach(renderLight);
+    renderEditor();
+    if (lastNight !== null && lastNight !== night) {
+      status.textContent = night ? `${time}: night gate open, ${onCount} of ${lights.length} lights on.` : `${time}: daytime, all night lights off.`;
+    }
+    lastNight = night;
+  }
+
+  const setMinutes = (m) => { minutes = wrap(m); render(); };
+  document.querySelectorAll("[data-preview]").forEach((b) => b.addEventListener("click", () => setMinutes(Number(b.dataset.preview))));
+  $("scrub").addEventListener("input", (e) => setMinutes(Number(e.target.value)));
+
+  $("master").addEventListener("change", (e) => { selected = e.target.value; render(); });
+  $("ed-switch").addEventListener("click", () => {
+    const l = byId(selected);
+    l.enabled = !l.enabled;
+    render();
+    status.textContent = `${l.name} ${l.enabled ? "enabled" : "disabled"}. ${stateHint(l)}`;
+  });
+  $("ed-color").addEventListener("input", (e) => { byId(selected).color = e.target.value; render(); });
+  $("ed-int").addEventListener("input", (e) => { byId(selected).intensity = Number(e.target.value); render(); });
+
+  // Rail tabs with roving tabindex.
+  const tabs = [...document.querySelectorAll('[role="tab"]')];
+  const panel = $("panel");
+  const stage = $("stage");
+  const collapse = $("collapse");
+  function setCollapsed(c) {
+    panel.dataset.collapsed = String(c);
+    stage.dataset.collapsed = String(c);
+    collapse.setAttribute("aria-expanded", String(!c));
+    collapse.setAttribute("aria-label", c ? "Expand scene settings" : "Collapse scene settings");
+    collapse.textContent = c ? "»" : "«";
+  }
+  function selectTab(tab) {
+    tabs.forEach((t) => {
+      const on = t === tab;
+      t.setAttribute("aria-selected", String(on));
+      t.tabIndex = on ? 0 : -1;
+      $(t.getAttribute("aria-controls")).hidden = !on;
+    });
+    setCollapsed(false);
+  }
+  tabs.forEach((t) => {
+    t.addEventListener("click", () => selectTab(t));
+    t.addEventListener("keydown", (e) => {
+      const i = tabs.indexOf(t);
+      const to = { ArrowDown: i + 1, ArrowRight: i + 1, ArrowUp: i - 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
+      if (to === undefined) return;
+      e.preventDefault();
+      const next = tabs[(to + tabs.length) % tabs.length];
+      next.focus();
+      selectTab(next);
+    });
+  });
+  collapse.addEventListener("click", () => setCollapsed(panel.dataset.collapsed !== "true"));
+  panel.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && panel.dataset.collapsed !== "true") { setCollapsed(true); collapse.focus(); }
+  });
+
+  const prompt = () => [
+    "Apply these /world scene lighting settings.",
+    "Night gate: lights may be on from 18:00 through 05:59 simulated time and are off from 06:00 through 17:59.",
+    ...lights.map((l) => `- ${l.name}: ${l.enabled ? "enabled" : "disabled"}, color ${l.color}, intensity ${l.intensity}%`),
+  ].join("\n");
+  $("copy").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(prompt()); status.textContent = "Settings copied as a prompt."; }
+    catch { status.textContent = "Clipboard is blocked in this view. Prompt: " + prompt().replace(/\n/g, " "); }
+  });
+  $("reset").addEventListener("click", () => { lights = DEFAULTS.map((l) => ({ ...l })); render(); status.textContent = "Lights reset to their defaults."; });
+
+  if (window.matchMedia("(max-width: 960px)").matches) setCollapsed(true);
+  render();
+})();
+</script>
+</body>
+</html>

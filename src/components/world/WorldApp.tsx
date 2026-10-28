@@ -15,7 +15,15 @@ import {
   loadControllerStyle,
   saveControllerStyle,
 } from "@/lib/room/controller-style.ts";
+import {
+  DEFAULT_LIGHTS,
+  type LightId,
+  type LightSetting,
+  type LightSettings,
+  updateLight,
+} from "@/lib/world/lights.ts";
 import { CreditsDialog } from "./CreditsDialog";
+import { ScenePanel } from "./ScenePanel";
 
 // Loaded only after WebGL is confirmed, so three.js never ships to clients that can't use it.
 const WorldScene = lazy(() => import("./WorldScene"));
@@ -108,6 +116,14 @@ export default function WorldApp() {
     saveControllerStyle(browserStorage(), next);
   }, []);
   const onReady = useCallback(() => setReady(true), []);
+  // Night light settings (T6b): held here for the session, no persistence.
+  const [lights, setLights] = useState<LightSettings>(DEFAULT_LIGHTS);
+  const changeLight = useCallback(
+    (id: LightId, patch: Partial<LightSetting>) =>
+      setLights((current) => updateLight(current, id, patch)),
+    [],
+  );
+  const resetLights = useCallback(() => setLights(DEFAULT_LIGHTS), []);
 
   if (!webgl) {
     return (
@@ -127,6 +143,7 @@ export default function WorldApp() {
             hours={clock.hours}
             reducedMotion={reducedMotion}
             home={home}
+            lights={lights}
             onReady={onReady}
           />
         </Suspense>
@@ -165,6 +182,16 @@ export default function WorldApp() {
           style={controllerStyle}
           onStyleChange={chooseStyle}
           narrow={narrow}
+        />
+      )}
+      {ready && (
+        <ScenePanel
+          hours={clock.hours}
+          lights={lights}
+          narrow={narrow}
+          onChange={changeLight}
+          onReset={resetLights}
+          onPreview={clock.setHours}
         />
       )}
     </div>

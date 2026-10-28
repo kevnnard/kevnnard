@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "chosen": "03-grouped-cards.html",
+  "handoffs": {
+    "03-grouped-cards.html": {
+      "status": "in_progress",
+      "queued": false,
+      "sentAt": "2026-10-28T18:51:33.816Z",
+      "startedAt": "2026-10-28T18:51:37.016Z",
+      "implementedAt": null,
+      "feature": "odd/tasks/stylized-house.md",
+      "note": "Implementando tarjetas por zona, colores y luces con horario nocturno."
+    }
+  }
+}

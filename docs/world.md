@@ -198,6 +198,39 @@ each source file's sha256). Only Bruno Simon's
 repository may use the permission license (`licenseAllowed` in
 `src/lib/world/credits.ts`).
 
+## Night lights and scene settings (T6b)
+
+Four night lights, editable in a right-hand "Scene" panel built from the
+chosen Gentle Design artboard (`design/world-lighting/03-grouped-cards.html`):
+TV backlight, setup backlight and left/right desk lamps (left and right as
+seen from the chair, facing the wall).
+
+| Piece | File |
+| --- | --- |
+| Gate, settings, clamping, fixtures, lamp parts | `src/lib/world/lights.ts` |
+| Point lights, lamp models, LED strips, bulbs | `src/components/world/NightLights.tsx` |
+| Grouped-card panel | `src/components/world/ScenePanel.tsx` |
+| Settings state (session only, no persistence) | `src/components/world/WorldApp.tsx` |
+
+- Night gate: `nightLightsOn(hours)` floors the simulated clock to the
+  minute and is on from 18:00 through 05:59, off from 06:00 through 17:59.
+  It never reads the stars level or the PC clock. The panel's boundary
+  buttons (17:59, 18:00, 05:59, 06:00) set the shared clock, which holds the
+  hour until it is resumed in the day controller.
+- Each light has a switch, a native color input and a 0-100 % slider.
+  Controls stay editable by day; their status reads "Off · daytime".
+  `updateLight` clamps intensity, rounds it, and ignores non-hex colors.
+- Scene: four point lights at most, never shadow-casting, `decay` 2 and a
+  finite `distance` (1.2-1.6 m), intensities under 1 cd at 100 %. They stay
+  mounted and drop to intensity 0 by day or when disabled, so the shader
+  light count never changes. Emitters: an LED strip behind the TV panel and
+  one behind the main monitor (dark when off), and two original desk lamps
+  (weighted foot, brass stem, lathe bell shade that glows faintly, sphere
+  bulb) at the desk's front corners, clear of the speakers, mug and steam.
+- Bruno's chair bake: his TV and desk-lamp channels take our TV and lamp
+  colors and follow the same gate and levels; his PC channel keeps our RGB.
+- Repaints are on demand (settings or hour change); nothing animates.
+
 ## Third-party notices
 
 - `src/lib/world/wheel.ts` ports the wheel normalization logic of the `normalize-wheel` package (originally from Facebook's fixed-data-table), licensed BSD-3-Clause. Its copyright notice and license terms apply to that logic.

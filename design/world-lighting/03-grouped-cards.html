@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grouped cards — Kevnnard world lighting settings</title>
+<style>
+  /* Tokens: design/system.md (dark theme, src/styles/globals.css). */
+  :root {
+    --background: #09090b;
+    --foreground: #fafafa;
+    --primary: #fafafa;
+    --primary-foreground: #18181b;
+    --secondary: #27272a;
+    --muted-foreground: #a1a1aa;
+    --border: #27272a;
+    --ring: #d4d4d8;
+    --emerald: #10b981;
+    --emerald-30: rgba(16, 185, 129, 0.3);
+    --emerald-20: rgba(16, 185, 129, 0.2);
+    --input-30: rgba(39, 39, 42, 0.3);
+    --input-50: rgba(39, 39, 42, 0.5);
+    --ring-50: rgba(212, 212, 216, 0.5);
+    --grid-line-strong: rgba(16, 185, 129, 0.1);
+    --grid-line-soft: rgba(16, 185, 129, 0.05);
+    --grid-line: rgba(16, 185, 129, 0.08);
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-xl: 12px;
+    --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--background);
+    color: var(--foreground);
+    font: 14px/20px var(--font-sans);
+    background-image:
+      linear-gradient(180deg, transparent 0%, var(--grid-line-strong) 50%, transparent 100%),
+      linear-gradient(180deg, transparent 0%, var(--grid-line-soft) 50%, transparent 100%),
+      linear-gradient(90deg, transparent 0%, var(--grid-line) 50%, transparent 100%);
+    background-size: 1px 100%, 1px 100%, 100% 1px;
+    background-position: 20% 0, 75% 0, 0 30%;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; margin: -1px; }
+  .frame { height: 900px; display: grid; grid-template-rows: 64px 1fr; }
+  .site-header { display: flex; align-items: center; justify-content: space-between; padding: 0 40px; border-bottom: 1px solid var(--border); }
+  .brand { font-weight: 600; }
+  .brand span { color: var(--muted-foreground); font-weight: 500; }
+  .hint { color: var(--muted-foreground); font-size: 12px; line-height: 16px; margin: 0; }
+  .stage { position: relative; min-height: 0; }
+  .room { margin: 0; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 420px 96px 40px; }
+  .stage[data-collapsed="true"] .room { padding-right: 40px; }
+  .room svg { width: 100%; max-width: 980px; height: auto; max-height: 660px; }
+  .room figcaption { position: absolute; top: 24px; left: 40px; }
+  .glow, .shade { transition: opacity 200ms, fill-opacity 200ms; }
+
+  /* Existing lower-left day controller, shown as a static schematic */
+  .clock { position: absolute; left: 24px; bottom: 24px; display: grid; gap: 6px; }
+  .clock-pill { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-xl); background: var(--background); font: 12px/16px var(--font-mono); font-variant-numeric: tabular-nums; }
+  .clock-pill strong { font-size: 16px; line-height: 20px; }
+  .sum-phase { color: var(--emerald); text-transform: uppercase; letter-spacing: 0.1em; }
+  .sum-mode { color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.1em; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted-foreground); flex: none; }
+  .dot[data-on="true"] { background: var(--emerald); }
+
+  /* Stack of separate cards on the right edge */
+  .stack { position: absolute; top: 24px; right: 24px; bottom: 24px; width: 372px; display: flex; flex-direction: column; gap: 12px; }
+  .stack-head { display: flex; align-items: center; gap: 10px; }
+  .stack-head h2 { margin: 0; font: 600 16px/24px var(--font-sans); }
+  .stack-head .count { color: var(--muted-foreground); font: 12px/16px var(--font-mono); font-variant-numeric: tabular-nums; }
+  .toggle { margin-left: auto; }
+  .cards { display: grid; gap: 12px; overflow: auto; align-content: start; padding: 2px; margin: -2px; }
+  .cards[hidden] { display: none; }
+  .stack[data-collapsed="true"] { bottom: auto; width: auto; }
+  .card { border: 1px solid var(--border); border-radius: var(--radius-xl); background: var(--background); padding: 16px; display: grid; gap: 14px; }
+  .card-head { display: flex; align-items: baseline; gap: 8px; }
+  .card-head h3 { margin: 0; font: 600 14px/20px var(--font-sans); }
+  .card-head .meta { margin-left: auto; color: var(--muted-foreground); font: 12px/16px var(--font-mono); font-variant-numeric: tabular-nums; }
+
+  /* Gate card */
+  .gate-row { display: flex; align-items: center; gap: 10px; font: 12px/16px var(--font-mono); font-variant-numeric: tabular-nums; }
+  .gate-row strong { font-size: 24px; line-height: 32px; font-weight: 600; }
+  .gate-state { text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted-foreground); }
+  .gate-state[data-on="true"] { color: var(--emerald); }
+  .gate-row .next { margin-left: auto; color: var(--muted-foreground); }
+  .strip { position: relative; height: 24px; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; background: var(--input-30); }
+  .strip .night { position: absolute; top: 0; bottom: 0; background: var(--emerald-20); }
+  .strip .head { position: absolute; top: -1px; bottom: -1px; width: 2px; background: var(--foreground); }
+  .ticks { display: flex; justify-content: space-between; color: var(--muted-foreground); font: 12px/16px var(--font-mono); font-variant-numeric: tabular-nums; margin-top: 4px; }
+  .seg { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; }
+  .seg button { height: 32px; border: 0; background: var(--input-30); color: var(--foreground); font: 500 12px/16px var(--font-mono); font-variant-numeric: tabular-nums; cursor: pointer; }
+  .seg button + button { border-left: 1px solid var(--border); }
+  .seg button:hover { background: var(--input-50); }
+  .seg button[aria-pressed="true"] { background: var(--emerald-30); }
+  .seg button:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+  .seg-cap { display: grid; grid-template-columns: repeat(4, 1fr); text-align: center; color: var(--muted-foreground); font-size: 12px; line-height: 16px; margin-top: 4px; }
+
+  /* Light rows inside zone cards, all controls visible */
+  .light { display: grid; gap: 10px; }
+  .light + .light { border-top: 1px solid var(--border); padding-top: 14px; }
+  .light-head { display: flex; align-items: center; gap: 10px; }
+  .light-head .name { font-weight: 500; }
+  .light-ctl { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; }
+  .light[data-state="disabled"] .light-ctl { opacity: 1; }
+  .light[data-state="disabled"] .light-ctl:focus-within { opacity: 1; }
+  .hex, .pct { font: 12px/16px var(--font-mono); font-variant-numeric: tabular-nums; color: var(--muted-foreground); min-width: 40px; text-align: right; }
+  .light-hint { margin: 0; color: var(--muted-foreground); font-size: 12px; line-height: 16px; }
+  .chip { margin-left: auto; padding: 2px 8px; border: 1px solid var(--border); border-radius: var(--radius-md); font: 500 12px/16px var(--font-sans); color: var(--muted-foreground); white-space: nowrap; }
+  .chip[data-state="on"] { background: var(--emerald-30); border-color: var(--emerald); color: var(--foreground); }
+  .chip[data-state="disabled"] { border-style: dashed; }
+  .swatch { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  .swatch[data-state="disabled"] { opacity: 0.5; }
+  input[type="range"] { width: 100%; accent-color: var(--emerald); margin: 0; }
+  input[type="color"] { width: 36px; height: 28px; padding: 2px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--input-30); cursor: pointer; }
+  input:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  .switch { position: relative; width: 36px; height: 20px; border-radius: 10px; border: 1px solid var(--border); background: var(--secondary); cursor: pointer; padding: 0; flex: none; }
+  .switch span { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--muted-foreground); transition: transform 150ms; }
+  .switch[aria-checked="true"] { background: var(--emerald-30); border-color: var(--emerald); }
+  .switch[aria-checked="true"] span { transform: translateX(16px); background: var(--foreground); }
+  .switch:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+  .row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 32px; padding: 0 12px; border-radius: var(--radius-md);
+    font: 500 12px/16px var(--font-sans); border: 1px solid var(--border); cursor: pointer;
+    background: var(--input-30); color: var(--foreground);
+    transition: background-color 150ms, box-shadow 150ms;
+  }
+  .btn:hover { background: var(--input-50); }
+  .btn:focus-visible { outline: none; border-color: var(--ring); box-shadow: 0 0 0 3px var(--ring-50); }
+  .btn.solid { background: var(--background); }
+  .status { margin: 0; color: var(--muted-foreground); }
+  .note { margin: 0; color: var(--muted-foreground); font-size: 12px; line-height: 16px; }
+  .card.slot { border-style: dashed; padding: 12px 16px; }
+
+  .notes { padding: 48px 40px 64px; border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+  .notes h2 { margin: 0 0 8px; font-size: 16px; line-height: 24px; font-weight: 600; }
+  .notes p, .notes li { color: var(--muted-foreground); }
+  .notes ul { margin: 0; padding-left: 18px; }
+
+  @media (max-width: 960px) {
+    .frame { height: auto; min-height: 100vh; grid-template-rows: 64px auto; }
+    .site-header { padding: 0 16px; }
+    .site-header .hint { display: none; }
+    .stage { display: grid; }
+    .room, .stage[data-collapsed="true"] .room { position: relative; padding: 48px 16px 88px; }
+    .room figcaption { top: 16px; left: 16px; }
+    .clock { left: 12px; top: auto; }
+    .clock { position: absolute; }
+    .stack, .stack[data-collapsed="true"] { position: static; width: auto; padding: 16px; border-top: 1px solid var(--border); }
+    .cards { overflow: visible; }
+    .notes { grid-template-columns: 1fr; padding: 32px 16px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="frame">
+  <header class="site-header">
+    <div class="brand">kevnnard <span>/ world</span></div>
+    <p class="hint">Drag to orbit · Zoom in to see the room · Scene settings on the right</p>
+  </header>
+  <main class="stage" id="stage">
+    <figure class="room" id="room">
+      <svg viewBox="0 0 800 480" role="img" aria-labelledby="scene-title scene-desc">
+        <title id="scene-title">Room schematic with night lights</title>
+        <desc id="scene-desc">Outline of the room: window on the left wall, desk setup with a monitor and two desk lamps, TV on the wall above its cabinet. Colored glows show which lights the night gate turns on.</desc>
+        <defs>
+          <filter id="blur" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="14"/></filter>
+          <clipPath id="win-clip"><rect x="150" y="80" width="100" height="90"/></clipPath>
+        </defs>
+        <g fill="none" stroke="#27272a" stroke-width="1.5">
+          <rect x="120" y="40" width="560" height="340"/>
+          <path d="M120 380 L40 460 M680 380 L760 460 M40 460 H760"/>
+        </g>
+        <rect class="win-light" x="150" y="80" width="100" height="90" fill="#fafafa" fill-opacity="0.05"/>
+        <g clip-path="url(#win-clip)"><circle class="sky-body" cx="200" cy="140" r="9" fill="#fafafa"/></g>
+        <rect class="room-dim" x="40" y="40" width="720" height="420" fill="#09090b" fill-opacity="0.5" pointer-events="none"/>
+        <g filter="url(#blur)">
+          <rect class="glow" data-glow="tv" x="496" y="84" width="188" height="124" rx="16" opacity="0"/>
+          <rect class="glow" data-glow="setup" x="266" y="184" width="168" height="104" rx="16" opacity="0"/>
+          <ellipse class="glow" data-glow="lampL" cx="250" cy="270" rx="42" ry="36" opacity="0"/>
+          <ellipse class="glow" data-glow="lampR" cx="450" cy="270" rx="42" ry="36" opacity="0"/>
+        </g>
+        <path class="shade" data-shade="lampL" d="M234 250 H266 L258 230 H242 Z" fill-opacity="0"/>
+        <path class="shade" data-shade="lampR" d="M434 250 H466 L458 230 H442 Z" fill-opacity="0"/>
+        <g fill="none" stroke="#a1a1aa" stroke-width="1.5" stroke-linejoin="round">
+          <rect x="150" y="80" width="100" height="90"/>
+          <path d="M200 80 V170 M150 125 H250"/>
+          <rect x="510" y="96" width="160" height="100" rx="4"/>
+          <rect x="500" y="320" width="180" height="60" rx="3"/>
+          <path d="M590 320 V380"/>
+          <path d="M210 300 H490 M225 300 V380 M475 300 V380"/>
+          <rect x="280" y="196" width="140" height="80" rx="3"/>
+          <path d="M350 276 V298 M332 298 H368"/>
+          <path d="M236 298 H264 M250 298 V250 M234 250 H266 L258 230 H242 Z"/>
+          <path d="M436 298 H464 M450 298 V250 M434 250 H466 L458 230 H442 Z"/>
+        </g>
+        <g fill="#a1a1aa" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" text-anchor="middle">
+          <text x="590" y="74">TV backlight</text>
+          <text x="350" y="176">Setup backlight</text>
+          <text x="250" y="220">Left lamp</text>
+          <text x="450" y="220">Right lamp</text>
+        </g>
+      </svg>
+      <figcaption class="hint">Schematic outline, not the live 3D render. Glow color and strength follow the cards.</figcaption>
+      <div class="clock" role="group" aria-labelledby="clock-tag">
+        <p class="hint" id="clock-tag">Existing day controller · schematic</p>
+        <div class="clock-pill"><span class="dot" aria-hidden="true"></span><strong id="clock-time">--:--</strong><span class="sum-phase" id="clock-phase"></span><span class="sum-mode">Paused</span></div>
+      </div>
+    </figure>
+
+    <section class="stack" id="stack" aria-labelledby="stack-title" data-collapsed="false">
+      <div class="stack-head">
+        <span class="dot" id="head-dot" aria-hidden="true"></span>
+        <h2 id="stack-title">Scene</h2>
+        <span class="count" id="head-count"></span>
+        <button type="button" class="btn solid toggle" id="toggle" aria-expanded="true" aria-controls="cards">Hide settings</button>
+      </div>
+
+      <div class="cards" id="cards">
+        <section class="card" aria-labelledby="gate-title">
+          <div class="card-head"><h3 id="gate-title">Night gate</h3><span class="meta">18:00–05:59</span></div>
+          <div class="gate-row">
+            <span class="dot" id="gate-dot" aria-hidden="true"></span>
+            <strong id="gate-time">--:--</strong>
+            <span class="gate-state" id="gate-state"></span>
+            <span class="next" id="gate-next"></span>
+          </div>
+          <div>
+            <div class="strip" aria-hidden="true">
+              <span class="night" style="left:0;width:25%"></span>
+              <span class="night" style="left:75%;width:25%"></span>
+              <span class="head" id="strip-head"></span>
+            </div>
+            <div class="ticks" aria-hidden="true"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div>
+          </div>
+          <div>
+            <div class="seg" role="group" aria-label="Preview the night boundary">
+              <button type="button" data-preview="1079" aria-pressed="false" aria-describedby="cap-1079">17:59</button>
+              <button type="button" data-preview="1080" aria-pressed="false" aria-describedby="cap-1080">18:00</button>
+              <button type="button" data-preview="359" aria-pressed="false" aria-describedby="cap-359">05:59</button>
+              <button type="button" data-preview="360" aria-pressed="false" aria-describedby="cap-360">06:00</button>
+            </div>
+            <div class="seg-cap"><span id="cap-1079">last off</span><span id="cap-1080">first on</span><span id="cap-359">last on</span><span id="cap-360">first off</span></div>
+          </div>
+          <p class="note">Uses the simulated time from the day controller, not your PC clock.</p>
+        </section>
+
+        <section class="card" aria-labelledby="zone-tv">
+          <div class="card-head"><h3 id="zone-tv">TV wall</h3><span class="meta" data-zone-meta="tv"></span></div>
+          <div data-zone="tv"></div>
+        </section>
+
+        <section class="card" aria-labelledby="zone-desk">
+          <div class="card-head"><h3 id="zone-desk">Desk setup</h3><span class="meta" data-zone-meta="desk"></span></div>
+          <div data-zone="desk"></div>
+        </section>
+
+        <div class="card slot">
+          <p class="note">Swatch colors are scene data you pick for each light, not theme colors. New scene settings arrive as their own cards in this stack.</p>
+          <div class="row">
+            <button type="button" class="btn" id="copy">Copy as prompt</button>
+            <button type="button" class="btn" id="reset">Reset lights</button>
+          </div>
+          <p class="status" id="status" role="status" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<section class="notes" aria-label="Design notes">
+  <div>
+    <h2>Night gate</h2>
+    <p>Lights follow the simulated clock, not the PC clock. They can be on from 18:00 through 05:59 and are always off from 06:00 through 17:59. Each light also has its own switch: a disabled light stays off at night.</p>
+  </div>
+  <div>
+    <h2>Grouped cards</h2>
+    <ul>
+      <li>Cards group lights by where they sit in the room, and every control is visible without opening anything.</li>
+      <li>Tab order runs gate, then each light: switch, color, intensity.</li>
+      <li>Hide settings folds the stack to its header line; the button keeps focus.</li>
+    </ul>
+  </div>
+  <div>
+    <h2>Mobile</h2>
+    <p>Under 960 px the cards leave the room and stack below it in the page flow, so the scene and the lower-left day controller are never covered. The header line stays above the first card.</p>
+  </div>
+</section>
+
+<script>
+(() => {
+  const DAY = 1440;
+  const ON_AT = 18 * 60;
+  const OFF_AT = 6 * 60;
+  const pad = (n) => String(n).padStart(2, "0");
+  const wrap = (m) => ((m % DAY) + DAY) % DAY;
+  const fmt = (m) => { const t = Math.floor(wrap(m)); return pad(Math.floor(t / 60)) + ":" + pad(t % 60); };
+  const dur = (n) => (n >= 60 ? `${Math.floor(n / 60)} h ${pad(n % 60)} min` : `${n} min`);
+  // Night gate on simulated minutes: on at >= 18:00 or < 06:00.
+  const isNight = (m) => m >= ON_AT || m < OFF_AT;
+  // Same phase bounds as src/lib/room/day-cycle.ts (drives the window only).
+  const phaseAt = (m) => {
+    const h = wrap(m) / 60;
+    if (h >= 5 && h < 7) return "dawn";
+    if (h >= 7 && h < 16.5) return "day";
+    if (h >= 16.5 && h < 19.5) return "sunset";
+    return "night";
+  };
+  const WINDOW = { night: [0.05, 0.55], dawn: [0.2, 0.3], day: [0.5, 0.05], sunset: [0.3, 0.2] };
+
+  // Scene data: user-editable light colors, not design-system theme colors.
+  const DEFAULTS = [
+    { id: "tv", zone: "tv", name: "TV backlight", where: "Behind the TV", color: "#7c6cff", intensity: 70, enabled: true },
+    { id: "setup", zone: "desk", name: "Setup backlight", where: "Behind the monitor", color: "#22d3ee", intensity: 60, enabled: true },
+    { id: "lampL", zone: "desk", name: "Left desk lamp", where: "Desk, left end", color: "#ffb36b", intensity: 80, enabled: true },
+    { id: "lampR", zone: "desk", name: "Right desk lamp", where: "Desk, right end", color: "#ffb36b", intensity: 80, enabled: false },
+  ];
+  let lights = DEFAULTS.map((l) => ({ ...l }));
+  let minutes = 22 * 60;
+  let lastNight = null;
+
+  const STATE_LABEL = { on: "On", standby: "Off · daytime", disabled: "Disabled" };
+  const stateOf = (l) => (!l.enabled ? "disabled" : isNight(minutes) ? "on" : "standby");
+  const stateHint = (l) => ({
+    on: `${l.where}. On until 06:00.`,
+    standby: `${l.where}. Turns on at 18:00 with these settings.`,
+    disabled: `${l.where}. Disabled, stays off at night.`,
+  })[stateOf(l)];
+
+  const $ = (id) => document.getElementById(id);
+  const status = $("status");
+  const byId = (id) => lights.find((l) => l.id === id);
+
+  document.querySelectorAll("[data-zone]").forEach((zone) => {
+    zone.innerHTML = lights.filter((l) => l.zone === zone.dataset.zone).map((l) => `
+      <div class="light" data-light="${l.id}" role="group" aria-labelledby="${l.id}-name">
+        <div class="light-head">
+          <span class="swatch" data-swatch="${l.id}" aria-hidden="true"></span>
+          <span class="name" id="${l.id}-name">${l.name}</span>
+          <span class="chip" data-chip="${l.id}"></span>
+          <button type="button" class="switch" role="switch" aria-checked="${l.enabled}" aria-label="${l.name} enabled" data-act="toggle" data-id="${l.id}"><span></span></button>
+        </div>
+        <div class="light-ctl">
+          <input type="color" value="${l.color}" aria-label="${l.name} color" aria-describedby="${l.id}-hex" data-act="color" data-id="${l.id}">
+          <input type="range" min="0" max="100" step="5" value="${l.intensity}" aria-label="${l.name} intensity" data-act="intensity" data-id="${l.id}">
+          <span class="pct" data-int="${l.id}" aria-hidden="true"></span>
+        </div>
+        <p class="light-hint"><span class="hex" id="${l.id}-hex" data-hex="${l.id}"></span> · <span data-hint="${l.id}"></span></p>
+      </div>`).join("");
+  });
+
+  function renderLight(l) {
+    const state = stateOf(l);
+    document.querySelectorAll(`[data-light="${l.id}"]`).forEach((el) => { el.dataset.state = state; });
+    document.querySelectorAll(`[data-swatch="${l.id}"]`).forEach((el) => { el.style.background = l.color; el.dataset.state = state; });
+    document.querySelectorAll(`[data-chip="${l.id}"]`).forEach((el) => { el.textContent = STATE_LABEL[state]; el.dataset.state = state; });
+    document.querySelectorAll(`[data-hex="${l.id}"]`).forEach((el) => { el.textContent = l.color; });
+    document.querySelectorAll(`[data-int="${l.id}"]`).forEach((el) => { el.textContent = l.intensity + "%"; });
+    document.querySelectorAll(`[data-hint="${l.id}"]`).forEach((el) => { el.textContent = stateHint(l); });
+    document.querySelectorAll(`[data-act="toggle"][data-id="${l.id}"]`).forEach((el) => el.setAttribute("aria-checked", String(l.enabled)));
+    document.querySelectorAll(`[data-act="color"][data-id="${l.id}"]`).forEach((el) => { if (el.value !== l.color) el.value = l.color; });
+    document.querySelectorAll(`[data-act="intensity"][data-id="${l.id}"]`).forEach((el) => {
+      if (Number(el.value) !== l.intensity) el.value = String(l.intensity);
+      el.setAttribute("aria-valuetext", `${l.intensity} percent`);
+    });
+    const on = state === "on";
+    document.querySelectorAll(`[data-glow="${l.id}"]`).forEach((el) => { el.setAttribute("fill", l.color); el.setAttribute("opacity", on ? (0.15 + 0.65 * l.intensity / 100).toFixed(2) : "0"); });
+    document.querySelectorAll(`[data-shade="${l.id}"]`).forEach((el) => { el.setAttribute("fill", l.color); el.setAttribute("fill-opacity", on ? (0.2 + 0.5 * l.intensity / 100).toFixed(2) : "0"); });
+  }
+
+  function render() {
+    const night = isNight(minutes);
+    const time = fmt(minutes);
+    const phase = phaseAt(minutes);
+    const onCount = lights.filter((l) => stateOf(l) === "on").length;
+    $("head-dot").dataset.on = String(night);
+    $("head-count").textContent = night ? `${onCount}/${lights.length} lights on` : "lights off · day";
+    $("gate-dot").dataset.on = String(night);
+    $("gate-time").textContent = time;
+    $("gate-state").textContent = night ? "Open" : "Closed";
+    $("gate-state").dataset.on = String(night);
+    $("gate-next").textContent = night ? `off in ${dur(wrap(OFF_AT - minutes))}` : `on in ${dur(wrap(ON_AT - minutes))}`;
+    $("strip-head").style.left = `calc(${(minutes / DAY) * 100}% - 1px)`;
+    document.querySelectorAll("[data-preview]").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.preview) === minutes)));
+    document.querySelectorAll("[data-zone-meta]").forEach((el) => {
+      const zone = lights.filter((l) => l.zone === el.dataset.zoneMeta);
+      const on = zone.filter((l) => stateOf(l) === "on").length;
+      el.textContent = `${on} of ${zone.length} on`;
+    });
+    $("clock-time").textContent = time;
+    $("clock-phase").textContent = phase;
+    const [win, dim] = WINDOW[phase];
+    document.querySelector(".win-light").setAttribute("fill-opacity", win);
+    document.querySelector(".room-dim").setAttribute("fill-opacity", dim);
+    const h = minutes / 60;
+    const day = h >= 6 && h < 18;
+    const arc = day ? (h - 6) / 12 : wrap(minutes - ON_AT) / 60 / 12;
+    const body = document.querySelector(".sky-body");
+    body.setAttribute("cx", (160 + arc * 80).toFixed(1));
+    body.setAttribute("cy", (178 - Math.sin(arc * Math.PI) * 70).toFixed(1));
+    body.setAttribute("fill-opacity", day ? 0.9 : 0.5);
+    lights.forEach(renderLight);
+    if (lastNight !== null && lastNight !== night) {
+      status.textContent = night ? `${time}: night gate open, ${onCount} of ${lights.length} lights on.` : `${time}: daytime, all night lights off.`;
+    }
+    lastNight = night;
+  }
+
+  document.querySelectorAll("[data-preview]").forEach((b) => b.addEventListener("click", () => { minutes = Number(b.dataset.preview); render(); }));
+
+  const cards = $("cards");
+  cards.addEventListener("click", (e) => {
+    const t = e.target.closest('[data-act="toggle"]');
+    if (!t) return;
+    const l = byId(t.dataset.id);
+    l.enabled = !l.enabled;
+    render();
+    status.textContent = `${l.name} ${l.enabled ? "enabled" : "disabled"}.`;
+  });
+  cards.addEventListener("input", (e) => {
+    const t = e.target;
+    const l = t.dataset.id && byId(t.dataset.id);
+    if (!l) return;
+    if (t.dataset.act === "color") l.color = t.value;
+    if (t.dataset.act === "intensity") l.intensity = Number(t.value);
+    render();
+  });
+
+  const toggle = $("toggle");
+  function setCollapsed(c) {
+    cards.hidden = c;
+    $("stack").dataset.collapsed = String(c);
+    $("stage").dataset.collapsed = String(c);
+    toggle.setAttribute("aria-expanded", String(!c));
+    toggle.textContent = c ? "Show settings" : "Hide settings";
+  }
+  toggle.addEventListener("click", () => setCollapsed(!cards.hidden));
+
+  const prompt = () => [
+    "Apply these /world scene lighting settings.",
+    "Night gate: lights may be on from 18:00 through 05:59 simulated time and are off from 06:00 through 17:59.",
+    ...lights.map((l) => `- ${l.name} (${l.where.toLowerCase()}): ${l.enabled ? "enabled" : "disabled"}, color ${l.color}, intensity ${l.intensity}%`),
+  ].join("\n");
+  $("copy").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(prompt()); status.textContent = "Settings copied as a prompt."; }
+    catch { status.textContent = "Clipboard is blocked in this view. Prompt: " + prompt().replace(/\n/g, " "); }
+  });
+  $("reset").addEventListener("click", () => { lights = DEFAULTS.map((l) => ({ ...l })); render(); status.textContent = "Lights reset to their defaults."; });
+
+  render();
+})();
+</script>
+</body>
+</html>

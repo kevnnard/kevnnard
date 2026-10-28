@@ -33,6 +33,7 @@ import {
   steamMaterial,
 } from "@/components/world/SetupEffects";
 import { type SurfaceMaps, surfaceMaterial } from "@/components/world/surfaces";
+import type { LightSettings } from "@/lib/world/lights.ts";
 import {
   BOUNCE,
   bounceStep,
@@ -253,10 +254,13 @@ export default function Setup({
   hours,
   maps,
   reducedMotion = false,
+  lights,
 }: {
   hours: number;
   maps?: SurfaceMaps;
   reducedMotion?: boolean;
+  /** Night light settings (T6b): Bruno's chair bake follows their colors. */
+  lights?: LightSettings;
 }) {
   const { invalidate } = useThree();
   const { group, glow, owned, swivel, leds, steam, logo, bruno } =
@@ -425,7 +429,7 @@ export default function Setup({
       </Suspense>
       {createPortal(
         <Suspense fallback={null}>
-          <BrunoChair hours={hours} />
+          <BrunoChair hours={hours} lights={lights} />
         </Suspense>,
         swivel,
       )}

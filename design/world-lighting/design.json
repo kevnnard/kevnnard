@@ -1,0 +1,28 @@
+{
+  "title": "World lighting settings",
+  "brief": "Right-hand scene settings panel for /world, styled like the compact time console. Night-only lights driven by simulated time (on 18:00 through 05:59, off 06:00 through 17:59): TV backlight, setup backlight, left and right desk lamps, each with enable switch, color and intensity. Lower-left day controller kept. Panel is built to gain more settings as sections. Scene is a schematic SVG, not the live render.",
+  "feature": "odd/tasks/stylized-house.md",
+  "artboards": [
+    {
+      "file": "01-compact-accordion.html",
+      "title": "Compact accordion",
+      "tradeoff": "Closest match to the time console: same chassis, one-line summary and collapsible sections, smallest footprint; only one light is visible at a time, so comparing colors across lights takes extra clicks.",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "02-rail-detail.html",
+      "title": "Rail and detail",
+      "tradeoff": "Section rail scales best as settings grow and the editor gives one light full attention with a large preview; it is the widest panel (432 px) and adds one navigation level before you reach a control.",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "03-grouped-cards.html",
+      "title": "Grouped cards",
+      "tradeoff": "Every light is editable at once, grouped by where it sits in the room (TV wall, desk setup), so matching colors is instant; the stack is the tallest and scrolls once more settings arrive, and it drifts furthest from the compact console look.",
+      "width": 1440,
+      "height": 900
+    }
+  ]
+}

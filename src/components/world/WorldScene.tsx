@@ -32,6 +32,7 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import House from "@/components/world/House";
 import Living from "@/components/world/Living";
+import NightLights from "@/components/world/NightLights";
 import Setup from "@/components/world/Setup";
 import { pastelMaterial, useSurfaceMaps } from "@/components/world/surfaces";
 import type { RGB } from "@/lib/room/day-cycle.ts";
@@ -59,6 +60,7 @@ import {
   type NatureKind,
   type Placement,
 } from "@/lib/world/layout.ts";
+import type { LightSettings } from "@/lib/world/lights.ts";
 import { MODEL_FILES } from "@/lib/world/models.ts";
 import {
   cloudShade,
@@ -90,6 +92,8 @@ interface WorldSceneProps {
   reducedMotion: boolean;
   /** Incremented by "Recenter view" to return to the home framing. */
   home: number;
+  /** Night light settings from the scene panel (T6b). */
+  lights: LightSettings;
   onReady: () => void;
 }
 
@@ -97,6 +101,7 @@ export default function WorldScene({
   hours,
   reducedMotion,
   home,
+  lights,
   onReady,
 }: WorldSceneProps) {
   return (
@@ -117,15 +122,24 @@ export default function WorldScene({
         fallback={
           <>
             <House reducedMotion={reducedMotion} />
-            <Setup hours={hours} reducedMotion={reducedMotion} />
+            <Setup
+              hours={hours}
+              reducedMotion={reducedMotion}
+              lights={lights}
+            />
             <Suspense fallback={null}>
               <Living hours={hours} />
             </Suspense>
           </>
         }
       >
-        <TexturedHouse reducedMotion={reducedMotion} hours={hours} />
+        <TexturedHouse
+          reducedMotion={reducedMotion}
+          hours={hours}
+          lights={lights}
+        />
       </Suspense>
+      <NightLights hours={hours} lights={lights} />
       <Flowers />
       <Clouds hours={hours} reducedMotion={reducedMotion} />
       <Nature onReady={onReady} />
@@ -136,15 +150,22 @@ export default function WorldScene({
 function TexturedHouse({
   reducedMotion,
   hours,
+  lights,
 }: {
   reducedMotion: boolean;
   hours: number;
+  lights: LightSettings;
 }) {
   const maps = useSurfaceMaps();
   return (
     <>
       <House reducedMotion={reducedMotion} maps={maps} />
-      <Setup hours={hours} maps={maps} reducedMotion={reducedMotion} />
+      <Setup
+        hours={hours}
+        maps={maps}
+        reducedMotion={reducedMotion}
+        lights={lights}
+      />
       <Suspense fallback={null}>
         <Living hours={hours} maps={maps} />
       </Suspense>

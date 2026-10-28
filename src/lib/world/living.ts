@@ -268,6 +268,17 @@ const local = (origin: Vec3, yaw: number, [dx, dy, dz]: Vec3): Vec3 => {
 
 const TV = { z: BENCH.z - 0.05, width: 1.04, height: 0.6, lift: 0.09 };
 
+/** The TV panel (T6b): centre, size and the back of its housing. */
+export const TV_PANEL = {
+  center: [LX, BENCH_TOP + TV.lift + TV.height / 2, TV.z] as Vec3,
+  width: TV.width,
+  height: TV.height,
+  /** Panel back (z), where its backlight strip runs. */
+  panelBack: TV.z - 0.015,
+  /** Back of the deeper housing (z), the TV's farthest point from the room. */
+  back: TV.z - 0.064,
+} as const;
+
 /** Thin-bezel flat TV on two feet, a deeper back housing and a game on screen. */
 function tv(solid: LivingPart[], glow: LivingPart[]) {
   const C = LIVING_COLORS;

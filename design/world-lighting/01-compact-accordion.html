@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compact accordion — Kevnnard world lighting settings</title>
+<style>
+  /* Tokens: design/system.md (dark theme, src/styles/globals.css). */
+  :root {
+    --background: #09090b;
+    --foreground: #fafafa;
+    --primary: #fafafa;
+    --primary-foreground: #18181b;
+    --secondary: #27272a;
+    --muted-foreground: #a1a1aa;
+    --border: #27272a;
+    --ring: #d4d4d8;
+    --emerald: #10b981;
+    --emerald-30: rgba(16, 185, 129, 0.3);
+    --input-30: rgba(39, 39, 42, 0.3);
+    --input-50: rgba(39, 39, 42, 0.5);
+    --ring-50: rgba(212, 212, 216, 0.5);
+    --grid-line-strong: rgba(16, 185, 129, 0.1);
+    --grid-line-soft: rgba(16, 185, 129, 0.05);
+    --grid-line: rgba(16, 185, 129, 0.08);
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-xl: 12px;
+    --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--background);
+    color: var(--foreground);
+    font: 14px/20px var(--font-sans);
+    background-image:
+      linear-gradient(180deg, transparent 0%, var(--grid-line-strong) 50%, transparent 100%),
+      linear-gradient(180deg, transparent 0%, var(--grid-line-soft) 50%, transparent 100%),
+      linear-gradient(90deg, transparent 0%, var(--grid-line) 50%, transparent 100%);
+    background-size: 1px 100%, 1px 100%, 100% 1px;
+    background-position: 20% 0, 75% 0, 0 30%;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; margin: -1px; }
+  .frame { height: 900px; display: grid; grid-template-rows: 64px 1fr; }
+  .site-header { display: flex; align-items: center; justify-content: space-between; padding: 0 40px; border-bottom: 1px solid var(--border); }
+  .brand { font-weight: 600; }
+  .brand span { color: var(--muted-foreground); font-weight: 500; }
+  .hint { color: var(--muted-foreground); font-size: 12px; line-height: 16px; margin: 0; }
+  .stage { position: relative; min-height: 0; }
+  .room { margin: 0; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 400px 96px 40px; }
+  .room svg { width: 100%; max-width: 980px; height: auto; max-height: 660px; }
+  .room figcaption { position: absolute; top: 24px; left: 40px; }
+  .glow, .shade { transition: opacity 200ms, fill-opacity 200ms; }
+
+  /* Existing lower-left day controller, shown as a static schematic */
+  .clock { position: absolute; left: 24px; bottom: 24px; display: grid; gap: 6px; }
+  .clock-pill { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-xl); background: var(--background); font: 12px/16px var(--font-mono); font-variant-numeric: tabular-nums; }
+  .clock-pill strong { font-size: 16px; line-height: 20px; }
+
+  /* Panel, same chassis as design/day-cycle-controller/03-compact-console.html */
+  .console { position: absolute; top: 24px; right: 24px; width: 352px; max-height: calc(100% - 48px); overflow: auto; border: 1px solid var(--border); border-radius: var(--radius-xl); background: var(--background); font-family: var(--font-mono); font-size: 12px; line-height: 16px; }
+  summary { list-style: none; display: flex; align-items: center; gap: 10px; padding: 12px 16px; cursor: pointer; border-radius: var(--radius-xl); font-variant-numeric: tabular-nums; }
+  summary::-webkit-details-marker { display: none; }
+  summary:focus-visible, .acc-head:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted-foreground); flex: none; }
+  .dot[data-on="true"] { background: var(--emerald); }
+  .sum-title { font-size: 16px; line-height: 20px; font-weight: 600; }
+  .sum-phase { color: var(--emerald); text-transform: uppercase; letter-spacing: 0.1em; }
+  .sum-phase[data-on="false"] { color: var(--muted-foreground); }
+  .sum-mode { margin-left: auto; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.1em; }
+  .chev { color: var(--muted-foreground); }
+  details[open] > summary .chev { transform: rotate(180deg); }
+  .body { border-top: 1px solid var(--border); }
+
+  /* Accordion sections and items */
+  .acc + .acc { border-top: 1px solid var(--border); }
+  .acc-head { width: 100%; display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: none; border: 0; color: var(--foreground); font: inherit; text-align: left; cursor: pointer; }
+  .acc-head:hover { background: var(--input-30); }
+  .acc-head .label { text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted-foreground); }
+  .acc-head .meta { margin-left: auto; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+  .acc-head .chev { transition: transform 150ms; }
+  .acc-head[aria-expanded="true"] .chev { transform: rotate(180deg); }
+  .acc-body { padding: 0 16px 16px; display: grid; gap: 14px; }
+  .acc-body[hidden] { display: none; }
+  .items { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; }
+  .item + .item { border-top: 1px solid var(--border); }
+  .item .acc-head { padding: 10px 12px; font-family: var(--font-sans); }
+  .item .acc-head .name { font-weight: 500; }
+  .item .acc-body { padding: 4px 12px 12px; gap: 12px; }
+
+  .swatch { width: 14px; height: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); flex: none; }
+  .swatch[data-state="disabled"] { opacity: 0.5; }
+  .chip { margin-left: auto; padding: 2px 8px; border: 1px solid var(--border); border-radius: var(--radius-md); font: 500 12px/16px var(--font-sans); color: var(--muted-foreground); white-space: nowrap; }
+  .chip[data-state="on"] { background: var(--emerald-30); border-color: var(--emerald); color: var(--foreground); }
+  .chip[data-state="disabled"] { border-style: dashed; }
+
+  .lines { margin: 0; display: grid; grid-template-columns: 72px 1fr; row-gap: 6px; font-variant-numeric: tabular-nums; }
+  .lines dt { color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.1em; }
+  .lines dd { margin: 0; }
+  .lines .em { color: var(--emerald); }
+  fieldset { border: 0; padding: 0; margin: 0; }
+  legend { color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; padding: 0; }
+  .field { display: grid; gap: 6px; }
+  .field-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; color: var(--muted-foreground); font-family: var(--font-sans); }
+  .field-row output { color: var(--foreground); font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .color-row { display: flex; align-items: center; gap: 8px; }
+  input[type="range"] { width: 100%; accent-color: var(--emerald); margin: 0; }
+  input[type="color"] { width: 40px; height: 28px; padding: 2px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--input-30); cursor: pointer; }
+  input:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  .switch { position: relative; width: 36px; height: 20px; border-radius: 10px; border: 1px solid var(--border); background: var(--secondary); cursor: pointer; padding: 0; flex: none; }
+  .switch span { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--muted-foreground); transition: transform 150ms; }
+  .switch[aria-checked="true"] { background: var(--emerald-30); border-color: var(--emerald); }
+  .switch[aria-checked="true"] span { transform: translateX(16px); background: var(--foreground); }
+  .switch:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  .ed-state { margin: 0; color: var(--muted-foreground); font-family: var(--font-sans); }
+  .row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 32px; padding: 0 12px; border-radius: var(--radius-md);
+    font: 500 12px/16px var(--font-sans); border: 1px solid var(--border); cursor: pointer;
+    background: var(--input-30); color: var(--foreground);
+    transition: background-color 150ms, box-shadow 150ms;
+  }
+  .btn.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .btn:hover { background: var(--input-50); }
+  .btn:focus-visible { outline: none; border-color: var(--ring); box-shadow: 0 0 0 3px var(--ring-50); }
+  .btn[aria-pressed="true"] { background: var(--emerald-30); border-color: var(--emerald); }
+  .footer { border-top: 1px solid var(--border); padding: 12px 16px 16px; display: grid; gap: 10px; }
+  .status { margin: 0; color: var(--muted-foreground); font-family: var(--font-sans); }
+  .note { margin: 0; color: var(--muted-foreground); font-family: var(--font-sans); font-size: 12px; line-height: 16px; }
+
+  /* Notes */
+  .notes { padding: 48px 40px 64px; border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+  .notes h2 { margin: 0 0 8px; font-size: 16px; line-height: 24px; font-weight: 600; }
+  .notes p, .notes li { color: var(--muted-foreground); }
+  .notes ul { margin: 0; padding-left: 18px; }
+
+  @media (max-width: 960px) {
+    .frame { height: auto; min-height: 100vh; }
+    .site-header { padding: 0 16px; }
+    .site-header .hint { display: none; }
+    .console { left: 12px; right: 12px; top: 12px; width: auto; max-height: 70vh; }
+    .room { padding: 88px 16px 96px; }
+    .room figcaption { position: static; order: 2; margin-top: 8px; }
+    .clock { left: 12px; bottom: 12px; }
+    .notes { grid-template-columns: 1fr; padding: 32px 16px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="frame">
+  <header class="site-header">
+    <div class="brand">kevnnard <span>/ world</span></div>
+    <p class="hint">Drag to orbit · Zoom in to see the room · Scene settings on the right</p>
+  </header>
+  <main class="stage">
+    <figure class="room">
+      <svg viewBox="0 0 800 480" role="img" aria-labelledby="scene-title scene-desc">
+        <title id="scene-title">Room schematic with night lights</title>
+        <desc id="scene-desc">Outline of the room: window on the left wall, desk setup with a monitor and two desk lamps, TV on the wall above its cabinet. Colored glows show which lights the night gate turns on.</desc>
+        <defs>
+          <filter id="blur" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="14"/></filter>
+          <clipPath id="win-clip"><rect x="150" y="80" width="100" height="90"/></clipPath>
+        </defs>
+        <g fill="none" stroke="#27272a" stroke-width="1.5">
+          <rect x="120" y="40" width="560" height="340"/>
+          <path d="M120 380 L40 460 M680 380 L760 460 M40 460 H760"/>
+        </g>
+        <rect class="win-light" x="150" y="80" width="100" height="90" fill="#fafafa" fill-opacity="0.05"/>
+        <g clip-path="url(#win-clip)"><circle class="sky-body" cx="200" cy="140" r="9" fill="#fafafa"/></g>
+        <rect class="room-dim" x="40" y="40" width="720" height="420" fill="#09090b" fill-opacity="0.5" pointer-events="none"/>
+        <g filter="url(#blur)">
+          <rect class="glow" data-glow="tv" x="496" y="84" width="188" height="124" rx="16" opacity="0"/>
+          <rect class="glow" data-glow="setup" x="266" y="184" width="168" height="104" rx="16" opacity="0"/>
+          <ellipse class="glow" data-glow="lampL" cx="250" cy="270" rx="42" ry="36" opacity="0"/>
+          <ellipse class="glow" data-glow="lampR" cx="450" cy="270" rx="42" ry="36" opacity="0"/>
+        </g>
+        <path class="shade" data-shade="lampL" d="M234 250 H266 L258 230 H242 Z" fill-opacity="0"/>
+        <path class="shade" data-shade="lampR" d="M434 250 H466 L458 230 H442 Z" fill-opacity="0"/>
+        <g fill="none" stroke="#a1a1aa" stroke-width="1.5" stroke-linejoin="round">
+          <rect x="150" y="80" width="100" height="90"/>
+          <path d="M200 80 V170 M150 125 H250"/>
+          <rect x="510" y="96" width="160" height="100" rx="4"/>
+          <rect x="500" y="320" width="180" height="60" rx="3"/>
+          <path d="M590 320 V380"/>
+          <path d="M210 300 H490 M225 300 V380 M475 300 V380"/>
+          <rect x="280" y="196" width="140" height="80" rx="3"/>
+          <path d="M350 276 V298 M332 298 H368"/>
+          <path d="M236 298 H264 M250 298 V250 M234 250 H266 L258 230 H242 Z"/>
+          <path d="M436 298 H464 M450 298 V250 M434 250 H466 L458 230 H442 Z"/>
+        </g>
+        <g fill="#a1a1aa" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" text-anchor="middle">
+          <text x="590" y="74">TV backlight</text>
+          <text x="350" y="176">Setup backlight</text>
+          <text x="250" y="220">Left lamp</text>
+          <text x="450" y="220">Right lamp</text>
+        </g>
+      </svg>
+      <figcaption class="hint">Schematic outline, not the live 3D render. Glow color and strength follow the panel.</figcaption>
+    </figure>
+
+    <div class="clock" role="group" aria-labelledby="clock-tag">
+      <p class="hint" id="clock-tag">Existing day controller · schematic</p>
+      <div class="clock-pill"><span class="dot" aria-hidden="true"></span><strong id="clock-time">--:--</strong><span class="sum-phase" id="clock-phase"></span><span class="sum-mode">Paused</span></div>
+    </div>
+
+    <section class="console" aria-labelledby="panel-title">
+      <h2 id="panel-title" class="sr">Scene settings</h2>
+      <details id="panel" open>
+        <summary>
+          <span class="dot" id="sum-dot" aria-hidden="true"></span>
+          <span class="sum-title">Scene</span>
+          <span class="sum-phase" id="sum-gate"></span>
+          <span class="sum-mode" id="sum-count"></span>
+          <span class="chev" aria-hidden="true">▾</span>
+        </summary>
+        <div class="body">
+          <div class="acc">
+            <h3 class="sr">Night schedule</h3>
+            <button type="button" class="acc-head" id="sec-schedule-h" aria-expanded="true" aria-controls="sec-schedule" data-section>
+              <span class="label">Night schedule</span><span class="meta">18:00–05:59</span><span class="chev" aria-hidden="true">▾</span>
+            </button>
+            <div class="acc-body" id="sec-schedule" role="region" aria-labelledby="sec-schedule-h">
+              <dl class="lines">
+                <dt>Sim</dt><dd><span id="sim-time">--:--</span> <span class="em" id="sim-phase"></span></dd>
+                <dt>Gate</dt><dd id="gate-line"></dd>
+                <dt>Window</dt><dd>On 18:00 · off 06:00</dd>
+                <dt>Next</dt><dd id="next-line"></dd>
+              </dl>
+              <fieldset>
+                <legend>Preview the boundary</legend>
+                <div class="row" id="previews">
+                  <button type="button" class="btn mono" data-preview="1079" aria-pressed="false">17:59</button>
+                  <button type="button" class="btn mono" data-preview="1080" aria-pressed="false">18:00</button>
+                  <button type="button" class="btn mono" data-preview="359" aria-pressed="false">05:59</button>
+                  <button type="button" class="btn mono" data-preview="360" aria-pressed="false">06:00</button>
+                </div>
+              </fieldset>
+              <div class="field">
+                <div class="field-row"><label for="scrub">Preview time</label><output id="scrub-out" for="scrub">--:--</output></div>
+                <input type="range" id="scrub" min="0" max="1439" step="1" value="1320">
+              </div>
+            </div>
+          </div>
+          <div class="acc">
+            <h3 class="sr">Night lights</h3>
+            <button type="button" class="acc-head" id="sec-lights-h" aria-expanded="true" aria-controls="sec-lights" data-section>
+              <span class="label">Night lights</span><span class="meta" id="lights-meta"></span><span class="chev" aria-hidden="true">▾</span>
+            </button>
+            <div class="acc-body" id="sec-lights" role="region" aria-labelledby="sec-lights-h">
+              <div class="items" id="items"></div>
+              <p class="note">Swatches are scene data you pick for each light, not theme colors.</p>
+            </div>
+          </div>
+          <div class="footer">
+            <p class="note">New scene settings are added here as their own sections.</p>
+            <div class="row">
+              <button type="button" class="btn" id="copy">Copy as prompt</button>
+              <button type="button" class="btn" id="reset">Reset lights</button>
+            </div>
+            <p class="status" id="status" role="status" aria-live="polite"></p>
+          </div>
+        </div>
+      </details>
+    </section>
+  </main>
+</div>
+
+<section class="notes" aria-label="Design notes">
+  <div>
+    <h2>Night gate</h2>
+    <p>Lights follow the simulated clock, not the PC clock. They can be on from 18:00 through 05:59 and are always off from 06:00 through 17:59. Each light also has its own switch: a disabled light stays off at night.</p>
+  </div>
+  <div>
+    <h2>Compact accordion</h2>
+    <ul>
+      <li>Same chassis as the time console: one-line summary, collapses with Enter or Space.</li>
+      <li>Sections open independently; inside Night lights only one light is open at a time.</li>
+      <li>Arrow Up/Down, Home and End move between light headers.</li>
+    </ul>
+  </div>
+  <div>
+    <h2>Mobile</h2>
+    <p>Under 960 px the panel spans the top edge and starts collapsed to its summary line, so the room and the lower-left day controller stay visible. Opening it scrolls inside a 70% height sheet.</p>
+  </div>
+</section>
+
+<script>
+(() => {
+  const DAY = 1440;
+  const ON_AT = 18 * 60;
+  const OFF_AT = 6 * 60;
+  const pad = (n) => String(n).padStart(2, "0");
+  const wrap = (m) => ((m % DAY) + DAY) % DAY;
+  const fmt = (m) => { const t = Math.floor(wrap(m)); return pad(Math.floor(t / 60)) + ":" + pad(t % 60); };
+  const dur = (n) => (n >= 60 ? `${Math.floor(n / 60)} h ${pad(n % 60)} min` : `${n} min`);
+  // Night gate on simulated minutes: on at >= 18:00 or < 06:00.
+  const isNight = (m) => m >= ON_AT || m < OFF_AT;
+  // Same phase bounds as src/lib/room/day-cycle.ts (drives the window only).
+  const phaseAt = (m) => {
+    const h = wrap(m) / 60;
+    if (h >= 5 && h < 7) return "dawn";
+    if (h >= 7 && h < 16.5) return "day";
+    if (h >= 16.5 && h < 19.5) return "sunset";
+    return "night";
+  };
+  const WINDOW = { night: [0.05, 0.55], dawn: [0.2, 0.3], day: [0.5, 0.05], sunset: [0.3, 0.2] };
+
+  // Scene data: user-editable light colors, not design-system theme colors.
+  const DEFAULTS = [
+    { id: "tv", name: "TV backlight", color: "#7c6cff", intensity: 70, enabled: true },
+    { id: "setup", name: "Setup backlight", color: "#22d3ee", intensity: 60, enabled: true },
+    { id: "lampL", name: "Left desk lamp", color: "#ffb36b", intensity: 80, enabled: true },
+    { id: "lampR", name: "Right desk lamp", color: "#ffb36b", intensity: 80, enabled: false },
+  ];
+  let lights = DEFAULTS.map((l) => ({ ...l }));
+  let minutes = 22 * 60;
+  let lastNight = null;
+
+  const STATE_LABEL = { on: "On", standby: "Off · daytime", disabled: "Disabled" };
+  const stateOf = (l) => (!l.enabled ? "disabled" : isNight(minutes) ? "on" : "standby");
+  const stateHint = (l) => ({
+    on: `On until 06:00 at ${l.intensity}%.`,
+    standby: "Off for daytime. Turns on at 18:00 with these settings.",
+    disabled: "Disabled. Stays off at night until you switch it on.",
+  })[stateOf(l)];
+
+  const $ = (id) => document.getElementById(id);
+  const items = $("items");
+  const status = $("status");
+  const byId = (id) => lights.find((l) => l.id === id);
+
+  items.innerHTML = lights.map((l, i) => `
+    <div class="item">
+      <h4 class="sr" id="${l.id}-name">${l.name}</h4>
+      <button type="button" class="acc-head" id="${l.id}-h" aria-expanded="${i === 0}" aria-controls="${l.id}-p" data-item>
+        <span class="swatch" data-swatch="${l.id}" aria-hidden="true"></span>
+        <span class="name">${l.name}</span>
+        <span class="chip" data-chip="${l.id}"></span>
+        <span class="chev" aria-hidden="true">▾</span>
+      </button>
+      <div class="acc-body" id="${l.id}-p" role="region" aria-labelledby="${l.id}-h" ${i === 0 ? "" : "hidden"}>
+        <div class="field-row"><span id="${l.id}-en">Enabled</span>
+          <button type="button" class="switch" role="switch" aria-checked="${l.enabled}" aria-labelledby="${l.id}-en ${l.id}-name" data-act="toggle" data-id="${l.id}"><span></span></button>
+        </div>
+        <div class="field-row"><label for="${l.id}-c">Color</label>
+          <span class="color-row"><output for="${l.id}-c" data-hex="${l.id}"></output><input type="color" id="${l.id}-c" value="${l.color}" aria-label="${l.name} color" data-act="color" data-id="${l.id}"></span>
+        </div>
+        <div class="field">
+          <div class="field-row"><label for="${l.id}-i">Intensity</label><output for="${l.id}-i" data-int="${l.id}"></output></div>
+          <input type="range" id="${l.id}-i" min="0" max="100" step="5" value="${l.intensity}" aria-label="${l.name} intensity" data-act="intensity" data-id="${l.id}">
+        </div>
+        <p class="ed-state" data-hint="${l.id}"></p>
+      </div>
+    </div>`).join("");
+
+  function renderLight(l) {
+    const state = stateOf(l);
+    document.querySelectorAll(`[data-swatch="${l.id}"]`).forEach((el) => { el.style.background = l.color; el.dataset.state = state; });
+    document.querySelectorAll(`[data-chip="${l.id}"]`).forEach((el) => { el.textContent = STATE_LABEL[state]; el.dataset.state = state; });
+    document.querySelectorAll(`[data-hex="${l.id}"]`).forEach((el) => { el.textContent = l.color; });
+    document.querySelectorAll(`[data-int="${l.id}"]`).forEach((el) => { el.textContent = l.intensity + "%"; });
+    document.querySelectorAll(`[data-hint="${l.id}"]`).forEach((el) => { el.textContent = stateHint(l); });
+    document.querySelectorAll(`[data-act="toggle"][data-id="${l.id}"]`).forEach((el) => el.setAttribute("aria-checked", String(l.enabled)));
+    document.querySelectorAll(`[data-act="color"][data-id="${l.id}"]`).forEach((el) => { if (el.value !== l.color) el.value = l.color; });
+    document.querySelectorAll(`[data-act="intensity"][data-id="${l.id}"]`).forEach((el) => {
+      if (Number(el.value) !== l.intensity) el.value = String(l.intensity);
+      el.setAttribute("aria-valuetext", `${l.intensity} percent`);
+    });
+    const on = state === "on";
+    document.querySelectorAll(`[data-glow="${l.id}"]`).forEach((el) => { el.setAttribute("fill", l.color); el.setAttribute("opacity", on ? (0.15 + 0.65 * l.intensity / 100).toFixed(2) : "0"); });
+    document.querySelectorAll(`[data-shade="${l.id}"]`).forEach((el) => { el.setAttribute("fill", l.color); el.setAttribute("fill-opacity", on ? (0.2 + 0.5 * l.intensity / 100).toFixed(2) : "0"); });
+  }
+
+  function render() {
+    const night = isNight(minutes);
+    const time = fmt(minutes);
+    const phase = phaseAt(minutes);
+    const onCount = lights.filter((l) => stateOf(l) === "on").length;
+    const next = night ? `off at 06:00 · in ${dur(wrap(OFF_AT - minutes))}` : `on at 18:00 · in ${dur(wrap(ON_AT - minutes))}`;
+    $("sum-dot").dataset.on = String(night);
+    $("sum-gate").textContent = night ? "Lights on" : "Lights off";
+    $("sum-gate").dataset.on = String(night);
+    $("sum-count").textContent = `${onCount}/${lights.length}`;
+    $("lights-meta").textContent = `${onCount} of ${lights.length} on`;
+    $("sim-time").textContent = time;
+    $("sim-phase").textContent = phase;
+    $("gate-line").textContent = night ? "Open · night window" : "Closed · daytime";
+    $("next-line").textContent = next;
+    $("scrub-out").textContent = time;
+    const scrub = $("scrub");
+    if (Number(scrub.value) !== minutes) scrub.value = String(minutes);
+    scrub.setAttribute("aria-valuetext", `${time}, lights ${night ? "on" : "off"}`);
+    document.querySelectorAll("[data-preview]").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.preview) === minutes)));
+    $("clock-time").textContent = time;
+    $("clock-phase").textContent = phase;
+    const [win, dim] = WINDOW[phase];
+    document.querySelector(".win-light").setAttribute("fill-opacity", win);
+    document.querySelector(".room-dim").setAttribute("fill-opacity", dim);
+    const h = minutes / 60;
+    const day = h >= 6 && h < 18;
+    const arc = day ? (h - 6) / 12 : wrap(minutes - ON_AT) / 60 / 12;
+    const body = document.querySelector(".sky-body");
+    body.setAttribute("cx", (160 + arc * 80).toFixed(1));
+    body.setAttribute("cy", (178 - Math.sin(arc * Math.PI) * 70).toFixed(1));
+    body.setAttribute("fill-opacity", day ? 0.9 : 0.5);
+    lights.forEach(renderLight);
+    if (lastNight !== null && lastNight !== night) {
+      status.textContent = night ? `${time}: night gate open, ${onCount} of ${lights.length} lights on.` : `${time}: daytime, all night lights off.`;
+    }
+    lastNight = night;
+  }
+
+  function setMinutes(m) { minutes = wrap(m); render(); }
+
+  document.querySelectorAll("[data-preview]").forEach((b) => b.addEventListener("click", () => setMinutes(Number(b.dataset.preview))));
+  $("scrub").addEventListener("input", (e) => setMinutes(Number(e.target.value)));
+
+  document.querySelectorAll("[data-section]").forEach((b) => b.addEventListener("click", () => {
+    const open = b.getAttribute("aria-expanded") !== "true";
+    b.setAttribute("aria-expanded", String(open));
+    $(b.getAttribute("aria-controls")).hidden = !open;
+  }));
+
+  const heads = [...items.querySelectorAll("[data-item]")];
+  heads.forEach((b) => {
+    b.addEventListener("click", () => {
+      const open = b.getAttribute("aria-expanded") !== "true";
+      heads.forEach((o) => { o.setAttribute("aria-expanded", "false"); $(o.getAttribute("aria-controls")).hidden = true; });
+      b.setAttribute("aria-expanded", String(open));
+      $(b.getAttribute("aria-controls")).hidden = !open;
+    });
+    b.addEventListener("keydown", (e) => {
+      const i = heads.indexOf(b);
+      const to = { ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: heads.length - 1 }[e.key];
+      if (to === undefined) return;
+      e.preventDefault();
+      heads[(to + heads.length) % heads.length].focus();
+    });
+  });
+
+  items.addEventListener("click", (e) => {
+    const t = e.target.closest('[data-act="toggle"]');
+    if (!t) return;
+    const l = byId(t.dataset.id);
+    l.enabled = !l.enabled;
+    render();
+    status.textContent = `${l.name} ${l.enabled ? "enabled" : "disabled"}. ${stateHint(l)}`;
+  });
+  items.addEventListener("input", (e) => {
+    const t = e.target;
+    const l = t.dataset.id && byId(t.dataset.id);
+    if (!l) return;
+    if (t.dataset.act === "color") l.color = t.value;
+    if (t.dataset.act === "intensity") l.intensity = Number(t.value);
+    render();
+  });
+
+  const prompt = () => [
+    "Apply these /world scene lighting settings.",
+    "Night gate: lights may be on from 18:00 through 05:59 simulated time and are off from 06:00 through 17:59.",
+    ...lights.map((l) => `- ${l.name}: ${l.enabled ? "enabled" : "disabled"}, color ${l.color}, intensity ${l.intensity}%`),
+  ].join("\n");
+  $("copy").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(prompt()); status.textContent = "Settings copied as a prompt."; }
+    catch { status.textContent = "Clipboard is blocked in this view. Prompt: " + prompt().replace(/\n/g, " "); }
+  });
+  $("reset").addEventListener("click", () => { lights = DEFAULTS.map((l) => ({ ...l })); render(); status.textContent = "Lights reset to their defaults."; });
+
+  if (window.matchMedia("(max-width: 960px)").matches) $("panel").open = false;
+  render();
+})();
+</script>
+</body>
+</html>

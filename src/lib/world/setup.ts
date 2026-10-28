@@ -74,6 +74,21 @@ const w = (d: number, y: number, u: number): Vec3 => [IN + d, Y0 + y, u];
 
 const DESK = { u0: -2.3, u1: -0.3, d0: 0.03, depth: 0.72, height: 0.76 };
 const CHAIR = { d: 1.12, u: -1.42, yaw: 0.22, tilt: 0.14 };
+
+/** Desk top surface in world space (T6b): where the night lamps stand. */
+export const DESK_TOP = {
+  x0: IN + DESK.d0,
+  x1: IN + DESK.d0 + DESK.depth,
+  z0: DESK.u0,
+  z1: DESK.u1,
+  y: Y0 + DESK.height,
+} as const;
+
+/** The wide main monitor's panel (T6b): its backlight sits behind it. */
+export const MAIN_MONITOR = {
+  center: w(0.26, 1.11, -1.45),
+  size: [0.045, 0.4, 0.94] as Vec3,
+} as const;
 const SIDE_YAW = 0.35;
 const SPEAKERS = [-2.12, -0.4] as const;
 const SPEAKER_Y = 0.1;
@@ -342,7 +357,7 @@ function monitors(solid: SetupPart[], glow: SetupPart[]) {
       undefined,
       0.9,
     ),
-    rounded("satin", 0.018, w(0.26, 1.11, u), [0.045, 0.4, 0.94], C.bezel),
+    rounded("satin", 0.018, MAIN_MONITOR.center, MAIN_MONITOR.size, C.bezel),
   );
   glow.push(
     part("satin", "box", w(0.286, 1.115, u), [0.006, 0.35, 0.88], C.screen),
