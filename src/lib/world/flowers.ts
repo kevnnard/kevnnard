@@ -124,7 +124,9 @@ export const FLOWER_TRIANGLES = (() => {
 })();
 
 const MAX_FLOWERS = 80;
-const GAP = 0.12;
+const GAP = 0.16;
+/** Flowers render this much larger than the modeled size, to read from afar. */
+const SIZE = 1.6;
 // Pad-edge patches, just outside the pad, away from the front path.
 const PAD_EDGE: readonly [number, number][] = [
   [PAD.center[0] + PAD.halfX + 0.45, PAD.center[1] - 1.4],
@@ -140,13 +142,12 @@ export function flowerLayout(
   seed: number = ISLAND.seed,
 ): FlowerPlacement[] {
   const random = seededRandom(seed * 17 + 3);
-  const ground = layout.filter((item) => !KIND_SPECS[item.kind].floating);
   const flowers: FlowerPlacement[] = [];
 
   const free = (x: number, z: number) =>
     insideIsland(x, z, 0.3) &&
     !onPad(x, z, 0.25) &&
-    ground.every(
+    layout.every(
       (item) =>
         item.kind === "tuft-small" ||
         Math.hypot(x - item.position[0], z - item.position[2]) >=
@@ -158,7 +159,7 @@ export function flowerLayout(
     );
 
   const centers: [number, number][] = [...PAD_EDGE];
-  for (const bush of ground.filter((item) => item.kind === "bush")) {
+  for (const bush of layout.filter((item) => item.kind === "bush")) {
     const angle = random() * Math.PI * 2;
     const reach = KIND_SPECS.bush.radius * bush.scale + 0.25;
     centers.push([
@@ -168,16 +169,16 @@ export function flowerLayout(
   }
 
   for (const [cx, cz] of centers) {
-    const count = 3 + Math.floor(random() * 4);
+    const count = 5 + Math.floor(random() * 5);
     const color = Math.floor(random() * FLOWER_COLORS.length);
     for (let i = 0; i < count && flowers.length < MAX_FLOWERS; i++) {
       const angle = random() * Math.PI * 2;
-      const distance = 0.08 + random() * 0.4;
+      const distance = 0.08 + random() * 0.55;
       const x = cx + Math.cos(angle) * distance;
       const z = cz + Math.sin(angle) * distance;
       // Mostly one color per patch, with an occasional stray.
       const stray = random() < 0.25;
-      const scale = 0.8 + random() * 0.5;
+      const scale = (0.8 + random() * 0.5) * SIZE;
       const rotationY = random() * Math.PI * 2;
       if (!free(x, z)) continue;
       flowers.push({

@@ -1,6 +1,6 @@
 // Seeded nature layout for the floating island. Hand-placed anchors give the
 // composition (tall trees behind, open lawn and path toward the camera); the
-// seed only jitters them and scatters bushes, grass tufts and cloud puffs, so
+// seed only jitters them and scatters bushes, and grass tufts, so
 // every visit looks the same.
 
 import { ISLAND, insideIsland, islandRadiusAt, onPad, PAD } from "./island.ts";
@@ -16,8 +16,7 @@ export type NatureKind =
   | "stone"
   | "tuft"
   | "tuft-small"
-  | "bush"
-  | "cloud";
+  | "bush";
 
 export interface KindSpec {
   /** Rendered height in meters; the model is scaled uniformly to it. */
@@ -26,16 +25,13 @@ export interface KindSpec {
   radius: number;
   /** Distance kept from the building pad. */
   clearance: number;
-  /** Clouds float around the island instead of standing on it. */
-  floating: boolean;
 }
 
-const spec = (
-  height: number,
-  radius: number,
-  clearance: number,
-  floating = false,
-): KindSpec => ({ height, radius, clearance, floating });
+const spec = (height: number, radius: number, clearance: number): KindSpec => ({
+  height,
+  radius,
+  clearance,
+});
 
 export const KIND_SPECS: Record<NatureKind, KindSpec> = {
   tree: spec(2.8, 0.6, 0.8),
@@ -48,7 +44,6 @@ export const KIND_SPECS: Record<NatureKind, KindSpec> = {
   tuft: spec(0.45, 0.37, 0.2),
   "tuft-small": spec(0.35, 0.2, 0.12),
   bush: spec(0.55, 0.42, 0.3),
-  cloud: spec(1.1, 1.6, 0, true),
 };
 
 export interface Placement {
@@ -90,15 +85,6 @@ const PATH_FROM = [1.1, PAD.center[1] + PAD.halfZ + 0.45] as const;
 const PATH_TO = [3.7, 4.7] as const;
 const PATH_STONES = 6;
 
-// Cloud cluster centers; each grows 3-5 overlapping puffs of varied size.
-const CLOUDS: readonly [number, number, number][] = [
-  [-9, 2, -5],
-  [6, 3, -9],
-  [-8, -3, 4],
-  [9.5, -2.5, 1.5],
-  [0.5, 4.2, -11],
-];
-
 /** Bush clusters spread along the rim, besides those hugging trees and rocks. */
 const RIM_CLUSTERS = 6;
 const BUSHES_PER_RIM_CLUSTER = 3;
@@ -115,7 +101,6 @@ export function islandLayout(seed: number = ISLAND.seed): Placement[] {
     if (!insideIsland(x, z, Math.max(0.3, radius * scale * 0.6))) return false;
     if (onPad(x, z, clearance)) return false;
     return placed.every((other) => {
-      if (KIND_SPECS[other.kind].floating) return true;
       const gap = Math.hypot(x - other.position[0], z - other.position[2]);
       const need =
         (radius * scale + KIND_SPECS[other.kind].radius * other.scale) *
@@ -191,27 +176,6 @@ export function islandLayout(seed: number = ISLAND.seed): Placement[] {
     const before = placed.length;
     tryPlace("tuft-small", x, z, 0, 1);
     if (placed.length > before) tufts++;
-  }
-
-  for (const [x, y, z] of CLOUDS) {
-    const puffs = 3 + Math.floor(random() * 3);
-    const heading = random() * Math.PI * 2;
-    for (let i = 0; i < puffs; i++) {
-      // The first puff is the big middle one; the rest trail off both sides.
-      const side = i === 0 ? 0 : (i % 2 === 0 ? 1 : -1) * Math.ceil(i / 2);
-      const along = side * (0.9 + random() * 0.4);
-      const across = (random() - 0.5) * 0.9;
-      placed.push({
-        kind: "cloud",
-        position: [
-          x + Math.cos(heading) * along - Math.sin(heading) * across,
-          y + (random() - 0.5) * 0.35 - Math.abs(side) * 0.12,
-          z + Math.sin(heading) * along + Math.cos(heading) * across,
-        ],
-        rotationY: random() * Math.PI * 2,
-        scale: i === 0 ? 1.15 + random() * 0.25 : 0.55 + random() * 0.45,
-      });
-    }
   }
 
   return placed;

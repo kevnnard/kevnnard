@@ -51,9 +51,10 @@ fails otherwise (S4). The credits are shown in the "Credits" dialog.
 | KayKit Medieval Hexagon Pack 1.0 | Kay Lousberg | CC0 1.0 | pines, rocks, path stones |
 | KayKit City Builder Bits 1.0 | Kay Lousberg | CC0 1.0 | bushes |
 | Kenney Mini Arena 1.0 | Kenney, Tony Schär | CC0 1.0 | tree |
-| Kenney Starter Kit 3D Platformer | Kenney | CC0 1.0 | grass tufts, clouds |
+| Kenney Starter Kit 3D Platformer | Kenney | CC0 1.0 | grass tufts |
 
-The flowers are original procedural geometry (`src/lib/world/flowers.ts`),
+The flowers and clouds are original procedural geometry
+(`src/lib/world/flowers.ts`, `src/lib/world/clouds.ts`),
 credited under `original` in `credits.json` with the repository's license.
 
 Quaternius packs were not used: their pack pages say CC0, but

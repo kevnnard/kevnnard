@@ -334,25 +334,6 @@
           "sha256": "6d2d9a5a13bce32209cd8c04572ab170504d68f34b1519165c9b0c41871e235b"
         }
       ]
-    },
-    {
-      "file": "models/cloud.glb",
-      "asset": "cloud",
-      "pack": "kenney-starter-kit-3d-platformer",
-      "author": "Kenney",
-      "license": "CC0-1.0",
-      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-      "source": "https://github.com/KenneyNL/Starter-Kit-3D-Platformer/blob/3fa8a04b1c01ab23db43123d4ce814a34c3fc7f0/models/cloud.glb",
-      "bytes": 7576,
-      "sha256": "0bf4ebeb68f592932699106c01bddb35664970c5ba7ccbfc949f2749f7361f24",
-      "triangles": 204,
-      "sourceFiles": [
-        {
-          "url": "https://raw.githubusercontent.com/KenneyNL/Starter-Kit-3D-Platformer/3fa8a04b1c01ab23db43123d4ce814a34c3fc7f0/models/cloud.glb",
-          "bytes": 23788,
-          "sha256": "09c6f071d3a9ab64993248ee5c8d50debcd9c6cc4369236a01155ff7ff87f30a"
-        }
-      ]
     }
   ],
   "original": [
@@ -362,6 +343,13 @@
       "author": "Kevnnard",
       "license": "Original work (repository license)",
       "source": "src/lib/world/flowers.ts"
+    },
+    {
+      "id": "clouds",
+      "asset": "Puffy clouds (procedural)",
+      "author": "Kevnnard",
+      "license": "Original work (repository license)",
+      "source": "src/lib/world/clouds.ts"
     }
   ]
 }

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { cloudLayout, cloudShapes } from "../../src/lib/world/clouds.ts";
 import { flowerLayout } from "../../src/lib/world/flowers.ts";
 import {
   ISLAND,
@@ -120,7 +121,6 @@ describe("islandLayout", () => {
     assert.ok(total("rock") >= 4);
     assert.ok(total("stone") >= 4);
     assert.ok(total("bush") >= 10);
-    assert.ok(total("cloud") >= 12, "clouds come in clusters of 3-5 puffs");
     assert.ok(layout.length <= 120, "instance budget");
   });
 
@@ -131,6 +131,29 @@ describe("islandLayout", () => {
     for (const { position } of flowers) {
       assert.ok(!onPad(position[0], position[2], 0.2), `${position}`);
       assert.ok(insideIsland(position[0], position[2], 0.25), `${position}`);
+    }
+  });
+
+  it("builds seeded clouds from 4-7 smooth overlapping puffs with a flat-ish bottom", () => {
+    const shapes = cloudShapes(ISLAND.seed);
+    assert.deepEqual(shapes, cloudShapes(ISLAND.seed));
+    assert.ok(shapes.length >= 3);
+    for (const shape of shapes) {
+      assert.ok(shape.puffs >= 4 && shape.puffs <= 7, `${shape.puffs} puffs`);
+      assert.equal(shape.positions.length, shape.normals.length);
+      let low = Infinity;
+      for (let i = 1; i < shape.positions.length; i += 3)
+        low = Math.min(low, shape.positions[i]);
+      let high = -Infinity;
+      for (let i = 1; i < shape.positions.length; i += 3)
+        high = Math.max(high, shape.positions[i]);
+      assert.ok(-low < high * 0.6, "bottom flatter than the top");
+    }
+    const clouds = cloudLayout(ISLAND.seed);
+    assert.ok(clouds.length >= 5);
+    for (const cloud of clouds) {
+      assert.ok(cloud.shape >= 0 && cloud.shape < shapes.length);
+      assert.ok(cloud.position.every(Number.isFinite) && cloud.scale > 0);
     }
   });
 

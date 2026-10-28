@@ -1,6 +1,7 @@
 // Shipped world models (written by scripts/prepare-world.py, credited in
 // public/world/credits.json) and the render budget the tests enforce.
 
+import { CLOUD_SHAPES } from "./clouds.ts";
 import { KIND_SPECS, type NatureKind } from "./layout.ts";
 
 export const MODEL_FILES = Object.fromEntries(
@@ -9,9 +10,10 @@ export const MODEL_FILES = Object.fromEntries(
 
 /**
  * Draws outside the instanced models: sky, stars, grass, rock and pad, plus
- * the procedural flowers (stems with centers, and petals).
+ * the procedural flowers (stems with centers, and petals) and one instanced
+ * draw per procedural cloud shape.
  */
-export const SCENE_DRAWS = 7;
+export const SCENE_DRAWS = 7 + CLOUD_SHAPES;
 
 /** Triangles per frame (all instances), main-pass draw calls, model bytes. */
 export const BUDGET = {

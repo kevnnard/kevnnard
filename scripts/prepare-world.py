@@ -93,8 +93,6 @@ ASSETS = [
     ("tuft-small", "kenney-starter-kit-3d-platformer", ["models/grass-small.glb", "models/Textures/colormap.png"]),
     ("bush", "kaykit-city-builder-bits",
      [CITY_BITS + "bush.gltf", CITY_BITS + "bush.bin", CITY_BITS + "citybits_texture.png"]),
-    # Self-contained GLB: no external texture.
-    ("cloud", "kenney-starter-kit-3d-platformer", ["models/cloud.glb"]),
 ]
 
 # Original work built in code for this project: credited too, under the
@@ -102,6 +100,8 @@ ASSETS = [
 ORIGINAL = [
     {"id": "flowers", "asset": "Low-poly flowers (procedural)", "author": "Kevnnard",
      "license": "Original work (repository license)", "source": "src/lib/world/flowers.ts"},
+    {"id": "clouds", "asset": "Puffy clouds (procedural)", "author": "Kevnnard",
+     "license": "Original work (repository license)", "source": "src/lib/world/clouds.ts"},
 ]
 
 

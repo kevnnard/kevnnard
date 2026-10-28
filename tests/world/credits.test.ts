@@ -22,11 +22,10 @@ describe("credits.json (S4: every author is credited, even CC0)", () => {
       assert.ok(existsSync(new URL(file, PUBLIC)), `${file} is credited`);
   });
 
-  it("ships the CC0 bush and Kenney cloud, not the old rock-like clouds (S5)", () => {
+  it("ships the CC0 bush and no cloud models: clouds are original (S5)", () => {
     const files = shippedModels();
     assert.ok(files.includes("models/bush.glb"), "bush");
-    assert.ok(files.includes("models/cloud.glb"), "cloud");
-    assert.ok(!files.some((file) => file.includes("cloud-")), "old clouds");
+    assert.ok(!files.some((file) => file.includes("cloud")), "cloud models");
     const packs = credits().assets.map((entry) => [entry.file, entry.pack]);
     assert.deepEqual(packs.filter(([file]) => file === "models/bush.glb")[0], [
       "models/bush.glb",
@@ -34,13 +33,15 @@ describe("credits.json (S4: every author is credited, even CC0)", () => {
     ]);
   });
 
-  it("credits original procedural work, such as the flowers, to the project", () => {
+  it("credits original procedural work, the flowers and clouds, to the project", () => {
     const original = credits().original ?? [];
-    const flowers = original.find((entry) => entry.id === "flowers");
-    assert.ok(flowers, "flowers credited");
-    assert.equal(flowers.license, ORIGINAL_LICENSE);
-    assert.ok(flowers.author.trim());
-    assert.ok(existsSync(new URL(`../../${flowers.source}`, import.meta.url)));
+    for (const id of ["flowers", "clouds"]) {
+      const entry = original.find((item) => item.id === id);
+      assert.ok(entry, `${id} credited`);
+      assert.equal(entry.license, ORIGINAL_LICENSE);
+      assert.ok(entry.author.trim());
+      assert.ok(existsSync(new URL(`../../${entry.source}`, import.meta.url)));
+    }
   });
 
   it("credits exactly the models the runtime loads", () => {

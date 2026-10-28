@@ -35,6 +35,7 @@ import {
   guidePose,
   poseToPosition,
 } from "@/lib/world/camera.ts";
+import { cloudLayout, cloudShapes } from "@/lib/world/clouds.ts";
 import {
   FLOWER_COLORS,
   flowerLayout,
@@ -100,7 +101,8 @@ export default function WorldScene({
       <GuidedCamera reducedMotion={reducedMotion} home={home} />
       <Island />
       <Flowers />
-      <Nature hours={hours} reducedMotion={reducedMotion} onReady={onReady} />
+      <Clouds hours={hours} reducedMotion={reducedMotion} />
+      <Nature onReady={onReady} />
     </Canvas>
   );
 }
@@ -364,8 +366,6 @@ const TINTS: Record<NatureKind, string> = {
   tuft: PALETTE.foliage,
   "tuft-small": PALETTE.foliage,
   bush: PALETTE.foliage,
-  // Clouds use cloudMaterial instead; the hour sets their color.
-  cloud: "#ffffff",
 };
 const PASTEL_LIFT = 0.22;
 
@@ -383,14 +383,6 @@ function pastelMaterial(source: Material, tint: string): Material {
   };
   material.customProgramCacheKey = () => `world-pastel-${PASTEL_LIFT}`;
   return material;
-}
-
-/**
- * Soft cloud material: no atlas, fully rough, smooth normals and an emissive
- * lift so shaded puffs stay soft white. Nature tints it from the hour.
- */
-function cloudMaterial(): MeshStandardMaterial {
-  return new MeshStandardMaterial({ roughness: 1, metalness: 0 });
 }
 
 const scratch = {
@@ -418,13 +410,10 @@ function buildInstances(
   scratch.normalize
     .makeScale(unit, unit, unit)
     .multiply(new Matrix4().makeTranslation(-center.x, -box.min.y, -center.z));
-  const floating = KIND_SPECS[kind].floating;
   root.traverse((object) => {
     const mesh = object as Mesh;
     if (!mesh.isMesh) return;
-    const material = floating
-      ? cloudMaterial()
-      : pastelMaterial(mesh.material as Material, TINTS[kind]);
+    const material = pastelMaterial(mesh.material as Material, TINTS[kind]);
     const instanced = new InstancedMesh(
       mesh.geometry,
       material,
@@ -445,26 +434,15 @@ function buildInstances(
     });
     instanced.instanceMatrix.needsUpdate = true;
     instanced.computeBoundingSphere();
-    instanced.castShadow = !floating;
-    instanced.receiveShadow = !floating;
+    instanced.castShadow = true;
+    instanced.receiveShadow = true;
     group.add(instanced);
   });
   return group;
 }
 
-function Nature({
-  hours,
-  reducedMotion,
-  onReady,
-}: {
-  hours: number;
-  reducedMotion: boolean;
-  onReady: () => void;
-}) {
+function Nature({ onReady }: { onReady: () => void }) {
   const gltfs = useLoader(GLTFLoader, URLS, extendLoader);
-  const clouds = useRef<Group>(null);
-  const { drift } = guideMotion(reducedMotion);
-  const invalidate = useThree((state) => state.invalidate);
 
   const groups = useMemo(
     () =>
@@ -491,21 +469,84 @@ function Nature({
     };
   }, [groups, onReady]);
 
+  return (
+    <>
+      {groups.map(({ kind, group }) => (
+        <primitive key={kind} object={group} />
+      ))}
+    </>
+  );
+}
+
+/**
+ * Original procedural clouds: one instanced draw per seeded shape, in a soft
+ * material (fully rough, smooth normals, emissive lift) tinted by the hour.
+ */
+function Clouds({
+  hours,
+  reducedMotion,
+}: {
+  hours: number;
+  reducedMotion: boolean;
+}) {
+  const clouds = useRef<Group>(null);
+  const { drift } = guideMotion(reducedMotion);
+  const invalidate = useThree((state) => state.invalidate);
+
+  const { group, material } = useMemo(() => {
+    const material = new MeshStandardMaterial({ roughness: 1, metalness: 0 });
+    const group = new Object3D() as Group;
+    const placements = cloudLayout(ISLAND.seed);
+    cloudShapes(ISLAND.seed).forEach((shape, index) => {
+      const mine = placements.filter((cloud) => cloud.shape === index);
+      if (mine.length === 0) return;
+      const geometry = new BufferGeometry();
+      geometry.setAttribute(
+        "position",
+        new BufferAttribute(new Float32Array(shape.positions), 3),
+      );
+      geometry.setAttribute(
+        "normal",
+        new BufferAttribute(new Float32Array(shape.normals), 3),
+      );
+      geometry.setIndex(shape.indices);
+      const instanced = new InstancedMesh(geometry, material, mine.length);
+      mine.forEach((cloud, slot) => {
+        scratch.rotation.setFromAxisAngle(scratch.axis, cloud.rotationY);
+        scratch.instance.compose(
+          new Vector3(...cloud.position),
+          scratch.rotation,
+          new Vector3(cloud.scale, cloud.scale, cloud.scale),
+        );
+        instanced.setMatrixAt(slot, scratch.instance);
+      });
+      instanced.instanceMatrix.needsUpdate = true;
+      instanced.computeBoundingSphere();
+      group.add(instanced);
+    });
+    return { group, material };
+  }, []);
+
+  useEffect(
+    () => () => {
+      material.dispose();
+      for (const child of group.children) {
+        const mesh = child as InstancedMesh;
+        mesh.geometry.dispose();
+        mesh.dispose();
+      }
+    },
+    [group, material],
+  );
+
   // Warm white by day, pink at dusk, dim blue at night.
   useLayoutEffect(() => {
     const shade = cloudShade(worldLight(hours));
-    for (const { kind, group } of groups) {
-      if (!KIND_SPECS[kind].floating) continue;
-      for (const child of group.children) {
-        const material = (child as InstancedMesh)
-          .material as MeshStandardMaterial;
-        setColor(material.color, shade.color);
-        setColor(material.emissive, shade.emissive);
-        material.emissiveIntensity = shade.emissiveIntensity;
-      }
-    }
+    setColor(material.color, shade.color);
+    setColor(material.emissive, shade.emissive);
+    material.emissiveIntensity = shade.emissiveIntensity;
     invalidate();
-  }, [hours, groups, invalidate]);
+  }, [hours, material, invalidate]);
 
   // Clouds drift slowly around the island; reduced motion keeps them still.
   useFrame((state, delta) => {
@@ -515,20 +556,9 @@ function Nature({
   });
 
   return (
-    <>
-      {groups
-        .filter(({ kind }) => !KIND_SPECS[kind].floating)
-        .map(({ kind, group }) => (
-          <primitive key={kind} object={group} />
-        ))}
-      <group ref={clouds}>
-        {groups
-          .filter(({ kind }) => KIND_SPECS[kind].floating)
-          .map(({ kind, group }) => (
-            <primitive key={kind} object={group} />
-          ))}
-      </group>
-    </>
+    <group ref={clouds}>
+      <primitive object={group} />
+    </group>
   );
 }
 

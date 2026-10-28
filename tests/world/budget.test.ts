@@ -1,5 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import {
+  cloudLayout,
+  cloudShapes,
+  cloudTriangles,
+} from "../../src/lib/world/clouds.ts";
 import { FLOWER_TRIANGLES, flowerLayout } from "../../src/lib/world/flowers.ts";
 import { ISLAND, undersideMesh } from "../../src/lib/world/island.ts";
 import { islandLayout, KIND_SPECS } from "../../src/lib/world/layout.ts";
@@ -34,7 +39,8 @@ describe("world budgets", () => {
     const flowers = flowerLayout(layout, ISLAND.seed).length;
     let triangles =
       undersideMesh(ISLAND.seed).indices.length / 3 +
-      flowers * FLOWER_TRIANGLES;
+      flowers * FLOWER_TRIANGLES +
+      cloudTriangles(cloudShapes(ISLAND.seed), cloudLayout(ISLAND.seed));
     let draws = SCENE_DRAWS;
     let bytes = 0;
     for (const [kind, url] of Object.entries(MODEL_FILES)) {
