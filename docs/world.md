@@ -20,6 +20,7 @@ is untouched; the house and room arrive in T4 on the empty pad in the middle.
 | Guided camera limits | `src/lib/world/camera.ts` |
 | Pastel palette and light | `src/lib/world/palette.ts` |
 | Model list and budgets | `src/lib/world/models.ts` |
+| Personal collection shelf | `src/lib/world/shelf.ts`, `src/components/world/Shelf.tsx` |
 
 ## Day cycle
 
@@ -379,11 +380,14 @@ spaces collapse, words too wide break by character, and text over
   shadows.
 - Path: six irregular beveled stones (14-point seeded outlines, smooth rings
   from a tucked foot to a rounded shoulder and domed top, 5.3 cm tall, sunk
-  8 mm) on a gentle S from the porch step (x 0.5, z 1.7) to (2.46, 3.8),
-  where the island's older KayKit trail continues. The first stone lies
-  wholly on the pad, the others wholly on the grass. Stone material: rough,
+  8 mm) on a gentle S from the porch step (x 0.5, z 2.37) to (2.46, 4.2),
+  where the island's older KayKit trail continues (T10 moved them out with
+  the porch; x kept). All six lie wholly on the grass: the first sits at
+  z 2.37, not the planned 2.35, because at 2.35 its outline (z 2.2025)
+  straddled the pad's front edge (2.2 plus the 1.8 cm bevel). Stone material: rough,
   pitted `noise` normal map, darker toward the ground.
-- Mailbox at (-0.05, 2.55), sign at (1.72, 2.48), both square to the
+- Mailbox at (-0.05, 2.55), sign at (1.72, 2.7) (2.48 before T10: its
+  0.45 m footprint reached onto the grown pad), both square to the
   front facade (`rotationY` 0, facing +z like the front door; S20 removed
   the 0.3 and 0.45 turns toward the home camera that looked crooked). Mailbox: planted post with collar, support plate on two
   braces, sage body (the door's color) with a round hood, arched door with
@@ -391,7 +395,58 @@ spaces collapse, words too wide break by character, and text over
   framed board with brass screws and a coral cap; the text is a canvas
   texture. Wood uses the house's plank texture once the maps load.
 - Clearing: `clearOfGarden` drops only nature items and flowers whose
-  footprint meets a stone or prop (today three old KayKit path stones).
+  footprint meets a stone or prop (since T10: three old KayKit path stones
+  and one small tuft at (2.67, 4.2)). The remaining trail stones are
+  (2.86, 3.66), (2.96, 4.49) and (3.84, 4.51); the nearest is 0.58 m past
+  the last garden stone.
+
+## House extension and collection shelf (T10, S22)
+
+The main volume came 0.65 m forward toward the entrance (`HOUSE.main.z1`
+0.85 → 1.50); its walls, gables, roof and floor regenerate from the volume,
+and the front wall keeps the same door and windows. The garage (volume,
+door -2.88..-1.5, roof) and the driveway (still ending at z 2, now a
+literal `DRIVEWAY_END` instead of the pad front) are unchanged, as are every
+setup and living placement: `tests/world/expansion.test.ts` hashes their
+part geometry against the pre-extension house. The porch moved with the
+wall (z 1.50..2.06), the pad grew 0.2 m forward only (centre z -0.4, half
+depth 2.6; back edge still -3), the camera focus follows half the extension
+(z -0.95 → -0.625) and the front lanterns follow the wall. The island's
+seeded layout is identical: `layout.ts` pins the old trail start at z 2.45
+instead of deriving it from the pad.
+
+The shelf stands against the main room's left wall, left of the setup, at
+base (-0.89, floor + 0.04, 0.45), turned a quarter (yaw π/2) so its open
+front faces the room: 1.20 m wide, 0.32 deep, 1.45 tall, footprint
+x -1.05..-0.73, z -0.15..1.05; 6 cm from the wall, 15 cm past the setup
+zone, 31 cm from the front wall and 87 cm beside the door swing. No window
+lies behind it or within 30 cm. It does not fade with the cutaway.
+
+- Carcass: white satin rounded boards (two sides, top, bottom, a centre
+  divider, three shelves per column, back panel) on an oak kick board.
+- Top: the brown Nike football on an oak stand. Lathe body with a pointed
+  prolate profile, r = R (1 - u²), 28 × 17 cm; raised white laces (eight
+  cross laces over a running lace) facing up toward the room; a canvas
+  leather skin (1024 × 512) with four panels and seams, white stripes across
+  the two panels beside the laces, and an original vector swoosh; procedural
+  `pebble` normal (36 × 18 repeats). No model text: none is readable in the
+  photos.
+- Eye level: black instant camera (lens bezel, chrome ring, glass,
+  viewfinder, flash, orange shutter, film slot) with its rainbow film
+  carton; Zenit SLR (pentaprism hump with nameplate, chrome mount, knurled
+  focus ring, aperture and front rings, glass, dials); silver Samsung
+  compact (lens rings, flash, shutter).
+- Below: Corsair VS600 box, Ryzen 7 box, two memory kits and two NVMe packs;
+  then the keyboard (orange accent keys) and six standing books; at the
+  bottom a lying book stack, two more books and a Gigabyte box.
+- Labels: one original canvas atlas (1024 × 512, 21 regions) drawn in code
+  from measured layouts; no photo pixels, no reference photos in `public/`.
+- Budget (`shelfBudget()`): 13,950 triangles (solids 10,836, ball 3,072,
+  labels 42) and 8 draws (paint, wood, card, plastic, metal, glass, ball,
+  labels); all solids cast and receive shadows; no lights, no animation.
+- Credit: original `shelf` entry in `credits.json` and in `ORIGINAL` of
+  `scripts/prepare-world.py`: reference photos supplied by Kevnnard; brand
+  names and marks belong to their owners, no affiliation.
 
 ## Third-party notices
 

@@ -19,12 +19,13 @@ export const ISLAND = {
 
 /**
  * Building pad for T4: kept flat and empty, slightly back of center. Grown
- * 1.8 m toward +x with the main room for the living area (T4j).
+ * 1.8 m toward +x with the main room for the living area (T4j), and 0.2 m
+ * toward the front with the house (T10): back edge fixed at z -3, front 2.2.
  */
 export const PAD = {
-  center: [0.5, -0.5] as const,
+  center: [0.5, -0.4] as const,
   halfX: 3.8,
-  halfZ: 2.5,
+  halfZ: 2.6,
   height: 0.05,
 } as const;
 

@@ -35,6 +35,8 @@ export interface Part {
   shape: "box" | "round" | "rounded" | "prism";
   /** Edge radius in metres of a "rounded" box. */
   radius?: number;
+  /** Arc steps per rounded edge (2 by default); 1 is a chamfer for small props. */
+  segments?: number;
   /** Prism outline, counter-clockwise, within [-0.5, 0.5]. */
   profile?: [number, number][];
   center: Vec3;
@@ -84,7 +86,8 @@ interface Volume extends Rect {
 }
 
 const FLOOR_Y = PAD.height + 0.1;
-const PAD_FRONT = PAD.center[1] + PAD.halfZ;
+/** The driveway's end: the pad's front before S22 grew it 0.2 m, kept so the garage side is unchanged. */
+const DRIVEWAY_END = 2;
 
 export const HOUSE = {
   seed: 11,
@@ -97,7 +100,8 @@ export const HOUSE = {
     // Widened by 1.8 m for the living area (T4j, S14).
     x1: 4.05,
     z0: -2.75,
-    z1: 0.85,
+    // Brought 0.65 m forward toward the entrance (T10, S22).
+    z1: 1.5,
     height: 1.95,
     rise: 1.15,
     overhang: { x0: 0.22, x1: 0.22, z0: 0.22, z1: 0.22 },
@@ -112,8 +116,8 @@ export const HOUSE = {
     // No overhang on the right: that side leans on the main house.
     overhang: { x0: 0.18, x1: 0, z0: 0.18, z1: 0.18 },
   } satisfies Volume,
-  porch: { x0: 0.04, x1: 0.96, z0: 0.85, z1: 1.41 },
-  driveway: { x0: -2.95, x1: -1.42, z0: 0.55, z1: PAD_FRONT },
+  porch: { x0: 0.04, x1: 0.96, z0: 1.5, z1: 2.06 },
+  driveway: { x0: -2.95, x1: -1.42, z0: 0.55, z1: DRIVEWAY_END },
 } as const;
 
 /** Middle of the house and garage, a little above the floor: the camera target. */

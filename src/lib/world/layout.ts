@@ -80,8 +80,10 @@ const ANCHORS: readonly Anchor[] = [
   ["tuft", -3.6, 2.4],
 ];
 
-// Stepping stones from the pad's front edge toward the front-right rim.
-const PATH_FROM = [1.1, PAD.center[1] + PAD.halfZ + 0.45] as const;
+// Stepping stones toward the front-right rim, from 0.45 m past the pad's
+// original front edge (z 2): fixed when T10 grew the pad, so the seeded
+// layout does not reshuffle.
+const PATH_FROM = [1.1, 2.45] as const;
 const PATH_TO = [3.7, 4.7] as const;
 const PATH_STONES = 6;
 

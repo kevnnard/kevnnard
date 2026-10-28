@@ -35,6 +35,7 @@ import House from "@/components/world/House";
 import Living from "@/components/world/Living";
 import NightLights from "@/components/world/NightLights";
 import Setup from "@/components/world/Setup";
+import Shelf from "@/components/world/Shelf";
 import { pastelMaterial, useSurfaceMaps } from "@/components/world/surfaces";
 import type { RGB } from "@/lib/room/day-cycle.ts";
 import {
@@ -139,6 +140,7 @@ export default function WorldScene({
               lights={lights}
               power={power}
             />
+            <Shelf />
             <Suspense fallback={null}>
               <Living hours={hours} power={power} />
             </Suspense>
@@ -183,6 +185,7 @@ function TexturedHouse({
         lights={lights}
         power={power}
       />
+      <Shelf maps={maps} />
       <Suspense fallback={null}>
         <Living hours={hours} maps={maps} power={power} />
       </Suspense>

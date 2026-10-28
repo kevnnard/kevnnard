@@ -127,7 +127,7 @@ function prismGeometry(profile: [number, number][]): BufferGeometry {
 
 /** A "rounded" part at its own size: scaling would squash the radius. */
 function roundedGeometry(part: Part): BufferGeometry {
-  const box = roundedBox(part.size, part.radius ?? 0);
+  const box = roundedBox(part.size, part.radius ?? 0, part.segments);
   const geometry = new BufferGeometry();
   geometry.setAttribute(
     "position",

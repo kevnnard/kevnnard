@@ -413,12 +413,15 @@ export interface PathStone {
 // the island's older trail continues to the rim.
 const STONES: readonly [number, number, number, number, number, number][] = [
   // x, z, half width, half depth, turn, shade
-  [0.5, 1.7, 0.2, 0.15, 0.15, 1],
-  [0.66, 2.3, 0.21, 0.17, -0.3, 0.95],
-  [1.02, 2.8, 0.23, 0.17, 0.5, 1.03],
-  [1.48, 3.2, 0.2, 0.16, -0.2, 0.97],
-  [1.97, 3.5, 0.22, 0.17, 0.35, 1.01],
-  [2.46, 3.8, 0.19, 0.15, -0.1, 0.94],
+  // Moved out with the porch (T10): z from 1.7..3.8 to 2.37..4.2, x kept;
+  // the first sits 2 cm past the planned 2.35 so its outline clears the
+  // pad's new front edge (2.2) instead of straddling it.
+  [0.5, 2.37, 0.2, 0.15, 0.15, 1],
+  [0.66, 2.85, 0.21, 0.17, -0.3, 0.95],
+  [1.02, 3.25, 0.23, 0.17, 0.5, 1.03],
+  [1.48, 3.6, 0.2, 0.16, -0.2, 0.97],
+  [1.97, 3.9, 0.22, 0.17, 0.35, 1.01],
+  [2.46, 4.2, 0.19, 0.15, -0.1, 0.94],
 ];
 
 export const PATH_STONES: readonly PathStone[] = STONES.map(
@@ -522,7 +525,9 @@ export interface GardenProp {
 
 export const GARDEN_PROPS: { mailbox: GardenProp; sign: GardenProp } = {
   mailbox: { position: [-0.05, 2.55], rotationY: 0, radius: 0.28 },
-  sign: { position: [1.72, 2.48], rotationY: 0, radius: 0.45 },
+  // 0.22 m further out than T7 (2.48): its footprint stays off the pad,
+  // whose front edge moved from 2 to 2.2 (T10).
+  sign: { position: [1.72, 2.7], rotationY: 0, radius: 0.45 },
 };
 
 /**

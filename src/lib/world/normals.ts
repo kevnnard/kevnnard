@@ -1,9 +1,15 @@
 // Original procedural normal maps for the gaming setup (T4g, S11): a fine
 // noise for powder coat and plastics, concentric speaker-cone rings, a fabric
-// weave for the mousepad and a rounded keycap. Pure pixels, generated once per
+// weave for the mousepad, a rounded keycap and football pebble grain (T10). Pure pixels, generated once per
 // pattern and cached; Setup.tsx wraps them in owned DataTextures.
 
-export const NORMAL_PATTERNS = ["noise", "radial", "weave", "keycap"] as const;
+export const NORMAL_PATTERNS = [
+  "noise",
+  "radial",
+  "weave",
+  "keycap",
+  "pebble",
+] as const;
 export type NormalPattern = (typeof NORMAL_PATTERNS)[number];
 
 /** Pixels per side: tileable, power of two for mipmaps. */
@@ -73,6 +79,12 @@ const HEIGHTS: Record<
       const d = (x ** 4 + y ** 4) ** 0.25;
       return smooth(0.47, 0.34, d) * (1 - 0.3 * (x * x + y * y));
     },
+  },
+  // Leather pebbling: rounded bumps with narrow valleys between them.
+  pebble: {
+    slope: 2.5,
+    height: (u, v) =>
+      smooth(0.3, 0.7, noise(u, v, 24)) * 0.8 + 0.2 * noise(u, v, 48),
   },
 };
 
