@@ -5,7 +5,6 @@ import {
   type BufferAttribute,
   Color,
   DataTexture,
-  DoubleSide,
   type Group,
   LinearFilter,
   LinearMipmapLinearFilter,
@@ -20,11 +19,7 @@ import {
   type Texture,
   Vector3,
 } from "three";
-import {
-  BrunoChair,
-  BrunoOverlayModel,
-  GoogleHomeLeds,
-} from "@/components/world/BrunoProps";
+import { BrunoChair } from "@/components/world/BrunoProps";
 import { mergeParts } from "@/components/world/House";
 import {
   CoffeeSteam,
@@ -33,24 +28,26 @@ import {
   steamMaterial,
 } from "@/components/world/SetupEffects";
 import { type SurfaceMaps, surfaceMaterial } from "@/components/world/surfaces";
-import { glowPower, type LightSettings } from "@/lib/world/lights.ts";
+import {
+  DEFAULT_LIGHTS,
+  glowPower,
+  type LightSettings,
+  sideLight,
+} from "@/lib/world/lights.ts";
 import {
   BOUNCE,
+  type BounceState,
   bounceStep,
   chairSway,
-  GOOGLE_LED_COLORS,
-  GOOGLE_LED_REST,
-  googleLedOpacity,
-  LOUPEDECK,
-  LOUPEDECK_REST,
   ledLevel,
-  loupedeckButton,
   setupAnimates,
 } from "@/lib/world/motion.ts";
-import { NORMAL_SIZE, normalPixels } from "@/lib/world/normals.ts";
 import {
-  BRUNO_FILES,
-  BRUNO_OVERLAYS,
+  NORMAL_SIZE,
+  normalPixels,
+  woodGrainPixels,
+} from "@/lib/world/normals.ts";
+import {
   CHAIR_PIVOT,
   SETUP_COLORS,
   SETUP_MATERIALS,
@@ -78,14 +75,14 @@ const SOLID_MERGE = {
   occlusion: setupOcclusion,
 };
 
-/** An owned DataTexture over a cached procedural normal map, tiled in metres. */
-export function proceduralNormal(spec: SetupMaterial): Texture | null {
-  if (!spec.normal || !spec.tile) return null;
-  const texture = new DataTexture(
-    normalPixels(spec.normal),
-    NORMAL_SIZE,
-    NORMAL_SIZE,
-  );
+/** Vertex index of the parts lit by the setup channel in the LED mesh. */
+const CHANNEL_LED = 255;
+/** The keyboard side lights' colour while the setup channel is dark. */
+const SIDE_OFF = new Color("#2a2930");
+
+/** An owned DataTexture over cached procedural pixels, tiled in metres. */
+function tiledTexture(pixels: Uint8Array, spec: SetupMaterial): Texture {
+  const texture = new DataTexture(pixels, NORMAL_SIZE, NORMAL_SIZE);
   texture.colorSpace = NoColorSpace;
   texture.wrapS = RepeatWrapping;
   texture.wrapT = RepeatWrapping;
@@ -93,10 +90,16 @@ export function proceduralNormal(spec: SetupMaterial): Texture | null {
   texture.minFilter = LinearMipmapLinearFilter;
   texture.generateMipmaps = true;
   texture.anisotropy = 4;
-  texture.repeat.set(1 / spec.tile[0], 1 / spec.tile[1]);
+  if (spec.tile) texture.repeat.set(1 / spec.tile[0], 1 / spec.tile[1]);
   if (spec.offset) texture.offset.set(...spec.offset);
   texture.needsUpdate = true;
   return texture;
+}
+
+/** An owned DataTexture over a cached procedural normal map, tiled in metres. */
+export function proceduralNormal(spec: SetupMaterial): Texture | null {
+  if (!spec.normal || !spec.tile) return null;
+  return tiledTexture(normalPixels(spec.normal), spec);
 }
 
 /** One material per setup material id; textures it creates join `owned`. */
@@ -123,6 +126,12 @@ export function setupMaterial(
     base.normalMap = normal;
     base.normalScale.setScalar(spec.normalScale ?? 1);
     owned.textures.push(normal);
+  }
+  // Wood grain (T12): the colour map multiplies the copper vertex colours.
+  if (spec.grain && spec.tile) {
+    const grain = tiledTexture(woodGrainPixels(), spec);
+    base.map = grain;
+    owned.textures.push(grain);
   }
   if (!spec.surface || !maps) {
     owned.materials.push(base);
@@ -155,7 +164,10 @@ function addSolids(
   }
 }
 
-/** One merged LED mesh; `index` holds each vertex's LED phase index. */
+/**
+ * One merged LED mesh; `index` holds each vertex's LED phase index, or
+ * CHANNEL_LED for the keyboard side lights on the setup channel.
+ */
 function ledMesh(parts: SetupPart[], material: Material) {
   const merge = { roundSegments: SETUP_ROUND_SEGMENTS };
   const geometry = mergeParts(parts, merge);
@@ -164,7 +176,11 @@ function ledMesh(parts: SetupPart[], material: Material) {
   for (const part of parts) {
     const single = mergeParts([part], merge);
     const count = single.getAttribute("position").count;
-    index.fill(part.led ?? 0, offset, offset + count);
+    index.fill(
+      part.channel ? CHANNEL_LED : (part.led ?? 0),
+      offset,
+      offset + count,
+    );
     offset += count;
     single.dispose();
   }
@@ -174,44 +190,32 @@ function ledMesh(parts: SetupPart[], material: Material) {
   return { mesh, index, colors, base: Float32Array.from(colors.array) };
 }
 
-/** Bruno's overlay materials (T4k): Elgato glow, Google Home LEDs, Loupedeck screens. */
-function brunoMaterials() {
-  return {
-    elgato: new MeshBasicMaterial({ side: DoubleSide }),
-    leds: GOOGLE_LED_COLORS.map(
-      (color) => new MeshBasicMaterial({ color, transparent: true }),
-    ),
-    buttons: Array.from(
-      { length: LOUPEDECK.buttons },
-      () => new MeshBasicMaterial({ color: "#ffffff", transparent: true }),
-    ),
-  };
+/** Paints the LED mesh: breathing LEDs at `level(index)`, side lights `side`. */
+function paintLeds(
+  leds: ReturnType<typeof ledMesh>,
+  level: (index: number) => number,
+  side: Color,
+) {
+  const { colors, index, base } = leds;
+  for (let v = 0; v < index.length; v++) {
+    const i = v * 3;
+    if (index[v] === CHANNEL_LED) {
+      colors.array[i] = base[i] * side.r;
+      colors.array[i + 1] = base[i + 1] * side.g;
+      colors.array[i + 2] = base[i + 2] * side.b;
+      continue;
+    }
+    const k = level(index[v]);
+    for (let c = 0; c < 3; c++) colors.array[i + c] = base[i + c] * k;
+  }
+  colors.needsUpdate = true;
 }
 
-type BrunoMaterials = ReturnType<typeof brunoMaterials>;
-const BUTTON_COLORS = new Map(
-  LOUPEDECK.colors.map((color) => [color, new Color(color)]),
-);
-
-/** LoupedeckButtons and GoogleLeds at `t` ms; all dark while powered off. */
-function brunoFrame(
-  bruno: BrunoMaterials,
-  t: number,
-  ledT: number | null,
-  lit: boolean,
-) {
-  for (const [index, material] of bruno.buttons.entries()) {
-    const { color, opacity } = loupedeckButton(t, index);
-    const value = BUTTON_COLORS.get(color);
-    if (value) material.color.copy(value);
-    material.opacity = lit ? opacity : 0;
-  }
-  for (const [index, material] of bruno.leds.entries())
-    material.opacity = !lit
-      ? 0
-      : ledT === null
-        ? GOOGLE_LED_REST
-        : googleLedOpacity(ledT, index);
+/** Puts the bouncing logo on the portrait screen, axes swapped and scaled there. */
+function placeLogo(logo: ReturnType<typeof logoMesh>, bounce: BounceState) {
+  const { swap } = SETUP_PROPS.sideScreen.logo;
+  logo.mesh.position.x = swap ? bounce.y : bounce.x;
+  logo.mesh.position.y = swap ? bounce.x : bounce.y;
 }
 
 /** The resting pose, also what reduced motion and far views show. */
@@ -220,46 +224,43 @@ function rest(
     swivel,
     leds,
     logo,
-    bruno,
   }: {
     swivel: Object3D;
     leds: ReturnType<typeof ledMesh>;
     logo: ReturnType<typeof logoMesh>;
-    bruno: BrunoMaterials;
   },
   base: number,
+  side: Color,
 ) {
-  brunoFrame(bruno, LOUPEDECK_REST, null, base > 0);
   swivel.rotation.y = 0;
-  for (let i = 0; i < leds.base.length; i++)
-    leds.colors.array[i] = leds.base[i] * base;
-  leds.colors.needsUpdate = true;
-  logo.mesh.position.x = 0;
-  logo.mesh.position.y = 0;
-  return { ...BOUNCE.start };
+  paintLeds(leds, () => base, side);
+  const start = { ...BOUNCE.start };
+  placeLogo(logo, start);
+  return start;
 }
 
 /**
- * Original procedural gaming setup in the main room (T4d). Lives outside the
- * cutaway groups, so it never fades. Screens and RGB are unlit vertex colors
- * scaled by the hour: no extra lights. Solid parts merge into one mesh per
- * material (T4g): laminate, powder coat, satin and matte plastics, keycaps,
- * cones and cloth with original procedural normals, and with `maps` the
- * mesh grilles and sci-fi PC panels. Grilles wait for their opacity map, so
- * the flat fallback never hides the cones. The seat is Bruno Simon's top
- * chair with his baked shader, and his Elgato, Google Home and Loupedeck
- * overlays sit on original bodies (T4k, BrunoProps.tsx).
+ * Original procedural gaming setup in the main room (T4d, finished in T12).
+ * Lives outside the cutaway groups, so it never fades. Screens and RGB are
+ * unlit vertex colors scaled by the hour: no extra lights. Solid parts merge
+ * into one mesh per material (T4g): copper wood with an original grain map,
+ * powder coat, satin and matte plastics, keycaps, cones and cloth with
+ * original procedural normals, and with `maps` the mesh grilles and sci-fi
+ * PC panels. Grilles wait for their opacity map, so the flat fallback never
+ * hides the cones. The seat is Bruno Simon's top chair with his baked
+ * shader (T4k, BrunoProps.tsx).
  *
  * Effects ported from Bruno Simon's my-room-in-3d (T4i, with permission):
- * the seat sways on its column, the PC and keyboard LEDs breathe, steam rises
- * from an original mug and the site's initials bounce on the side screen.
- * The Google Home LEDs breathe and the Loupedeck buttons light up in turns.
- * Frames are requested continuously only while the camera is near the house
- * and motion is allowed; otherwise the setup rests (chair centred, LEDs at
- * the hour's glow, logo still, steam frozen, or hidden with reduced motion).
- * At night the scene panel's master `power` off turns every screen, LED,
- * the Elgato panel, Google Home LEDs, Loupedeck buttons and the chair bake's
- * artificial channels dark; motion keeps running on the dark values.
+ * the seat sways on its column, the PC LEDs breathe, steam rises from an
+ * original mug on its wooden coaster and the site's initials bounce on the
+ * portrait screen. The keyboard's side lights (T12) never animate: they take
+ * the setup light's colour at a subtle strength, only at night, through its
+ * switch and the master. Frames are requested continuously only while the
+ * camera is near the house and motion is allowed; otherwise the setup rests
+ * (chair centred, LEDs at the hour's glow, logo still, steam frozen, or
+ * hidden with reduced motion). At night the scene panel's master `power` off
+ * turns every screen, LED and the chair bake's artificial channels dark;
+ * motion keeps running on the dark values.
  */
 export default function Setup({
   hours,
@@ -271,123 +272,117 @@ export default function Setup({
   hours: number;
   maps?: SurfaceMaps;
   reducedMotion?: boolean;
-  /** Night light settings (T6b): Bruno's chair bake follows their colors. */
+  /**
+   * Night light settings (T6b): Bruno's chair bake follows their colors and
+   * the keyboard side lights the setup light (T12).
+   */
   lights?: LightSettings;
   /** The scene panel's master switch (night only). */
   power?: boolean;
 }) {
   const { invalidate } = useThree();
-  const { group, glow, owned, swivel, leds, steam, logo, bruno } =
-    useMemo(() => {
-      const meshes = setupMeshes();
-      const owned = { materials: [] as Material[], textures: [] as Texture[] };
-      const screens = new MeshBasicMaterial({ vertexColors: true });
-      const ledMaterial = new MeshBasicMaterial({ vertexColors: true });
-      const glass = new MeshStandardMaterial({
-        color: SETUP_COLORS.glass,
-        roughness: 0.05,
-        metalness: 0,
-        transparent: true,
-        opacity: 0.3,
-        depthWrite: false,
-      });
-      const mugMaterial = new MeshStandardMaterial({
-        vertexColors: true,
-        roughness: 0.35,
-        metalness: 0,
-      });
-      const steam = steamMaterial();
-      const bruno = brunoMaterials();
-      owned.materials.push(
-        screens,
-        ledMaterial,
-        glass,
-        mugMaterial,
-        steam,
-        bruno.elgato,
-        ...bruno.leds,
-        ...bruno.buttons,
-      );
-      const materials = new Map<SetupMaterialId, Material>();
-      const material = (id: SetupMaterialId) => {
-        let found = materials.get(id);
-        if (!found) {
-          found = setupMaterial(SETUP_MATERIALS[id], maps, owned);
-          materials.set(id, found);
-        }
-        return found;
-      };
-      const setup = new Object3D() as Group;
-      setup.name = "house-interior";
-      const shown = meshes.solid.filter(
-        (part) => maps || part.material !== "grille",
-      );
-      addSolids(
-        setup,
-        shown.filter((part) => part.rig !== "swivel"),
-        material,
-      );
-      // The seat turns around the column: Bruno's top chair (BrunoChair) is
-      // rendered into this pivot, on its axis.
-      const swivel = new Object3D();
-      swivel.position.set(CHAIR_PIVOT[0], 0, CHAIR_PIVOT[1]);
-      addSolids(
-        swivel,
-        shown.filter((part) => part.rig === "swivel"),
-        material,
-      );
-      for (const child of swivel.children)
-        (child as Mesh).geometry.translate(-CHAIR_PIVOT[0], 0, -CHAIR_PIVOT[1]);
-      const lit = new Mesh(
-        mergeParts(
-          meshes.glow.filter((part) => part.led === undefined),
-          { roundSegments: SETUP_ROUND_SEGMENTS },
-        ),
-        screens,
-      );
-      const leds = ledMesh(
-        meshes.glow.filter((part) => part.led !== undefined),
-        ledMaterial,
-      );
-      const pane = new Mesh(mergeParts(meshes.glass), glass);
-      pane.renderOrder = 1;
-      const mug = new Mesh(mugGeometry(), mugMaterial);
-      mug.name = "setup-mug";
-      mug.position.set(...SETUP_PROPS.mug.center);
-      mug.castShadow = true;
-      mug.receiveShadow = true;
-      const logo = logoMesh();
-      owned.materials.push(logo.mesh.material);
-      if (logo.mesh.material.map) owned.textures.push(logo.mesh.material.map);
-      setup.add(swivel, lit, leds.mesh, pane, mug, logo.group);
-      return {
-        group: setup,
-        glow: screens,
-        owned,
-        swivel,
-        leds,
-        steam,
-        logo,
-        bruno,
-      };
-    }, [maps]);
+  const { group, glow, owned, swivel, leds, steam, logo } = useMemo(() => {
+    const meshes = setupMeshes();
+    const owned = { materials: [] as Material[], textures: [] as Texture[] };
+    const screens = new MeshBasicMaterial({ vertexColors: true });
+    const ledMaterial = new MeshBasicMaterial({ vertexColors: true });
+    const glass = new MeshStandardMaterial({
+      color: SETUP_COLORS.glass,
+      roughness: 0.05,
+      metalness: 0,
+      transparent: true,
+      opacity: 0.3,
+      depthWrite: false,
+    });
+    const mugMaterial = new MeshStandardMaterial({
+      vertexColors: true,
+      roughness: 0.35,
+      metalness: 0,
+    });
+    const steam = steamMaterial();
+    owned.materials.push(screens, ledMaterial, glass, mugMaterial, steam);
+    const materials = new Map<SetupMaterialId, Material>();
+    const material = (id: SetupMaterialId) => {
+      let found = materials.get(id);
+      if (!found) {
+        found = setupMaterial(SETUP_MATERIALS[id], maps, owned);
+        materials.set(id, found);
+      }
+      return found;
+    };
+    const setup = new Object3D() as Group;
+    setup.name = "house-interior";
+    const shown = meshes.solid.filter(
+      (part) => maps || part.material !== "grille",
+    );
+    addSolids(
+      setup,
+      shown.filter((part) => part.rig !== "swivel"),
+      material,
+    );
+    // The seat turns around the column: Bruno's top chair (BrunoChair) is
+    // rendered into this pivot, on its axis.
+    const swivel = new Object3D();
+    swivel.position.set(CHAIR_PIVOT[0], 0, CHAIR_PIVOT[1]);
+    addSolids(
+      swivel,
+      shown.filter((part) => part.rig === "swivel"),
+      material,
+    );
+    for (const child of swivel.children)
+      (child as Mesh).geometry.translate(-CHAIR_PIVOT[0], 0, -CHAIR_PIVOT[1]);
+    const lit = new Mesh(
+      mergeParts(
+        meshes.glow.filter((part) => part.led === undefined),
+        { roundSegments: SETUP_ROUND_SEGMENTS },
+      ),
+      screens,
+    );
+    const leds = ledMesh(
+      meshes.glow.filter((part) => part.led !== undefined),
+      ledMaterial,
+    );
+    const pane = new Mesh(mergeParts(meshes.glass), glass);
+    pane.renderOrder = 1;
+    const mug = new Mesh(mugGeometry(), mugMaterial);
+    mug.name = "setup-mug";
+    mug.position.set(...SETUP_PROPS.mug.center);
+    mug.castShadow = true;
+    mug.receiveShadow = true;
+    const logo = logoMesh();
+    owned.materials.push(logo.mesh.material);
+    if (logo.mesh.material.map) owned.textures.push(logo.mesh.material.map);
+    setup.add(swivel, lit, leds.mesh, pane, mug, logo.group);
+    return {
+      group: setup,
+      glow: screens,
+      owned,
+      swivel,
+      leds,
+      steam,
+      logo,
+    };
+  }, [maps]);
 
   const base = setupGlow(hours) * glowPower(power, hours);
-  const effects = useMemo(
-    () => ({ swivel, leds, logo, bruno }),
-    [swivel, leds, logo, bruno],
+  const side = sideLight(lights ?? DEFAULT_LIGHTS, hours, power);
+  const sideColor = useMemo(
+    () =>
+      side.level > 0
+        ? new Color(side.color).multiplyScalar(side.strength)
+        : SIDE_OFF.clone(),
+    [side.level, side.color, side.strength],
   );
+  const effects = useMemo(() => ({ swivel, leds, logo }), [swivel, leds, logo]);
   const motion = useRef({ active: false, bounce: { ...BOUNCE.start } });
 
   useLayoutEffect(() => {
     glow.color.setScalar(base);
     logo.mesh.material.color.setScalar(base);
-    // ElgatoLight.js: his plain white panel, warm and dimmer by day.
-    bruno.elgato.color.set(SETUP_COLORS.keyLight).multiplyScalar(base);
-    motion.current.bounce = rest(effects, base);
+    motion.current.bounce = rest(effects, base, sideColor);
     motion.current.active = false;
     invalidate();
-  }, [base, reducedMotion, glow, logo, bruno, effects, invalidate]);
+  }, [base, sideColor, reducedMotion, glow, logo, effects, invalidate]);
 
   useFrame((frame, delta) => {
     const active = setupAnimates({
@@ -397,7 +392,7 @@ export default function Setup({
     if (!active) {
       if (motion.current.active) {
         motion.current.active = false;
-        motion.current.bounce = rest(effects, base);
+        motion.current.bounce = rest(effects, base, sideColor);
         frame.invalidate();
       }
       return;
@@ -405,21 +400,13 @@ export default function Setup({
     motion.current.active = true;
     const t = frame.clock.elapsedTime * 1000;
     swivel.rotation.y = chairSway(t);
-    const { colors, index, base: original } = leds;
-    for (let v = 0; v < index.length; v++) {
-      const level = ledLevel(t, index[v], base);
-      for (let k = 0; k < 3; k++)
-        colors.array[v * 3 + k] = original[v * 3 + k] * level;
-    }
-    colors.needsUpdate = true;
-    brunoFrame(bruno, t, t, base > 0);
+    paintLeds(leds, (index) => ledLevel(t, index, base), sideColor);
     steam.uniforms.uTime.value = t;
     motion.current.bounce = bounceStep(
       motion.current.bounce,
       Math.min(delta * 1000, MAX_STEP),
     );
-    logo.mesh.position.x = motion.current.bounce.x;
-    logo.mesh.position.y = motion.current.bounce.y;
+    placeLogo(logo, motion.current.bounce);
     frame.invalidate();
   });
 
@@ -447,22 +434,6 @@ export default function Setup({
         </Suspense>,
         swivel,
       )}
-      <Suspense fallback={null}>
-        <BrunoOverlayModel
-          url={BRUNO_FILES.elgato}
-          overlay={BRUNO_OVERLAYS.elgato}
-          materials={[bruno.elgato]}
-        />
-        <GoogleHomeLeds
-          overlay={BRUNO_OVERLAYS.googleHome}
-          materials={bruno.leds}
-        />
-        <BrunoOverlayModel
-          url={BRUNO_FILES.loupedeck}
-          overlay={BRUNO_OVERLAYS.loupedeck}
-          materials={bruno.buttons}
-        />
-      </Suspense>
     </>
   );
 }

@@ -322,10 +322,13 @@ export function logoMesh(): {
     depthWrite: false,
   });
   const group = new Object3D();
-  const { center, yaw } = SETUP_PROPS.sideScreen;
+  const { center, yaw, logo } = SETUP_PROPS.sideScreen;
   group.position.set(...center);
   // A plane faces +z; turn it onto the screen's normal (cos yaw, 0, -sin yaw).
   group.rotation.y = Math.PI / 2 + yaw;
+  // The portrait screen is narrower than Bruno's travel (T12): Setup.tsx
+  // swaps the bounce axes, and the badge and its travel shrink together.
+  group.scale.setScalar(logo.scale);
   const mesh = new Mesh(new PlaneGeometry(LOGO.width, LOGO.height), material);
   mesh.position.z = 0.002;
   mesh.renderOrder = 2;

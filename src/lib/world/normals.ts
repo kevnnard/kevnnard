@@ -1,7 +1,9 @@
 // Original procedural normal maps for the gaming setup (T4g, S11): a fine
 // noise for powder coat and plastics, concentric speaker-cone rings, a fabric
-// weave for the mousepad, a rounded keycap and football pebble grain (T10). Pure pixels, generated once per
-// pattern and cached; Setup.tsx wraps them in owned DataTextures.
+// weave for the mousepad, a rounded keycap, football pebble grain (T10) and
+// wood grain for the copper desk (T12), with its matching colour map. Pure
+// pixels, generated once per pattern and cached; Setup.tsx wraps them in
+// owned DataTextures.
 
 export const NORMAL_PATTERNS = [
   "noise",
@@ -9,6 +11,7 @@ export const NORMAL_PATTERNS = [
   "weave",
   "keycap",
   "pebble",
+  "grain",
 ] as const;
 export type NormalPattern = (typeof NORMAL_PATTERNS)[number];
 
@@ -81,12 +84,24 @@ const HEIGHTS: Record<
     },
   },
   // Leather pebbling: rounded bumps with narrow valleys between them.
+  // Shallow grooves along the darker latewood rings.
+  grain: { slope: 0.8, height: (u, v) => 1 - grain(u, v) },
   pebble: {
     slope: 2.5,
     height: (u, v) =>
       smooth(0.3, 0.7, noise(u, v, 24)) * 0.8 + 0.2 * noise(u, v, 48),
   },
 };
+
+/**
+ * Wood grain in [0, 1]: six growth rings across u, wobbling slowly along v,
+ * plus fine fibres. Wraps on both axes (whole ring counts, periodic noise).
+ */
+function grain(u: number, v: number) {
+  const wobble = 1.4 * noise(u, v, 4) + 0.35 * noise(u, v, 12);
+  const rings = 0.5 + 0.5 * Math.sin(2 * Math.PI * (6 * u + wobble));
+  return 0.75 * rings ** 3 + 0.25 * noise(u, v, 48);
+}
 
 const cache = new Map<NormalPattern, Uint8Array>();
 
@@ -113,5 +128,29 @@ export function normalPixels(pattern: NormalPattern): Uint8Array {
       data[i + 3] = 255;
     }
   cache.set(pattern, data);
+  return data;
+}
+
+let grainCache: Uint8Array | undefined;
+
+/**
+ * Wood grain colour multiplier (T12), same tiling as the "grain" normals:
+ * 1 on the light earlywood, about 0.7 on the latewood streaks, so the
+ * copper vertex colours keep their tone and gain visible grain.
+ */
+export function woodGrainPixels(): Uint8Array {
+  if (grainCache) return grainCache;
+  const n = NORMAL_SIZE;
+  const data = new Uint8Array(n * n * 4);
+  for (let y = 0; y < n; y++)
+    for (let x = 0; x < n; x++) {
+      const value = Math.round(255 * (1 - 0.3 * grain(x / n, y / n)));
+      const i = (y * n + x) * 4;
+      data[i] = value;
+      data[i + 1] = value;
+      data[i + 2] = value;
+      data[i + 3] = 255;
+    }
+  grainCache = data;
   return data;
 }

@@ -93,9 +93,13 @@ describe("setup animations (T4i, ported from Bruno Simon's my-room-in-3d)", () =
     );
     assert.notEqual(ledLevel(500, 0, base), ledLevel(500, 1, base), "phased");
     assert.ok(
-      meshes.glow.filter((part) => part.led !== undefined).length >= 4,
-      "keyboard underglow and PC strips",
+      meshes.glow.filter((part) => part.led !== undefined).length >= 3,
+      "PC strips",
     );
+    // T12: the keyboard's side lights follow the setup light, not the wave.
+    const side = meshes.glow.filter((part) => part.channel === "setup");
+    assert.equal(side.length, 2);
+    assert.ok(side.every((part) => part.led === undefined));
   });
 
   it("breathes the Google Home LEDs with Bruno's phased wave", () => {

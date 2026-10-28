@@ -85,6 +85,8 @@ export interface OriginalCredit {
   license: string;
   /** Repository-relative file that builds it. */
   source: string;
+  /** Official pages it was modelled from (no download), https only (T12). */
+  references?: string[];
 }
 
 /** Code or shaders ported from a permitted author (T4i). */
@@ -177,6 +179,10 @@ export function creditProblems(credits: Credits): string[] {
       problems.push(`${entry.id}: original work must use ${ORIGINAL_LICENSE}`);
     else if (!entry.source.startsWith("src/"))
       problems.push(`${entry.id}: source must be a repository file`);
+    else if (
+      (entry.references ?? []).some((url) => !url.startsWith("https://"))
+    )
+      problems.push(`${entry.id}: references must be https pages`);
   }
   for (const entry of credits.ported ?? []) {
     if (!entry.author?.trim()) problems.push(`${entry.id}: missing author`);

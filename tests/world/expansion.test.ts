@@ -23,7 +23,9 @@ import { LIVING_MODELS, livingMeshes } from "../../src/lib/world/living.ts";
 import { setupMeshes } from "../../src/lib/world/setup.ts";
 
 // S22: "extiendes las casa osea sacas mas la entrada". The main volume grows
-// 0.65 m toward the front; the garage, setup and living area stay put.
+// 0.65 m toward the front; the garage and living area stay put. The setup's
+// fingerprint was dropped in T12: S24-S25 asked to rebuild the setup itself
+// (tests/world/setup-finish.test.ts guards it now).
 // Hashes are of part geometry (shape, centre, size, rotation, radius,
 // profile) recorded from the house before the extension.
 
@@ -124,12 +126,11 @@ describe("house extension toward the entrance (T10, S22)", () => {
     });
   });
 
-  it("leaves the gaming setup and the living area where they were", () => {
+  it("leaves the living area where it was, and the setup in its zone", () => {
     const setup = setupMeshes();
-    assert.equal(
-      hash([...setup.solid, ...setup.glow, ...setup.glass, ...setup.hull]),
-      "5ee8de46183ed522",
-    );
+    // The setup changed on request (T12); it still fits the room it had.
+    for (const part of [...setup.solid, ...setup.glow, ...setup.glass])
+      assert.ok(part.center[2] >= -2.3 && part.center[2] <= -0.3);
     assert.equal(
       hash(Object.values(livingMeshes()).flat()),
       "db052265f27be4fb",

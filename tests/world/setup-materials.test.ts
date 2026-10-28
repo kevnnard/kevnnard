@@ -38,9 +38,12 @@ describe("gaming setup materials (T4g, S11)", () => {
     assert.ok(using("cone").length === 4, "woofer and tweeter per speaker");
     assert.ok(using("panel").length >= 5, "PC case and frame");
     assert.ok(using("powder").length >= 10, "desk frame and legs");
-    assert.ok(using("laminate").length === 2, "desk top and front edge");
-    assert.ok(using("keycap").length === 4, "key rows");
-    assert.ok(using("fabric").length === 3, "mousepad and Google Home Mini");
+    // T12: five copper boards, the front edge, the coaster (disc and rim)
+    // and the shelf board.
+    assert.equal(using("wood").length, 9, "desk boards, edge, coaster, shelf");
+    assert.equal(using("keycap").length, 84, "one cap per key");
+    // Mouse pad and its stitched edge, and the headphone cushions.
+    assert.equal(using("fabric").length, 4, "mat and headphone cushions");
     assert.ok(using("base").length >= 10, "chair star base and casters");
     // Bruno Simon's top chair (T4k) replaced the leather seat and white trim.
     assert.equal(using("leather").length, 0, "no procedural seat");
@@ -54,12 +57,14 @@ describe("gaming setup materials (T4g, S11)", () => {
     assert.equal(M.powder.roughness, 0.45);
     assert.equal(M.powder.normal, "noise");
     assert.ok(M.powder.normalScale <= 0.2, "very subtle");
-    assert.equal(M.laminate.roughness, 0.6);
-    assert.ok(M.laminate.clearcoat > 0 && M.laminate.clearcoat <= 0.4);
+    assert.equal(M.wood.metalness, 0);
+    assert.ok(M.wood.clearcoat > 0 && M.wood.clearcoat <= 0.4);
+    assert.equal(M.wood.normal, "grain");
     assert.equal(M.satin.roughness, 0.5);
     assert.equal(M.fabric.normal, "weave");
     assert.equal(M.cone.normal, "radial");
-    assert.equal(M.keycap.normal, "keycap");
+    // Individual caps (T12): a fine matte texture instead of one dish per tile.
+    assert.equal(M.keycap.normal, "noise");
     assert.equal(M.grille.surface, "grille");
     assert.equal(M.panel.surface, "panel");
     assert.equal(M.leather.surface, "leather");

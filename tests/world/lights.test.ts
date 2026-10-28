@@ -15,11 +15,11 @@ import {
 } from "../../src/lib/world/lights.ts";
 import { TV_PANEL } from "../../src/lib/world/living.ts";
 import {
-  DESK_TOP,
   MAIN_MONITOR,
   MAIN_ROOM,
   partBounds,
   SETUP_PROPS,
+  SHELF,
   setupMeshes,
 } from "../../src/lib/world/setup.ts";
 
@@ -164,10 +164,11 @@ describe("night light fixtures", () => {
     }
   });
 
-  // S18: backlights wash the wall broadly; lamps are bulbs in their shades.
-  it("makes the backlights wall-aimed spots and the lamps point bulbs", () => {
-    assert.equal(LIGHT_FIXTURES.lampLeft.kind, "point");
-    assert.equal(LIGHT_FIXTURES.lampRight.kind, "point");
+  // S18: backlights wash the wall broadly. T12: the shelf lamps are spots
+  // aimed down at the desk (tests/world/setup-finish.test.ts).
+  it("makes the backlights wall-aimed spots and the lamps spots too", () => {
+    assert.equal(LIGHT_FIXTURES.lampLeft.kind, "spot");
+    assert.equal(LIGHT_FIXTURES.lampRight.kind, "spot");
     const walls = {
       tv: { axis: 2, wall: MAIN_ROOM.z0 },
       setup: { axis: 0, wall: MAIN_ROOM.x0 },
@@ -212,13 +213,12 @@ describe("night light fixtures", () => {
 
   it("puts the setup backlight between the monitor and the left wall", () => {
     const [x, y, z] = LIGHT_FIXTURES.setup.position;
-    const back = MAIN_MONITOR.center[0] - MAIN_MONITOR.size[0] / 2;
-    assert.ok(x > MAIN_ROOM.x0 && x < back, `x ${x}`);
+    assert.ok(x > MAIN_ROOM.x0 && x < MAIN_MONITOR.back, `x ${x}`);
     assert.ok(Math.abs(z - MAIN_MONITOR.center[2]) < 0.1);
     assert.ok(Math.abs(y - MAIN_MONITOR.center[1]) < MAIN_MONITOR.size[1] / 2);
   });
 
-  it("stands both lamps on the desk ends, clear of every other desk item", () => {
+  it("stands both lamps on the shelf, clear of every other setup item", () => {
     const meshes = setupMeshes();
     const others = [
       ...meshes.solid,
@@ -226,8 +226,8 @@ describe("night light fixtures", () => {
       ...meshes.glass,
       ...meshes.hull,
     ]
-      .map(partBounds)
-      .filter((b) => b.y1 > DESK_TOP.y + EPS);
+      .filter((part) => part.item !== "shelf")
+      .map(partBounds);
     const { center, radius, height } = SETUP_PROPS.mug;
     others.push({
       x0: center[0] - radius,
@@ -240,23 +240,23 @@ describe("night light fixtures", () => {
     });
     for (const id of ["lampLeft", "lampRight"] as const) {
       const parts = lampParts(id);
-      assert.ok(parts.length >= 5, `${id} is a detailed model`);
+      assert.ok(parts.length >= 6, `${id} is a detailed model`);
       const bounds = parts.map(partBounds);
       const shade = LAMP.shade;
       const base = LIGHT_FIXTURES[id].base;
+      const head = base[0] + LAMP.head.dx;
       bounds.push({
-        x0: base[0] - shade.bottom,
-        x1: base[0] + shade.bottom,
+        x0: head - shade.bottom,
+        x1: head + shade.bottom,
         y0: base[1] + shade.y0,
         y1: base[1] + shade.y1,
         z0: base[2] - shade.bottom,
         z1: base[2] + shade.bottom,
       });
       const lowest = Math.min(...bounds.map((b) => b.y0));
-      assert.ok(Math.abs(lowest - DESK_TOP.y) < EPS, `${id} sits on the desk`);
+      assert.ok(Math.abs(lowest - SHELF.top) < EPS, `${id} sits on the shelf`);
       for (const b of bounds) {
-        assert.ok(b.x0 >= DESK_TOP.x0 - EPS && b.x1 <= DESK_TOP.x1 + EPS, id);
-        assert.ok(b.z0 >= DESK_TOP.z0 - EPS && b.z1 <= DESK_TOP.z1 + EPS, id);
+        assert.ok(b.z0 >= SHELF.z0 - EPS && b.z1 <= SHELF.z1 + EPS, id);
         for (const o of others) {
           const overlap =
             b.x0 < o.x1 &&
@@ -265,7 +265,7 @@ describe("night light fixtures", () => {
             b.y1 > o.y0 &&
             b.z0 < o.z1 &&
             b.z1 > o.z0;
-          assert.ok(!overlap, `${id} collides with a desk item`);
+          assert.ok(!overlap, `${id} collides with a setup item`);
         }
       }
       const [, by] = LIGHT_FIXTURES[id].position;

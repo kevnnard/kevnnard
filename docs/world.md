@@ -148,9 +148,9 @@ normal, roughness and a lossless opacity mask cut with alpha test) and
 Stylized_Sci_fi_Metal_Panel_001 (PC case at a 0.3 m repeat; chosen over
 Metal_Plates_001 because its small panel lines read as a case): about 0.4 MB,
 budget 2.5 MB. The catalog has no plastic or fabric, so the desk top
-(laminate, light clearcoat), powder-coated frame, satin and matte plastics,
-keycaps, speaker cones and mousepad use PBR tuning plus original tileable
-normal maps generated in code (`src/lib/world/normals.ts`, credited under
+(copper wood since T12, with an original grain colour map), powder-coated
+frame, satin and matte plastics, keycaps, speaker cones and mousepad use PBR
+tuning plus original tileable normal maps generated in code (`src/lib/world/normals.ts`, credited under
 `original` as `setup-normals`). `SETUP_MATERIALS` in `src/lib/world/setup.ts`
 maps each part to one merged draw per material.
 
@@ -223,8 +223,8 @@ React Three Fiber, keeping his math:
 | --- | --- | --- |
 | Coffee steam on an original mug | `SetupEffects.tsx`, `models/coffee-steam.glb` | `CoffeeSteam.js`, coffeeSteam shaders, perlin2d partial (inlined, no glslify) |
 | Chair sway, ±0.25 rad around the column | `motion.ts`, `Setup.tsx` | `TopChair.js` (±0.5 rad) |
-| Breathing PC and keyboard LEDs, never below 40% of `setupGlow(hours)` | `motion.ts` | `GoogleLeds.js` |
-| "KV" initials bouncing on the side screen | `motion.ts`, `SetupEffects.tsx` | `BouncingLogo.js` |
+| Breathing PC LEDs, never below 40% of `setupGlow(hours)` | `motion.ts` | `GoogleLeds.js` |
+| "KV" initials bouncing on the portrait side screen (bounce x runs up the screen, scaled 0.85, T12) | `motion.ts`, `SetupEffects.tsx`, `Setup.tsx` | `BouncingLogo.js` |
 | Normalized wheel zoom | `wheel.ts`, `WorldScene.tsx` | `Navigation.js` (normalize-wheel) |
 
 ### Bruno's chair and desk gadgets (T4k)
@@ -233,9 +233,15 @@ React Three Fiber, keeping his math:
 | --- | --- | --- |
 | Top chair (seat, back, armrests, headrest) on our five-star base and column | `BrunoProps.tsx` `BrunoChair`, `models/bruno-chair.glb` | `topChairModel.glb`, `TopChair.js` |
 | Chair material: day/night/neutral bake mix plus light map | `BrunoProps.tsx` (night mix from `worldLight(hours).stars`, neutral 0.12, PC channel tinted with our RGB) | `Baked.js`, baked shaders, glsl-blend lighten (inlined) |
-| Elgato key light glow on an original panel, arm and pole | `models/bruno-elgato-light.glb`, `setup.ts` body | `elgatoLightModel.glb`, `ElgatoLight.js` |
-| Google Home Mini LEDs on an original fabric puck, breathing | `models/bruno-google-home-leds.glb`, `bruno/google-home-led-mask.png`, `motion.ts` | `googleHomeLedsModel.glb`, `googleHomeLedMask.png`, `GoogleLeds.js` |
-| Loupedeck button screens on an original sloped console | `models/bruno-loupedeck-buttons.glb`, `motion.ts` (seeded, no gsap) | `loupedeckButtonsModel.glb`, `LoupedeckButtons.js` |
+| Elgato key light glow (removed from the desk in T12) | `models/bruno-elgato-light.glb` | `elgatoLightModel.glb`, `ElgatoLight.js` |
+| Google Home Mini LEDs (removed in T12) | `models/bruno-google-home-leds.glb`, `bruno/google-home-led-mask.png`, `motion.ts` | `googleHomeLedsModel.glb`, `googleHomeLedMask.png`, `GoogleLeds.js` |
+| Loupedeck button screens (removed in T12) | `models/bruno-loupedeck-buttons.glb`, `motion.ts` (seeded, no gsap) | `loupedeckButtonsModel.glb`, `LoupedeckButtons.js` |
+
+S25 asked to clear every desk item not mentioned, so since T12 the Elgato,
+Google Home and Loupedeck bodies, overlays, materials and animations are
+gone from the scene. Their files and credits still ship (about 150 KB:
+`BRUNO_FILES`, `BRUNO_MAPS.ledMask`) and nothing loads them; deleting them
+with their credits and `prepare-world.py` outputs is a separate cleanup.
 
 His baked maps are 4096 atlases shared with his whole room. The `--bruno`
 step decodes the chair, groups its triangles into UV islands, packs each
@@ -264,8 +270,10 @@ repository may use the permission license (`licenseAllowed` in
 Four night lights, editable in a bottom-right "Scene" console with the zone
 cards of the chosen Gentle Design artboard
 (`design/world-lighting/03-grouped-cards.html`):
-TV backlight, setup backlight and left/right desk lamps (left and right as
-seen from the chair, facing the wall).
+TV backlight, setup backlight and left/right lamps (left and right as seen
+from the chair, facing the wall). Since T12 the lamps are gamer lamps on the
+wall shelf, and the setup channel also drives the monitor light bar and the
+keyboard's side lights.
 
 | Piece | File |
 | --- | --- |
@@ -309,22 +317,70 @@ seen from the chair, facing the wall).
   "Off · power" and the header "lights off". The sun, moon, sky and fill
   never change. By day `glowPower` stays 1, so the daytime scene is
   unaffected whatever the master; the per-light sliders are never locked.
-- Scene: four lights, never shadow-casting, `decay` 2 and a finite
-  `distance` (1.2-1.6 m), intensities under 1 cd at 100 %. Since S18 the TV
+- Scene: four channels, five interior lights (`INTERIOR_FIXTURES`), never
+  shadow-casting, `decay` 2 and a finite `distance` (1.2-1.6 m), intensities
+  under 1 cd at 100 %. Since S18 the TV
   and setup backlights are spots placed behind the middle of their panel and
   aimed square at the wall (72° half-angle, penumbra 0.7): the hotspot hides
   behind the panel, the wall washes around it, and nothing in front of the
   panel is lit through it. This approximates the LED strip; a RectAreaLight
   would need `RectAreaLightUniformsLib` (an extra examples import with large
-  LTC tables). The desk lamps stay point bulbs inside their shades. They stay
-  mounted and drop to intensity 0 by day or when disabled, so the shader
-  light count never changes. Emitters: an LED strip behind the TV panel and
-  one behind the main monitor (dark when off), and two original desk lamps
-  (weighted foot, brass stem, lathe bell shade that glows faintly, sphere
-  bulb) at the desk's front corners, clear of the speakers, mug and steam.
+  LTC tables). Since T12 the two lamps are spots (0.6 rad, penumbra 0.6,
+  0.3 cd, 1.5 m) from the bulb in each shelf lamp's head straight down onto
+  the desk, and the light bar adds a fifth spot on the setup channel: fixed
+  white, 0.35 cd at 100 %, 1.2 m, 0.55 rad, from under its slit onto the mat
+  between the keyboard and the mouse, its cone's upper edge still pointing
+  down (no ceiling wash or eye glare). They stay mounted and drop to
+  intensity 0 by day or when disabled, so the shader light count never
+  changes. Emitters: an LED strip behind the TV panel and one following the
+  back of the curved ultrawide (dark when off), the light bar's slit, and two
+  original articulated lamps (puck, copper ring, two arms, dark metal head
+  whose lathe shade glows faintly inside, sphere bulb). The keyboard's two
+  side light bars take the setup colour at 0.2-0.5 of it with
+  `sideLight(settings, hours, power)`: night only, through the setup switch
+  and the master, and static (no breathing).
 - Bruno's chair bake: his TV and desk-lamp channels take our TV and lamp
   colors and follow the same gate and levels; his PC channel keeps our RGB.
 - Repaints are on demand (settings or hour change); nothing animates.
+
+## Finished gaming setup (T12, S24-S25)
+
+S24 asked to finish the setup: mouse on the right, a NuPhy-style wireless
+keyboard with subtle RGB, a shelf over the desk with the lamps and speakers, a
+white monitor light bar lighting the keyboard and mouse softly, the owner's
+over-ear headphones, a giant black mouse pad, a copper-toned wooden desk, a
+curved main monitor and a vertical second one on arms, and some plants. S25:
+the coffee on the right on a wooden coaster, and nothing else on the desk.
+Seated you face the left wall (-x), so your right is -z. All geometry is
+original (`src/lib/world/setup.ts`, lamps in `lights.ts`), credited as
+`setup` with the NuPhy pages it was modelled from (no download).
+
+| Item | Where (d from the wall, height over the floor boards, z) | Notes |
+| --- | --- | --- |
+| Desk top | 0.72 x 2.0 m, top at 0.76 | five copper wood boards, `wood` material: grain normal and grain colour map (`woodGrainPixels`) |
+| Giant mat | d 0.50, z -1.35, 0.42 x 1.35 m | black cloth with a stitched edge |
+| Keyboard | d 0.53, z -1.35, 0.133 x 0.316 m, 21 mm tall | 84 individual caps in a 75% layout (`KEY_ROWS`), pale modifiers, coral Esc, teal Enter, yellow space, aluminium case, two side light bars, no cable |
+| Mouse | d 0.54, z -1.88 | curved shell (prism profile), two buttons, groove, wheel, side grips |
+| Coffee | coaster d 0.59, z -2.17, 12 cm | mug and steam move with `SETUP_PROPS.mug` |
+| Ultrawide | d 0.27, y 1.14, z -1.55, 1.15 m chord | twelve rounded segments on a 1.8 m arc, the screen segments follow it; VESA hump, clamp arm at z -1.70 |
+| Portrait | d 0.27, y 1.12, z -0.67, 0.30 x 0.54 m | own clamp arm at z -0.58, code-editor glow, bouncing logo |
+| Light bar | on the ultrawide's top, 0.45 m | white housing, saddle, counterweight, slit behind a front shield |
+| Shelf | 0.33 x 1.90 m board, underside 1.46 | three wall brackets with braces; speakers at z -2.10/-0.45, lamps -1.90/-0.80, plants -1.65/-1.05 |
+| Headphones | hanger under the front edge, d 0.63, z -1.92 | broad flat band, sliders, yokes, cups; 3 cm clear of the PC |
+
+The owner's own mouse was checked: `public/models/room/desk.glb` is one baked
+node holding one mesh of 12 material primitives with no mouse node, mesh or
+material, so the mouse is modelled (`MOUSE_SOURCE`). The headphones were
+planned at z -2.22, where the right leg's top rail runs; they hang at z -1.92
+instead. Every part carries an `item`; `TABLETOP_ITEMS` lists what may rest
+on the desk, and `tests/world/setup-finish.test.ts` checks each request
+(placements, pairwise clearances, light aims, gates, credits).
+
+Budget: 297 parts (under the 300 limit), 11 draws (nine solid materials plus
+glow and glass), about 28,100 setup triangles before the lamps (84 caps are
+9,100; parts thinner than 2 cm use one chamfer step). One new 128 px grain
+colour map, no downloaded textures. Five interior lights (eleven in the
+scene with the hemisphere fill, the sun/moon key and four lanterns).
 
 ## Front garden entrance (T7, S20)
 

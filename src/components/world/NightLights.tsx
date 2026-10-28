@@ -22,6 +22,8 @@ import {
   LAMP,
   LIGHT_FIXTURES,
   LIGHT_IDS,
+  LIGHTBAR_FIXTURE,
+  type LightFixture,
   type LightId,
   type LightSettings,
   lampParts,
@@ -29,7 +31,9 @@ import {
 } from "@/lib/world/lights.ts";
 import { TV_PANEL } from "@/lib/world/living.ts";
 import {
+  LIGHTBAR,
   MAIN_MONITOR,
+  mainCurve,
   SETUP_MATERIALS,
   SETUP_ROUND_SEGMENTS,
   type SetupMaterialId,
@@ -67,16 +71,52 @@ function frame(
   ];
 }
 
-/** Lathe outline of the bell shade, rim to crown (radius, height). */
+/**
+ * The setup backlight's strip on the back of the curved ultrawide: top and
+ * bottom runs in short segments following the arc, and the two ends.
+ */
+function curvedFrame(): SetupPart[] {
+  const { curve, size, center } = MAIN_MONITOR;
+  const behind = -(size[0] / 2 + BAR_DEPTH / 2);
+  const half = curve.halfAngle - 0.05 / curve.radius;
+  const steps = 10;
+  const step = (2 * half) / steps;
+  const chord = 2 * curve.radius * Math.sin(step / 2) + 0.002;
+  const top = center[1] + size[1] / 2 - 0.04;
+  const bottom = center[1] - size[1] / 2 + 0.04;
+  const bar = (
+    theta: number,
+    y: number,
+    sy: number,
+    su: number,
+  ): SetupPart => ({
+    material: "satin",
+    shape: "box",
+    center: mainCurve(theta, behind, y),
+    size: [BAR_DEPTH, sy, su],
+    rotation: [0, theta, 0],
+    color: "#ffffff",
+    shade: 1,
+  });
+  const parts: SetupPart[] = [];
+  for (let i = 0; i < steps; i++) {
+    const theta = -half + (i + 0.5) * step;
+    parts.push(bar(theta, top, BAR, chord), bar(theta, bottom, BAR, chord));
+  }
+  for (const theta of [-half, half])
+    parts.push(bar(theta, (top + bottom) / 2, top - bottom, BAR));
+  return parts;
+}
+
+/** Lathe outline of the lamp's head shade, rim to crown (radius, height). */
 function shadeGeometry() {
   const { y0, y1, bottom, top } = LAMP.shade;
   const points = [
-    [bottom + 0.003, y0],
-    [bottom, y0 + 0.008],
-    [bottom - 0.006, y0 + 0.04],
-    [top + 0.012, y1 - 0.03],
-    [top, y1 - 0.008],
-    [top - 0.012, y1],
+    [bottom + 0.002, y0],
+    [bottom, y0 + 0.006],
+    [bottom * 0.8, y0 + 0.03],
+    [top + 0.006, y1 - 0.006],
+    [top, y1],
     [0.009, y1],
   ].map(([r, y]) => new Vector2(r, y));
   return new LatheGeometry(points, 32);
@@ -84,6 +124,8 @@ function shadeGeometry() {
 
 interface Emitters {
   light: PointLight | SpotLight;
+  /** Extra light on the same channel (the setup's light bar), fixed colour. */
+  extra?: { light: SpotLight; glow: MeshBasicMaterial; color: Color };
   /** Strip or bulb: unlit, tinted by the light. */
   glow: MeshBasicMaterial;
   /** Lamp shades: the fabric glows a little when lit. */
@@ -92,10 +134,12 @@ interface Emitters {
 }
 
 /**
- * Night lights (T6b, S17): a TV backlight, a setup backlight and two desk
- * lamps, each a non-shadow light with a finite range (wall-aimed spots for
- * the backlights, point bulbs in the lamp shades, S18) plus its emitter
- * (LED strip behind the TV panel or monitor, lamp bulb and shade). Always
+ * Night lights (T6b, S17): a TV backlight, a setup backlight and two shelf
+ * lamps (T12), each a non-shadow spot with a finite range (wall-aimed for
+ * the backlights, S18; aimed down at the desk for the lamps) plus its
+ * emitter (LED strip behind the TV panel or the curved monitor, lamp bulb and
+ * shade). The setup channel also lights the white monitor light bar: its
+ * slit and a neutral white downlight onto the keyboard and mouse. Always
  * mounted, so the shader light count never changes: by day or when disabled
  * a light's intensity drops to zero, as with the scene panel's master
  * `power` off. Settings, the master and the hour only repaint on demand;
@@ -141,8 +185,7 @@ export default function NightLights({
     }
 
     const emitters = {} as Record<LightId, Emitters>;
-    const fixtureLight = (id: LightId) => {
-      const fixture = LIGHT_FIXTURES[id];
+    const fixtureLight = (id: string, fixture: LightFixture) => {
       let light: PointLight | SpotLight;
       if (fixture.kind === "spot") {
         const spot = new SpotLight(
@@ -172,7 +215,7 @@ export default function NightLights({
       mesh.name = `night-${id}-strip`;
       group.add(mesh);
       emitters[id] = {
-        light: fixtureLight(id),
+        light: fixtureLight(id, LIGHT_FIXTURES[id]),
         glow,
         off: new Color(STRIP_OFF),
       };
@@ -187,31 +230,47 @@ export default function NightLights({
         TV_PANEL.height - 0.08,
       ),
     );
-    const [, my, mz] = MAIN_MONITOR.center;
-    const back = MAIN_MONITOR.center[0] - MAIN_MONITOR.size[0] / 2;
-    strip(
-      "setup",
-      frame(
-        [back - BAR_DEPTH / 2, my, mz],
-        "x",
-        MAIN_MONITOR.size[2] - 0.1,
-        MAIN_MONITOR.size[1] - 0.08,
-      ),
+    strip("setup", curvedFrame());
+    // The light bar's slit, under its housing, and its white downlight.
+    const slit = new MeshBasicMaterial({ color: STRIP_OFF });
+    owned.materials.push(slit);
+    const slitMesh = new Mesh(
+      mergeParts([
+        {
+          shape: "box",
+          center: LIGHTBAR.slit.center,
+          size: LIGHTBAR.slit.size,
+          color: "#ffffff",
+          shade: 1,
+        },
+      ]),
+      slit,
     );
+    slitMesh.name = "night-lightbar-slit";
+    group.add(slitMesh);
+    emitters.setup.extra = {
+      light: fixtureLight("lightbar", LIGHTBAR_FIXTURE) as SpotLight,
+      glow: slit,
+      color: new Color(LIGHTBAR_FIXTURE.color),
+    };
 
     for (const id of LAMPS) {
       const fixture = LIGHT_FIXTURES[id];
       const fabric = new MeshStandardMaterial({
         color: LAMP.colors.shade,
-        roughness: 0.85,
-        metalness: 0,
+        roughness: 0.5,
+        metalness: 0.4,
         side: DoubleSide,
       });
       const glow = new MeshBasicMaterial({ color: LAMP.colors.bulbOff });
       owned.materials.push(fabric, glow);
       const cover = new Mesh(shade, fabric);
       cover.name = `${id}-shade`;
-      cover.position.set(...fixture.base);
+      cover.position.set(
+        fixture.base[0] + LAMP.head.dx,
+        fixture.base[1],
+        fixture.base[2],
+      );
       cover.castShadow = true;
       const lit = new Mesh(bulb, glow);
       lit.name = `${id}-bulb`;
@@ -219,7 +278,7 @@ export default function NightLights({
       lit.scale.setScalar(LAMP.bulb.radius);
       group.add(cover, lit);
       emitters[id] = {
-        light: fixtureLight(id),
+        light: fixtureLight(id, fixture),
         glow,
         shade: fabric,
         off: new Color(LAMP.colors.bulbOff),
@@ -233,13 +292,20 @@ export default function NightLights({
     for (const id of LIGHT_IDS) {
       const setting = lights[id];
       const level = lightLevel(setting, hours, power);
-      const { light, glow, shade, off } = emitters[id];
+      const { light, glow, shade, off, extra } = emitters[id];
       color.set(setting.color);
       light.color.copy(color);
       light.intensity = LIGHT_FIXTURES[id].intensity * level;
       if (level > 0) glow.color.copy(color).multiplyScalar(0.6 + 0.8 * level);
       else glow.color.copy(off);
-      if (shade) shade.emissive.copy(color).multiplyScalar(0.35 * level);
+      if (shade) shade.emissive.copy(color).multiplyScalar(0.2 * level);
+      if (extra) {
+        extra.light.color.copy(extra.color);
+        extra.light.intensity = LIGHTBAR_FIXTURE.intensity * level;
+        if (level > 0)
+          extra.glow.color.copy(extra.color).multiplyScalar(0.7 + 0.5 * level);
+        else extra.glow.color.copy(off);
+      }
     }
     invalidate();
   }, [hours, lights, power, emitters, invalidate]);

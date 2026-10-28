@@ -155,11 +155,22 @@ ORIGINAL = [
      "license": "Original work (repository license)", "source": "src/lib/world/clouds.ts"},
     {"id": "house", "asset": "Wooden house and garage (procedural)", "author": "Kevnnard",
      "license": "Original work (repository license)", "source": "src/lib/world/house.ts"},
-    {"id": "setup", "asset": "Gaming setup: desk, monitors, PC, speakers and chair (procedural)",
+    # T12 (S24-S25): the finished setup, modelled from NuPhy's official pages.
+    {"id": "setup",
+     "asset": ("Gaming setup: copper-toned wooden desk under a giant black mouse pad, a NuPhy Air75 "
+               "V2-inspired wireless low-profile 75% keyboard with side lights, an original curved mouse, "
+               "a curved ultrawide and a portrait monitor on clamp arms, an original white monitor light "
+               "bar, a wall shelf with the speakers, gamer lamps and two potted plants, over-ear headphones "
+               "on an under-desk hanger, a coffee mug on a wooden coaster, the PC and the chair base "
+               "(procedural; modelled from NuPhy's official product pages, no assets downloaded; NuPhy is "
+               "a trademark of its owner, no affiliation)"),
      "author": "Kevnnard", "license": "Original work (repository license)",
-     "source": "src/lib/world/setup.ts"},
+     "source": "src/lib/world/setup.ts",
+     "references": ["https://nuphy.com/products/air75-v2",
+                    "https://nuphy.com/blogs/journal/air75-v2"]},
     {"id": "setup-normals",
-     "asset": "Setup normal maps: noise, speaker cone, fabric weave and keycaps (procedural)",
+     "asset": ("Setup maps: noise, speaker cone, fabric weave and keycap normals, and wood grain normals "
+               "with their colour map (procedural)"),
      "author": "Kevnnard", "license": "Original work (repository license)",
      "source": "src/lib/world/normals.ts"},
     {"id": "living",

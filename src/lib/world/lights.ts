@@ -1,19 +1,25 @@
 // Night lights (T6b, S17): a TV backlight, a setup backlight behind the main
-// monitor and two desk lamps on the desk ends. They may only shine on the
-// simulated night, 18:00 through 05:59; each has its own switch, color and
-// intensity, edited in the scene settings panel. Pure numbers; NightLights.tsx
-// turns them into four non-shadow lights (two wall-aimed spots for the
-// backlights, two point bulbs for the lamps, S18), the lamp models and the
-// emissive strips and bulbs.
+// monitor and two lamps. They may only shine on the simulated night, 18:00
+// through 05:59; each has its own switch, color and intensity, edited in the
+// scene settings panel. Since T12 (S24) the lamps are gamer lamps on the wall
+// shelf aimed down at the desk, and the setup channel also drives the white
+// monitor light bar and the keyboard's side lights. Pure numbers;
+// NightLights.tsx turns them into five non-shadow spots (two wall-aimed
+// backlights, S18; two lamps and the light bar aimed down), the lamp models
+// and the emissive strips, slit and bulbs.
 
 import type { Vec3 } from "./house.ts";
 import { TV_PANEL } from "./living.ts";
 import {
   DESK_TOP,
+  KEYBOARD,
+  LIGHTBAR,
   MAIN_MONITOR,
   MAIN_ROOM,
+  MOUSE,
   SETUP_COLORS,
   type SetupPart,
+  SHELF,
 } from "./setup.ts";
 
 export const LIGHT_IDS = ["tv", "setup", "lampLeft", "lampRight"] as const;
@@ -37,13 +43,13 @@ export const LIGHT_INFO: Record<
   tv: { name: "TV backlight", where: "Behind the TV", zone: "tv" },
   setup: {
     name: "Setup backlight",
-    where: "Behind the monitor",
+    where: "Behind the monitor, light bar and keyboard",
     zone: "desk",
   },
-  lampLeft: { name: "Left desk lamp", where: "Desk, left end", zone: "desk" },
+  lampLeft: { name: "Left shelf lamp", where: "Shelf, left end", zone: "desk" },
   lampRight: {
-    name: "Right desk lamp",
-    where: "Desk, right end",
+    name: "Right shelf lamp",
+    where: "Shelf, right end",
     zone: "desk",
   },
 };
@@ -140,25 +146,27 @@ interface FixtureBase {
   distance: number;
   decay: 2;
   castShadow: false;
-  /** Where the lamp's base stands on the desk (lamps only). */
+  /** Where the fixture stands or hangs. */
   base: Vec3;
 }
 
-/** A bare bulb inside a lamp shade. */
+/** A bare bulb. */
 export interface PointFixture extends FixtureBase {
   kind: "point";
 }
 
 /**
- * An LED backlight approximated by one spot aimed square at the wall from
- * behind the middle of its panel (S18): the hotspot hides behind the panel,
- * the wide soft cone washes the wall around it, and nothing in front of the
- * panel is lit. Area lights would need three's RectAreaLightUniformsLib, an
- * examples import with large LTC tables, so they are not used.
+ * A finite spot. The backlights are LED strips approximated by one spot
+ * aimed square at the wall from behind the middle of their panel (S18): the
+ * hotspot hides behind the panel, the wide soft cone washes the wall around
+ * it, and nothing in front of the panel is lit. Area lights would need
+ * three's RectAreaLightUniformsLib, an examples import with large LTC
+ * tables, so they are not used. The shelf lamps and the light bar aim
+ * down at the desk (T12).
  */
 export interface SpotFixture extends FixtureBase {
   kind: "spot";
-  /** Point on the wall the spot faces. */
+  /** Point the spot faces. */
   target: Vec3;
   /** Cone half-angle, radians. */
   angle: number;
@@ -167,37 +175,50 @@ export interface SpotFixture extends FixtureBase {
 
 export type LightFixture = PointFixture | SpotFixture;
 
-/** Desk lamp, base at the origin: a bell shade over a round bulb. */
+/**
+ * Articulated gamer lamp on the shelf (T12), base at the origin, `dx` metres
+ * into the room: a weighted puck, a lower and an upper arm, and a head whose
+ * shade opens straight down over the desk.
+ */
 export const LAMP = {
-  /** Lathe bell, heights above the base; radii at its rim and crown. */
-  shade: { y0: 0.22, y1: 0.335, bottom: 0.065, top: 0.035 },
-  bulb: { y: 0.275, radius: 0.022 },
+  /** Base puck, metres from the wall. */
+  d: 0.22,
+  /** The head reaches past the shelf's front edge. */
+  head: { dx: 0.24 },
+  elbow: { dx: 0.03, y: 0.2 },
+  /** Lathe shade on the head, heights above the base; radii at its rim and crown. */
+  shade: { y0: 0.07, y1: 0.125, bottom: 0.042, top: 0.018 },
+  bulb: { y: 0.095, radius: 0.014 },
   colors: {
     foot: SETUP_COLORS.frame,
-    cap: SETUP_COLORS.trim,
-    stem: "#c9a46a",
+    cap: "#d26a3a",
+    stem: SETUP_COLORS.frame,
+    joint: "#8d9097",
     socket: SETUP_COLORS.bezel,
-    shade: "#f6efe4",
+    shade: "#2b2a30",
     bulbOff: "#d9d4ce",
   },
 } as const;
 
-// Seated at the desk you face the left wall (-x): your left is +z.
-const LAMP_D = 0.56;
-const LAMP_INSET = 0.07;
-const lampBase = (z: number): Vec3 => [DESK_TOP.x0 + LAMP_D, DESK_TOP.y, z];
+const lampBase = (z: number): Vec3 => [MAIN_ROOM.x0 + LAMP.d, SHELF.top, z];
 const LAMP_BASES = {
-  lampLeft: lampBase(DESK_TOP.z1 - LAMP_INSET),
-  lampRight: lampBase(DESK_TOP.z0 + LAMP_INSET),
+  lampLeft: lampBase(SHELF.lamps.left),
+  lampRight: lampBase(SHELF.lamps.right),
 } as const;
+const bulbAt = ([x, y, z]: Vec3): Vec3 => [
+  x + LAMP.head.dx,
+  y + LAMP.bulb.y,
+  z,
+];
 
 const lift = ([x, y, z]: Vec3, dy: number): Vec3 => [x, y + dy, z];
 
 const tvTop = TV_PANEL.center[1] + TV_PANEL.height / 2;
-const monitorBack = MAIN_MONITOR.center[0] - MAIN_MONITOR.size[0] / 2;
 const monitorTop = MAIN_MONITOR.center[1] + MAIN_MONITOR.size[1] / 2;
 /** Backlight cone: 72° half-angle, soft edge, so the wash runs past the panel. */
 const WASH = { angle: 1.25, penumbra: 0.7 } as const;
+/** Lamp cone: a soft pool on the desk under each lamp. */
+const POOL = { angle: 0.6, penumbra: 0.6 } as const;
 
 const tvSpot: Vec3 = [
   TV_PANEL.center[0],
@@ -205,10 +226,26 @@ const tvSpot: Vec3 = [
   TV_PANEL.panelBack - 0.01,
 ];
 const setupSpot: Vec3 = [
-  monitorBack - 0.01,
+  MAIN_MONITOR.back - 0.01,
   MAIN_MONITOR.center[1],
   MAIN_MONITOR.center[2],
 ];
+
+const lampSpot = (id: "lampLeft" | "lampRight"): SpotFixture => {
+  const base = LAMP_BASES[id];
+  const position = bulbAt(base);
+  return {
+    kind: "spot",
+    position,
+    target: [DESK_TOP.x0 + 0.47, DESK_TOP.y, position[2] - 0.04],
+    ...POOL,
+    intensity: 0.3,
+    distance: 1.5,
+    decay: 2,
+    castShadow: false,
+    base,
+  };
+};
 
 export const LIGHT_FIXTURES: Record<LightId, LightFixture> = {
   // Behind the middle of the panel, aimed at the wall: a halo around the TV.
@@ -235,25 +272,65 @@ export const LIGHT_FIXTURES: Record<LightId, LightFixture> = {
     castShadow: false,
     base: [MAIN_ROOM.x0, monitorTop, MAIN_MONITOR.center[2]],
   },
-  lampLeft: {
-    kind: "point",
-    position: lift(LAMP_BASES.lampLeft, LAMP.bulb.y),
-    intensity: 0.22,
-    distance: 1.2,
-    decay: 2,
-    castShadow: false,
-    base: LAMP_BASES.lampLeft,
-  },
-  lampRight: {
-    kind: "point",
-    position: lift(LAMP_BASES.lampRight, LAMP.bulb.y),
-    intensity: 0.22,
-    distance: 1.2,
-    decay: 2,
-    castShadow: false,
-    base: LAMP_BASES.lampRight,
-  },
+  lampLeft: lampSpot("lampLeft"),
+  lampRight: lampSpot("lampRight"),
 };
+
+const lightbarSpot: Vec3 = lift(LIGHTBAR.slit.center, -0.006);
+
+/**
+ * The monitor light bar's downlight (T12): neutral white whatever the setup
+ * colour, from just under its slit onto the mat between the keyboard and the
+ * mouse, with a cone narrow enough that its upper edge still points down.
+ * It follows the setup channel's switch, intensity, night gate and master.
+ */
+export const LIGHTBAR_FIXTURE: SpotFixture & {
+  channel: "setup";
+  color: string;
+} = {
+  kind: "spot",
+  channel: "setup",
+  color: "#ffffff",
+  position: lightbarSpot,
+  target: [
+    (KEYBOARD.center[0] + MOUSE.center[0]) / 2,
+    KEYBOARD.center[1] - KEYBOARD.size[1] / 2,
+    (KEYBOARD.center[2] + MOUSE.center[2]) / 2 + 0.06,
+  ],
+  angle: 0.55,
+  penumbra: 0.6,
+  intensity: 0.35,
+  distance: 1.2,
+  decay: 2,
+  castShadow: false,
+  base: LIGHTBAR.center,
+};
+
+/** Every physical light inside the house: the four channels and the light bar. */
+export const INTERIOR_FIXTURES: readonly LightFixture[] = [
+  ...LIGHT_IDS.map((id) => LIGHT_FIXTURES[id]),
+  LIGHTBAR_FIXTURE,
+];
+
+/** Keyboard side lights (T12): the setup colour, kept subtle. */
+const SIDE_LIGHT = { min: 0.2, span: 0.3 } as const;
+
+/**
+ * The keyboard's side light bars: the setup channel's colour at a subtle
+ * strength, zero by day, when the setup light is off or with the master off.
+ */
+export function sideLight(
+  settings: LightSettings,
+  hours: number,
+  power = true,
+): { level: number; color: string; strength: number } {
+  const level = lightLevel(settings.setup, hours, power);
+  return {
+    level,
+    color: settings.setup.color,
+    strength: level > 0 ? SIDE_LIGHT.min + SIDE_LIGHT.span * level : 0,
+  };
+}
 
 const round = (
   material: SetupPart["material"],
@@ -263,39 +340,66 @@ const round = (
   height: number,
   color: string,
   shade = 1,
+  dx = 0,
 ): SetupPart => ({
   material,
   shape: "round",
-  center: lift(base, y),
+  center: [base[0] + dx, base[1] + y, base[2]],
   size: [diameter, height, diameter],
   color,
   shade,
 });
 
+/** A rounded bar between two points in the lamp's x-y plane. */
+function arm(
+  base: Vec3,
+  [ax, ay]: readonly [number, number],
+  [bx, by]: readonly [number, number],
+  thick: number,
+  color: string,
+): SetupPart {
+  const [dx, dy] = [bx - ax, by - ay];
+  const length = Math.hypot(dx, dy);
+  return {
+    material: "powder",
+    shape: "rounded",
+    radius: thick / 2 - 0.0005,
+    center: [base[0] + (ax + bx) / 2, base[1] + (ay + by) / 2, base[2]],
+    size: [length, thick, thick],
+    rotation: [0, 0, Math.atan2(dy, dx)],
+    color,
+    shade: 1,
+  };
+}
+
 /**
- * Solid parts of one desk lamp, in the setup's materials: a weighted foot
- * with a cream cap, brass stem with collar and joint, and the socket under
- * the shade's crown. The shade and bulb are lathe and sphere meshes.
+ * Solid parts of one shelf lamp, in the setup's materials: a weighted puck
+ * with a copper ring, a shoulder joint, two arms meeting at an elbow and a
+ * socket on the head. The shade and bulb are lathe and sphere meshes.
  */
 export function lampParts(id: "lampLeft" | "lampRight"): SetupPart[] {
   const base = LAMP_BASES[id];
   const C = LAMP.colors;
-  const { y0, y1 } = LAMP.shade;
-  const stemTop = y1 - 0.035;
+  const { elbow, head, shade } = LAMP;
+  const shoulder = [0, 0.03] as const;
+  const socket = [head.dx, shade.y1 + 0.01] as const;
+  const joint = (x: number, y: number): SetupPart => ({
+    material: "powder",
+    shape: "round",
+    center: [base[0] + x, base[1] + y, base[2]],
+    size: [0.022, 0.026, 0.022],
+    color: C.joint,
+    shade: 1,
+    rotation: [Math.PI / 2, 0, 0],
+  });
   return [
-    round("powder", base, 0.007, 0.11, 0.014, C.foot),
-    round("satin", base, 0.019, 0.085, 0.01, C.cap),
-    round("powder", base, 0.033, 0.026, 0.018, C.stem, 0.9),
-    round(
-      "powder",
-      base,
-      (0.024 + stemTop) / 2,
-      0.012,
-      stemTop - 0.024,
-      C.stem,
-    ),
-    round("powder", base, (0.024 + y0) / 2 + 0.02, 0.02, 0.014, C.stem, 0.9),
-    round("satin", base, stemTop + 0.0175, 0.032, 0.035, C.socket),
-    round("powder", base, y1 + 0.006, 0.016, 0.012, C.stem),
+    round("powder", base, 0.007, 0.085, 0.014, C.foot),
+    round("satin", base, 0.016, 0.07, 0.004, C.cap),
+    round("powder", base, 0.024, 0.02, 0.012, C.stem),
+    joint(...shoulder),
+    arm(base, shoulder, [elbow.dx, elbow.y], 0.012, C.stem),
+    joint(elbow.dx, elbow.y),
+    arm(base, [elbow.dx, elbow.y], [head.dx, socket[1] + 0.01], 0.01, C.stem),
+    round("satin", base, socket[1], 0.03, 0.02, C.socket, 1, head.dx),
   ];
 }

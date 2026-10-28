@@ -1,12 +1,16 @@
-// Original procedural gaming setup (T4d, S8), the main room's centerpiece:
-// a white-top desk on a black frame with a cable tray, a wide and a side
-// monitor, keyboard, mouse on a pad, a glass-sided PC with a subtle RGB
-// strip, two speakers and a chair pulled out: an original five-star base under
-// Bruno Simon's top chair (T4k), plus original bodies for his Elgato light,
-// Google Home Mini and Loupedeck overlays (BrunoProps.tsx). It backs
-// onto the main room's left wall, which has no openings and faces the home
-// camera from inside. Pure numbers; Setup.tsx merges the solid parts into one
-// mesh per material (T4g, S11), plus glow (screens and RGB) and glass.
+// Original procedural gaming setup (T4d, S8), the main room's centerpiece,
+// finished in T12 (S24-S25): a copper-toned wooden desk top on a black
+// frame with a cable tray, a giant black mat under a NuPhy-style wireless
+// low-profile 75% keyboard and a curved mouse on the right, a curved
+// ultrawide and a portrait monitor on their own clamp arms, a white light bar
+// on the ultrawide, and a coffee mug on a wooden coaster to the right. A
+// wall shelf above carries the speakers, two gamer lamps (lights.ts) and two
+// small plants; over-ear headphones hang under the desk's front edge, the
+// glass-sided PC stands under its far end and the chair is an original
+// five-star base under Bruno Simon's top chair (T4k). It backs onto the main
+// room's left wall, which has no openings and faces the home camera from
+// inside. Pure numbers; Setup.tsx merges the solid parts into one mesh per
+// material (T4g, S11), plus glow (screens and RGB) and glass.
 
 import { HOUSE, type Part, type Rect, type Vec3, WALLS } from "./house.ts";
 import type { NormalPattern } from "./normals.ts";
@@ -14,13 +18,25 @@ import { worldLight } from "./palette.ts";
 import type { Surface } from "./textures.ts";
 
 export const SETUP_COLORS = {
-  deskTop: "#f7f3ee",
+  /** Copper-toned wood: desk top, shelf board and coaster (S24). */
+  wood: "#b8643b",
   frame: "#2b2a30",
   tray: "#3a3940",
   cable: "#4a4852",
   bezel: "#26252b",
+  /** Aluminium keyboard case. */
+  case: "#aeb3bb",
   keys: "#f3eee8",
-  pad: "#34323a",
+  keyAlpha: "#eceae6",
+  keyMod: "#c3c8d0",
+  keyEsc: "#ff6f5e",
+  keyEnter: "#2fb5a6",
+  keySpace: "#f2c84b",
+  /** Giant black mouse pad. */
+  mat: "#18171b",
+  matEdge: "#2c2b31",
+  mouse: "#ebe8e3",
+  mouseGrip: "#9a9ca3",
   tower: "#2e2d34",
   inner: "#45434c",
   speaker: "#3a3840",
@@ -35,11 +51,20 @@ export const SETUP_COLORS = {
   sun: "#ffe1a1",
   hud: "#ffffff",
   side: "#c5b4f0",
+  code: "#2a3350",
   rgb: "#b48cff",
   rgbCool: "#7fd8ff",
   rgbWarm: "#ff9ad5",
-  home: "#d9d4ce",
-  keyLight: "#ffe7c4",
+  /** White housing of the monitor light bar. */
+  lightbar: "#f4f4f2",
+  metal: "#8d9097",
+  headphones: "#1f1e23",
+  cushion: "#34333a",
+  pot: "#e9e2d8",
+  potWarm: "#d98e5f",
+  soil: "#4a3428",
+  leaf: "#4fa84a",
+  leafLight: "#6cbf4f",
 } as const;
 
 const M = HOUSE.main;
@@ -75,7 +100,7 @@ const w = (d: number, y: number, u: number): Vec3 => [IN + d, Y0 + y, u];
 const DESK = { u0: -2.3, u1: -0.3, d0: 0.03, depth: 0.72, height: 0.76 };
 const CHAIR = { d: 1.12, u: -1.42, yaw: 0.22, tilt: 0.14 };
 
-/** Desk top surface in world space (T6b): where the night lamps stand. */
+/** Desk top surface in world space (T6b). */
 export const DESK_TOP = {
   x0: IN + DESK.d0,
   x1: IN + DESK.d0 + DESK.depth,
@@ -84,16 +109,212 @@ export const DESK_TOP = {
   y: Y0 + DESK.height,
 } as const;
 
-/** The wide main monitor's panel (T6b): its backlight sits behind it. */
-export const MAIN_MONITOR = {
-  center: w(0.26, 1.11, -1.45),
-  size: [0.045, 0.4, 0.94] as Vec3,
+// Seated at the desk you face the left wall (-x): your right is -z.
+
+/** Giant black mouse pad across the desk front (S24). */
+const MAT_D = { d: 0.5, u: -1.35, depth: 0.42, width: 1.35, height: 0.006 };
+export const MAT = {
+  center: w(MAT_D.d, DESK.height + MAT_D.height / 2, MAT_D.u),
+  size: [MAT_D.depth, MAT_D.height, MAT_D.width] as Vec3,
 } as const;
-const SIDE_YAW = 0.35;
-const SPEAKERS = [-2.12, -0.4] as const;
+const MAT_TOP = DESK.height + MAT_D.height;
+
+/** Key pitch: one unit (19.05 mm on the real board). */
+const KEY_UNIT = 0.019;
+type KeyRole = "alpha" | "mod" | "esc" | "enter" | "space";
+const keys = (units: number, role: KeyRole, count = 1) =>
+  Array.from({ length: count }, () => ({ units, role }));
+/**
+ * A low-profile 75% layout like the NuPhy Air75 V2: 84 keys in six rows of
+ * 16 units, the last column for navigation, arrows tucked bottom right.
+ */
+export const KEY_ROWS: readonly (readonly {
+  units: number;
+  role: KeyRole;
+}[])[] = [
+  [...keys(1, "esc"), ...keys(1, "mod", 15)],
+  [...keys(1, "alpha", 13), ...keys(2, "mod"), ...keys(1, "mod")],
+  [
+    ...keys(1.5, "mod"),
+    ...keys(1, "alpha", 12),
+    ...keys(1.5, "alpha"),
+    ...keys(1, "mod"),
+  ],
+  [
+    ...keys(1.75, "mod"),
+    ...keys(1, "alpha", 11),
+    ...keys(2.25, "enter"),
+    ...keys(1, "mod"),
+  ],
+  [
+    ...keys(2.25, "mod"),
+    ...keys(1, "alpha", 10),
+    ...keys(1.75, "mod"),
+    ...keys(1, "alpha"),
+    ...keys(1, "mod"),
+  ],
+  [
+    ...keys(1.25, "mod", 3),
+    ...keys(6.25, "space"),
+    ...keys(1, "mod", 3),
+    ...keys(1, "alpha", 3),
+  ],
+];
+const KEY_COLORS: Record<KeyRole, string> = {
+  alpha: SETUP_COLORS.keyAlpha,
+  mod: SETUP_COLORS.keyMod,
+  esc: SETUP_COLORS.keyEsc,
+  enter: SETUP_COLORS.keyEnter,
+  space: SETUP_COLORS.keySpace,
+};
+
+/** NuPhy-style wireless keyboard: aluminium case, low caps, no cable. */
+export const KEYBOARD = {
+  center: w(0.53, MAT_TOP + 0.0105, -1.35),
+  /** Depth, height (case and caps), width. */
+  size: [0.133, 0.021, 0.316] as Vec3,
+  wireless: true,
+} as const;
+const CASE_H = 0.014;
+
+/** The owner's curved mouse, right of the keyboard. */
+export const MOUSE = {
+  center: w(0.54, MAT_TOP + 0.0175, -1.88),
+  size: [0.115, 0.035, 0.062] as Vec3,
+} as const;
+
+/**
+ * S24 offered the owner's own mouse: public/models/room/desk.glb is one baked
+ * node ("escritorio") holding one mesh of 12 material primitives (keyboard,
+ * monitor, phone, wires, "demas"), with no mouse node, mesh or material to
+ * lift out, so the mouse is original geometry.
+ */
+export const MOUSE_SOURCE = {
+  reused: false,
+  file: "public/models/room/desk.glb",
+} as const;
+
+/** Wooden coaster under the coffee mug, right of the mat (S25). */
+export const COASTER = {
+  center: w(0.59, DESK.height, -2.17),
+  radius: 0.06,
+  height: 0.008,
+} as const;
+
+/** The curved ultrawide's mid-panel; the light bar rides its top. */
+const MAIN = { d: 0.27, y: 1.14, u: -1.55, height: 0.42, width: 1.15 };
+const PANEL_DEPTH = 0.045;
+const HUMP_DEPTH = 0.03;
+const CURVE_RADIUS = 1.8;
+const CURVE_HALF = Math.asin(MAIN.width / 2 / CURVE_RADIUS);
+/** Centre of the monitor's arc, in front of it (world x, z). */
+const ARC: readonly [number, number] = [IN + MAIN.d + CURVE_RADIUS, MAIN.u];
+
+/**
+ * A point `inset` metres in front of the ultrawide's mid-surface (negative is
+ * behind it) at `theta` radians along its arc, at world height `y`. The arc
+ * is concave toward the chair, so its ends come forward.
+ */
+export function mainCurve(theta: number, inset: number, y: number): Vec3 {
+  const r = CURVE_RADIUS - inset;
+  return [ARC[0] - r * Math.cos(theta), y, ARC[1] + r * Math.sin(theta)];
+}
+
+/** The curved ultrawide (S24); its backlight sits behind its middle. */
+export const MAIN_MONITOR = {
+  center: w(MAIN.d, MAIN.y, MAIN.u),
+  /** Depth of the panel, height, chord width. */
+  size: [PANEL_DEPTH, MAIN.height, MAIN.width] as Vec3,
+  curve: { radius: CURVE_RADIUS, halfAngle: CURVE_HALF, segments: 12 },
+  /** World x of the back of its housing (the VESA hump). */
+  back: IN + MAIN.d - PANEL_DEPTH / 2 - HUMP_DEPTH,
+} as const;
+/** Screen surface, just proud of the bezel. */
+const SCREEN_INSET = PANEL_DEPTH / 2 + 0.002;
+const OVERLAY_INSET = SCREEN_INSET + 0.002;
+
+/** The portrait side monitor, turned in toward the chair. */
+const SIDE_YAW = 0.3;
+export const SIDE_MONITOR = {
+  center: w(0.27, 1.12, -0.67),
+  /** Depth, height, width: taller than wide. */
+  size: [0.035, 0.54, 0.3] as Vec3,
+  yaw: SIDE_YAW,
+  /** Visible screen, width and height. */
+  screen: [0.27, 0.5] as const,
+} as const;
+/** Out of the portrait screen (+x turned by its yaw) and along its width. */
+const SIDE_N: Vec3 = [Math.cos(SIDE_YAW), 0, -Math.sin(SIDE_YAW)];
+const SIDE_T: Vec3 = [Math.sin(SIDE_YAW), 0, Math.cos(SIDE_YAW)];
+const onSide = (out: number, along: number, up: number): Vec3 => {
+  const [x, y, z] = SIDE_MONITOR.center;
+  return [
+    x + SIDE_N[0] * out + SIDE_T[0] * along,
+    y + up,
+    z + SIDE_N[2] * out + SIDE_T[2] * along,
+  ];
+};
+
+/** Clamp arms on the desk's back edge, one per monitor. */
+export const MONITOR_ARMS = {
+  main: {
+    clamp: w(0.065, DESK.height, -1.7),
+    vesa: mainCurve(0, -(PANEL_DEPTH / 2 + HUMP_DEPTH + 0.004), Y0 + MAIN.y),
+  },
+  side: {
+    clamp: w(0.065, DESK.height, -0.58),
+    vesa: onSide(-(SIDE_MONITOR.size[0] / 2 + 0.024), 0, 0),
+  },
+} as const;
+
+const MAIN_TOP = MAIN.y + MAIN.height / 2;
+/** White light bar on the ultrawide's top, its slit under a front shield. */
+export const LIGHTBAR = {
+  center: w(MAIN.d + 0.02, MAIN_TOP + 0.004 + 0.011, MAIN.u),
+  size: [0.04, 0.022, 0.45] as Vec3,
+  slit: {
+    center: w(MAIN.d + 0.03, MAIN_TOP + 0.0025, MAIN.u),
+    size: [0.008, 0.003, 0.42] as Vec3,
+  },
+} as const;
+
+/** Wall shelf above the setup (S24): wooden board on metal brackets. */
+const SHELF_D = { depth: 0.33, y0: 1.4625, thick: 0.035, u0: -2.25, u1: -0.35 };
+const SHELF_TOP = SHELF_D.y0 + SHELF_D.thick;
+export const SHELF = {
+  x0: IN,
+  x1: IN + SHELF_D.depth,
+  z0: SHELF_D.u0,
+  z1: SHELF_D.u1,
+  /** Underside and top of the board, world y. */
+  y0: Y0 + SHELF_D.y0,
+  top: Y0 + SHELF_TOP,
+  /** Where the lamps stand along the shelf (lights.ts). */
+  lamps: { left: -0.8, right: -1.9 },
+} as const;
+const SPEAKERS = [-2.1, -0.45] as const;
 const SPEAKER_Y = 0.1;
-const KEY_ROWS = [0.505, 0.54, 0.575, 0.61] as const;
-const KEYBOARD_U = -1.45;
+const PLANTS = [-1.65, -1.05] as const;
+
+/** Over-ear headphones on a hanger under the desk's front edge (S24). */
+const PHONES = { d: 0.63, u: -1.92, radius: 0.085, band: 0.04, peg: 0.62 };
+export const HEADPHONES = {
+  center: w(PHONES.d, PHONES.peg - 0.08, PHONES.u),
+  /** Width of the broad, flat headband. */
+  band: PHONES.band,
+} as const;
+
+/** Desk-top items S25 keeps; everything else moved to the shelf or left. */
+export const TABLETOP_ITEMS = [
+  "keyboard",
+  "mouse",
+  "mat",
+  "monitor",
+  "monitor-arm",
+  "portrait",
+  "lightbar",
+  "coaster",
+] as const;
 
 const frac = (x: number) => x - Math.floor(x);
 /** UV offset that centres one `tile` repeat on `at` (box UVs are metres). */
@@ -104,20 +325,19 @@ const centre = (
 // Fifteen cone-map repeats between the two speakers, so both cones (and their
 // tweeters) sit on a ring centre. Front faces project to (z, y).
 const CONE_TILE = (SPEAKERS[1] - SPEAKERS[0]) / 15;
-// One keycap repeat per key: row pitch across x, key pitch along z. Up faces
-// project to (x, -z).
-const KEY_TILE = [KEY_ROWS[1] - KEY_ROWS[0], 0.019] as const;
 
 export interface SetupMaterial {
   roughness: number;
   metalness: number;
-  /** Clear lacquer layer (physical material) for the laminate top. */
+  /** Clear lacquer layer (physical material) for the wood. */
   clearcoat?: number;
   /** StylizedTextures surface (color, normal, roughness, opacity maps). */
   surface?: Surface;
   /** Original procedural normal map (src/lib/world/normals.ts). */
   normal?: NormalPattern;
   normalScale?: number;
+  /** Original wood grain colour map (normals.ts woodGrainPixels), same tile. */
+  grain?: boolean;
   /** Metres covered by one repeat of the procedural map, along u and v. */
   tile?: readonly [number, number];
   offset?: readonly [number, number];
@@ -125,16 +345,20 @@ export interface SetupMaterial {
 
 /** PBR per setup material: one merged draw each. */
 export const SETUP_MATERIALS = {
-  /** White matte laminate desk top, lightly lacquered. */
-  laminate: {
-    roughness: 0.6,
+  /**
+   * Copper-toned lacquered wood (S24): grain streaks run along the boards
+   * (up faces map x to u, z to v), a few per board width.
+   */
+  wood: {
+    roughness: 0.5,
     metalness: 0,
-    clearcoat: 0.2,
-    normal: "noise",
-    normalScale: 0.04,
-    tile: [0.6, 0.6],
+    clearcoat: 0.25,
+    normal: "grain",
+    normalScale: 0.35,
+    grain: true,
+    tile: [0.24, 1.1],
   },
-  /** Black powder-coated steel: desk frame, legs, tray, chair column. */
+  /** Black powder-coated steel: desk frame, legs, tray, arms, brackets. */
   powder: {
     roughness: 0.45,
     metalness: 0.35,
@@ -142,7 +366,7 @@ export const SETUP_MATERIALS = {
     normalScale: 0.12,
     tile: [0.08, 0.08],
   },
-  /** Satin plastic: monitor bezels, keyboard case, speaker cabinets, mouse. */
+  /** Satin plastic: monitor bezels, light bar, speaker cabinets, mouse. */
   satin: {
     roughness: 0.5,
     metalness: 0,
@@ -150,13 +374,13 @@ export const SETUP_MATERIALS = {
     normalScale: 0.05,
     tile: [0.3, 0.3],
   },
+  /** Keycaps: one rounded cap per key, a fine matte texture on top. */
   keycap: {
     roughness: 0.55,
     metalness: 0,
-    normal: "keycap",
-    normalScale: 0.9,
-    tile: KEY_TILE,
-    offset: centre(KEY_TILE, [IN + KEY_ROWS[0], -KEYBOARD_U]),
+    normal: "noise",
+    normalScale: 0.08,
+    tile: [0.05, 0.05],
   },
   /** Speaker cones: concentric ripples centred on each driver. */
   cone: {
@@ -167,10 +391,10 @@ export const SETUP_MATERIALS = {
     tile: [CONE_TILE, CONE_TILE],
     offset: centre(
       [CONE_TILE, CONE_TILE],
-      [SPEAKERS[0], Y0 + DESK.height + SPEAKER_Y],
+      [SPEAKERS[0], Y0 + SHELF_TOP + SPEAKER_Y],
     ),
   },
-  /** Mousepad cloth. */
+  /** Mouse pad cloth and headphone cushions. */
   fabric: {
     roughness: 0.95,
     metalness: 0,
@@ -178,7 +402,7 @@ export const SETUP_MATERIALS = {
     normalScale: 0.6,
     tile: [0.02, 0.02],
   },
-  /** Matte plastic: chair star base, casters, armrests, feet, cables. */
+  /** Matte plastic: chair base, casters, feet, cables, pots and leaves. */
   base: { roughness: 0.85, metalness: 0 },
   grille: { roughness: 0.5, metalness: 0.5, surface: "grille" },
   panel: { roughness: 0.55, metalness: 0.3, surface: "panel" },
@@ -187,12 +411,36 @@ export const SETUP_MATERIALS = {
 } as const satisfies Record<string, SetupMaterial>;
 
 export type SetupMaterialId = keyof typeof SETUP_MATERIALS;
+
+/** What a part belongs to: the T12 contracts check items, not part lists. */
+export type SetupItem =
+  | (typeof TABLETOP_ITEMS)[number]
+  | "desk"
+  | "shelf"
+  | "speaker"
+  | "plant"
+  | "headphones"
+  | "pc"
+  | "chair";
+
 export type SetupPart = Part & {
   material: SetupMaterialId;
+  item?: SetupItem;
   /** Chair rig (T4i): "swivel" turns with the seat, "chair" is its fixed base. */
   rig?: "swivel" | "chair";
   /** Breathing LED phase index (T4i), glow parts only. */
   led?: number;
+  /** Lit by a night light channel instead of the hour's glow (T12). */
+  channel?: "setup";
+  /** Angle on the ultrawide's arc, for its curved segments. */
+  curve?: number;
+  /** A monitor's VESA plate. */
+  vesa?: boolean;
+  /** Plant leaves, and which plant a part belongs to. */
+  leaf?: boolean;
+  group?: string;
+  /** The headphone hanger (it is meant to touch the desk). */
+  hanger?: boolean;
 };
 
 const part = (
@@ -227,6 +475,33 @@ const rounded = (
   radius,
 });
 
+/**
+ * A rounded bar from `a` to `b` (its length along local x), `thick` across
+ * (local y, then local z), rolled `roll` about its own length.
+ */
+function beam(
+  material: SetupMaterialId,
+  a: Vec3,
+  b: Vec3,
+  thick: readonly [number, number],
+  color: string,
+  radius = 0.004,
+): SetupPart {
+  const d: Vec3 = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+  const length = Math.hypot(...d);
+  // R = Ry(yaw) Rz(pitch) carries local +x onto the bar.
+  const yaw = Math.atan2(-d[2], d[0]);
+  const pitch = Math.asin(d[1] / length);
+  return rounded(
+    material,
+    radius,
+    [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2],
+    [length, thick[0], thick[1]],
+    color,
+    [0, yaw, pitch],
+  );
+}
+
 /** Sides of the setup's cylinders: smooth knobs, casters and cones. */
 export const SETUP_ROUND_SEGMENTS = 16;
 
@@ -243,6 +518,9 @@ export interface SetupMeshes {
   hull: SetupPart[];
 }
 
+/** Shade per desk board: each board a slightly different cut. */
+const BOARD_SHADES = [0.94, 1.04, 0.98, 1.07, 0.92] as const;
+
 function desk(solid: SetupPart[]) {
   const { u0, u1, d0, depth, height } = DESK;
   const C = SETUP_COLORS;
@@ -250,23 +528,31 @@ function desk(solid: SetupPart[]) {
   const du = u1 - u0;
   const front = d0 + depth;
   const top = 0.05;
+  // Copper wood top (S24): five boards along the desk with fine seams, and
+  // a chunky rounded front edge.
+  const boards = front - 0.025 - d0;
+  const pitch = boards / BOARD_SHADES.length;
+  for (const [i, shade] of BOARD_SHADES.entries())
+    solid.push(
+      rounded(
+        "wood",
+        0.004,
+        w(d0 + pitch * (i + 0.5), height - top / 2, uc),
+        [pitch - 0.002, top, du],
+        C.wood,
+        undefined,
+        shade,
+      ),
+    );
   solid.push(
-    rounded(
-      "laminate",
-      0.015,
-      w((d0 + front) / 2 - 0.0125, height - top / 2, uc),
-      [depth - 0.025, top, du],
-      C.deskTop,
-    ),
-    // Chunky rounded front edge, and a black lip under it.
     part(
-      "laminate",
+      "wood",
       "round",
       w(front - 0.025, height - top / 2, uc),
       [0.05, du, 0.05],
-      C.deskTop,
+      C.wood,
       ALONG_Z,
-      0.97,
+      0.95,
     ),
     part(
       "powder",
@@ -333,153 +619,525 @@ function desk(solid: SetupPart[]) {
     );
 }
 
-function monitors(solid: SetupPart[], glow: SetupPart[]) {
+/** One curved segment of the ultrawide, `inset` in front of its mid-surface. */
+function arcPart(
+  material: SetupMaterialId,
+  theta: number,
+  inset: number,
+  y: number,
+  size: Vec3,
+  color: string,
+  radius = 0,
+): SetupPart {
+  const center = mainCurve(theta, inset, Y0 + y);
+  const rotation: Vec3 = [0, theta, 0];
+  return {
+    ...(radius > 0
+      ? rounded(material, radius, center, size, color, rotation)
+      : part(material, "box", center, size, color, rotation)),
+    curve: theta,
+  };
+}
+
+/**
+ * Curved ultrawide (S24): twelve bezel segments on one 1.8 m arc, rounded so
+ * the overlapping joins hide and the corners stay soft, a screen of the same
+ * segments just in front, a VESA hump behind its middle. No desk stand: it
+ * hangs from its clamp arm.
+ */
+function mainMonitor(solid: SetupPart[], glow: SetupPart[]) {
   const C = SETUP_COLORS;
-  const top = DESK.height;
-  // Wide main monitor, centered on the keyboard.
-  const u = -1.45;
-  solid.push(
-    rounded("satin", 0.008, w(0.2, top + 0.01, u), [0.2, 0.02, 0.26], C.bezel),
-    rounded(
+  const { segments } = MAIN_MONITOR.curve;
+  const step = (2 * CURVE_HALF) / segments;
+  const chord = 2 * CURVE_RADIUS * Math.sin(step / 2);
+  const angle = (i: number) => -CURVE_HALF + (i + 0.5) * step;
+  for (let i = 0; i < segments; i++)
+    solid.push(
+      arcPart(
+        "satin",
+        angle(i),
+        0,
+        MAIN.y,
+        [PANEL_DEPTH, MAIN.height, chord + 0.02],
+        C.bezel,
+        0.01,
+      ),
+    );
+  // The screen: sky over a horizon band, a sun and a HUD bar.
+  const screenHalf = Math.asin((MAIN.width / 2 - 0.02) / CURVE_RADIUS);
+  const glowStep = (2 * screenHalf) / segments;
+  const glowChord = 2 * CURVE_RADIUS * Math.sin(glowStep / 2) + 0.002;
+  const screenH = MAIN.height - 0.04;
+  for (let i = 0; i < segments; i++) {
+    const theta = -screenHalf + (i + 0.5) * glowStep;
+    glow.push(
+      arcPart(
+        "satin",
+        theta,
+        SCREEN_INSET,
+        MAIN.y,
+        [0.004, screenH, glowChord],
+        C.screen,
+      ),
+      arcPart(
+        "satin",
+        theta,
+        OVERLAY_INSET,
+        MAIN.y - 0.08,
+        [0.002, 0.1, glowChord],
+        C.horizon,
+      ),
+    );
+  }
+  const sun = -screenHalf + 3.5 * glowStep;
+  const hud = -screenHalf + 9 * glowStep;
+  glow.push(
+    arcPart(
       "satin",
-      0.015,
-      w(0.17, top + 0.19, u),
-      [0.05, 0.36, 0.07],
-      C.bezel,
+      sun,
+      OVERLAY_INSET,
+      MAIN.y + 0.08,
+      [0.002, 0.07, 0.07],
+      C.sun,
     ),
-    rounded("satin", 0.02, w(0.21, 1.08, u), [0.08, 0.08, 0.1], C.bezel),
+    {
+      ...arcPart(
+        "satin",
+        hud,
+        OVERLAY_INSET,
+        MAIN.y + 0.15,
+        [0.002, 0.022, 0.25],
+        C.hud,
+      ),
+      shade: 0.95,
+    },
+  );
+  // VESA hump behind the middle.
+  solid.push(
+    arcPart(
+      "satin",
+      0,
+      -(PANEL_DEPTH / 2 + HUMP_DEPTH / 2),
+      MAIN.y - 0.02,
+      [HUMP_DEPTH, 0.3, 0.5],
+      C.bezel,
+      0.02,
+    ),
+  );
+}
+
+/** Portrait side monitor (S24): one tall panel with a code editor. */
+function sideMonitor(solid: SetupPart[], glow: SetupPart[]) {
+  const C = SETUP_COLORS;
+  const rot: Vec3 = [0, SIDE_YAW, 0];
+  const [depth, height, width] = SIDE_MONITOR.size;
+  const [sw, sh] = SIDE_MONITOR.screen;
+  solid.push(
     rounded(
       "satin",
-      0.015,
-      w(0.225, 1.1, u),
-      [0.04, 0.24, 0.5],
+      0.012,
+      SIDE_MONITOR.center,
+      [depth, height, width],
       C.bezel,
-      undefined,
+      rot,
+    ),
+    rounded(
+      "satin",
+      0.012,
+      onSide(-(depth / 2 + 0.01), 0, -0.02),
+      [0.02, 0.22, 0.16],
+      C.bezel,
+      rot,
       0.9,
     ),
-    rounded("satin", 0.018, MAIN_MONITOR.center, MAIN_MONITOR.size, C.bezel),
   );
   glow.push(
-    part("satin", "box", w(0.286, 1.115, u), [0.006, 0.35, 0.88], C.screen),
-    part("satin", "box", w(0.2905, 1.03, u), [0.003, 0.1, 0.88], C.horizon),
-    part("satin", "box", w(0.2905, 1.19, u - 0.22), [0.003, 0.07, 0.07], C.sun),
     part(
       "satin",
       "box",
-      w(0.2905, 1.265, u + 0.25),
-      [0.003, 0.022, 0.25],
-      C.hud,
-      undefined,
-      0.95,
-    ),
-  );
-  // Side monitor angled in toward the chair.
-  const yaw = SIDE_YAW;
-  const s = -0.74;
-  const rot: Vec3 = [0, yaw, 0];
-  const n: Vec3 = [Math.cos(yaw), 0, -Math.sin(yaw)];
-  const t: Vec3 = [Math.sin(yaw), 0, Math.cos(yaw)];
-  const panel = w(0.27, 1.1, s);
-  const on = (out: number, along: number, up: number): Vec3 => [
-    panel[0] + n[0] * out + t[0] * along,
-    panel[1] + up,
-    panel[2] + n[2] * out + t[2] * along,
-  ];
-  solid.push(
-    rounded(
-      "satin",
-      0.008,
-      w(0.22, top + 0.01, s),
-      [0.18, 0.02, 0.2],
-      C.bezel,
+      onSide(depth / 2 + 0.002, 0, 0),
+      [0.004, sh, sw],
+      C.side,
       rot,
     ),
-    rounded(
-      "satin",
-      0.015,
-      w(0.21, top + 0.17, s),
-      [0.04, 0.3, 0.06],
-      C.bezel,
-      rot,
-    ),
-    rounded("satin", 0.016, panel, [0.04, 0.32, 0.52], C.bezel, rot),
   );
-  glow.push(
-    part("satin", "box", on(0.024, 0, 0), [0.006, 0.28, 0.48], C.side, rot),
-  );
-  for (const [i, up] of [0.08, 0.035, -0.01, -0.055].entries())
+  // Code lines, left aligned, in two indented blocks.
+  const lines = [0.16, 0.12, 0.18, 0.08, 0.14, 0.1, 0.17, 0.06, 0.12, 0.15];
+  for (const [i, length] of lines.entries()) {
+    const indent = i % 4 === 0 ? 0 : 0.02;
+    const along = sw / 2 - 0.02 - indent - length / 2;
     glow.push(
       part(
         "satin",
         "box",
-        on(0.0285, -0.05 - i * 0.02, up),
-        [0.003, 0.02, 0.3 - i * 0.04],
-        C.hud,
+        onSide(depth / 2 + 0.005, along, sh / 2 - 0.05 - i * 0.04),
+        [0.002, 0.012, length],
+        i % 3 === 0 ? C.hud : C.code,
         rot,
         0.92,
       ),
     );
+  }
 }
 
-function deskTop(solid: SetupPart[], glow: SetupPart[]) {
+/** A clamp on the desk's back edge with a pole, two arm links and a VESA plate. */
+function clampArm(
+  solid: SetupPart[],
+  clamp: Vec3,
+  poleTop: number,
+  vesa: Vec3,
+  out: Vec3,
+  yaw: number,
+) {
   const C = SETUP_COLORS;
-  const top = DESK.height;
-  // Keyboard: black case, white key rows, a thin RGB underglow.
+  const [x, y, z] = clamp;
+  const below = y - 0.05;
   solid.push(
+    // C-clamp: top plate, back bar behind the edge, bottom plate and screw.
+    rounded("powder", 0.004, [x, y + 0.006, z], [0.07, 0.012, 0.06], C.frame),
     rounded(
-      "satin",
-      0.008,
-      w(0.56, top + 0.0125, KEYBOARD_U),
-      [0.16, 0.025, 0.46],
+      "powder",
+      0.004,
+      [IN + 0.022, y - 0.025, z],
+      [0.016, 0.074, 0.06],
       C.frame,
     ),
+    rounded(
+      "powder",
+      0.004,
+      [x, below - 0.006, z],
+      [0.07, 0.012, 0.06],
+      C.frame,
+    ),
+    part("powder", "round", [x, below - 0.022, z], [0.02, 0.02, 0.02], C.metal),
+    // Pole with a collar, then the arm to a tilt joint behind the plate.
+    part(
+      "powder",
+      "round",
+      [x, (y + 0.012 + poleTop) / 2, z],
+      [0.03, poleTop - y - 0.012, 0.03],
+      C.frame,
+    ),
+    part(
+      "powder",
+      "round",
+      [x, poleTop + 0.012, z],
+      [0.038, 0.024, 0.038],
+      C.metal,
+    ),
   );
-  for (const [i, d] of KEY_ROWS.entries())
+  const joint: Vec3 = [
+    vesa[0] - out[0] * 0.02,
+    vesa[1],
+    vesa[2] - out[2] * 0.02,
+  ];
+  const elbow: Vec3 = [
+    (x + joint[0]) / 2 - 0.02,
+    poleTop + 0.05,
+    (z + joint[2]) / 2,
+  ];
+  solid.push(
+    beam("powder", [x, poleTop + 0.02, z], elbow, [0.022, 0.03], C.frame),
+    part("powder", "round", elbow, [0.032, 0.03, 0.032], C.metal),
+    beam("powder", elbow, joint, [0.02, 0.028], C.frame),
+    part("powder", "round", joint, [0.03, 0.04, 0.03], C.metal, ALONG_Z),
+    {
+      ...rounded("powder", 0.004, vesa, [0.008, 0.1, 0.1], C.frame, [
+        0,
+        yaw,
+        0,
+      ]),
+      vesa: true,
+    },
+  );
+}
+
+/**
+ * White light bar (S24): a rounded housing across the ultrawide's top with
+ * its emitting slit underneath, behind a front shield so it lights the desk
+ * and never the eyes; a saddle on the bezel and a counterweight behind.
+ * NightLights.tsx draws the slit and its spot.
+ */
+function lightbar(solid: SetupPart[]) {
+  const C = SETUP_COLORS;
+  const [x, y, z] = LIGHTBAR.center;
+  const [depth, height, width] = LIGHTBAR.size;
+  const top = Y0 + MAIN_TOP;
+  const back = IN + MAIN.d - PANEL_DEPTH / 2;
+  solid.push(
+    rounded("satin", 0.009, LIGHTBAR.center, LIGHTBAR.size, C.lightbar),
+    rounded(
+      "satin",
+      0.002,
+      [x + depth / 2 - 0.002, y - height / 2 - 0.004, z],
+      [0.004, 0.008, width - 0.02],
+      C.lightbar,
+      undefined,
+      0.96,
+    ),
+    rounded(
+      "satin",
+      0.002,
+      [IN + MAIN.d - 0.005, top + 0.002, z],
+      [0.05, 0.004, 0.06],
+      C.bezel,
+    ),
+    rounded(
+      "satin",
+      0.003,
+      [back - 0.004, top - 0.008, z],
+      [0.008, 0.02, 0.05],
+      C.lightbar,
+      undefined,
+      0.94,
+    ),
+    rounded(
+      "satin",
+      0.004,
+      [back - 0.014, top - 0.012, z],
+      [0.018, 0.025, 0.07],
+      C.lightbar,
+    ),
+  );
+  for (const side of [-1, 1])
     solid.push(
       rounded(
-        "keycap",
+        "satin",
         0.004,
-        w(d, top + 0.031, KEYBOARD_U + (i === 3 ? 0.02 : 0)),
-        [0.028, 0.012, i === 3 ? 0.24 : 0.42],
-        C.keys,
+        [x, y, z + side * (width / 2 - 0.004)],
+        [depth + 0.002, height + 0.002, 0.008],
+        C.bezel,
       ),
     );
-  glow.push({
-    ...part(
-      "satin",
-      "box",
-      w(0.643, top + 0.006, KEYBOARD_U),
-      [0.006, 0.008, 0.44],
-      C.rgb,
-    ),
-    led: 0,
-  });
-  // Mouse on its pad.
+}
+
+/**
+ * NuPhy-style wireless low-profile 75% keyboard (S24): a rounded aluminium
+ * case, 84 individual low caps colour-blocked with coral Esc, teal Enter and
+ * a yellow space bar, two slender side light bars and no cable.
+ */
+function keyboard(solid: SetupPart[], glow: SetupPart[]) {
+  const C = SETUP_COLORS;
+  const [cx, cy, cz] = KEYBOARD.center;
+  const [depth, , width] = KEYBOARD.size;
+  const base = cy - KEYBOARD.size[1] / 2;
   solid.push(
-    part(
-      "fabric",
-      "box",
-      w(0.52, top + 0.003, -0.95),
-      [0.3, 0.006, 0.32],
-      C.pad,
+    rounded(
+      "powder",
+      0.005,
+      [cx, base + CASE_H / 2, cz],
+      [depth, CASE_H, width],
+      C.case,
     ),
-    part(
-      "satin",
-      "round",
-      w(0.54, top + 0.021, -0.95),
-      [0.1, 0.03, 0.065],
-      C.keys,
+    rounded(
+      "powder",
+      0.002,
+      [cx, base + CASE_H - 0.0005, cz],
+      [depth - 0.012, 0.002, width - 0.012],
+      C.frame,
+      undefined,
+      0.9,
     ),
+  );
+  const capH = KEYBOARD.size[1] - CASE_H;
+  const left = cz + (16 * KEY_UNIT) / 2;
+  const back = cx - (KEY_ROWS.length * KEY_UNIT) / 2;
+  for (const [r, row] of KEY_ROWS.entries()) {
+    let units = 0;
+    for (const key of row) {
+      const z = left - (units + key.units / 2) * KEY_UNIT;
+      units += key.units;
+      solid.push({
+        ...rounded(
+          "keycap",
+          0.0025,
+          [back + (r + 0.5) * KEY_UNIT, base + CASE_H + capH / 2, z],
+          [KEY_UNIT - 0.0025, capH, key.units * KEY_UNIT - 0.0025],
+          KEY_COLORS[key.role],
+        ),
+        segments: 1,
+      });
+    }
+  }
+  for (const side of [-1, 1])
+    glow.push({
+      ...part(
+        "satin",
+        "box",
+        [cx, base + CASE_H / 2, cz + side * (width / 2 + 0.0015)],
+        [depth - 0.04, 0.004, 0.003],
+        "#ffffff",
+      ),
+      channel: "setup",
+    });
+}
+
+/** Height of the mouse shell's top, from -0.5 to 0.5 across its length. */
+function mouseProfile(): [number, number][] {
+  // Two quarter ellipses meeting at the hump, set back toward the palm.
+  const hump = 0.08;
+  const points: [number, number][] = [
+    [-0.5, -0.5],
+    [0.5, -0.5],
+  ];
+  for (let i = 0; i <= 12; i++) {
+    const a = (i / 12) * Math.PI;
+    const reach = a < Math.PI / 2 ? 0.5 - hump : 0.5 + hump;
+    points.push([hump + reach * Math.cos(a), -0.35 + 0.85 * Math.sin(a)]);
+  }
+  return points;
+}
+
+/** Shell top above the mouse's centre at local x (metres), front half. */
+function mouseTop(x: number): number {
+  const [len, height] = [MOUSE.size[0], MOUSE.size[1]];
+  const cos = Math.max(-1, Math.min(1, (x / len - 0.08) / 0.58));
+  return (-0.35 + 0.85 * Math.sqrt(1 - cos * cos)) * height;
+}
+
+/**
+ * The owner's curved mouse (S24), original: a sculpted shell higher toward
+ * the palm, two buttons split by a groove, a scroll wheel and side grips.
+ */
+function mouse(solid: SetupPart[]) {
+  const C = SETUP_COLORS;
+  const [cx, cy, cz] = MOUSE.center;
+  const [, height, width] = MOUSE.size;
+  solid.push({
+    ...part("satin", "prism", MOUSE.center, MOUSE.size, C.mouse),
+    profile: mouseProfile(),
+  });
+  const bx = -0.016;
+  const slope = Math.atan2(mouseTop(0) - mouseTop(-0.03), 0.03);
+  for (const side of [-1, 1])
+    solid.push(
+      rounded(
+        "satin",
+        0.0015,
+        [cx + bx, cy + mouseTop(bx) + 0.0012, cz + side * 0.0165],
+        [0.036, 0.003, 0.027],
+        C.mouse,
+        [0, 0, slope],
+        1.04,
+      ),
+      rounded(
+        "satin",
+        0.002,
+        [cx + 0.01, cy - height / 2 + 0.013, cz + side * (width / 2 + 0.0012)],
+        [0.06, 0.016, 0.003],
+        C.mouseGrip,
+      ),
+    );
+  solid.push(
     part(
       "base",
       "box",
-      w(0.508, top + 0.038, -0.95),
-      [0.02, 0.008, 0.012],
+      [cx + bx, cy + mouseTop(bx), cz],
+      [0.036, 0.003, 0.006],
       C.frame,
     ),
+    part(
+      "base",
+      "round",
+      [cx - 0.011, cy + mouseTop(-0.011) + 0.001, cz],
+      [0.015, 0.006, 0.015],
+      C.frame,
+      ALONG_Z,
+    ),
   );
-  // Speakers flanking the monitors: woofer, tweeter, white rings, and a
-  // perforated mesh grille in front of them.
+}
+
+/** The giant black mouse pad with a stitched edge (S24). */
+function mat(solid: SetupPart[]) {
+  const C = SETUP_COLORS;
+  const [x, y, z] = MAT.center;
+  const [depth, height, width] = MAT.size;
+  solid.push(
+    rounded("fabric", 0.003, MAT.center, MAT.size, C.mat),
+    rounded(
+      "fabric",
+      0.001,
+      [x, y + height / 2 - 0.0005, z],
+      [depth - 0.012, 0.001, width - 0.012],
+      C.matEdge,
+      undefined,
+      0.7,
+    ),
+  );
+}
+
+/** Wooden coaster under the mug (S25): a disc with a turned rim. */
+function coaster(solid: SetupPart[]) {
+  const [x, y, z] = COASTER.center;
+  const d = 2 * COASTER.radius;
+  solid.push(
+    part(
+      "wood",
+      "round",
+      [x, y + COASTER.height / 2 - 0.001, z],
+      [d, COASTER.height - 0.002, d],
+      SETUP_COLORS.wood,
+      undefined,
+      1.06,
+    ),
+    part(
+      "wood",
+      "round",
+      [x, y + COASTER.height - 0.001, z],
+      [d - 0.008, 0.002, d - 0.008],
+      SETUP_COLORS.wood,
+      undefined,
+      0.9,
+    ),
+  );
+}
+
+/** Wall shelf (S24): a wooden board on three metal brackets screwed to the wall. */
+function shelf(solid: SetupPart[]) {
+  const C = SETUP_COLORS;
+  const { depth, y0, thick, u0, u1 } = SHELF_D;
+  solid.push(
+    rounded(
+      "wood",
+      0.006,
+      w(depth / 2, y0 + thick / 2, (u0 + u1) / 2),
+      [depth, thick, u1 - u0],
+      C.wood,
+      undefined,
+      1.02,
+    ),
+  );
+  for (const u of [-2.05, -1.3, -0.55])
+    solid.push(
+      rounded(
+        "powder",
+        0.002,
+        w(0.003, y0 - 0.07, u),
+        [0.006, 0.14, 0.03],
+        C.frame,
+      ),
+      rounded(
+        "powder",
+        0.002,
+        w(0.131, y0 - 0.006, u),
+        [0.25, 0.012, 0.03],
+        C.frame,
+      ),
+      beam(
+        "powder",
+        w(0.006, y0 - 0.125, u),
+        w(0.17, y0 - 0.012, u),
+        [0.01, 0.022],
+        C.frame,
+        0.002,
+      ),
+    );
+}
+
+/** Speakers on the shelf's ends: woofer, tweeter, white rings and a mesh grille. */
+function speakers(solid: SetupPart[]) {
+  const C = SETUP_COLORS;
+  const top = SHELF_TOP;
   for (const u of SPEAKERS)
     solid.push(
       rounded(
@@ -537,6 +1195,146 @@ function deskTop(solid: SetupPart[], glow: SetupPart[]) {
         C.grille,
       ),
     );
+}
+
+/** Two tiny potted plants on the shelf, each with six leaves (S24). */
+function plants(solid: SetupPart[]) {
+  const C = SETUP_COLORS;
+  const top = SHELF_TOP;
+  for (const [k, u] of PLANTS.entries()) {
+    const group = `plant-${k}`;
+    const at = (y: number, dx = 0, dz = 0) => w(0.17 + dx, top + y, u + dz);
+    const pot = k === 0 ? C.potWarm : C.pot;
+    const parts: SetupPart[] = [
+      part("base", "round", at(0.026), [0.064, 0.052, 0.064], pot),
+      part(
+        "base",
+        "round",
+        at(0.054),
+        [0.074, 0.01, 0.074],
+        pot,
+        undefined,
+        1.05,
+      ),
+      part("base", "round", at(0.058), [0.06, 0.004, 0.06], C.soil),
+    ];
+    for (let i = 0; i < 6; i++) {
+      const yaw = (i * Math.PI) / 3 + k * 0.4;
+      const pitch = i % 2 === 0 ? 0.55 : 0.9;
+      const reach = 0.024;
+      const lift = 0.06 + Math.sin(pitch) * reach;
+      parts.push({
+        ...rounded(
+          "base",
+          0.002,
+          at(
+            lift,
+            Math.cos(yaw) * Math.cos(pitch) * reach,
+            -Math.sin(yaw) * Math.cos(pitch) * reach,
+          ),
+          [0.05, 0.004, 0.022],
+          i % 2 === 0 ? C.leaf : C.leafLight,
+          [0, yaw, pitch],
+        ),
+        leaf: true,
+      });
+    }
+    for (const p of parts) p.group = group;
+    solid.push(...parts);
+  }
+}
+
+/**
+ * Black over-ear headphones (S24) on a hanger under the desk's front edge,
+ * right of the knees and clear of the PC: a broad flat headband arch over
+ * the peg, sliders, yokes, cups and cushions.
+ */
+function headphones(solid: SetupPart[]) {
+  const C = SETUP_COLORS;
+  const { d, u, radius, band, peg } = PHONES;
+  const under = DESK.height - 0.05;
+  const hanger: SetupPart[] = [
+    rounded(
+      "powder",
+      0.002,
+      w(d - 0.02, under - 0.005, u),
+      [0.1, 0.01, 0.04],
+      C.frame,
+    ),
+    part(
+      "powder",
+      "round",
+      w(d - 0.06, (under - 0.01 + peg) / 2, u),
+      [0.012, under - 0.01 - peg, 0.012],
+      C.frame,
+    ),
+    beam(
+      "powder",
+      w(d - 0.066, peg, u),
+      w(d + 0.04, peg, u),
+      [0.012, 0.012],
+      C.frame,
+      0.005,
+    ),
+  ];
+  for (const p of hanger) p.hanger = true;
+  solid.push(...hanger);
+  // The band's inner top rests on the peg.
+  const cy = peg + 0.006 + 0.006 - radius;
+  const arch = (a: number): Vec3 =>
+    w(d, cy + radius * Math.cos(a), u + radius * Math.sin(a));
+  const steps = 6;
+  const spread = 1.4;
+  for (let i = 0; i < steps; i++) {
+    const a0 = -spread + (i * 2 * spread) / steps;
+    const a1 = a0 + (2 * spread) / steps;
+    solid.push(
+      beam(
+        "satin",
+        arch(a0 - 0.04),
+        arch(a1 + 0.04),
+        [0.012, band],
+        C.headphones,
+        0.005,
+      ),
+    );
+  }
+  for (const side of [-1, 1]) {
+    const end = arch(side * spread);
+    const z = u + side * (radius * Math.sin(spread));
+    solid.push(
+      rounded(
+        "powder",
+        0.002,
+        [end[0], end[1] - 0.025, z],
+        [0.01, 0.045, 0.008],
+        C.metal,
+      ),
+      rounded(
+        "satin",
+        0.003,
+        [end[0], end[1] - 0.052, z],
+        [0.07, 0.01, 0.012],
+        C.headphones,
+      ),
+      part(
+        "satin",
+        "round",
+        [end[0], end[1] - 0.105, z - side * 0.006],
+        [0.088, 0.03, 0.098],
+        C.headphones,
+        ALONG_Z,
+      ),
+      part(
+        "fabric",
+        "round",
+        [end[0], end[1] - 0.105, z - side * 0.028],
+        [0.078, 0.018, 0.088],
+        C.cushion,
+        ALONG_Z,
+      ),
+    );
+  }
 }
 
 function tower(solid: SetupPart[], glow: SetupPart[], glass: SetupPart[]) {
@@ -736,216 +1534,17 @@ function chairHull(): SetupPart[] {
   }));
 }
 
-type Mat3 = [Vec3, Vec3, Vec3];
-
-const yawMatrix = (b: number): Mat3 => [
-  [Math.cos(b), 0, Math.sin(b)],
-  [0, 1, 0],
-  [-Math.sin(b), 0, Math.cos(b)],
-];
-
-function quatMatrix([x, y, z, q]: readonly [
-  number,
-  number,
-  number,
-  number,
-]): Mat3 {
-  return [
-    [1 - 2 * (y * y + z * z), 2 * (x * y - z * q), 2 * (x * z + y * q)],
-    [2 * (x * y + z * q), 1 - 2 * (x * x + z * z), 2 * (y * z - x * q)],
-    [2 * (x * z - y * q), 2 * (y * z + x * q), 1 - 2 * (x * x + y * y)],
-  ];
-}
-
-const times = (a: Mat3, b: Mat3): Mat3 =>
-  a.map((row) =>
-    [0, 1, 2].map(
-      (j) => row[0] * b[0][j] + row[1] * b[1][j] + row[2] * b[2][j],
-    ),
-  ) as Mat3;
-
-const apply = (m: Mat3, v: Vec3): Vec3 =>
-  m.map((row) => row[0] * v[0] + row[1] * v[1] + row[2] * v[2]) as Vec3;
-
-/** Euler XYZ angles (Object3D order) of a rotation matrix. */
-function euler(m: Mat3): Vec3 {
-  const b = Math.asin(Math.min(Math.max(m[0][2], -1), 1));
-  return [Math.atan2(-m[1][2], m[2][2]), b, Math.atan2(-m[0][1], m[0][0])];
-}
-
-/** Heading of a horizontal direction, as Object3D.rotation.y adds to it. */
-const heading = (v: Vec3) => Math.atan2(-v[2], v[0]);
-
 /**
  * One of Bruno's overlay models moved from his room onto an original body:
  * his node at `from` (his world coordinates) lands on `to`, turned `yaw`
- * around +y and scaled by BRUNO_SCALE, his own orientation kept.
+ * around +y and scaled by BRUNO_SCALE, his own orientation kept. T12 (S25)
+ * took his Elgato, Google Home and Loupedeck overlays off the desk; the type
+ * stays for BrunoProps.tsx.
  */
 export interface BrunoOverlay {
   from: Vec3;
   to: Vec3;
   yaw: number;
-}
-
-// Elgato key light: his glowing plane (elgatoLightModel, node Plane.034),
-// turned so its face looks at our chair from the desk's back-left corner.
-const ELGATO_ROTATION = quatMatrix([
-  0.7829142212867737, 0.10722018778324127, -0.14074204862117767,
-  0.5964401364326477,
-]);
-const ELGATO_HALF = 0.3433 * 1.1041581630706787 * BRUNO_SCALE;
-const ELGATO_FROM: Vec3 = [
-  -0.06248994544148445, 4.58691930770874, -4.555070400238037,
-];
-const ELGATO_TO = w(0.125, 1.42, -2.13);
-const ELGATO_YAW = (() => {
-  const face = apply(ELGATO_ROTATION, [0, 1, 0]);
-  const chairAt = w(CHAIR.d, 0, CHAIR.u);
-  const look: Vec3 = [chairAt[0] - ELGATO_TO[0], 0, chairAt[2] - ELGATO_TO[2]];
-  return heading(look) - heading(face);
-})();
-
-// Google Home Mini: his four LEDs (googleHomeLedsModel, led0..led3) on the
-// top of an original fabric puck, beside the right speaker.
-const HOME = { at: w(0.42, DESK.height, -0.42), radius: 0.049, height: 0.042 };
-
-// Loupedeck console: his fourteen button screens (loupedeckButtonsModel),
-// tilted 2 * asin(0.1447) about his x like his, left of the keyboard.
-const LOUPEDECK_TILT = 2 * Math.asin(0.14466357231140137);
-const LOUPEDECK_SCREENS = { width: 0.3203, depth: 0.1691 };
-const LOUPEDECK_BODY = {
-  at: w(0.57, DESK.height, -1.79),
-  length:
-    (LOUPEDECK_SCREENS.depth / Math.cos(LOUPEDECK_TILT)) * BRUNO_SCALE + 0.03,
-  width: LOUPEDECK_SCREENS.width * BRUNO_SCALE + 0.03,
-  height: 0.018,
-};
-const LOUPEDECK_CENTER: Vec3 = [
-  LOUPEDECK_BODY.at[0],
-  LOUPEDECK_BODY.at[1] +
-    (LOUPEDECK_BODY.length / 2) * Math.sin(LOUPEDECK_TILT) +
-    (LOUPEDECK_BODY.height / 2) * Math.cos(LOUPEDECK_TILT),
-  LOUPEDECK_BODY.at[2],
-];
-/** Up out of the console's sloped face (toward the chair, +x). */
-const LOUPEDECK_UP: Vec3 = [
-  Math.sin(LOUPEDECK_TILT),
-  Math.cos(LOUPEDECK_TILT),
-  0,
-];
-const along = (p: Vec3, d: Vec3, k: number): Vec3 => [
-  p[0] + d[0] * k,
-  p[1] + d[1] * k,
-  p[2] + d[2] * k,
-];
-
-export const BRUNO_OVERLAYS = {
-  elgato: { from: ELGATO_FROM, to: ELGATO_TO, yaw: ELGATO_YAW },
-  googleHome: {
-    from: [1.0239909887313843, 1.1137, 0.98043],
-    to: [HOME.at[0], HOME.at[1] + HOME.height + 0.0005, HOME.at[2]],
-    yaw: 0,
-  },
-  loupedeck: {
-    from: [0.14945, 2.45555, -4.35065],
-    to: along(
-      LOUPEDECK_CENTER,
-      LOUPEDECK_UP,
-      LOUPEDECK_BODY.height / 2 + 0.0012,
-    ),
-    // His users sit toward his +z; ours toward +x.
-    yaw: Math.PI / 2,
-  },
-} as const satisfies Record<string, BrunoOverlay>;
-
-/** Original bodies under Bruno's overlays (T4k): key light, speaker, console. */
-function brunoBodies(solid: SetupPart[]) {
-  const C = SETUP_COLORS;
-  // Key light: a dark panel behind his glowing plane, on an arm and a pole
-  // clamped to the desk's back edge.
-  const turn = times(yawMatrix(ELGATO_YAW), ELGATO_ROTATION);
-  const face = apply(turn, [0, 1, 0]);
-  const flat = Math.hypot(face[0], face[2]);
-  const out: Vec3 = [face[0] / flat, 0, face[2] / flat];
-  const panel = along(ELGATO_TO, face, -0.014);
-  const pole: Vec3 = [
-    ELGATO_TO[0] - out[0] * 0.07,
-    0,
-    ELGATO_TO[2] - out[2] * 0.07,
-  ];
-  const top = Y0 + DESK.height;
-  const side = 2 * ELGATO_HALF + 0.02;
-  solid.push(
-    rounded("satin", 0.008, panel, [side, 0.022, side], C.bezel, euler(turn)),
-    part(
-      "powder",
-      "box",
-      [(pole[0] + panel[0]) / 2, ELGATO_TO[1], (pole[2] + panel[2]) / 2],
-      [0.07, 0.02, 0.02],
-      C.frame,
-      [0, heading(out), 0],
-    ),
-    part(
-      "powder",
-      "round",
-      [pole[0], (top + ELGATO_TO[1] + 0.02) / 2, pole[2]],
-      [0.022, ELGATO_TO[1] + 0.02 - top, 0.022],
-      C.frame,
-    ),
-    rounded(
-      "base",
-      0.006,
-      [pole[0], top + 0.015, pole[2]],
-      [0.05, 0.03, 0.05],
-      C.frame,
-    ),
-  );
-  // Google Home Mini: rubber foot, fabric-covered body and a domed top.
-  const [hx, hy, hz] = HOME.at;
-  const d = 2 * HOME.radius;
-  solid.push(
-    part(
-      "base",
-      "round",
-      [hx, hy + 0.002, hz],
-      [d - 0.01, 0.004, d - 0.01],
-      C.frame,
-    ),
-    part("fabric", "round", [hx, hy + 0.019, hz], [d, 0.03, d], C.home),
-    part(
-      "fabric",
-      "round",
-      [hx, hy + 0.038, hz],
-      [d - 0.01, 0.008, d - 0.01],
-      C.home,
-      undefined,
-      1.04,
-    ),
-  );
-  // Loupedeck: a rounded dark slab sloped like his screens, on a rear foot.
-  const { length, width, height } = LOUPEDECK_BODY;
-  const rise = length * Math.sin(LOUPEDECK_TILT);
-  solid.push(
-    rounded(
-      "satin",
-      0.006,
-      LOUPEDECK_CENTER,
-      [length, height, width],
-      C.frame,
-      [0, 0, -LOUPEDECK_TILT],
-    ),
-    part(
-      "base",
-      "box",
-      [
-        LOUPEDECK_CENTER[0] - (length / 2 - 0.015) * Math.cos(LOUPEDECK_TILT),
-        LOUPEDECK_BODY.at[1] + rise / 2,
-        LOUPEDECK_CENTER[2],
-      ],
-      [0.02, rise, width - 0.02],
-      C.frame,
-    ),
-  );
 }
 
 /** Column axis the seat swivels around (world x, z). */
@@ -967,24 +1566,32 @@ export function swivelPart(p: SetupPart, angle: number): SetupPart {
   };
 }
 
-const SIDE_PANEL = w(0.27, 1.1, -0.74);
-
 /** Desk props placed at runtime (T4i): the mug and the side screen's face. */
 export const SETUP_PROPS = {
-  /** Base centre on the desk top, between the mousepad and the right speaker. */
-  mug: { center: w(0.6, DESK.height, -0.5), radius: 0.045, height: 0.1 },
-  /** Just in front of the side monitor's screen, facing out along its normal. */
-  sideScreen: {
+  /** Base centre on the wooden coaster, right of the mouse (S25). */
+  mug: {
     center: [
-      SIDE_PANEL[0] + Math.cos(SIDE_YAW) * 0.03,
-      SIDE_PANEL[1],
-      SIDE_PANEL[2] - Math.sin(SIDE_YAW) * 0.03,
+      COASTER.center[0],
+      COASTER.center[1] + COASTER.height,
+      COASTER.center[2],
     ] as Vec3,
+    radius: 0.045,
+    height: 0.1,
+  },
+  /** Just in front of the portrait screen, facing out along its normal. */
+  sideScreen: {
+    center: onSide(SIDE_MONITOR.size[0] / 2 + 0.008, 0, 0),
     yaw: SIDE_YAW,
+    screen: SIDE_MONITOR.screen,
+    /**
+     * Bruno's bounce travels wider than tall (motion.ts BOUNCE); on the
+     * portrait screen its x runs up the screen and its y across, scaled down.
+     */
+    logo: { scale: 0.85, swap: true },
   },
 } as const;
 
-/** Every setup part, by material. */
+/** Every setup part, by material, each tagged with its item. */
 export function setupMeshes(): SetupMeshes {
   const meshes: SetupMeshes = {
     solid: [],
@@ -992,12 +1599,42 @@ export function setupMeshes(): SetupMeshes {
     glass: [],
     hull: chairHull(),
   };
-  desk(meshes.solid);
-  monitors(meshes.solid, meshes.glow);
-  deskTop(meshes.solid, meshes.glow);
-  tower(meshes.solid, meshes.glow, meshes.glass);
-  chair(meshes.solid);
-  brunoBodies(meshes.solid);
+  const { solid, glow, glass } = meshes;
+  const add = (item: SetupItem, build: () => void) => {
+    const from = [solid.length, glow.length, glass.length];
+    build();
+    for (const [i, list] of [solid, glow, glass].entries())
+      for (const p of list.slice(from[i])) p.item = item;
+  };
+  add("desk", () => desk(solid));
+  add("mat", () => mat(solid));
+  add("keyboard", () => keyboard(solid, glow));
+  add("mouse", () => mouse(solid));
+  add("coaster", () => coaster(solid));
+  add("monitor", () => mainMonitor(solid, glow));
+  add("portrait", () => sideMonitor(solid, glow));
+  add("monitor-arm", () => {
+    const { main, side } = MONITOR_ARMS;
+    clampArm(solid, main.clamp, Y0 + 1.03, main.vesa, [1, 0, 0], 0);
+    clampArm(solid, side.clamp, Y0 + 1.0, side.vesa, SIDE_N, SIDE_YAW);
+  });
+  add("lightbar", () => lightbar(solid));
+  add("shelf", () => shelf(solid));
+  add("speaker", () => speakers(solid));
+  add("plant", () => plants(solid));
+  add("headphones", () => headphones(solid));
+  add("pc", () => tower(solid, glow, glass));
+  add("chair", () => chair(solid));
+  for (const p of meshes.hull) p.item = "chair";
+  // Parts thinner than 2 cm get a single chamfer step: the bevel reads the
+  // same at that size for about a third of the triangles.
+  for (const p of [...solid, ...glow])
+    if (
+      p.shape === "rounded" &&
+      p.segments === undefined &&
+      Math.min(...p.size) < 0.02
+    )
+      p.segments = 1;
   return meshes;
 }
 
@@ -1083,7 +1720,12 @@ export function setupOcclusion(
   return Math.max(ao, 0.5);
 }
 
-/** Bruno's shipped models and maps (T4k), credited in public/world/credits.json. */
+/**
+ * Bruno's shipped models and maps (T4k), credited in public/world/credits.json.
+ * Since T12 (S25) only the chair and its maps render: the Elgato, Google
+ * Home and Loupedeck overlays and the LED mask still ship, credited, but
+ * nothing loads them.
+ */
 export const BRUNO_FILES = {
   chair: "/world/models/bruno-chair.glb",
   elgato: "/world/models/bruno-elgato-light.glb",
