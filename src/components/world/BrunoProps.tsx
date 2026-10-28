@@ -19,7 +19,7 @@ import {
   type LightSettings,
   lightLevel,
 } from "@/lib/world/lights.ts";
-import { worldLight } from "@/lib/world/palette.ts";
+import { chairShade, worldLight } from "@/lib/world/palette.ts";
 import {
   BRUNO_CHAIR,
   BRUNO_FILES,
@@ -177,8 +177,9 @@ function setHours(
   uniforms.uLightDeskStrength.value =
     STRENGTH.desk * CHANNEL * Math.max(lamps[0].level, lamps[1].level);
   uniforms.uLightPcStrength.value = STRENGTH.pc * (0.4 + 0.6 * night);
-  // His bake is brighter than our daylight interior: dim it by day.
-  uniforms.uShade.value = 0.8 + 0.2 * night;
+  // His bake is unlit: dim it by day, and more at night so it does not
+  // float above the darker moonlit room (S18).
+  uniforms.uShade.value = chairShade(hours);
 }
 
 /**

@@ -65,7 +65,9 @@ import { MODEL_FILES } from "@/lib/world/models.ts";
 import {
   cloudShade,
   environmentIntensity,
+  KEY_DISTANCE_SCALE,
   PALETTE,
+  WORLD_SHADOW,
   worldLight,
 } from "@/lib/world/palette.ts";
 import { seededRandom } from "@/lib/world/random.ts";
@@ -77,7 +79,6 @@ const LAYOUT = islandLayout(ISLAND.seed);
 const FLOWERS = flowerLayout(LAYOUT, ISLAND.seed);
 const SKY_RADIUS = 90;
 const STAR_COUNT = 260;
-const SHADOW_EXTENT = 9;
 
 const extendLoader = (loader: GLTFLoader) => {
   loader.setMeshoptDecoder(MeshoptDecoder);
@@ -265,7 +266,11 @@ function WorldLighting({ hours }: { hours: number }) {
     setColor(uniforms.ground.value, light.sky.ground);
     if (key.current) {
       const [x, y, z] = light.key.position;
-      key.current.position.set(x * 1.6, y * 1.6, z * 1.6);
+      key.current.position.set(
+        x * KEY_DISTANCE_SCALE,
+        y * KEY_DISTANCE_SCALE,
+        z * KEY_DISTANCE_SCALE,
+      );
       setColor(key.current.color, light.key.color);
       key.current.intensity = light.key.intensity;
     }
@@ -310,19 +315,20 @@ function WorldLighting({ hours }: { hours: number }) {
         />
       </points>
       <hemisphereLight ref={fill} />
+      {/* The only shadow map (S18 fit and bias in WORLD_SHADOW). */}
       <directionalLight
         ref={key}
         castShadow
-        shadow-mapSize={[2048, 2048]}
-        shadow-bias={-0.0005}
-        shadow-normalBias={0.03}
-        shadow-radius={4}
-        shadow-camera-left={-SHADOW_EXTENT}
-        shadow-camera-right={SHADOW_EXTENT}
-        shadow-camera-top={SHADOW_EXTENT}
-        shadow-camera-bottom={-SHADOW_EXTENT}
-        shadow-camera-near={1}
-        shadow-camera-far={60}
+        shadow-mapSize={[WORLD_SHADOW.mapSize, WORLD_SHADOW.mapSize]}
+        shadow-bias={WORLD_SHADOW.bias}
+        shadow-normalBias={WORLD_SHADOW.normalBias}
+        shadow-radius={WORLD_SHADOW.radius}
+        shadow-camera-left={-WORLD_SHADOW.extent}
+        shadow-camera-right={WORLD_SHADOW.extent}
+        shadow-camera-top={WORLD_SHADOW.extent}
+        shadow-camera-bottom={-WORLD_SHADOW.extent}
+        shadow-camera-near={WORLD_SHADOW.near}
+        shadow-camera-far={WORLD_SHADOW.far}
       />
     </>
   );

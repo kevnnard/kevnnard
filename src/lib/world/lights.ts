@@ -2,7 +2,8 @@
 // monitor and two desk lamps on the desk ends. They may only shine on the
 // simulated night, 18:00 through 05:59; each has its own switch, color and
 // intensity, edited in the scene settings panel. Pure numbers; NightLights.tsx
-// turns them into four non-shadow point lights, the lamp models and the
+// turns them into four non-shadow lights (two wall-aimed spots for the
+// backlights, two point bulbs for the lamps, S18), the lamp models and the
 // emissive strips and bulbs.
 
 import type { Vec3 } from "./house.ts";
@@ -96,8 +97,8 @@ export function lightLevel(setting: LightSetting, hours: number): number {
   return setting.intensity / 100;
 }
 
-export interface LightFixture {
-  /** Point light position. */
+interface FixtureBase {
+  /** Light position. */
   position: Vec3;
   /** Candela at 100 %: restrained, so the room never washes out. */
   intensity: number;
@@ -108,6 +109,29 @@ export interface LightFixture {
   /** Where the lamp's base stands on the desk (lamps only). */
   base: Vec3;
 }
+
+/** A bare bulb inside a lamp shade. */
+export interface PointFixture extends FixtureBase {
+  kind: "point";
+}
+
+/**
+ * An LED backlight approximated by one spot aimed square at the wall from
+ * behind the middle of its panel (S18): the hotspot hides behind the panel,
+ * the wide soft cone washes the wall around it, and nothing in front of the
+ * panel is lit. Area lights would need three's RectAreaLightUniformsLib, an
+ * examples import with large LTC tables, so they are not used.
+ */
+export interface SpotFixture extends FixtureBase {
+  kind: "spot";
+  /** Point on the wall the spot faces. */
+  target: Vec3;
+  /** Cone half-angle, radians. */
+  angle: number;
+  penumbra: number;
+}
+
+export type LightFixture = PointFixture | SpotFixture;
 
 /** Desk lamp, base at the origin: a bell shade over a round bulb. */
 export const LAMP = {
@@ -138,24 +162,39 @@ const lift = ([x, y, z]: Vec3, dy: number): Vec3 => [x, y + dy, z];
 const tvTop = TV_PANEL.center[1] + TV_PANEL.height / 2;
 const monitorBack = MAIN_MONITOR.center[0] - MAIN_MONITOR.size[0] / 2;
 const monitorTop = MAIN_MONITOR.center[1] + MAIN_MONITOR.size[1] / 2;
+/** Backlight cone: 72° half-angle, soft edge, so the wash runs past the panel. */
+const WASH = { angle: 1.25, penumbra: 0.7 } as const;
+
+const tvSpot: Vec3 = [
+  TV_PANEL.center[0],
+  TV_PANEL.center[1],
+  TV_PANEL.panelBack - 0.01,
+];
+const setupSpot: Vec3 = [
+  monitorBack - 0.01,
+  MAIN_MONITOR.center[1],
+  MAIN_MONITOR.center[2],
+];
 
 export const LIGHT_FIXTURES: Record<LightId, LightFixture> = {
-  // Behind the panel, near its top: the wall glows above and around the TV.
+  // Behind the middle of the panel, aimed at the wall: a halo around the TV.
   tv: {
-    position: [TV_PANEL.center[0], tvTop - 0.08, TV_PANEL.panelBack - 0.02],
+    kind: "spot",
+    position: tvSpot,
+    target: [tvSpot[0], tvSpot[1], MAIN_ROOM.z0],
+    ...WASH,
     intensity: 0.6,
     distance: 1.6,
     decay: 2,
     castShadow: false,
     base: [TV_PANEL.center[0], tvTop, MAIN_ROOM.z0],
   },
-  // Between the monitor's back and the wall, near its top edge.
+  // Just behind the monitor's middle, aimed at the left wall.
   setup: {
-    position: [
-      (MAIN_ROOM.x0 + monitorBack) / 2,
-      monitorTop - 0.06,
-      MAIN_MONITOR.center[2],
-    ],
+    kind: "spot",
+    position: setupSpot,
+    target: [MAIN_ROOM.x0, setupSpot[1], setupSpot[2]],
+    ...WASH,
     intensity: 0.25,
     distance: 1.4,
     decay: 2,
@@ -163,6 +202,7 @@ export const LIGHT_FIXTURES: Record<LightId, LightFixture> = {
     base: [MAIN_ROOM.x0, monitorTop, MAIN_MONITOR.center[2]],
   },
   lampLeft: {
+    kind: "point",
     position: lift(LAMP_BASES.lampLeft, LAMP.bulb.y),
     intensity: 0.22,
     distance: 1.2,
@@ -171,6 +211,7 @@ export const LIGHT_FIXTURES: Record<LightId, LightFixture> = {
     base: LAMP_BASES.lampLeft,
   },
   lampRight: {
+    kind: "point",
     position: lift(LAMP_BASES.lampRight, LAMP.bulb.y),
     intensity: 0.22,
     distance: 1.2,

@@ -12,6 +12,7 @@ import {
   Object3D,
   PointLight,
   SphereGeometry,
+  SpotLight,
   type Texture,
   Vector2,
 } from "three";
@@ -82,7 +83,7 @@ function shadeGeometry() {
 }
 
 interface Emitters {
-  light: PointLight;
+  light: PointLight | SpotLight;
   /** Strip or bulb: unlit, tinted by the light. */
   glow: MeshBasicMaterial;
   /** Lamp shades: the fabric glows a little when lit. */
@@ -92,7 +93,8 @@ interface Emitters {
 
 /**
  * Night lights (T6b, S17): a TV backlight, a setup backlight and two desk
- * lamps, each a non-shadow point light with a finite range plus its emitter
+ * lamps, each a non-shadow light with a finite range (wall-aimed spots for
+ * the backlights, point bulbs in the lamp shades, S18) plus its emitter
  * (LED strip behind the TV panel or monitor, lamp bulb and shade). Always
  * mounted, so the shader light count never changes: by day or when disabled
  * a light's intensity drops to zero. Settings and the hour only repaint on
@@ -135,14 +137,24 @@ export default function NightLights({
     }
 
     const emitters = {} as Record<LightId, Emitters>;
-    const pointLight = (id: LightId) => {
+    const fixtureLight = (id: LightId) => {
       const fixture = LIGHT_FIXTURES[id];
-      const light = new PointLight(
-        "#ffffff",
-        0,
-        fixture.distance,
-        fixture.decay,
-      );
+      let light: PointLight | SpotLight;
+      if (fixture.kind === "spot") {
+        const spot = new SpotLight(
+          "#ffffff",
+          0,
+          fixture.distance,
+          fixture.angle,
+          fixture.penumbra,
+          fixture.decay,
+        );
+        // In the group, so its world matrix follows the scene's updates.
+        spot.target.position.set(...fixture.target);
+        group.add(spot.target);
+        light = spot;
+      } else
+        light = new PointLight("#ffffff", 0, fixture.distance, fixture.decay);
       light.name = `night-${id}`;
       light.castShadow = fixture.castShadow;
       light.position.set(...fixture.position);
@@ -156,7 +168,7 @@ export default function NightLights({
       mesh.name = `night-${id}-strip`;
       group.add(mesh);
       emitters[id] = {
-        light: pointLight(id),
+        light: fixtureLight(id),
         glow,
         off: new Color(STRIP_OFF),
       };
@@ -203,7 +215,7 @@ export default function NightLights({
       lit.scale.setScalar(LAMP.bulb.radius);
       group.add(cover, lit);
       emitters[id] = {
-        light: pointLight(id),
+        light: fixtureLight(id),
         glow,
         shade: fabric,
         off: new Color(LAMP.colors.bulbOff),

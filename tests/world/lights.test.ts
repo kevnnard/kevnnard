@@ -93,7 +93,7 @@ describe("night light settings", () => {
 });
 
 describe("night light fixtures", () => {
-  it("keeps a modest budget of finite, non-shadow point lights", () => {
+  it("keeps a modest budget of four finite, non-shadow lights", () => {
     assert.deepEqual(Object.keys(LIGHT_FIXTURES).sort(), [...LIGHT_IDS].sort());
     for (const id of LIGHT_IDS) {
       const fixture = LIGHT_FIXTURES[id];
@@ -102,6 +102,45 @@ describe("night light fixtures", () => {
       assert.equal(fixture.decay, 2, id);
       assert.ok(fixture.intensity > 0 && fixture.intensity < 1, id);
     }
+  });
+
+  // S18: backlights wash the wall broadly; lamps are bulbs in their shades.
+  it("makes the backlights wall-aimed spots and the lamps point bulbs", () => {
+    assert.equal(LIGHT_FIXTURES.lampLeft.kind, "point");
+    assert.equal(LIGHT_FIXTURES.lampRight.kind, "point");
+    const walls = {
+      tv: { axis: 2, wall: MAIN_ROOM.z0 },
+      setup: { axis: 0, wall: MAIN_ROOM.x0 },
+    } as const;
+    for (const id of ["tv", "setup"] as const) {
+      const fixture = LIGHT_FIXTURES[id];
+      assert.equal(fixture.kind, "spot", id);
+      if (fixture.kind !== "spot") continue;
+      const { axis, wall } = walls[id];
+      // Aimed straight at the wall: only the wall side is lit, no spill
+      // through the panel into the room.
+      assert.ok(Math.abs(fixture.target[axis] - wall) < EPS, id);
+      for (const other of [0, 1, 2].filter((a) => a !== axis))
+        assert.ok(
+          Math.abs(fixture.target[other] - fixture.position[other]) < EPS,
+          id,
+        );
+      assert.ok(fixture.angle > 1 && fixture.angle < Math.PI / 2, id);
+      assert.ok(fixture.penumbra >= 0.5 && fixture.penumbra <= 1, id);
+    }
+  });
+
+  it("hides each backlight's hotspot behind the middle of its panel", () => {
+    const tv = LIGHT_FIXTURES.tv.position;
+    assert.ok(Math.abs(tv[1] - TV_PANEL.center[1]) < 0.05, `tv y ${tv[1]}`);
+    const setup = LIGHT_FIXTURES.setup.position;
+    assert.ok(
+      Math.abs(setup[1] - MAIN_MONITOR.center[1]) < 0.05,
+      `setup y ${setup[1]}`,
+    );
+    // Far enough from the wall for a broad wash rather than a pinpoint.
+    assert.ok(tv[2] - MAIN_ROOM.z0 >= 0.14, "tv off the wall");
+    assert.ok(setup[0] - MAIN_ROOM.x0 >= 0.2, "setup off the wall");
   });
 
   it("puts the TV backlight between the TV and the back wall", () => {

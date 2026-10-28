@@ -28,6 +28,39 @@ The world reuses the room's clock and day cycle read-only: `useRoomClock`,
 lifts the daytime sky toward cream (pink at dawn and dusk) and keeps the night
 dark, so the sun, moon and phases match `/room` exactly.
 
+### World light balance (S18)
+
+`/room` and `dayCycle` are untouched; the world rescales the cycle in
+`worldLight` (`BALANCE` in `palette.ts`):
+
+| Hour | Key | Hemisphere fill | Environment | Key : fill |
+| --- | --- | --- | --- | --- |
+| 13:00 before / after | 1.98 / 2.86 sun | 0.81 / 0.47 | 0.22 / 0.16 | 1.9 / 4.5 |
+| 18:00 before / after | 0 | 0.60 / 0.24 | 0.22 / 0.08 | — |
+| 19:19 before / after | 0.47 / 0.44 moon | 0.44 / 0.13 | 0.15 / 0.03 | 0.8 / 2.8 |
+| 00:00 before / after | 0.50 / 0.47 moon | 0.34 / 0.09 | 0.10 / 0.03 | 1.1 / 3.9 |
+
+- Day: the sun keys 1.3x the cycle and the fill drops, so shadows read while
+  lit faces keep about the same total (no washed-out pastels). Sun color is
+  the cycle's warm-neutral `#ffe6c4` at height.
+- Night: fill and the neutral RoomEnvironment (which read as white light)
+  fall to near zero; the moon is pulled 60 % toward a deeper blue, so the
+  night lights carry the interior.
+- Transitions follow a `night` factor, `1 - smoothstep(-0.2, 0.3, sunY)`,
+  never the 18:00 fixture gate; tests bound every per-minute step.
+- Bruno's chair bake is unlit, so `chairShade` dims it from 0.8 by day to
+  0.55 at night instead of the old 1.0.
+
+### Shadows (S18)
+
+One directional map, 2048 (`WORLD_SHADOW`). The ortho box (±8.25 m) covers
+the island rim up to a 3.6 m caster top (house ridge, scaled trees) from any
+sun direction; near/far 2/32 m around the key's 14.4-15 m distance.
+`normalBias` 0.02 keeps contact shadows attached; `radius` 2. three r186
+removed `PCFSoftShadowMap`, so R3F's `shadows` renders PCF with a Vogel-disk
+`radius` blur; 4 smeared contact shadows. Caster and receiver flags were
+already right and the cutaway shadow fade is unchanged.
+
 ## Camera
 
 Guided, not free: a three-quarter home view from the front right, always
@@ -209,7 +242,7 @@ seen from the chair, facing the wall).
 | Piece | File |
 | --- | --- |
 | Gate, settings, clamping, fixtures, lamp parts | `src/lib/world/lights.ts` |
-| Point lights, lamp models, LED strips, bulbs | `src/components/world/NightLights.tsx` |
+| Spot and point lights, lamp models, LED strips, bulbs | `src/components/world/NightLights.tsx` |
 | Scene console and its scoped styles | `src/components/world/ScenePanel.tsx`, `scene-panel.css` |
 | Settings state (session only, no persistence) | `src/components/world/WorldApp.tsx` |
 
@@ -232,8 +265,14 @@ seen from the chair, facing the wall).
   its color and location as the hint. Controls stay editable by day; their
   status reads "Off · day".
   `updateLight` clamps intensity, rounds it, and ignores non-hex colors.
-- Scene: four point lights at most, never shadow-casting, `decay` 2 and a
-  finite `distance` (1.2-1.6 m), intensities under 1 cd at 100 %. They stay
+- Scene: four lights, never shadow-casting, `decay` 2 and a finite
+  `distance` (1.2-1.6 m), intensities under 1 cd at 100 %. Since S18 the TV
+  and setup backlights are spots placed behind the middle of their panel and
+  aimed square at the wall (72° half-angle, penumbra 0.7): the hotspot hides
+  behind the panel, the wall washes around it, and nothing in front of the
+  panel is lit through it. This approximates the LED strip; a RectAreaLight
+  would need `RectAreaLightUniformsLib` (an extra examples import with large
+  LTC tables). The desk lamps stay point bulbs inside their shades. They stay
   mounted and drop to intensity 0 by day or when disabled, so the shader
   light count never changes. Emitters: an LED strip behind the TV panel and
   one behind the main monitor (dark when off), and two original desk lamps
