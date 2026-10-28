@@ -16,6 +16,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { extendLoader } from "@/components/world/SetupEffects";
 import {
   DEFAULT_LIGHTS,
+  glowPower,
   type LightSettings,
   lightLevel,
 } from "@/lib/world/lights.ts";
@@ -149,23 +150,25 @@ const CHANNEL = 0.6;
 /**
  * Day/night mix from our clock: his night bake as the stars come out. His TV
  * and desk lamp channels follow our night lights (T6b): their colors, and
- * strengths gated to 18:00-05:59 like the real lights.
+ * strengths gated to 18:00-05:59 like the real lights. The scene panel's
+ * master `power` off at night darkens all three artificial channels.
  */
 function setHours(
   material: ShaderMaterial,
   hours: number,
   lights: LightSettings,
+  power: boolean,
 ) {
   const night = worldLight(hours).stars;
   const { uniforms } = material;
   uniforms.uNightMix.value = night;
-  const tv = lightLevel(lights.tv, hours);
+  const tv = lightLevel(lights.tv, hours, power);
   uniforms.uLightTvColor.value.setStyle(lights.tv.color, LinearSRGBColorSpace);
   uniforms.uLightTvStrength.value = STRENGTH.tv * CHANNEL * tv;
   // His single desk channel: the lit lamps' colors, weighted by level.
   const lamps = [lights.lampLeft, lights.lampRight].map((lamp) => ({
     color: raw(lamp.color),
-    level: lightLevel(lamp, hours),
+    level: lightLevel(lamp, hours, power),
   }));
   const total = lamps[0].level + lamps[1].level;
   const desk = uniforms.uLightDeskColor.value as Color;
@@ -176,7 +179,8 @@ function setHours(
       .add(lamps[1].color.multiplyScalar(lamps[1].level / total));
   uniforms.uLightDeskStrength.value =
     STRENGTH.desk * CHANNEL * Math.max(lamps[0].level, lamps[1].level);
-  uniforms.uLightPcStrength.value = STRENGTH.pc * (0.4 + 0.6 * night);
+  uniforms.uLightPcStrength.value =
+    STRENGTH.pc * (0.4 + 0.6 * night) * glowPower(power, hours);
   // His bake is unlit: dim it by day, and more at night so it does not
   // float above the darker moonlit room (S18).
   uniforms.uShade.value = chairShade(hours);
@@ -189,9 +193,11 @@ function setHours(
 export function BrunoChair({
   hours,
   lights = DEFAULT_LIGHTS,
+  power = true,
 }: {
   hours: number;
   lights?: LightSettings;
+  power?: boolean;
 }) {
   const { invalidate } = useThree();
   const gltf = useLoader(GLTFLoader, BRUNO_FILES.chair, extendLoader);
@@ -228,9 +234,9 @@ export function BrunoChair({
   }, [gltf, maps]);
 
   useLayoutEffect(() => {
-    setHours(material, hours, lights);
+    setHours(material, hours, lights, power);
     invalidate();
-  }, [material, hours, lights, invalidate]);
+  }, [material, hours, lights, power, invalidate]);
   useEffect(() => () => material.dispose(), [material]);
 
   return <primitive object={group} />;

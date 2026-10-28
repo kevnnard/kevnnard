@@ -33,7 +33,7 @@ import {
   steamMaterial,
 } from "@/components/world/SetupEffects";
 import { type SurfaceMaps, surfaceMaterial } from "@/components/world/surfaces";
-import type { LightSettings } from "@/lib/world/lights.ts";
+import { glowPower, type LightSettings } from "@/lib/world/lights.ts";
 import {
   BOUNCE,
   bounceStep,
@@ -193,17 +193,25 @@ const BUTTON_COLORS = new Map(
   LOUPEDECK.colors.map((color) => [color, new Color(color)]),
 );
 
-/** LoupedeckButtons and GoogleLeds at `t` ms. */
-function brunoFrame(bruno: BrunoMaterials, t: number, ledT: number | null) {
+/** LoupedeckButtons and GoogleLeds at `t` ms; all dark while powered off. */
+function brunoFrame(
+  bruno: BrunoMaterials,
+  t: number,
+  ledT: number | null,
+  lit: boolean,
+) {
   for (const [index, material] of bruno.buttons.entries()) {
     const { color, opacity } = loupedeckButton(t, index);
     const value = BUTTON_COLORS.get(color);
     if (value) material.color.copy(value);
-    material.opacity = opacity;
+    material.opacity = lit ? opacity : 0;
   }
   for (const [index, material] of bruno.leds.entries())
-    material.opacity =
-      ledT === null ? GOOGLE_LED_REST : googleLedOpacity(ledT, index);
+    material.opacity = !lit
+      ? 0
+      : ledT === null
+        ? GOOGLE_LED_REST
+        : googleLedOpacity(ledT, index);
 }
 
 /** The resting pose, also what reduced motion and far views show. */
@@ -221,7 +229,7 @@ function rest(
   },
   base: number,
 ) {
-  brunoFrame(bruno, LOUPEDECK_REST, null);
+  brunoFrame(bruno, LOUPEDECK_REST, null, base > 0);
   swivel.rotation.y = 0;
   for (let i = 0; i < leds.base.length; i++)
     leds.colors.array[i] = leds.base[i] * base;
@@ -249,18 +257,24 @@ function rest(
  * Frames are requested continuously only while the camera is near the house
  * and motion is allowed; otherwise the setup rests (chair centred, LEDs at
  * the hour's glow, logo still, steam frozen, or hidden with reduced motion).
+ * At night the scene panel's master `power` off turns every screen, LED,
+ * the Elgato panel, Google Home LEDs, Loupedeck buttons and the chair bake's
+ * artificial channels dark; motion keeps running on the dark values.
  */
 export default function Setup({
   hours,
   maps,
   reducedMotion = false,
   lights,
+  power = true,
 }: {
   hours: number;
   maps?: SurfaceMaps;
   reducedMotion?: boolean;
   /** Night light settings (T6b): Bruno's chair bake follows their colors. */
   lights?: LightSettings;
+  /** The scene panel's master switch (night only). */
+  power?: boolean;
 }) {
   const { invalidate } = useThree();
   const { group, glow, owned, swivel, leds, steam, logo, bruno } =
@@ -358,7 +372,7 @@ export default function Setup({
       };
     }, [maps]);
 
-  const base = setupGlow(hours);
+  const base = setupGlow(hours) * glowPower(power, hours);
   const effects = useMemo(
     () => ({ swivel, leds, logo, bruno }),
     [swivel, leds, logo, bruno],
@@ -398,7 +412,7 @@ export default function Setup({
         colors.array[v * 3 + k] = original[v * 3 + k] * level;
     }
     colors.needsUpdate = true;
-    brunoFrame(bruno, t, t);
+    brunoFrame(bruno, t, t, base > 0);
     steam.uniforms.uTime.value = t;
     motion.current.bounce = bounceStep(
       motion.current.bounce,
@@ -429,7 +443,7 @@ export default function Setup({
       </Suspense>
       {createPortal(
         <Suspense fallback={null}>
-          <BrunoChair hours={hours} lights={lights} />
+          <BrunoChair hours={hours} lights={lights} power={power} />
         </Suspense>,
         swivel,
       )}

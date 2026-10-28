@@ -98,6 +98,11 @@ interface WorldSceneProps {
   home: number;
   /** Night light settings from the scene panel (T6b). */
   lights: LightSettings;
+  /**
+   * The scene panel's master switch (S20): off at night darkens every
+   * artificial light and glow; the sun, moon and sky never change.
+   */
+  power?: boolean;
   onReady: () => void;
 }
 
@@ -106,6 +111,7 @@ export default function WorldScene({
   reducedMotion,
   home,
   lights,
+  power = true,
   onReady,
 }: WorldSceneProps) {
   return (
@@ -126,14 +132,15 @@ export default function WorldScene({
         fallback={
           <>
             <House reducedMotion={reducedMotion} />
-            <Garden hours={hours} />
+            <Garden hours={hours} power={power} />
             <Setup
               hours={hours}
               reducedMotion={reducedMotion}
               lights={lights}
+              power={power}
             />
             <Suspense fallback={null}>
-              <Living hours={hours} />
+              <Living hours={hours} power={power} />
             </Suspense>
           </>
         }
@@ -142,9 +149,10 @@ export default function WorldScene({
           reducedMotion={reducedMotion}
           hours={hours}
           lights={lights}
+          power={power}
         />
       </Suspense>
-      <NightLights hours={hours} lights={lights} />
+      <NightLights hours={hours} lights={lights} power={power} />
       <Flowers />
       <Clouds hours={hours} reducedMotion={reducedMotion} />
       <Nature onReady={onReady} />
@@ -156,24 +164,27 @@ function TexturedHouse({
   reducedMotion,
   hours,
   lights,
+  power,
 }: {
   reducedMotion: boolean;
   hours: number;
   lights: LightSettings;
+  power: boolean;
 }) {
   const maps = useSurfaceMaps();
   return (
     <>
       <House reducedMotion={reducedMotion} maps={maps} />
-      <Garden hours={hours} maps={maps} />
+      <Garden hours={hours} maps={maps} power={power} />
       <Setup
         hours={hours}
         maps={maps}
         reducedMotion={reducedMotion}
         lights={lights}
+        power={power}
       />
       <Suspense fallback={null}>
-        <Living hours={hours} maps={maps} />
+        <Living hours={hours} maps={maps} power={power} />
       </Suspense>
     </>
   );

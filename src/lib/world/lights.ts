@@ -91,10 +91,44 @@ export function updateLight(
   return { ...settings, [id]: next };
 }
 
-/** 0-1 output of a light at `hours`: zero by day or when disabled. */
-export function lightLevel(setting: LightSetting, hours: number): number {
-  if (!setting.enabled || !nightLightsOn(hours)) return 0;
+/**
+ * 0-1 output of a light at `hours`: zero by day, when disabled or when the
+ * master `power` is off.
+ */
+export function lightLevel(
+  setting: LightSetting,
+  hours: number,
+  power = true,
+): number {
+  if (!power || !setting.enabled || !nightLightsOn(hours)) return 0;
   return setting.intensity / 100;
+}
+
+/** Every light's 0-1 output; the settings themselves are never touched. */
+export function lightOutputs(
+  settings: LightSettings,
+  hours: number,
+  power = true,
+): Record<LightId, number> {
+  return Object.fromEntries(
+    LIGHT_IDS.map((id) => [id, lightLevel(settings[id], hours, power)]),
+  ) as Record<LightId, number>;
+}
+
+/**
+ * The scene panel's master switch (Power off / Power on): it flips only at
+ * night; by day the action is a no-op and the master keeps its state.
+ */
+export function togglePower(power: boolean, hours: number): boolean {
+  return nightLightsOn(hours) ? !power : power;
+}
+
+/**
+ * Scale for the screens, LEDs and glowing gadgets: 0 at night with the master
+ * off, 1 otherwise, so the daytime scene never changes.
+ */
+export function glowPower(power: boolean, hours: number): number {
+  return power || !nightLightsOn(hours) ? 1 : 0;
 }
 
 interface FixtureBase {

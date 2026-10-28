@@ -35,6 +35,8 @@ import {
   LANTERN,
   LANTERN_FIXTURES,
   LANTERN_IDS,
+  LANTERN_MOUNTS,
+  type LanternWall,
   lanternGlass,
   lanternLevel,
   lanternParts,
@@ -50,7 +52,7 @@ import { boxUv } from "@/lib/world/textures.ts";
 
 type Owned = { materials: Material[]; textures: Texture[] };
 
-/** The main front wall fades from here on: its lanterns hide with it. */
+/** A lantern's wall fades from here on: the lantern hides with it. */
 const LANTERN_HIDE = 0.5;
 const SIGN_FONT = (size: number) =>
   `700 ${size}px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
@@ -175,24 +177,28 @@ interface Lantern {
 }
 
 /**
- * Front garden entrance (T7, S19): two bronze wall lanterns beside the front
- * door, a beveled stepping-stone path from the porch step, a decorative
- * mailbox and a garden sign reading GARDEN_SIGN.text. The lanterns are
- * non-shadow spots with a finite range, aimed out and down at the porch, on
- * from 18:00 through 05:59 (the night lights gate) with no settings; they
- * stay mounted at intensity 0 by day so the light count never changes. The
- * lantern bodies hide while the front wall is cut away. With `maps` the wood
- * takes the house's plank texture.
+ * Front garden entrance (T7, S19, S20): four bronze wall lanterns (two beside
+ * the front door, one at the garage door, one on the back wall), a beveled
+ * stepping-stone path from the porch step, a decorative mailbox and a garden
+ * sign reading GARDEN_SIGN.text. The lanterns are non-shadow spots with a
+ * finite range, aimed out of their wall and down, on from 18:00 through
+ * 05:59 (the night lights gate) unless the scene panel's master `power` is
+ * off; they stay mounted at intensity 0 otherwise so the light count never
+ * changes. Each lantern body hides while its own wall is cut away. With
+ * `maps` the wood takes the house's plank texture.
  */
 export default function Garden({
   hours,
   maps,
+  power = true,
 }: {
   hours: number;
   maps?: SurfaceMaps;
+  /** The scene panel's master switch (night only). */
+  power?: boolean;
 }) {
   const { invalidate } = useThree();
-  const { group, lanternGroup, lanterns, owned } = useMemo(() => {
+  const { group, lanternGroups, lanterns, owned } = useMemo(() => {
     const owned: Owned = { materials: [], textures: [] };
     const cache = new Map<GardenMaterialId, Material>();
     const material = (id: GardenMaterialId) => {
@@ -233,14 +239,24 @@ export default function Garden({
     sign.add(panel);
     group.add(mailbox, sign);
 
-    const lanternGroup = new Object3D();
-    lanternGroup.name = "garden-lanterns";
-    addSolids(
-      lanternGroup,
-      LANTERN_IDS.flatMap(lanternParts),
-      material,
-      "lantern",
-    );
+    // One group per wall, so each lantern follows its own wall's cutaway.
+    const lanternGroups = new Map<LanternWall, Object3D>();
+    for (const id of LANTERN_IDS) {
+      const { wall } = LANTERN_MOUNTS[id];
+      if (lanternGroups.has(wall)) continue;
+      const parent = new Object3D();
+      parent.name = `garden-lanterns-${wall}`;
+      addSolids(
+        parent,
+        LANTERN_IDS.filter(
+          (other) => LANTERN_MOUNTS[other].wall === wall,
+        ).flatMap(lanternParts),
+        material,
+        `lantern-${wall}`,
+      );
+      lanternGroups.set(wall, parent);
+      group.add(parent);
+    }
     const glassBox = new BoxGeometry(1, 1, 1);
     const bulbBall = new SphereGeometry(1, 16, 12);
     const lanterns = {} as Record<(typeof LANTERN_IDS)[number], Lantern>;
@@ -265,8 +281,8 @@ export default function Garden({
       const lit = new Mesh(bulbBall, bulb);
       lit.name = `${id}-bulb`;
       lit.position.set(...fixture.position);
-      lit.scale.setScalar(LANTERN.bulb.radius);
-      lanternGroup.add(pane, lit);
+      lit.scale.setScalar(LANTERN.bulb.radius * LANTERN_MOUNTS[id].scale);
+      lanternGroups.get(LANTERN_MOUNTS[id].wall)?.add(pane, lit);
 
       const light = new SpotLight(
         GARDEN_COLORS.light,
@@ -284,28 +300,30 @@ export default function Garden({
       group.add(light, light.target);
       lanterns[id] = { light, glass, bulb };
     }
-    group.add(lanternGroup);
-    return { group, lanternGroup, lanterns, owned };
+    return { group, lanternGroups, lanterns, owned };
   }, [maps]);
 
   useLayoutEffect(() => {
-    const level = lanternLevel(hours);
+    const level = lanternLevel(hours, power);
     for (const id of LANTERN_IDS) {
       const { light, glass, bulb } = lanterns[id];
       light.intensity = LANTERN_FIXTURES[id].intensity * level;
       bulb.color.set(level > 0 ? GARDEN_COLORS.light : GARDEN_COLORS.bulbOff);
-      if (level > 0) bulb.color.multiplyScalar(1.4);
-      glass.emissive.set(GARDEN_COLORS.light).multiplyScalar(0.55 * level);
+      if (level > 0) bulb.color.multiplyScalar(2);
+      // Twice the first pass (0.55), with the doubled spot.
+      glass.emissive.set(GARDEN_COLORS.light).multiplyScalar(1.1 * level);
     }
     invalidate();
-  }, [hours, lanterns, invalidate]);
+  }, [hours, power, lanterns, invalidate]);
 
   const camera = useRef<[number, number, number]>([0, 0, 0]);
   useFrame(({ camera: { position } }) => {
     camera.current[0] = position.x;
     camera.current[1] = position.y;
     camera.current[2] = position.z;
-    lanternGroup.visible = cutaway(camera.current)["main-front"] < LANTERN_HIDE;
+    const fades = cutaway(camera.current);
+    for (const [wall, parent] of lanternGroups)
+      parent.visible = fades[wall] < LANTERN_HIDE;
   });
 
   useEffect(

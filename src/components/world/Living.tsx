@@ -21,6 +21,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { mergeParts } from "@/components/world/House";
 import { proceduralNormal, setupMaterial } from "@/components/world/Setup";
 import { pastelMaterial, type SurfaceMaps } from "@/components/world/surfaces";
+import { glowPower } from "@/lib/world/lights.ts";
 import {
   LIVING_FILES,
   LIVING_MATERIALS,
@@ -203,9 +204,12 @@ function modelMaterial(
 export default function Living({
   hours,
   maps,
+  power = true,
 }: {
   hours: number;
   maps?: SurfaceMaps;
+  /** The scene panel's master switch: off at night darkens the screen. */
+  power?: boolean;
 }) {
   const { invalidate } = useThree();
   const gltfs = useLoader(GLTFLoader, URLS, extendLoader);
@@ -261,7 +265,7 @@ export default function Living({
     return { group: living, glow, owned };
   }, [gltfs, maps]);
 
-  const level = livingGlow(hours);
+  const level = livingGlow(hours) * glowPower(power, hours);
   useLayoutEffect(() => {
     glow.color.setScalar(level);
     invalidate();

@@ -20,6 +20,8 @@ import {
   groundY,
   LANTERN_FIXTURES,
   LANTERN_IDS,
+  LANTERN_MOUNTS,
+  lanternGlass,
   lanternLevel,
   lanternParts,
   mailboxParts,
@@ -31,10 +33,18 @@ import {
   signParts,
   stoneOutline,
 } from "../../src/lib/world/garden.ts";
-import { HOUSE, HOUSE_FOOTPRINT, WALLS } from "../../src/lib/world/house.ts";
+import {
+  HOUSE,
+  HOUSE_FOOTPRINT,
+  houseMeshes,
+  WALLS,
+} from "../../src/lib/world/house.ts";
 import { insideIsland, onPad, PAD } from "../../src/lib/world/island.ts";
 import { islandLayout, KIND_SPECS } from "../../src/lib/world/layout.ts";
 import { nightLightsOn } from "../../src/lib/world/lights.ts";
+import { partBounds } from "../../src/lib/world/setup.ts";
+
+type Bounds = ReturnType<typeof partBounds>;
 
 const EPS = 1e-6;
 const at = (h: number, m: number) => h + m / 60;
@@ -67,25 +77,43 @@ describe("entrance lanterns (night gate reused from S17)", () => {
     assert.equal(lanternLevel.length, 1, "takes only the hour");
   });
 
-  it("are two finite, non-shadow lights", () => {
-    assert.deepEqual([...LANTERN_IDS], ["lanternLeft", "lanternRight"]);
+  it("are four finite, non-shadow lights, twice the first brightness", () => {
+    assert.deepEqual(
+      [...LANTERN_IDS],
+      ["lanternLeft", "lanternRight", "lanternGarage", "lanternBack"],
+    );
     for (const id of LANTERN_IDS) {
       const fixture = LANTERN_FIXTURES[id];
       assert.equal(fixture.castShadow, false);
       assert.equal(fixture.decay, 2);
       assert.ok(fixture.distance > 0 && fixture.distance <= 3.2);
-      assert.ok(fixture.intensity > 0 && fixture.intensity <= 1.5);
+      // T7 shipped 0.85 cd; the follow-up doubles it.
+      assert.equal(fixture.intensity, 1.7);
       assert.ok(fixture.angle > 0 && fixture.angle < Math.PI / 2);
     }
   });
 
-  it("flank the front door on the front wall, clear of the door and window trim", () => {
+  it("go dark at night when the master power is off", () => {
+    assert.equal(lanternLevel(at(22, 0), false), 0);
+    assert.equal(lanternLevel(at(22, 0), true), 1);
+    assert.equal(lanternLevel(at(12, 0), true), 0, "never by day");
+  });
+
+  it("hang on their own walls: two at the door, one at the garage, one at the back", () => {
+    assert.deepEqual(
+      LANTERN_IDS.map((id) => LANTERN_MOUNTS[id].wall),
+      ["main-front", "main-front", "garage-front", "main-back"],
+    );
+  });
+
+  it("flank the front door on the front wall, symmetric", () => {
     const front = WALLS.find((wall) => wall.id === "main-front");
     assert.ok(front);
     const door = front.openings.find((o) => o.kind === "door");
     assert.ok(door);
     const doorMid = (door.u0 + door.u1) / 2;
-    const [left, right] = LANTERN_IDS.map((id) => LANTERN_FIXTURES[id]);
+    const left = LANTERN_FIXTURES.lanternLeft;
+    const right = LANTERN_FIXTURES.lanternRight;
     assert.ok(left.position[0] < door.u0 - 0.07, "left of the door frame");
     assert.ok(right.position[0] > door.u1 + 0.07, "right of the door frame");
     assert.ok(
@@ -93,33 +121,104 @@ describe("entrance lanterns (night gate reused from S17)", () => {
         0.05,
       "symmetric about the door",
     );
-    const face = HOUSE.main.z1;
+  });
+
+  it("sit on their wall or post face, clear of trim, aimed outward", () => {
     for (const id of LANTERN_IDS) {
+      const mount = LANTERN_MOUNTS[id];
+      const wall = WALLS.find((w) => w.id === mount.wall);
+      assert.ok(wall && wall.axis === "x");
+      // The plank face, plus a corner post's protrusion when mounted on one.
+      const face = wall.at + wall.side * (HOUSE.wall / 2 + mount.out);
       const parts = lanternParts(id);
       const xs = parts.flatMap((p) => [
         p.center[0] - p.size[0] / 2,
         p.center[0] + p.size[0] / 2,
       ]);
-      const zs = parts.map((p) => p.center[2] - p.size[2] / 2);
-      // Mounted on the wall: the backplate touches the planks, nothing sinks in.
-      assert.ok(Math.min(...zs) >= face - EPS, `${id} inside the wall`);
-      assert.ok(Math.min(...zs) <= face + 0.02, `${id} floats off the wall`);
-      for (const window of front.openings.filter((o) => o.kind === "window"))
-        assert.ok(
-          Math.max(...xs) < window.u0 - 0.07 ||
-            Math.min(...xs) > window.u1 + 0.07,
-          `${id} overlaps a window frame`,
-        );
-      assert.ok(
-        Math.max(...xs) < door.u0 - 0.07 || Math.min(...xs) > door.u1 + 0.07,
-        `${id} overlaps the door frame`,
+      const outs = parts.map(
+        (p) => wall.side * (p.center[2] - face) - p.size[2] / 2,
       );
-      // Light aims out and down, toward the porch, never into the house.
+      // Mounted: the backplate touches its face, nothing sinks in.
+      assert.ok(Math.min(...outs) >= -EPS, `${id} inside its mount`);
+      assert.ok(Math.min(...outs) <= 0.02, `${id} floats off its mount`);
+      for (const opening of wall.openings)
+        assert.ok(
+          Math.max(...xs) < opening.u0 - 0.07 ||
+            Math.min(...xs) > opening.u1 + 0.07,
+          `${id} overlaps a ${opening.kind} frame`,
+        );
+      // Light aims out of its wall and down, never into the house.
       const fixture = LANTERN_FIXTURES[id];
-      assert.ok(fixture.target[2] > fixture.position[2]);
+      assert.ok(wall.side * (fixture.target[2] - fixture.position[2]) > 0.5);
+      if (!mount.aim)
+        assert.equal(fixture.target[0], fixture.position[0], "square out");
       assert.ok(fixture.target[1] < fixture.position[1]);
-      assert.ok(fixture.position[1] < HOUSE.floorY + HOUSE.main.height);
+      assert.ok(wall.side * (fixture.position[2] - face) > 0.1 * mount.scale);
+      // The bulb is inside its glass.
+      const glass = lanternGlass(id);
+      for (const k of [0, 1, 2])
+        assert.ok(
+          Math.abs(fixture.position[k] - glass.center[k]) < glass.size[k] / 2,
+          `${id} bulb outside its glass`,
+        );
     }
+  });
+
+  it("never intersect the real house parts: posts, trim, planks, roofs", () => {
+    // Every part's axis-aligned bounds (rotation included, so the sloped
+    // roof slabs and eave boards are conservative) against every lantern
+    // part's bounds. The plank faces only touch, so they keep 1 mm slack.
+    const house = Object.values(houseMeshes()).flatMap((m) => [
+      ...m.wood,
+      ...m.glass,
+    ]);
+    const boxes = house.map(partBounds);
+    const gap = (a: Bounds, b: Bounds) =>
+      Math.max(
+        a.x0 - b.x1,
+        b.x0 - a.x1,
+        a.y0 - b.y1,
+        b.y0 - a.y1,
+        a.z0 - b.z1,
+        b.z0 - a.z1,
+      );
+    for (const id of LANTERN_IDS) {
+      let nearest = Number.POSITIVE_INFINITY;
+      for (const part of lanternParts(id)) {
+        const own = partBounds(part);
+        for (const box of boxes) nearest = Math.min(nearest, gap(own, box));
+      }
+      assert.ok(nearest >= -0.001, `${id} intersects the house by ${-nearest}`);
+    }
+  });
+
+  it("light the garage driveway and the back of the house", () => {
+    const garage = LANTERN_FIXTURES.lanternGarage;
+    const { driveway } = HOUSE;
+    assert.ok(garage.target[0] > driveway.x0 && garage.target[0] < driveway.x1);
+    assert.ok(garage.target[2] > driveway.z0 && garage.target[2] < driveway.z1);
+    // Mounted on the garage's outer front corner post, its cutaway group.
+    assert.equal(LANTERN_MOUNTS.lanternGarage.wall, "garage-front");
+    assert.equal(
+      garage.position[0],
+      HOUSE.garage.x0 + HOUSE.wall / 2,
+      "on the corner post's axis",
+    );
+    const back = LANTERN_FIXTURES.lanternBack;
+    assert.ok(back.target[2] < HOUSE.main.z0 - 1);
+  });
+
+  it("share one detailed body, only moved and scaled onto each mount", () => {
+    const shape = (id: (typeof LANTERN_IDS)[number]) =>
+      lanternParts(id).map((p) =>
+        [
+          p.role,
+          p.shape,
+          p.size.map((v) => (v / LANTERN_MOUNTS[id].scale).toFixed(6)).join(),
+        ].join(),
+      );
+    for (const id of LANTERN_IDS)
+      assert.deepEqual(shape(id), shape("lanternLeft"), id);
   });
 
   it("are detailed: rounded frame, hood, glass and a bulb", () => {
@@ -234,6 +333,24 @@ describe("garden props", () => {
     );
     const post = parts.find((p) => p.role === "post");
     assert.ok(post && post.center[1] - post.size[1] / 2 < 0, "post planted");
+  });
+
+  it("stands the mailbox and sign square to the front facade, untilted", () => {
+    // The front wall faces +z: both props face it straight, so the sign
+    // reads level from the path instead of angled toward one camera.
+    for (const prop of Object.values(GARDEN_PROPS))
+      assert.equal(prop.rotationY, 0);
+    for (const part of [...mailboxParts(), ...signParts()]) {
+      const [x = 0, y = 0, z = 0] = part.rotation ?? [];
+      // Only quarter turns that lay cylinders along an axis, and the
+      // mailbox's two braces; nothing leans the post, board or text.
+      if (part.role === "support" && x !== 0) continue;
+      for (const angle of [x, y, z])
+        assert.ok(
+          Math.abs(Math.sin(2 * angle)) < EPS,
+          `${part.role} tilted by ${angle}`,
+        );
+    }
   });
 
   it("has a framed sign on two planted posts", () => {

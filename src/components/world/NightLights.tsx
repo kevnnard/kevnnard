@@ -97,15 +97,19 @@ interface Emitters {
  * the backlights, point bulbs in the lamp shades, S18) plus its emitter
  * (LED strip behind the TV panel or monitor, lamp bulb and shade). Always
  * mounted, so the shader light count never changes: by day or when disabled
- * a light's intensity drops to zero. Settings and the hour only repaint on
- * demand; nothing here animates.
+ * a light's intensity drops to zero, as with the scene panel's master
+ * `power` off. Settings, the master and the hour only repaint on demand;
+ * nothing here animates.
  */
 export default function NightLights({
   hours,
   lights,
+  power = true,
 }: {
   hours: number;
   lights: LightSettings;
+  /** The scene panel's master switch (night only). */
+  power?: boolean;
 }) {
   const { invalidate } = useThree();
   const { group, emitters, owned, geometries } = useMemo(() => {
@@ -228,7 +232,7 @@ export default function NightLights({
     const color = new Color();
     for (const id of LIGHT_IDS) {
       const setting = lights[id];
-      const level = lightLevel(setting, hours);
+      const level = lightLevel(setting, hours, power);
       const { light, glow, shade, off } = emitters[id];
       color.set(setting.color);
       light.color.copy(color);
@@ -238,7 +242,7 @@ export default function NightLights({
       if (shade) shade.emissive.copy(color).multiplyScalar(0.35 * level);
     }
     invalidate();
-  }, [hours, lights, emitters, invalidate]);
+  }, [hours, lights, power, emitters, invalidate]);
 
   useEffect(
     () => () => {

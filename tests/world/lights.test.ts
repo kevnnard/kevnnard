@@ -2,12 +2,15 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   DEFAULT_LIGHTS,
+  glowPower,
   LAMP,
   LIGHT_FIXTURES,
   LIGHT_IDS,
   lampParts,
   lightLevel,
+  lightOutputs,
   nightLightsOn,
+  togglePower,
   updateLight,
 } from "../../src/lib/world/lights.ts";
 import { TV_PANEL } from "../../src/lib/world/living.ts";
@@ -89,6 +92,63 @@ describe("night light settings", () => {
     assert.equal(lightLevel(light, at(18, 0)), 0.6);
     assert.equal(lightLevel(light, at(17, 59)), 0);
     assert.equal(lightLevel({ ...light, enabled: false }, at(22, 0)), 0);
+  });
+});
+
+describe("master power (Power off / Power on, night only)", () => {
+  const night = at(22, 0);
+  const day = at(12, 0);
+
+  it("toggles only at night: by day the action is a no-op", () => {
+    assert.equal(togglePower(true, night), false);
+    assert.equal(togglePower(false, night), true);
+    assert.equal(togglePower(true, day), true, "day keeps it on");
+    assert.equal(togglePower(false, day), false, "day keeps it off");
+    // The exact S17 gate: 17:59 is day, 18:00 and 05:59 night, 06:00 day.
+    assert.equal(togglePower(true, at(17, 59)), true);
+    assert.equal(togglePower(true, at(18, 0)), false);
+    assert.equal(togglePower(true, at(5, 59)), false);
+    assert.equal(togglePower(true, at(6, 0)), true);
+  });
+
+  it("zeroes every light output when off, and restores them unchanged", () => {
+    const custom = updateLight(
+      updateLight(DEFAULT_LIGHTS, "tv", { color: "#123456", intensity: 35 }),
+      "lampLeft",
+      { enabled: false },
+    );
+    const frozen = structuredClone(custom);
+    const on = lightOutputs(custom, night, true);
+    assert.deepEqual(on, {
+      tv: 0.35,
+      setup: 0.6,
+      lampLeft: 0,
+      lampRight: 0.8,
+    });
+    const off = lightOutputs(custom, night, false);
+    for (const id of LIGHT_IDS) {
+      assert.equal(off[id], 0, id);
+      assert.equal(lightLevel(custom[id], night, false), 0, id);
+    }
+    // The master is separate state: settings survive off and on.
+    assert.deepEqual(custom, frozen);
+    assert.deepEqual(lightOutputs(custom, night, true), on);
+    // Defaults to on, so older callers keep their behavior.
+    assert.deepEqual(lightOutputs(custom, night), on);
+    assert.equal(lightLevel(custom.tv, night), 0.35);
+  });
+
+  it("never lights anything by day, whatever the master", () => {
+    for (const power of [true, false])
+      for (const id of LIGHT_IDS)
+        assert.equal(lightOutputs(DEFAULT_LIGHTS, day, power)[id], 0);
+  });
+
+  it("turns screens and LEDs off only at night", () => {
+    assert.equal(glowPower(true, night), 1);
+    assert.equal(glowPower(false, night), 0);
+    assert.equal(glowPower(true, day), 1);
+    assert.equal(glowPower(false, day), 1, "daytime screens stay as they are");
   });
 });
 

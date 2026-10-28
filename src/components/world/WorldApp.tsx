@@ -20,6 +20,7 @@ import {
   type LightId,
   type LightSetting,
   type LightSettings,
+  togglePower,
   updateLight,
 } from "@/lib/world/lights.ts";
 import { CreditsDialog } from "./CreditsDialog";
@@ -124,6 +125,15 @@ export default function WorldApp() {
     [],
   );
   const resetLights = useCallback(() => setLights(DEFAULT_LIGHTS), []);
+  // Master Power off / Power on (S20): separate from the per-light settings,
+  // so they survive off and on; kept across day and night for the session.
+  // It only flips at night: by day the action is a no-op.
+  const [power, setPower] = useState(true);
+  const hours = clock.hours;
+  const switchPower = useCallback(
+    () => setPower((on) => togglePower(on, hours)),
+    [hours],
+  );
 
   if (!webgl) {
     return (
@@ -144,6 +154,7 @@ export default function WorldApp() {
             reducedMotion={reducedMotion}
             home={home}
             lights={lights}
+            power={power}
             onReady={onReady}
           />
         </Suspense>
@@ -190,8 +201,10 @@ export default function WorldApp() {
           lights={lights}
           narrow={narrow}
           controllerStyle={controllerStyle}
+          power={power}
           onChange={changeLight}
           onReset={resetLights}
+          onPower={switchPower}
         />
       )}
     </div>

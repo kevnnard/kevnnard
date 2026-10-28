@@ -55,6 +55,28 @@ describe("scene panel (T6b UI fix)", () => {
     assert.equal(panel.split("Reset lights").length - 1, 1);
   });
 
+  it("puts one night-only Power off / Power on button next to Reset", () => {
+    const foot = panel.slice(panel.indexOf('className="sp-foot"'));
+    const reset = foot.indexOf("Reset lights");
+    const power = foot.indexOf("onPower");
+    assert.ok(reset > 0 && power > 0, "both in the footer");
+    assert.ok(power < foot.indexOf('className="sp-head"'), "same footer");
+    assert.match(foot, /disabled=\{!night\}/, "disabled by day");
+    assert.match(foot, /aria-pressed=\{!power\}/);
+    assert.match(foot, /"Power on" : "Power off"/);
+    assert.equal(panel.split("onPower?.();").length - 1, 1, "one handler");
+    // The handler itself is a no-op by day: the app only flips at night.
+    assert.match(app, /setPower\(\(on\) => togglePower\(on, /);
+    // Reset only touches the per-light settings, never the master.
+    assert.match(
+      app,
+      /const resetLights = useCallback\(\(\) => setLights\(DEFAULT_LIGHTS\), \[\]\);/,
+    );
+    assert.match(app, /useState\(true\)/, "master defaults on");
+    assert.match(panel, /stateOf\(lights\[id\], night, power\) === "on"/);
+    assert.match(panel, /night && power\n/, "header honors the master");
+  });
+
   it("is styled by its scoped stylesheet, not theme or utility classes", () => {
     // Root cause: tokens are triplets like "240 10% 3.9%", mapped without
     // hsl() in @theme, so bg-background and friends compute to invalid colors.

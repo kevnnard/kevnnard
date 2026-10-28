@@ -9,15 +9,17 @@ import {
 } from "@/lib/world/lights.ts";
 import "./scene-panel.css";
 
-type State = "on" | "standby" | "disabled";
+type State = "on" | "standby" | "off" | "disabled";
 const STATE_LABEL: Record<State, string> = {
   on: "On",
   standby: "Off · day",
+  off: "Off · power",
   disabled: "Disabled",
 };
 
-const stateOf = (light: LightSetting, night: boolean): State =>
-  !light.enabled ? "disabled" : night ? "on" : "standby";
+/** `power` is the master switch: off at night holds every light dark. */
+const stateOf = (light: LightSetting, night: boolean, power: boolean): State =>
+  !light.enabled ? "disabled" : !night ? "standby" : power ? "on" : "off";
 
 const ZONES = [
   { id: "tv", title: "TV wall" },
@@ -34,16 +36,18 @@ function LightRow({
   id,
   light,
   night,
+  power,
   onChange,
 }: {
   id: LightId;
   light: LightSetting;
   night: boolean;
+  power: boolean;
   onChange: (id: LightId, patch: Partial<LightSetting>) => void;
 }) {
   const uid = useId();
   const { name, where } = LIGHT_INFO[id];
-  const state = stateOf(light, night);
+  const state = stateOf(light, night, power);
   return (
     <div role="group" aria-labelledby={`${uid}-name`} className="sp-light">
       <div className="sp-light-head">
@@ -109,23 +113,30 @@ function LightRow({
  * the shared day controller is the only time display and editor; this panel
  * only reads the simulated hour to show each light's state. When the day
  * controller spans under the panel (narrow screens, timeline dock), the panel
- * lifts above it.
+ * lifts above it. Beside Reset, one master Power off / Power on button (S20)
+ * darkens every artificial light at night; by day it is disabled.
  */
 export function ScenePanel({
   hours,
   lights,
   narrow,
   controllerStyle,
+  power = true,
   onChange,
   onReset,
+  onPower,
 }: {
   hours: number;
   lights: LightSettings;
   narrow: boolean;
   /** The day controller remounts on a style switch; re-measure it then. */
   controllerStyle: string;
+  /** Master switch, separate from the per-light settings. */
+  power?: boolean;
   onChange: (id: LightId, patch: Partial<LightSetting>) => void;
   onReset: () => void;
+  /** Flips the master; the app ignores it by day. */
+  onPower?: () => void;
 }) {
   // Starts folded to its header row so the scene stays clear.
   const [open, setOpen] = useState(false);
@@ -135,7 +146,7 @@ export function ScenePanel({
   const uid = useId();
   const night = nightLightsOn(hours);
   const onCount = LIGHT_IDS.filter(
-    (id) => stateOf(lights[id], night) === "on",
+    (id) => stateOf(lights[id], night, power) === "on",
   ).length;
 
   // Sit above the day controller whenever it reaches under the panel.
@@ -169,11 +180,11 @@ export function ScenePanel({
     if (last.current === night) return;
     last.current = night;
     setStatus(
-      night
+      night && power
         ? `Night lights on, ${onCount} of ${LIGHT_IDS.length}.`
         : "Night lights off.",
     );
-  }, [night, onCount]);
+  }, [night, power, onCount]);
 
   const change = (id: LightId, patch: Partial<LightSetting>) => {
     onChange(id, patch);
@@ -205,7 +216,7 @@ export function ScenePanel({
               (id) => LIGHT_INFO[id].zone === zone.id,
             );
             const on = ids.filter(
-              (id) => stateOf(lights[id], night) === "on",
+              (id) => stateOf(lights[id], night, power) === "on",
             ).length;
             return (
               <section
@@ -225,6 +236,7 @@ export function ScenePanel({
                     id={id}
                     light={lights[id]}
                     night={night}
+                    power={power}
                     onChange={change}
                   />
                 ))}
@@ -242,6 +254,20 @@ export function ScenePanel({
             >
               Reset lights
             </button>
+            <button
+              type="button"
+              aria-pressed={!power}
+              disabled={!night}
+              title={night ? undefined : "Lights are off by day"}
+              onClick={() => {
+                if (!night) return;
+                onPower?.();
+                setStatus(power ? "All lights off." : "All lights on.");
+              }}
+              className="sp-btn"
+            >
+              {!power ? "Power on" : "Power off"}
+            </button>
           </div>
         </div>
       )}
@@ -249,7 +275,9 @@ export function ScenePanel({
         <span aria-hidden="true" className="sp-dot" data-on={onCount > 0} />
         <h2 id={`${uid}-title`}>Scene</h2>
         <span className="sp-muted">
-          {night ? `${onCount}/${LIGHT_IDS.length} lights on` : "lights off"}
+          {night && power
+            ? `${onCount}/${LIGHT_IDS.length} lights on`
+            : "lights off"}
         </span>
         <button
           type="button"

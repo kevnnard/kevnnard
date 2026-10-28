@@ -257,7 +257,8 @@ seen from the chair, facing the wall).
 - Scene console: the lower-left day controller mirrored to the bottom right.
   One dark box, at most 320 px wide, header row ("Scene", lights on/off,
   Show/Hide) at the bottom and the TV wall and Desk setup cards opening
-  upward above it, then one "Reset lights" action. It starts folded, scrolls
+  upward above it, then the "Reset lights" action with the master power
+  button beside it. It starts folded, scrolls
   inside below the top buttons, and lifts above the day controller when that
   spans under it (narrow screens, timeline dock).
 - Styling lives in `scene-panel.css` with literal colors. The shadcn theme
@@ -269,6 +270,21 @@ seen from the chair, facing the wall).
   its color and location as the hint. Controls stay editable by day; their
   status reads "Off · day".
   `updateLight` clamps intensity, rounds it, and ignores non-hex colors.
+- Master power (S20): one "Power off" / "Power on" button next to "Reset
+  lights". It is a separate `power` state in `WorldApp` (default on, kept
+  for the page session across day and night), so the per-light switches,
+  colors and intensities survive off and on; "Reset lights" resets only
+  those settings, never the master. It works only at night: by day the
+  button is disabled and `togglePower` returns the state unchanged. At night
+  with the master off, `lightLevel(setting, hours, power)` and
+  `lanternLevel(hours, power)` are 0 for the four night lights and all four
+  lanterns, and `glowPower` is 0 for every artificial glow: the setup
+  screens, RGB, PC and keyboard LEDs, side-screen logo, Bruno's Elgato
+  panel, Google Home LEDs and Loupedeck buttons, the TV screen and light
+  bar, and the TV, desk and PC channels of Bruno's chair bake. Rows read
+  "Off · power" and the header "lights off". The sun, moon, sky and fill
+  never change. By day `glowPower` stays 1, so the daytime scene is
+  unaffected whatever the master; the per-light sliders are never locked.
 - Scene: four lights, never shadow-casting, `decay` 2 and a finite
   `distance` (1.2-1.6 m), intensities under 1 cd at 100 %. Since S18 the TV
   and setup backlights are spots placed behind the middle of their panel and
@@ -286,10 +302,11 @@ seen from the chair, facing the wall).
   colors and follow the same gate and levels; his PC channel keeps our RGB.
 - Repaints are on demand (settings or hour change); nothing animates.
 
-## Front garden entrance (T7)
+## Front garden entrance (T7, S20)
 
 Original procedural work (credited as `garden` in `public/world/credits.json`,
-no downloads): two wall lanterns beside the front door, a stepping-stone
+no downloads): four wall lanterns (two beside the front door, one at the
+garage door, one on the back wall), a stepping-stone
 path from the porch step into the front lawn, a decorative mailbox and a
 garden sign. Nothing is interactive.
 
@@ -310,25 +327,42 @@ spaces collapse, words too wide break by character, and text over
 
 ### Layout, materials and light
 
-- Lanterns: bronze carriage lanterns on the main front wall at x -0.04 and
-  1.04 (0.54 m each side of the door middle), between the door and window
-  trim. Rounded backplate, arm and brace, square cage on a pan with corner
+- Lanterns: bronze carriage lanterns, one body (`lanternParts`) built
+  against a front wall and turned onto its wall by `LANTERN_MOUNTS`: on the
+  main front wall at x -0.04 and 1.04 (0.54 m each side of the door middle),
+  between the door and window trim; on the front face of the garage's outer
+  front corner post (x -3.03, the post's axis; 0.05 m proud of the planks),
+  at 0.8 scale and 0.05 m lower so it fits beside the unchanged garage door
+  trim (12 mm clear in x) and under the low eave, aimed in across the
+  driveway at (-2.55, 1.35); on the main back wall at x 0.55, between the
+  two windows, facing -z. The inner garage corner post is not used: the
+  main house's left wall boxes it in. The house geometry is unchanged.
+  Tests check every lantern part's bounds against every real house part
+  (posts, trim, planks, glass, rotated roof slabs and eave boards). Rounded backplate, arm and brace, square cage on a pan with corner
   posts and bands, frosted glass, a stepped round hood and brass finial and
   socket; a sphere bulb. Each has one non-shadow spot (warm `#ffc27a`,
-  0.85 cd, 3.2 m, decay 2, 57° half-angle, penumbra 0.7) aimed out and down
-  at the porch: unlike a point light, it never reaches the floor inside
+  1.7 cd since S20, twice the first 0.85, 3.2 m, decay 2, 57° half-angle,
+  penumbra 0.7) aimed square out of its wall and down (the glass glow also
+  doubled, emissive 0.55 to 1.1, bulb x2): unlike a point light, it never reaches the floor inside
   through the unshadowed wall. On from 18:00 through 05:59 by
-  `nightLightsOn`, the night lights gate, with no panel settings; by day the
-  intensity is 0, the bulb is grey and the glass stops glowing. The lantern
-  bodies hide while the front wall is cut away; the lights stay on.
+  `nightLightsOn`, the night lights gate, with no per-lantern settings; the
+  scene panel's master power turns them all off at night. By day the
+  intensity is 0, the bulb is grey and the glass stops glowing. Each lantern
+  body hides while its own wall (`main-front`, `garage-front`, `main-back`)
+  is cut away; the lights stay on.
+- Light count: the scene has 10 lights, none added or removed at runtime:
+  the sun/moon key (the only shadow caster), the hemisphere fill, the four
+  night lights (two spots, two points) and the four lantern spots. No point
+  shadows.
 - Path: six irregular beveled stones (14-point seeded outlines, smooth rings
   from a tucked foot to a rounded shoulder and domed top, 5.3 cm tall, sunk
   8 mm) on a gentle S from the porch step (x 0.5, z 1.7) to (2.46, 3.8),
   where the island's older KayKit trail continues. The first stone lies
   wholly on the pad, the others wholly on the grass. Stone material: rough,
   pitted `noise` normal map, darker toward the ground.
-- Mailbox at (-0.05, 2.55), sign at (1.72, 2.48), both turned toward the
-  home camera. Mailbox: planted post with collar, support plate on two
+- Mailbox at (-0.05, 2.55), sign at (1.72, 2.48), both square to the
+  front facade (`rotationY` 0, facing +z like the front door; S20 removed
+  the 0.3 and 0.45 turns toward the home camera that looked crooked). Mailbox: planted post with collar, support plate on two
   braces, sage body (the door's color) with a round hood, arched door with
   letter slot and brass pull, raised coral flag. Sign: two planted posts, a
   framed board with brass screws and a coral cap; the text is a canvas

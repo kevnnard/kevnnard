@@ -1,10 +1,10 @@
-// Front garden entrance (T7, S19): two wall lanterns beside the front door
-// that light up with the night lights gate, a stone stepping path from the
-// porch step into the garden, a decorative mailbox and a sign whose text is
-// one string, GARDEN_SIGN.text. Pure numbers; Garden.tsx builds the meshes.
+// Front garden entrance (T7, S19, S20): wall lanterns beside the front door,
+// at the garage door and on the back wall that light up with the night
+// lights gate, a stone stepping path from the porch step into the garden,
+// a decorative mailbox and a sign whose text is one string, GARDEN_SIGN.text. Pure numbers; Garden.tsx builds the meshes.
 // Nothing here is interactive: no form, no network.
 
-import { HOUSE, type Part, type Vec3 } from "./house.ts";
+import { HOUSE, type Part, type Vec3, WALLS } from "./house.ts";
 import { onPad, PAD } from "./island.ts";
 import { KIND_SPECS, type NatureKind } from "./layout.ts";
 import { nightLightsOn } from "./lights.ts";
@@ -114,22 +114,65 @@ const piece = (
 /* Lanterns                                                            */
 /* ------------------------------------------------------------------ */
 
-export const LANTERN_IDS = ["lanternLeft", "lanternRight"] as const;
+export const LANTERN_IDS = [
+  "lanternLeft",
+  "lanternRight",
+  "lanternGarage",
+  "lanternBack",
+] as const;
 export type LanternId = (typeof LANTERN_IDS)[number];
 
-/** On (1) from 18:00 through 05:59, off (0) by day: the S17 gate, no settings. */
-export function lanternLevel(hours: number): number {
-  return nightLightsOn(hours) ? 1 : 0;
+/**
+ * On (1) from 18:00 through 05:59, off (0) by day: the S17 gate, no settings.
+ * The scene panel's master `power` switches them off too.
+ */
+export function lanternLevel(hours: number, power = true): number {
+  return power && nightLightsOn(hours) ? 1 : 0;
 }
 
 const FLOOR = HOUSE.floorY;
-/** Outer face of the front wall's planks. */
-const FACE = HOUSE.main.z1;
 /** Door middle (front wall door spans x 0.14-0.86): lanterns sit 0.54 m out. */
 const DOOR_MID = 0.5;
-const LANTERN_X: Record<LanternId, number> = {
-  lanternLeft: DOOR_MID - 0.54,
-  lanternRight: DOOR_MID + 0.54,
+
+/** Walls along x that carry a lantern; each is also its cutaway group. */
+export type LanternWall = "main-front" | "garage-front" | "main-back";
+
+export interface LanternMount {
+  wall: LanternWall;
+  /** World x along the wall. */
+  u: number;
+  /** How much lower than the front pair it hangs (under the low garage eave). */
+  drop: number;
+  /** How far out from the wall the spot meets the ground. */
+  reach: number;
+  /** Extra distance out from the plank face: a corner post's front. */
+  out: number;
+  /** Size of the shared lantern body, 1 at the front door. */
+  scale: number;
+  /** World x, z the spot aims at, when not square out of the wall. */
+  aim?: [number, number];
+}
+
+const DOOR_MOUNT = { drop: 0, reach: 1.6, out: 0, scale: 1 } as const;
+
+export const LANTERN_MOUNTS: Record<LanternId, LanternMount> = {
+  lanternLeft: { wall: "main-front", u: DOOR_MID - 0.54, ...DOOR_MOUNT },
+  lanternRight: { wall: "main-front", u: DOOR_MID + 0.54, ...DOOR_MOUNT },
+  // On the front face of the garage's outer corner post (x -3.03, 0.24 m
+  // round, 0.05 m proud of the planks), at 0.8 scale so the cage clears the
+  // garage door trim and the low eave; aimed in across the driveway. The
+  // inner corner post is boxed in by the main house's left wall.
+  lanternGarage: {
+    wall: "garage-front",
+    u: HOUSE.garage.x0 + HOUSE.wall / 2,
+    drop: 0.05,
+    reach: 0.8,
+    out: 0.12 - HOUSE.wall / 2,
+    scale: 0.8,
+    aim: [-2.55, 1.35],
+  },
+  // Between the two back windows.
+  lanternBack: { wall: "main-back", u: 0.55, ...DOOR_MOUNT },
 };
 
 /** Carriage lantern, heights above the floor; `out` is the body's distance from the wall. */
@@ -140,15 +183,35 @@ export const LANTERN = {
   bulb: { y: 1.32, radius: 0.024 },
 } as const;
 
+/**
+ * Lantern frame on its wall: `u` along it, the outer plank face, and `side`,
+ * the outward direction (+z on front walls, -z at the back).
+ */
+function lanternFrame(id: LanternId) {
+  const mount = LANTERN_MOUNTS[id];
+  const wall = WALLS.find((w) => w.id === mount.wall);
+  if (!wall || wall.axis !== "x") throw new Error(`no wall ${mount.wall}`);
+  const face = wall.at + (wall.side * HOUSE.wall) / 2;
+  const { side } = wall;
+  const s = mount.scale;
+  /** Local (along, up from the floor, out of the wall) to world, scaled. */
+  const at = ([x, y, z]: Vec3): Vec3 => [
+    mount.u + side * x * s,
+    FLOOR - mount.drop + y * s,
+    face + side * (mount.out + z * s),
+  ];
+  return { face, side, at, scale: s };
+}
+
 export interface LanternFixture {
   /** Bulb center. */
   position: Vec3;
-  /** Point on the porch the spot faces: out and down, never into the house. */
+  /** Point on the ground the spot faces: out and down, never into the house. */
   target: Vec3;
   /** Cone half-angle and soft edge: a wide lantern spill. */
   angle: number;
   penumbra: number;
-  /** Candela when on: about the moon's level on the porch. */
+  /** Candela when on: twice the first pass (0.85), so the porch reads lit. */
   intensity: number;
   /** Metres to zero: the porch, path start and sign, not the island. */
   distance: number;
@@ -157,14 +220,16 @@ export interface LanternFixture {
 }
 
 const lanternFixture = (id: LanternId): LanternFixture => {
-  const x = LANTERN_X[id];
-  const z = FACE + LANTERN.out;
+  const { at, scale } = lanternFrame(id);
+  const { aim, reach } = LANTERN_MOUNTS[id];
+  const position = at([0, LANTERN.bulb.y, LANTERN.out]);
+  const ground = at([0, 0, reach / scale]);
   return {
-    position: [x, FLOOR + LANTERN.bulb.y, z],
-    target: [x, 0, FACE + 1.6],
+    position,
+    target: aim ? [aim[0], 0, aim[1]] : [ground[0], 0, ground[2]],
     angle: 1.0,
     penumbra: 0.7,
-    intensity: 0.85,
+    intensity: 1.7,
     distance: 3.2,
     decay: 2,
     castShadow: false,
@@ -174,25 +239,27 @@ const lanternFixture = (id: LanternId): LanternFixture => {
 export const LANTERN_FIXTURES: Record<LanternId, LanternFixture> = {
   lanternLeft: lanternFixture("lanternLeft"),
   lanternRight: lanternFixture("lanternRight"),
+  lanternGarage: lanternFixture("lanternGarage"),
+  lanternBack: lanternFixture("lanternBack"),
 };
 
 /**
  * One wall lantern: backplate, arm and diagonal brace, a square bronze cage
  * on a pan with a drip ball, corner posts and bands around the glass, a
  * stepped round hood with a brass finial, and the bulb socket. Glass and
- * bulb are separate meshes.
+ * bulb are separate meshes. Built against a front wall (out is +z), then
+ * turned onto its own wall: tilts about x flip with the outward side.
  */
 export function lanternParts(id: LanternId): GardenPart[] {
-  const x = LANTERN_X[id];
-  const z = FACE + LANTERN.out;
-  const y = (v: number) => FLOOR + v;
+  const { at, side, scale } = lanternFrame(id);
+  const z = LANTERN.out;
   const { iron, brass } = GARDEN_COLORS;
   const parts: GardenPart[] = [
     piece(
       "backplate",
       "iron",
       "rounded",
-      [x, y(1.3), FACE + 0.022],
+      [0, 1.3, 0.022],
       [0.09, 0.22, 0.02],
       iron,
       { radius: 0.009 },
@@ -201,7 +268,7 @@ export function lanternParts(id: LanternId): GardenPart[] {
       "boss",
       "brass",
       "round",
-      [x, y(LANTERN.arm), FACE + 0.036],
+      [0, LANTERN.arm, 0.036],
       [0.032, 0.012, 0.032],
       brass,
       { rotation: ALONG_Z },
@@ -210,8 +277,8 @@ export function lanternParts(id: LanternId): GardenPart[] {
       "arm",
       "iron",
       "round",
-      [x, y(LANTERN.arm), (FACE + 0.03 + z) / 2],
-      [0.024, z - FACE - 0.03, 0.024],
+      [0, LANTERN.arm, (0.03 + z) / 2],
+      [0.024, z - 0.03, 0.024],
       iron,
       { rotation: ALONG_Z },
     ),
@@ -219,56 +286,39 @@ export function lanternParts(id: LanternId): GardenPart[] {
       "brace",
       "iron",
       "rounded",
-      [x, y(1.1475), FACE + 0.065],
+      [0, 1.1475, 0.065],
       [0.014, 0.014, 0.118],
       iron,
       { radius: 0.006, rotation: [-0.936, 0, 0] },
     ),
-    piece(
-      "pan",
-      "iron",
-      "rounded",
-      [x, y(1.225), z],
-      [0.14, 0.03, 0.14],
-      iron,
-      { radius: 0.012 },
-    ),
-    piece(
-      "drip",
-      "brass",
-      "round",
-      [x, y(1.198), z],
-      [0.03, 0.025, 0.03],
-      brass,
-    ),
+    piece("pan", "iron", "rounded", [0, 1.225, z], [0.14, 0.03, 0.14], iron, {
+      radius: 0.012,
+    }),
+    piece("drip", "brass", "round", [0, 1.198, z], [0.03, 0.025, 0.03], brass),
+    piece("band", "iron", "rounded", [0, 1.247, z], [0.13, 0.014, 0.13], iron, {
+      radius: 0.006,
+    }),
     piece(
       "band",
       "iron",
       "rounded",
-      [x, y(1.247), z],
-      [0.13, 0.014, 0.13],
-      iron,
-      { radius: 0.006 },
-    ),
-    piece(
-      "band",
-      "iron",
-      "rounded",
-      [x, y(1.445), z],
+      [0, 1.445, z],
       [0.135, 0.02, 0.135],
       iron,
-      { radius: 0.008 },
+      {
+        radius: 0.008,
+      },
     ),
-    piece("hood", "iron", "round", [x, y(1.465), z], [0.17, 0.022, 0.17], iron),
-    piece("hood", "iron", "round", [x, y(1.49), z], [0.12, 0.03, 0.12], iron, {
+    piece("hood", "iron", "round", [0, 1.465, z], [0.17, 0.022, 0.17], iron),
+    piece("hood", "iron", "round", [0, 1.49, z], [0.12, 0.03, 0.12], iron, {
       shade: 1.05,
     }),
-    piece("hood", "iron", "round", [x, y(1.517), z], [0.07, 0.025, 0.07], iron),
+    piece("hood", "iron", "round", [0, 1.517, z], [0.07, 0.025, 0.07], iron),
     piece(
       "finial",
       "brass",
       "round",
-      [x, y(1.548), z],
+      [0, 1.548, z],
       [0.022, 0.04, 0.022],
       brass,
     ),
@@ -276,18 +326,11 @@ export function lanternParts(id: LanternId): GardenPart[] {
       "finial",
       "brass",
       "round",
-      [x, y(1.574), z],
+      [0, 1.574, z],
       [0.034, 0.014, 0.034],
       brass,
     ),
-    piece(
-      "socket",
-      "brass",
-      "round",
-      [x, y(1.275), z],
-      [0.03, 0.04, 0.03],
-      brass,
-    ),
+    piece("socket", "brass", "round", [0, 1.275, z], [0.03, 0.04, 0.03], brass),
   ];
   for (const dx of [-0.055, 0.055])
     for (const dz of [-0.055, 0.055])
@@ -296,20 +339,30 @@ export function lanternParts(id: LanternId): GardenPart[] {
           "post",
           "iron",
           "rounded",
-          [x + dx, y(1.345), z + dz],
+          [dx, 1.345, z + dz],
           [0.016, 0.2, 0.016],
           iron,
           { radius: 0.005 },
         ),
       );
-  return parts;
+  // A half turn about y: x and z mirror, and a tilt about x reverses.
+  return parts.map((part) => ({
+    ...part,
+    center: at(part.center),
+    size: part.size.map((v) => v * scale) as Vec3,
+    ...(part.radius !== undefined && { radius: part.radius * scale }),
+    ...(part.rotation && {
+      rotation: [side * part.rotation[0], 0, 0] as Vec3,
+    }),
+  }));
 }
 
-/** Glass box and bulb of a lantern, world space. */
+/** Glass box of a lantern, world space. */
 export function lanternGlass(id: LanternId): { center: Vec3; size: Vec3 } {
+  const { at, scale } = lanternFrame(id);
   return {
-    center: [LANTERN_X[id], FLOOR + LANTERN.glass.y, FACE + LANTERN.out],
-    size: LANTERN.glass.size,
+    center: at([0, LANTERN.glass.y, LANTERN.out]),
+    size: LANTERN.glass.size.map((v) => v * scale) as Vec3,
   };
 }
 
@@ -461,15 +514,15 @@ export function pathMesh(
 export interface GardenProp {
   /** World x, z of the base. */
   position: [number, number];
-  /** Turn toward the home camera (front right). */
+  /** Turn about y: 0 keeps it square to the front facade (+z). */
   rotationY: number;
   /** Footprint radius, for spacing and clearing nature. */
   radius: number;
 }
 
 export const GARDEN_PROPS: { mailbox: GardenProp; sign: GardenProp } = {
-  mailbox: { position: [-0.05, 2.55], rotationY: 0.3, radius: 0.28 },
-  sign: { position: [1.72, 2.48], rotationY: 0.45, radius: 0.45 },
+  mailbox: { position: [-0.05, 2.55], rotationY: 0, radius: 0.28 },
+  sign: { position: [1.72, 2.48], rotationY: 0, radius: 0.45 },
 };
 
 /**
