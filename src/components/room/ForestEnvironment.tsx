@@ -32,6 +32,7 @@ import {
 import { treeFrame } from "@/lib/room/forest-model.ts";
 import { terrainGeometry } from "@/lib/room/ground-materials.ts";
 import { ForestDebris } from "./ForestDebris";
+import { ForestUnderstory } from "./ForestUnderstory";
 import { GroundSurface } from "./GroundSurface";
 
 // Invalidate useLoader/browser caches after restoring the reduced canopies.
@@ -184,6 +185,7 @@ export const ForestEnvironment = memo(function ForestEnvironment() {
         <ForestModels />
       </Suspense>
       <ForestDebris />
+      <ForestUnderstory />
     </group>
   );
 });
