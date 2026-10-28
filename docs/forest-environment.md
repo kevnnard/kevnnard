@@ -41,8 +41,9 @@ Near/far models use Meshopt and 1024/512px WebP textures. Near/far triangles: pi
 ## Scene budget and behavior
 
 - 347 deterministic trees: 10 near-detail instances, 337 far-detail instances. LOD is fixed by distance from the house, not switched while moving the camera.
-- 833,742 tree triangles before frustum culling, plus 18,434 ground/mountain triangles. This is an added geometry count, not an FPS measurement.
-- Four model batches, each with four primitive meshes: about 16 tree draw calls plus two terrain draws. Forest instances do not add shadow passes.
+- 833,742 tree triangles before frustum culling, plus 55,298 ground/mountain triangles across the three PBR terrain passes and outer plane. This is an added geometry count, not an FPS measurement.
+- Four model batches, each with four primitive meshes: about 16 tree draw calls plus four terrain draws. Forest instances do not add shadow passes.
+- Ground and lawn now use local grass, forest-soil and rock PBR maps with world-scaled UVs and smooth transitions. See [ground-materials.md](ground-materials.md) for texture licensing, download cost, resource ownership and verification.
 - A clear open-side approach preserves the house/PC/TV view. Trees elsewhere are scenery, not camera collision obstacles.
 - Mountains rise outside radius 135 and flatten beyond 360. Fog spans 85–360 units, follows the sky's eased day/night horizon color and leaves the house clear at ordinary overview distances.
 - Continuous terrain is 2,400 units wide; the camera far plane is at least 700. Scenery does not expand the home framing or target boundary.
@@ -51,12 +52,13 @@ Near/far models use Meshopt and 1024/512px WebP textures. Near/far triangles: pi
 
 ## Verification status
 
-`pnpm test:room`: **76 pass**. Production build, scoped Biome, room HTTP checks and strict TypeScript checks of the four touched TSX modules and their imported dependencies pass. The production build retains its existing large-chunk warning.
+`pnpm test:room`: **86 pass** after the ground-material integration (76 at the original forest milestone). Production build, scoped Biome, room HTTP checks and strict TypeScript checks of the four touched TSX modules and their imported dependencies pass. The production build retains its existing large-chunk warning.
 
 ```sh
 # Development server must already be running:
 node scripts/check-room-dev.mjs http://127.0.0.1:4321
 node scripts/check-forest-dev.mjs http://127.0.0.1:4321
+node scripts/check-ground-dev.mjs http://127.0.0.1:4321
 ```
 
 The forest HTTP check verifies nested source modules, transformed dependencies and all four served model SHA-256 hashes. Geometry tests decode all four actual assets with GLTFLoader and Meshopt, then assert upright unit-height grounding and unchanged quantized position arrays. A public loader texture hook skips image decoding in that Node test: it is **not** browser/GPU or appearance proof.

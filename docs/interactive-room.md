@@ -21,6 +21,7 @@ A browser-only 3D view of the original Blender room, linked from the static home
 | Camera math | `src/lib/room/camera.ts` | Plot overview framing and orbit limits; focus framing for the PC and TV screens. |
 | House diorama | `src/components/room/HouseDiorama.tsx`, `src/lib/room/house-layout.ts` | Procedural cutaway house and finite home plot. See [house-diorama.md](house-diorama.md). |
 | Forest | `src/components/room/ForestEnvironment.tsx`, `src/lib/room/forest-layout.ts`, `forest-model.ts` | Locally hosted pine/fir instances, continuous ground and mountains. See [forest-environment.md](forest-environment.md) for assets, license and rebuild steps. |
+| Ground materials | `src/components/room/GroundSurface.tsx`, `src/lib/room/ground-materials.ts` | Local PBR grass/forest-soil/rock layers and matching lawn; see [ground-materials.md](ground-materials.md). |
 | Content | `src/lib/room/content.ts` | Reads `src/utils/projects.json` and `experience.json`, the same data as the homepage. |
 
 Models live in `public/models/room/{office,desk,chair,lounge}.glb` (meshopt + WebP). Each
@@ -108,7 +109,10 @@ pnpm test:room   # node --test tests/room/ (camera, house layout, terminal, day 
 # With pnpm dev running (development module/dependency and asset HTTP checks):
 node scripts/check-room-dev.mjs http://127.0.0.1:4321
 node scripts/check-forest-dev.mjs http://127.0.0.1:4321
+node scripts/check-ground-dev.mjs http://127.0.0.1:4321
 ```
+
+The ground HTTP check covers nested ground modules, transformed dependencies and all nine served texture hashes. These checks are not browser image or GPU rendering proof.
 
 The room HTTP check only scans `RoomScene.tsx` imports. The forest check covers its nested modules, Vite dependencies and self-hosted model hashes. `RoomEnvironment` is now imported by
 `RoomAtmosphere.tsx`; it remains listed in `optimizeDeps.include`.

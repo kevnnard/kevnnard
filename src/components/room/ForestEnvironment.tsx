@@ -27,6 +27,7 @@ import {
   WORLD,
 } from "@/lib/room/forest-layout.ts";
 import { treeFrame } from "@/lib/room/forest-model.ts";
+import { GroundSurface } from "./GroundSurface";
 
 const MODELS = ["pine-near", "pine-far", "fir-near", "fir-far"] as const;
 const URLS = MODELS.map((name) => `/models/forest/${name}.glb`);
@@ -175,17 +176,8 @@ export const ForestEnvironment = memo(function ForestEnvironment() {
   useEffect(() => () => mountains.dispose(), [mountains]);
   return (
     <group name="forest-environment">
-      <mesh
-        position={[0, WORLD.groundY - 0.01, 0]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        receiveShadow
-      >
-        <planeGeometry args={[WORLD.size, WORLD.size]} />
-        <meshStandardMaterial color="#526e42" roughness={1} />
-      </mesh>
-      <mesh geometry={mountains} receiveShadow>
-        <meshStandardMaterial vertexColors roughness={1} />
-      </mesh>
+      {/* Vertex colors are only the loading fallback; textures replace them. */}
+      <GroundSurface terrain={mountains} />
       <Suspense fallback={null}>
         <ForestModels />
       </Suspense>

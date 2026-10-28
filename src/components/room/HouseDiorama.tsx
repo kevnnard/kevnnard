@@ -28,6 +28,7 @@ import {
   TREES,
   type Vec3,
 } from "@/lib/room/house-layout.ts";
+import { LawnSurface } from "./GroundSurface";
 
 // Warm, matte finishes so the shell stays quieter than the original room.
 const FINISHES: Record<Finish, string> = {
@@ -177,14 +178,11 @@ export const HouseDiorama = memo(function HouseDiorama({
 
   return (
     <group name="house-diorama">
-      {/* Box faces: +x, -x, +y, -y, +z, -z. Only the top is grass. */}
-      <mesh
-        name="plot"
-        geometry={geometries.box}
-        material={[soil, soil, grass, soil, soil, soil]}
-        position={centerOf(PLOT)}
-        scale={sizeOf(PLOT)}
-        receiveShadow
+      <LawnSurface
+        box={geometries.box}
+        plot={PLOT}
+        soil={soil}
+        fallback={grass}
       />
       {PARTS.map((part) => (
         <mesh
