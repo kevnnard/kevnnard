@@ -10,6 +10,12 @@ Optimizes with the pinned glTF Transform CLI 4.5.1 (set GLTF_TRANSFORM to an
 already cached binary to avoid `pnpm dlx`; it is not an app dependency).
 Writes public/world/models/<kind>.glb and public/world/credits.json (S4: every
 author is credited, even under CC0).
+
+StylizedTextures step (T4e): `python3 scripts/prepare-world.py --textures` only
+refreshes the house textures and their credits. Drive ids come from
+node_modules/.cache/world/explore/picks.tsv (rows of the pack's catalog CSV);
+the 4K PNGs are cached in node_modules/.cache/world/textures/ and downscaled to
+1024 WebP with cwebp (CWEBP overrides /opt/homebrew/bin/cwebp).
 """
 import hashlib
 import json
@@ -18,6 +24,7 @@ from pathlib import Path
 import shlex
 import struct
 import subprocess
+import sys
 import urllib.parse
 import urllib.request
 
@@ -110,6 +117,129 @@ ORIGINAL = [
 ]
 
 
+TEXTURE_PACK = {
+    "id": "stylizedtextures",
+    "pack": "StylizedTextures",
+    "author": "CreativeTrio",
+    "authorUrl": "https://creativetrio.art",
+    "license": "CC0-1.0",
+    "licenseUrl": CC0_URL,
+    "source": "https://stylizedtextures.com",
+    "licenseEvidence": {
+        "url": "https://stylizedtextures.com/faq",
+        "quote": "They are released under the CC0 (Creative Commons Zero) license",
+    },
+}
+# Only these materials ship: walls, floor, roofs and the gaming chair.
+TEXTURES = ["Stylized_Wood_Planks_001", "Stylized_Wood_Floor_001",
+            "Stylized_Wood_Shingles_001", "Stylized_Leather_Patch_001"]
+# Map name, catalog column (after the material name), cwebp encoding.
+MAPS = [("color", 0, ["-q", "82"]), ("normal", 1, ["-lossless", "-z", "9"]),
+        ("roughness", 2, ["-q", "70"])]
+CWEBP = os.environ.get("CWEBP", "/opt/homebrew/bin/cwebp")
+DWEBP = str(Path(CWEBP).with_name("dwebp"))
+TEXTURE_SIZE = 1024
+
+
+def drive_url(view_url):
+    file_id = urllib.parse.parse_qs(urllib.parse.urlparse(view_url).query)["id"][0]
+    return "https://drive.google.com/uc?export=download&id=" + file_id
+
+
+def webp_size(data):
+    if data[:4] != b"RIFF" or data[8:12] != b"WEBP":
+        raise ValueError("Output is not a WebP")
+    chunk = data[12:16]
+    if chunk == b"VP8 ":
+        return (struct.unpack_from("<H", data, 26)[0] & 0x3FFF,
+                struct.unpack_from("<H", data, 28)[0] & 0x3FFF)
+    if chunk == b"VP8L":
+        bits = struct.unpack_from("<I", data, 21)[0]
+        return (bits & 0x3FFF) + 1, ((bits >> 14) & 0x3FFF) + 1
+    if chunk == b"VP8X":
+        return (int.from_bytes(data[24:27], "little") + 1,
+                int.from_bytes(data[27:30], "little") + 1)
+    raise ValueError("Unknown WebP chunk")
+
+
+def mean_linear(webp):
+    """Mean linear RGB of a color map: the runtime divides by it, so the map
+    adds detail around the house's own pastel vertex colors."""
+    ppm = CACHE / "textures" / "mean.ppm"
+    subprocess.run([DWEBP, str(webp), "-scale", "64", "64", "-ppm", "-o", str(ppm)],
+                   check=True, capture_output=True)
+    data = ppm.read_bytes()
+    fields = data.split(maxsplit=4)
+    pixels = fields[4]
+    lut = [((c / 255 + 0.055) / 1.055) ** 2.4 if c > 10 else c / 255 / 12.92
+           for c in range(256)]
+    count = len(pixels) // 3
+    return [round(sum(lut[b] for b in pixels[k::3]) / count, 4) for k in range(3)]
+
+
+def prepare_textures():
+    license_page = fetch(TEXTURE_PACK["licenseEvidence"]["url"]).decode("utf-8")
+    if TEXTURE_PACK["licenseEvidence"]["quote"] not in license_page:
+        raise ValueError("StylizedTextures FAQ does not state CC0")
+    picks = {}
+    for line in (CACHE / "explore" / "picks.tsv").read_text(encoding="utf-8").splitlines():
+        name, *urls = line.split("\t")
+        picks[name] = urls
+    (CACHE / "textures").mkdir(parents=True, exist_ok=True)
+    (OUTPUT / "textures").mkdir(parents=True, exist_ok=True)
+    entries = []
+    for name in TEXTURES:
+        for kind, column, flags in MAPS:
+            url = drive_url(picks[name][column])
+            source = CACHE / "textures" / ("%s-%s.png" % (name, kind))
+            if not source.exists():
+                source.write_bytes(fetch(url))
+            raw = source.read_bytes()
+            if raw[:8] != b"\x89PNG\r\n\x1a\n":
+                raise ValueError("%s %s is not a PNG" % (name, kind))
+            target = OUTPUT / "textures" / ("%s-%s.webp" % (name, kind))
+            subprocess.run([CWEBP, *flags, "-metadata", "none", "-resize",
+                            str(TEXTURE_SIZE), str(TEXTURE_SIZE), str(source), "-o", str(target)],
+                           check=True, capture_output=True)
+            data = target.read_bytes()
+            width, height = webp_size(data)
+            if (width, height) != (TEXTURE_SIZE, TEXTURE_SIZE):
+                raise ValueError("%s is %dx%d" % (target.name, width, height))
+            entry = {
+                "file": "textures/" + target.name,
+                "asset": name,
+                "map": kind,
+                "pack": TEXTURE_PACK["id"],
+                "author": TEXTURE_PACK["author"],
+                "license": "CC0-1.0",
+                "licenseUrl": CC0_URL,
+                "source": "https://stylizedtextures.com/texture/" + name.lower(),
+                "bytes": len(data),
+                "sha256": hashlib.sha256(data).hexdigest(),
+                "width": width,
+                "height": height,
+                "sourceFiles": [{"url": url, "bytes": len(raw),
+                                 "sha256": hashlib.sha256(raw).hexdigest()}],
+            }
+            if kind == "color":
+                entry["meanLinear"] = mean_linear(target)
+            print(target.name, len(data), "bytes", flush=True)
+            entries.append(entry)
+    print("World textures:", sum(e["bytes"] for e in entries), "bytes", flush=True)
+    return entries
+
+
+def with_textures(credits, textures):
+    packs = [pack for pack in credits["packs"] if pack["id"] != TEXTURE_PACK["id"]]
+    return {**credits, "packs": [*packs, TEXTURE_PACK], "textures": textures,
+            "textureBytes": sum(e["bytes"] for e in textures)}
+
+
+def write_credits(credits):
+    (OUTPUT / "credits.json").write_text(
+        json.dumps(credits, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
 def raw_url(pack, path):
     return "https://raw.githubusercontent.com/%s/%s/%s" % (
         pack["repo"], pack["commit"], urllib.parse.quote(path))
@@ -190,6 +320,10 @@ def prepare(kind, pack_id, paths):
 
 
 if __name__ == "__main__":
+    if sys.argv[1:] == ["--textures"]:
+        current = json.loads((OUTPUT / "credits.json").read_text(encoding="utf-8"))
+        write_credits(with_textures(current, prepare_textures()))
+        sys.exit(0)
     (OUTPUT / "models").mkdir(parents=True, exist_ok=True)
     version = subprocess.run([*CLI, "--version"], capture_output=True, text=True,
                              check=True, cwd=ROOT).stdout.strip()
@@ -198,7 +332,7 @@ if __name__ == "__main__":
     used = sorted({pack_id for _, pack_id, _ in ASSETS})
     packs = [verify_license(pack_id) for pack_id in used]
     assets = [prepare(*spec) for spec in ASSETS]
-    (OUTPUT / "credits.json").write_text(json.dumps({
+    write_credits(with_textures({
         "policy": "Every shipped asset is credited, including CC0 ones (odd/tasks/stylized-house.md S4).",
         "userAgent": AGENT,
         "toolchain": "@gltf-transform/cli " + version,
@@ -208,5 +342,5 @@ if __name__ == "__main__":
         "packs": packs,
         "assets": assets,
         "original": ORIGINAL,
-    }, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    }, prepare_textures()))
     print("World models:", sum(a["bytes"] for a in assets), "bytes", flush=True)

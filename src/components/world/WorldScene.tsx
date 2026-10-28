@@ -1,7 +1,7 @@
 import { CameraControls, CameraControlsImpl } from "@react-three/drei";
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import { MeshoptDecoder } from "meshoptimizer/decoder";
-import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import {
   BackSide,
   Box3,
@@ -30,6 +30,7 @@ import {
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import House from "@/components/world/House";
 import Setup from "@/components/world/Setup";
+import { useSurfaceMaps } from "@/components/world/surfaces";
 import type { RGB } from "@/lib/room/day-cycle.ts";
 import {
   GUIDE,
@@ -102,12 +103,37 @@ export default function WorldScene({
       <WorldLighting hours={hours} />
       <GuidedCamera reducedMotion={reducedMotion} home={home} />
       <Island />
-      <House reducedMotion={reducedMotion} />
-      <Setup hours={hours} />
+      {/* Flat materials until the texture maps arrive (T4e). */}
+      <Suspense
+        fallback={
+          <>
+            <House reducedMotion={reducedMotion} />
+            <Setup hours={hours} />
+          </>
+        }
+      >
+        <TexturedHouse reducedMotion={reducedMotion} hours={hours} />
+      </Suspense>
       <Flowers />
       <Clouds hours={hours} reducedMotion={reducedMotion} />
       <Nature onReady={onReady} />
     </Canvas>
+  );
+}
+
+function TexturedHouse({
+  reducedMotion,
+  hours,
+}: {
+  reducedMotion: boolean;
+  hours: number;
+}) {
+  const maps = useSurfaceMaps();
+  return (
+    <>
+      <House reducedMotion={reducedMotion} maps={maps} />
+      <Setup hours={hours} maps={maps} />
+    </>
   );
 }
 
@@ -223,9 +249,9 @@ function WorldLighting({ hours }: { hours: number }) {
       <directionalLight
         ref={key}
         castShadow
-        shadow-mapSize={[1024, 1024]}
+        shadow-mapSize={[2048, 2048]}
         shadow-bias={-0.0005}
-        shadow-normalBias={0.04}
+        shadow-normalBias={0.03}
         shadow-radius={4}
         shadow-camera-left={-SHADOW_EXTENT}
         shadow-camera-right={SHADOW_EXTENT}

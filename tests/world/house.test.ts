@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { flowerLayout } from "../../src/lib/world/flowers.ts";
+import * as houseModule from "../../src/lib/world/house.ts";
 import {
   HOUSE,
   HOUSE_FOOTPRINT,
@@ -47,6 +48,48 @@ describe("stylized wooden house (T4a, S6)", () => {
       );
       const expected = (wall.to - wall.from) * wall.height - holes;
       assert.ok(Math.abs(area - expected) < 1e-6, `${wall.id} closed`);
+    }
+  });
+
+  it("closes each gable with one sloped panel: no plank or corner above the roof slope", () => {
+    const gables = WALLS.filter((wall) => wall.gable);
+    assert.ok(gables.length >= 3, "gable walls");
+    const meshes = houseMeshes();
+    for (const wall of gables) {
+      const { center, half, rise } = wall.gable ?? {
+        center: 0,
+        half: 1,
+        rise: 0,
+      };
+      const slope = (u: number) =>
+        wall.height + rise * (1 - Math.abs(u - center) / half);
+      // Planks stop at the eave: no stair-stepped rows inside the gable.
+      for (const p of planks(wall))
+        assert.ok(p.v1 <= wall.height + EPS, `${wall.id}: plank above eave`);
+      const panel = houseModule.gablePanel?.(wall);
+      assert.ok(panel, `${wall.id}: gable panel`);
+      for (const [u, v] of panel) {
+        assert.ok(u >= wall.from - EPS && u <= wall.to + EPS, wall.id);
+        assert.ok(
+          v >= wall.height - EPS && v <= slope(u) + EPS,
+          `${wall.id}: above slope`,
+        );
+      }
+      // Its top edges run on the slope: the corners at both ends and the apex.
+      const top = panel.filter(([, v]) => v > wall.height + EPS);
+      assert.ok(
+        top.some(
+          ([u, v]) =>
+            Math.abs(u - center) < EPS &&
+            Math.abs(v - wall.height - rise) < EPS,
+        ),
+      );
+      for (const [u, v] of top)
+        assert.ok(Math.abs(v - slope(u)) < EPS, wall.id);
+      assert.ok(
+        meshes[wall.group].wood.some((part) => part.shape === "prism"),
+        `${wall.id}: panel rendered`,
+      );
     }
   });
 

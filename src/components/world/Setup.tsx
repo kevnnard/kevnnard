@@ -1,21 +1,35 @@
 import { useThree } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useMemo } from "react";
 import {
+  BackSide,
   type Group,
+  type Material,
   Mesh,
   MeshBasicMaterial,
   MeshStandardMaterial,
   Object3D,
 } from "three";
 import { mergeParts } from "@/components/world/House";
+import {
+  bySurface,
+  materialFor,
+  type SurfaceMaps,
+} from "@/components/world/surfaces";
 import { SETUP_COLORS, setupGlow, setupMeshes } from "@/lib/world/setup.ts";
 
 /**
  * Original procedural gaming setup in the main room (T4d). Lives outside the
  * cutaway groups, so it never fades. Screens and RGB are unlit vertex colors
- * scaled by the hour: no extra lights.
+ * scaled by the hour: no extra lights. With `maps` the chair seat and back
+ * are leather (T4e).
  */
-export default function Setup({ hours }: { hours: number }) {
+export default function Setup({
+  hours,
+  maps,
+}: {
+  hours: number;
+  maps?: SurfaceMaps;
+}) {
   const { invalidate } = useThree();
   const { group, glow, materials } = useMemo(() => {
     const meshes = setupMeshes();
@@ -23,6 +37,7 @@ export default function Setup({ hours }: { hours: number }) {
       vertexColors: true,
       roughness: 0.75,
       metalness: 0,
+      shadowSide: BackSide,
     });
     const screens = new MeshBasicMaterial({ vertexColors: true });
     const glass = new MeshStandardMaterial({
@@ -35,15 +50,21 @@ export default function Setup({ hours }: { hours: number }) {
     });
     const setup = new Object3D() as Group;
     setup.name = "house-interior";
-    const body = new Mesh(mergeParts(meshes.solid), solid);
-    body.castShadow = true;
-    body.receiveShadow = true;
+    const owned: Material[] = [solid, screens, glass];
+    const surfaces = new Map<string, MeshStandardMaterial>();
+    for (const [surface, parts] of bySurface(meshes.solid)) {
+      const material = materialFor(surface, solid, maps, surfaces, owned);
+      const body = new Mesh(mergeParts(parts), material);
+      body.castShadow = true;
+      body.receiveShadow = true;
+      setup.add(body);
+    }
     const lit = new Mesh(mergeParts(meshes.glow), screens);
     const pane = new Mesh(mergeParts(meshes.glass), glass);
     pane.renderOrder = 1;
-    setup.add(body, lit, pane);
-    return { group: setup, glow: screens, materials: [solid, screens, glass] };
-  }, []);
+    setup.add(lit, pane);
+    return { group: setup, glow: screens, materials: owned };
+  }, [maps]);
 
   useLayoutEffect(() => {
     glow.color.setScalar(setupGlow(hours));

@@ -63,6 +63,28 @@ fails otherwise (S4). The credits are shown in the "Credits" dialog.
 | KayKit City Builder Bits 1.0 | Kay Lousberg | CC0 1.0 | bushes |
 | Kenney Mini Arena 1.0 | Kenney, Tony Schär | CC0 1.0 | tree |
 | Kenney Starter Kit 3D Platformer | Kenney | CC0 1.0 | grass tufts |
+| StylizedTextures | CreativeTrio | CC0 1.0 | wall planks, floor, roof shingles, chair leather |
+
+### Textures (T4e)
+
+`python3 scripts/prepare-world.py --textures` refreshes only the textures and
+their credits. It reads the Drive ids in
+`node_modules/.cache/world/explore/picks.tsv` (rows of the StylizedTextures
+catalog CSV), checks the FAQ still states CC0, caches the 4K PNGs in
+`node_modules/.cache/world/textures/`, and writes 1024 WebP color (lossy),
+normal (lossless) and roughness (lossy) maps to `public/world/textures/`
+with cwebp. Each map is credited under `textures` in `credits.json` with its
+bytes, hash, size and source file; color maps also record their mean linear
+color, which `src/lib/world/textures.ts` must match
+(`tests/world/textures.test.ts`). Only Wood_Planks_001, Wood_Floor_001,
+Wood_Shingles_001 and Leather_Patch_001 ship (about 5.9 MB).
+
+UVs are box-projected world metres (`boxUv`), so boards stay horizontal on
+every wall and shingles point down both slopes. The shader divides the color
+map by its mean luminance and blends it in partly, so vertex colors keep the
+pastel palette and the map only adds grain. The house shows flat materials
+until the maps load (Suspense fallback). Gables are one sloped plank-textured
+panel each; wall planks stop at the eave.
 
 The flowers, clouds, the wooden house with its garage and the gaming setup
 in its main room are original procedural geometry

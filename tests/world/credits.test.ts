@@ -78,7 +78,9 @@ describe("credits.json (S4: every author is credited, even CC0)", () => {
 
   it("keeps license evidence for every pack", () => {
     const data = credits();
-    const used = new Set(data.assets.map((entry) => entry.pack));
+    const used = new Set(
+      [...data.assets, ...(data.textures ?? [])].map((entry) => entry.pack),
+    );
     assert.deepEqual(
       data.packs.map((pack) => pack.id).sort(),
       [...used].sort(),

@@ -18,6 +18,9 @@ export const OFFICIAL_HOSTS: readonly string[] = [
   "poly.pizza",
   "static.poly.pizza",
   "kenney.nl",
+  // StylizedTextures: the site, and the Drive files its catalog links to.
+  "stylizedtextures.com",
+  "drive.google.com",
 ];
 
 export interface SourceFile {
@@ -52,6 +55,15 @@ export interface CreditEntry {
   sourceFiles: SourceFile[];
 }
 
+/** One shipped texture map (T4e). */
+export interface TextureCredit extends CreditEntry {
+  map: string;
+  width: number;
+  height: number;
+  /** Mean linear RGB, color maps only: the runtime normalizes by it. */
+  meanLinear?: [number, number, number];
+}
+
 /** Work made for this project (no download): same license as the repository. */
 export const ORIGINAL_LICENSE = "Original work (repository license)";
 
@@ -67,6 +79,7 @@ export interface OriginalCredit {
 export interface Credits {
   packs: CreditPack[];
   assets: CreditEntry[];
+  textures?: TextureCredit[];
   original?: OriginalCredit[];
 }
 
@@ -86,7 +99,7 @@ export function creditProblems(credits: Credits): string[] {
   const problems: string[] = [];
   const packs = new Set(credits.packs.map((pack) => pack.id));
   const seen = new Set<string>();
-  for (const entry of credits.assets) {
+  for (const entry of [...credits.assets, ...(credits.textures ?? [])]) {
     const name = entry.file;
     if (seen.has(name)) {
       problems.push(`${name}: credited twice`);

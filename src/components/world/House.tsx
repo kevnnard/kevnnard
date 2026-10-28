@@ -1,6 +1,7 @@
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import {
+  BackSide,
   BoxGeometry,
   BufferAttribute,
   BufferGeometry,
@@ -16,6 +17,11 @@ import {
   Quaternion,
   Vector3,
 } from "three";
+import {
+  bySurface,
+  materialFor,
+  type SurfaceMaps,
+} from "@/components/world/surfaces";
 import { cutaway } from "@/lib/world/cutaway.ts";
 import {
   HOUSE_COLORS,
@@ -24,6 +30,7 @@ import {
   houseMeshes,
   type Part,
 } from "@/lib/world/house.ts";
+import { boxUv } from "@/lib/world/textures.ts";
 
 /** Object names, one per cutaway group. */
 export const HOUSE_NAMES = Object.fromEntries(
@@ -37,14 +44,16 @@ const EASE = 12;
 
 /**
  * Screen-door transparency: a 4x4 ordered dither discards a `uFade` share of
- * the pixels. Stays opaque (no sorting) and keeps the vertex colors.
+ * the pixels. Stays opaque (no sorting) and keeps the vertex colors; runs
+ * after the source's own patch (the textured surfaces).
  */
 function cutawayMaterial(
   source: MeshStandardMaterial,
   fade: { value: number },
 ): MeshStandardMaterial {
   const material = source.clone();
-  material.onBeforeCompile = (shader) => {
+  material.onBeforeCompile = (shader, renderer) => {
+    source.onBeforeCompile(shader, renderer);
     shader.uniforms.uFade = fade;
     shader.fragmentShader = shader.fragmentShader
       .replace(
@@ -64,7 +73,7 @@ function cutawayMaterial(
       );
   };
   material.customProgramCacheKey = () =>
-    `house-cutaway-${source.transparent ? "glass" : "wood"}`;
+    `house-cutaway-${source.transparent ? "glass" : "wood"}-${source.userData.surface ?? "flat"}`;
   return material;
 }
 
@@ -79,16 +88,64 @@ const scratch = {
   color: new Color(),
 };
 
-/** Merges the parts into one vertex-colored geometry: one draw per mesh. */
+/** A convex counter-clockwise outline extruded from z -0.5 to 0.5. */
+function prismGeometry(profile: [number, number][]): BufferGeometry {
+  const positions: number[] = [];
+  const normals: number[] = [];
+  const indices: number[] = [];
+  const n = profile.length;
+  for (const z of [0.5, -0.5]) {
+    const base = positions.length / 3;
+    for (const [x, y] of profile) {
+      positions.push(x, y, z);
+      normals.push(0, 0, Math.sign(z));
+    }
+    for (let i = 1; i < n - 1; i++)
+      if (z > 0) indices.push(base, base + i, base + i + 1);
+      else indices.push(base, base + i + 1, base + i);
+  }
+  for (let i = 0; i < n; i++) {
+    const [ax, ay] = profile[i];
+    const [bx, by] = profile[(i + 1) % n];
+    const length = Math.hypot(bx - ax, by - ay) || 1;
+    const [nx, ny] = [(by - ay) / length, -(bx - ax) / length];
+    const base = positions.length / 3;
+    positions.push(ax, ay, 0.5, bx, by, 0.5, bx, by, -0.5, ax, ay, -0.5);
+    for (let k = 0; k < 4; k++) normals.push(nx, ny, 0);
+    indices.push(base, base + 3, base + 2, base, base + 2, base + 1);
+  }
+  const geometry = new BufferGeometry();
+  geometry.setAttribute(
+    "position",
+    new BufferAttribute(new Float32Array(positions), 3),
+  );
+  geometry.setAttribute(
+    "normal",
+    new BufferAttribute(new Float32Array(normals), 3),
+  );
+  geometry.setIndex(indices);
+  return geometry;
+}
+
+/**
+ * Merges the parts into one vertex-colored geometry: one draw per mesh. UVs
+ * are box-projected world metres, so textures line up across parts.
+ */
 export function mergeParts(parts: Part[]): BufferGeometry {
   const box = new BoxGeometry(1, 1, 1);
   const round = new CylinderGeometry(0.5, 0.5, 1, 10);
   const positions: number[] = [];
   const normals: number[] = [];
   const colors: number[] = [];
+  const uvs: number[] = [];
   const indices: number[] = [];
   for (const part of parts) {
-    const source = part.shape === "box" ? box : round;
+    const source =
+      part.shape === "prism"
+        ? prismGeometry(part.profile ?? [])
+        : part.shape === "box"
+          ? box
+          : round;
     const { matrix, normals: normalMatrix, vertex, color } = scratch;
     scratch.rotation.setFromEuler(
       scratch.euler.set(...(part.rotation ?? [0, 0, 0])),
@@ -105,15 +162,18 @@ export function mergeParts(parts: Part[]): BufferGeometry {
     const normal = source.getAttribute("normal");
     for (let i = 0; i < position.count; i++) {
       vertex.fromBufferAttribute(position, i).applyMatrix4(matrix);
-      positions.push(vertex.x, vertex.y, vertex.z);
+      const world: [number, number, number] = [vertex.x, vertex.y, vertex.z];
+      positions.push(...world);
       vertex.fromBufferAttribute(normal, i).applyMatrix3(normalMatrix);
       vertex.normalize();
       normals.push(vertex.x, vertex.y, vertex.z);
       colors.push(color.r, color.g, color.b);
+      uvs.push(...boxUv(world, [vertex.x, vertex.y, vertex.z]));
     }
     const index = source.getIndex();
     if (index)
       for (let i = 0; i < index.count; i++) indices.push(base + index.getX(i));
+    if (part.shape === "prism") source.dispose();
   }
   box.dispose();
   round.dispose();
@@ -130,6 +190,7 @@ export function mergeParts(parts: Part[]): BufferGeometry {
     "color",
     new BufferAttribute(new Float32Array(colors), 3),
   );
+  geometry.setAttribute("uv", new BufferAttribute(new Float32Array(uvs), 2));
   geometry.setIndex(indices);
   geometry.computeBoundingSphere();
   return geometry;
@@ -144,14 +205,23 @@ interface FadeGroup {
  * Original procedural wooden house and garage on the island pad. Walls,
  * floor and roof cast and receive shadows; the glass does not, so the sun
  * by day and the moon by night draw window patches on the empty floor.
- * Zooming in dissolves the roofs and camera-facing walls (T4c).
+ * Zooming in dissolves the roofs and camera-facing walls (T4c). With `maps`
+ * the planks, floor and roofs are textured (T4e); without, they stay flat.
  */
-export default function House({ reducedMotion }: { reducedMotion: boolean }) {
+export default function House({
+  reducedMotion,
+  maps,
+}: {
+  reducedMotion: boolean;
+  maps?: SurfaceMaps;
+}) {
   const { group, materials, fades } = useMemo(() => {
     const wood = new MeshStandardMaterial({
       vertexColors: true,
       roughness: 0.9,
       metalness: 0,
+      // Closed boxes cast from their back faces: no acne on lit faces.
+      shadowSide: BackSide,
     });
     const glass = new MeshStandardMaterial({
       color: HOUSE_COLORS.glass,
@@ -162,6 +232,7 @@ export default function House({ reducedMotion }: { reducedMotion: boolean }) {
       depthWrite: false,
     });
     const owned: MeshStandardMaterial[] = [wood, glass];
+    const surfaces = new Map<string, MeshStandardMaterial>();
     const fading = new Map<HouseGroup, FadeGroup>();
     const meshes = houseMeshes();
     const house = new Object3D() as Group;
@@ -170,18 +241,21 @@ export default function House({ reducedMotion }: { reducedMotion: boolean }) {
       const part = new Object3D();
       part.name = HOUSE_NAMES[name];
       const fade = { value: 0 };
-      const [solidMaterial, glassMaterial] =
-        name === "base"
-          ? [wood, glass]
-          : [cutawayMaterial(wood, fade), cutawayMaterial(glass, fade)];
-      if (name !== "base") {
-        owned.push(solidMaterial, glassMaterial);
-        fading.set(name, { object: part, fade });
+      const faded = (material: MeshStandardMaterial) => {
+        if (name === "base") return material;
+        const copy = cutawayMaterial(material, fade);
+        owned.push(copy);
+        return copy;
+      };
+      const glassMaterial = faded(glass);
+      if (name !== "base") fading.set(name, { object: part, fade });
+      for (const [surface, parts] of bySurface(meshes[name].wood)) {
+        const material = materialFor(surface, wood, maps, surfaces, owned);
+        const solid = new Mesh(mergeParts(parts), faded(material));
+        solid.castShadow = true;
+        solid.receiveShadow = true;
+        part.add(solid);
       }
-      const solid = new Mesh(mergeParts(meshes[name].wood), solidMaterial);
-      solid.castShadow = true;
-      solid.receiveShadow = true;
-      part.add(solid);
       if (meshes[name].glass.length > 0) {
         const panes = new Mesh(mergeParts(meshes[name].glass), glassMaterial);
         panes.castShadow = false;
@@ -192,7 +266,7 @@ export default function House({ reducedMotion }: { reducedMotion: boolean }) {
       house.add(part);
     }
     return { group: house, materials: owned, fades: fading };
-  }, []);
+  }, [maps]);
 
   const position = useRef<[number, number, number]>([0, 0, 0]);
   useFrame(({ camera, invalidate }, delta) => {

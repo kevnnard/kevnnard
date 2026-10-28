@@ -57,6 +57,19 @@
         "url": "https://raw.githubusercontent.com/KenneyNL/Starter-Kit-3D-Platformer/3fa8a04b1c01ab23db43123d4ce814a34c3fc7f0/README.md",
         "quote": "Assets included in this package (2D sprites, 3D models and sound effects) are [CC0 licensed]"
       }
+    },
+    {
+      "id": "stylizedtextures",
+      "pack": "StylizedTextures",
+      "author": "CreativeTrio",
+      "authorUrl": "https://creativetrio.art",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source": "https://stylizedtextures.com",
+      "licenseEvidence": {
+        "url": "https://stylizedtextures.com/faq",
+        "quote": "They are released under the CC0 (Creative Commons Zero) license"
+      }
     }
   ],
   "assets": [
@@ -365,5 +378,280 @@
       "license": "Original work (repository license)",
       "source": "src/lib/world/setup.ts"
     }
-  ]
+  ],
+  "textures": [
+    {
+      "file": "textures/Stylized_Wood_Planks_001-color.webp",
+      "asset": "Stylized_Wood_Planks_001",
+      "map": "color",
+      "pack": "stylizedtextures",
+      "author": "CreativeTrio",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source": "https://stylizedtextures.com/texture/stylized_wood_planks_001",
+      "bytes": 99576,
+      "sha256": "82978c71c7b3541190febb6f5536b3641b91e9b8c7b15325a04d582feb167f32",
+      "width": 1024,
+      "height": 1024,
+      "sourceFiles": [
+        {
+          "url": "https://drive.google.com/uc?export=download&id=1ye85e97DDseOlS06OIRUIs7Q7Pywnytj",
+          "bytes": 8460200,
+          "sha256": "fcac09bfe70f9cfe17d3bef777f12f023896ed09580cc365d5120f08647a8d6a"
+        }
+      ],
+      "meanLinear": [
+        0.04,
+        0.0167,
+        0.0047
+      ]
+    },
+    {
+      "file": "textures/Stylized_Wood_Planks_001-normal.webp",
+      "asset": "Stylized_Wood_Planks_001",
+      "map": "normal",
+      "pack": "stylizedtextures",
+      "author": "CreativeTrio",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source": "https://stylizedtextures.com/texture/stylized_wood_planks_001",
+      "bytes": 461178,
+      "sha256": "19d845dc3f627dccd3829bd1fca11053c665b6b24061b496ef670687d5686821",
+      "width": 1024,
+      "height": 1024,
+      "sourceFiles": [
+        {
+          "url": "https://drive.google.com/uc?export=download&id=1UcVCrWkpSVj-GcER2imYfO0zeIhhQb-p",
+          "bytes": 6127604,
+          "sha256": "a3e6c9f786653d64d2044ddb45f0e693c0299e6ca600ca85b8f424dbdc25ad73"
+        }
+      ]
+    },
+    {
+      "file": "textures/Stylized_Wood_Planks_001-roughness.webp",
+      "asset": "Stylized_Wood_Planks_001",
+      "map": "roughness",
+      "pack": "stylizedtextures",
+      "author": "CreativeTrio",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source": "https://stylizedtextures.com/texture/stylized_wood_planks_001",
+      "bytes": 14882,
+      "sha256": "b0000f74b8e37936f29ca03fb484418846968450c67e0ab19493d9fd56200b1a",
+      "width": 1024,
+      "height": 1024,
+      "sourceFiles": [
+        {
+          "url": "https://drive.google.com/uc?export=download&id=1uxGy1pFi1W-rqatt3UbZW4KabmZwjFC-",
+          "bytes": 1015692,
+          "sha256": "0a3a1d17edcdb1ee205ca68c474a0436f42aae0f748a6b390f22935ef6102d7f"
+        }
+      ]
+    },
+    {
+      "file": "textures/Stylized_Wood_Floor_001-color.webp",
+      "asset": "Stylized_Wood_Floor_001",
+      "map": "color",
+      "pack": "stylizedtextures",
+      "author": "CreativeTrio",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source": "https://stylizedtextures.com/texture/stylized_wood_floor_001",
+      "bytes": 206678,
+      "sha256": "f689d5916cf27a0af311439702239b2b10be949eb5036ae7612d8398c58fac28",
+      "width": 1024,
+      "height": 1024,
+      "sourceFiles": [
+        {
+          "url": "https://drive.google.com/uc?export=download&id=1CR3JwwknFUfUq-qnMNpNszHXk2L13L-L",
+          "bytes": 13405506,
+          "sha256": "588d60c0377b44d17cf0b9f8f6f69d5a331906bc95edccba8147de16949081fc"
+        }
+      ],
+      "meanLinear": [
+        0.1641,
+        0.0779,
+        0.0533
+      ]
+    },
+    {
+      "file": "textures/Stylized_Wood_Floor_001-normal.webp",
+      "asset": "Stylized_Wood_Floor_001",
+      "map": "normal",
+      "pack": "stylizedtextures",
+      "author": "CreativeTrio",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source": "https://stylizedtextures.com/texture/stylized_wood_floor_001",
+      "bytes": 1354914,
+      "sha256": "ad7a89388adc3f2395836c95a81e0ae952e92c8518c1bcc8d01e01d9dde39220",
+      "width": 1024,
+      "height": 1024,
+      "sourceFiles": [
+        {
+          "url": "https://drive.google.com/uc?export=download&id=1jqrMWo1glNNcqREHSyO63FvkRZ1wuF_D",
+          "bytes": 16862215,
+          "sha256": "153f4deb6efd5e6af27832124ac01eb09423ed2d527c18d60acbd6b70feabc25"
+        }
+      ]
+    },
+    {
+      "file": "textures/Stylized_Wood_Floor_001-roughness.webp",
+      "asset": "Stylized_Wood_Floor_001",
+      "map": "roughness",
+      "pack": "stylizedtextures",
+      "author": "CreativeTrio",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source": "https://stylizedtextures.com/texture/stylized_wood_floor_001",
+      "bytes": 9180,
+      "sha256": "a4459cc087061cc5544ba7e2e2a391e00d08d98abd327b042a95488a9df2a820",
+      "width": 1024,
+      "height": 1024,
+      "sourceFiles": [
+        {
+          "url": "https://drive.google.com/uc?export=download&id=1DOgPKedQOuGq4j1_ojGQKxQrfMB9uRkC",
+          "bytes": 72318,
+          "sha256": "5a100be8159a9d3977e90a35cc2ce2ee91ea752ef768fd9bdacc4029c347a9a5"
+        }
+      ]
+    },
+    {
+      "file": "textures/Stylized_Wood_Shingles_001-color.webp",
+      "asset": "Stylized_Wood_Shingles_001",
+      "map": "color",
+      "pack": "stylizedtextures",
+      "author": "CreativeTrio",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source": "https://stylizedtextures.com/texture/stylized_wood_shingles_001",
+      "bytes": 190772,
+      "sha256": "42b46efb1e2b24c4b4187472424c1fa8915b7dfac55e04ad9c8ae7bbaa326555",
+      "width": 1024,
+      "height": 1024,
+      "sourceFiles": [
+        {
+          "url": "https://drive.google.com/uc?export=download&id=1S6l5DuRqTTntGKjzYpoT3FZWWdsO0LZT",
+          "bytes": 20820769,
+          "sha256": "6cadb0692cd3f6d90ba5d267d7e43aa82321f680b96ec73f55ff6671b13f5536"
+        }
+      ],
+      "meanLinear": [
+        0.097,
+        0.1579,
+        0.4217
+      ]
+    },
+    {
+      "file": "textures/Stylized_Wood_Shingles_001-normal.webp",
+      "asset": "Stylized_Wood_Shingles_001",
+      "map": "normal",
+      "pack": "stylizedtextures",
+      "author": "CreativeTrio",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source": "https://stylizedtextures.com/texture/stylized_wood_shingles_001",
+      "bytes": 1401532,
+      "sha256": "c1195796adf08b16691fcc53a3db25665f8bd4e907b657cfb612e7f3298cbc23",
+      "width": 1024,
+      "height": 1024,
+      "sourceFiles": [
+        {
+          "url": "https://drive.google.com/uc?export=download&id=1uwC1U24CrQ_08lGQin8rryQN2HCnSoPE",
+          "bytes": 29095770,
+          "sha256": "bb7790bf00e4c2e327b4da44e05c36a34594d5f9a481df34acd65fec47d0efca"
+        }
+      ]
+    },
+    {
+      "file": "textures/Stylized_Wood_Shingles_001-roughness.webp",
+      "asset": "Stylized_Wood_Shingles_001",
+      "map": "roughness",
+      "pack": "stylizedtextures",
+      "author": "CreativeTrio",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source": "https://stylizedtextures.com/texture/stylized_wood_shingles_001",
+      "bytes": 16650,
+      "sha256": "3091e1f1b01e28e941cd26488848eeff3729657c3a4971da5ba470c8c342186d",
+      "width": 1024,
+      "height": 1024,
+      "sourceFiles": [
+        {
+          "url": "https://drive.google.com/uc?export=download&id=1U94Ko25PjbVC9ghtPoZfAojKjdn3Zr6v",
+          "bytes": 4112427,
+          "sha256": "6d538f0d36cd5c00ec4ea9190baf0515424e463b35cdf456f0dc388f74f6b399"
+        }
+      ]
+    },
+    {
+      "file": "textures/Stylized_Leather_Patch_001-color.webp",
+      "asset": "Stylized_Leather_Patch_001",
+      "map": "color",
+      "pack": "stylizedtextures",
+      "author": "CreativeTrio",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source": "https://stylizedtextures.com/texture/stylized_leather_patch_001",
+      "bytes": 197800,
+      "sha256": "19b33bb22bc5c5366a1fed2c9c309d1df5bf2f45426ff9eb468372012e7b6840",
+      "width": 1024,
+      "height": 1024,
+      "sourceFiles": [
+        {
+          "url": "https://drive.google.com/uc?export=download&id=11oxdQyrUoBoFi7955fNSVUni_M4S0n0F",
+          "bytes": 18700171,
+          "sha256": "b0235daf48e77f963c3dc320ca26607ce7b2d1ccc469711dbc477c5b3c62a4f0"
+        }
+      ],
+      "meanLinear": [
+        0.2299,
+        0.1499,
+        0.1204
+      ]
+    },
+    {
+      "file": "textures/Stylized_Leather_Patch_001-normal.webp",
+      "asset": "Stylized_Leather_Patch_001",
+      "map": "normal",
+      "pack": "stylizedtextures",
+      "author": "CreativeTrio",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source": "https://stylizedtextures.com/texture/stylized_leather_patch_001",
+      "bytes": 1936726,
+      "sha256": "62a69f08888d5344989f05ef8cd8cb2e8bf861e056811a9240007ada8c529e76",
+      "width": 1024,
+      "height": 1024,
+      "sourceFiles": [
+        {
+          "url": "https://drive.google.com/uc?export=download&id=1N2ULt3ueo6PifaEllbc5QYiWWLk7LTsP",
+          "bytes": 36859017,
+          "sha256": "ca6f1912710f8b25d20b1cd8010acfc9e7c6a14533da2421b256a2d0c70ba966"
+        }
+      ]
+    },
+    {
+      "file": "textures/Stylized_Leather_Patch_001-roughness.webp",
+      "asset": "Stylized_Leather_Patch_001",
+      "map": "roughness",
+      "pack": "stylizedtextures",
+      "author": "CreativeTrio",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source": "https://stylizedtextures.com/texture/stylized_leather_patch_001",
+      "bytes": 1926,
+      "sha256": "41dafdca0e336b52a0adf453c7bf9699735708754ecc33769d162ca11ae2b6e1",
+      "width": 1024,
+      "height": 1024,
+      "sourceFiles": [
+        {
+          "url": "https://drive.google.com/uc?export=download&id=1O1JYFnHbZhX-E_AjdE6Wx7RQihWcpVzi",
+          "bytes": 2131,
+          "sha256": "7f5c8b79afe2dd2120f9a1838db0a965cc473492f0b8e6f9fb0d6b24d7983ff0"
+        }
+      ]
+    }
+  ],
+  "textureBytes": 5891814
 }

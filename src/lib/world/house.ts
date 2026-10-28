@@ -6,6 +6,7 @@
 
 import { PAD } from "./island.ts";
 import { seededRandom } from "./random.ts";
+import type { Surface } from "./textures.ts";
 
 export type Vec3 = [number, number, number];
 
@@ -25,9 +26,14 @@ export const HOUSE_COLORS = {
   glass: "#d9f1f6",
 } as const;
 
-/** A box, or a 10-sided cylinder ("round", axis along y), scaled to `size`. */
+/**
+ * A box, a 10-sided cylinder ("round", axis along y) or a "prism" (convex
+ * `profile` in the unit xy square, extruded along z), scaled to `size`.
+ */
 export interface Part {
-  shape: "box" | "round";
+  shape: "box" | "round" | "prism";
+  /** Prism outline, counter-clockwise, within [-0.5, 0.5]. */
+  profile?: [number, number][];
   center: Vec3;
   size: Vec3;
   /** Euler XYZ radians. */
@@ -35,6 +41,8 @@ export interface Part {
   color: string;
   /** Multiplies the color: the subtle per-plank variation. */
   shade: number;
+  /** Textured surface (T4e); untextured trim and fittings have none. */
+  surface?: Surface;
 }
 
 /**
@@ -269,26 +277,33 @@ export interface Plank {
   lift: number;
 }
 
-const wallTop = (wall: Wall) => wall.height + (wall.gable?.rise ?? 0);
-
-/** Wall extent along u at height v: narrows inside the gable. */
-function spanAt(wall: Wall, v: number): [number, number] {
-  if (!wall.gable || v <= wall.height + 1e-9) return [wall.from, wall.to];
+/**
+ * The gable above the eave, as one sloped outline in (u, v): eave corners,
+ * the slope clipped at both wall ends, and the ridge apex. Counter-clockwise;
+ * null for walls without a gable.
+ */
+export function gablePanel(wall: Wall): [number, number][] | null {
+  if (!wall.gable) return null;
   const { center, half, rise } = wall.gable;
-  const reach = half * (1 - (v - wall.height) / rise);
+  const slope = (u: number) =>
+    wall.height + rise * (1 - Math.abs(u - center) / half);
   return [
-    Math.max(wall.from, center - reach),
-    Math.min(wall.to, center + reach),
+    [wall.from, wall.height],
+    [wall.to, wall.height],
+    [wall.to, slope(wall.to)],
+    [center, wall.height + rise],
+    [wall.from, slope(wall.from)],
   ];
 }
 
 /**
- * Horizontal planks laid row by row around the openings. A row crossing an
- * opening's sill or head is split there, so every hole is exact.
+ * Horizontal planks laid row by row around the openings, up to the eave (the
+ * gable above is one sloped panel). A row crossing an opening's sill or head
+ * is split there, so every hole is exact.
  */
 export function wallPlanks(wall: Wall, random: () => number): Plank[] {
   const planks: Plank[] = [];
-  const top = wallTop(wall);
+  const top = wall.height;
   const rows = Math.ceil(top / HOUSE.plank - 1e-9);
   for (let row = 0; row < rows; row++) {
     const v0 = row * HOUSE.plank;
@@ -307,8 +322,7 @@ export function wallPlanks(wall: Wall, random: () => number): Plank[] {
       const a = cuts[i];
       const b = cuts[i + 1];
       if (b - a < 1e-6) continue;
-      const [lo, hi] = spanAt(wall, b);
-      if (hi - lo < 0.02) continue;
+      const [lo, hi] = [wall.from, wall.to];
       const holes = wall.openings
         .filter((opening) => opening.v0 < b - 1e-9 && opening.v1 > a + 1e-9)
         .sort((p, q) => p.u0 - q.u0);
@@ -333,6 +347,7 @@ function onWall(
   [du, dv, dn]: Vec3,
   color: string,
   shade = 1,
+  surface?: Surface,
 ): Part {
   const out = wall.at + n * wall.side;
   return {
@@ -341,7 +356,35 @@ function onWall(
     size: wall.axis === "x" ? [du, dv, dn] : [dn, dv, du],
     color,
     shade,
+    ...(surface && { surface }),
   };
+}
+
+/** The gable panel as a plank-textured prism in the wall plane. */
+function gableParts(wall: Wall, wood: Part[]) {
+  const outline = gablePanel(wall);
+  if (!outline) return;
+  const us = outline.map(([u]) => u);
+  const vs = outline.map(([, v]) => v);
+  const [u0, u1] = [Math.min(...us), Math.max(...us)];
+  const [v0, v1] = [Math.min(...vs), Math.max(...vs)];
+  const [um, vm] = [(u0 + u1) / 2, (v0 + v1) / 2];
+  const out = wall.at;
+  wood.push({
+    shape: "prism",
+    profile: outline.map(([u, v]) => [
+      (u - um) / (u1 - u0),
+      (v - vm) / (v1 - v0),
+    ]),
+    center:
+      wall.axis === "x" ? [um, FLOOR_Y + vm, out] : [out, FLOOR_Y + vm, um],
+    size: [u1 - u0, v1 - v0, W],
+    // Local x runs along the wall: world z for walls along z.
+    ...(wall.axis === "z" && { rotation: [0, -Math.PI / 2, 0] as Vec3 }),
+    color: HOUSE_COLORS.plank,
+    shade: 0.97,
+    surface: "planks",
+  });
 }
 
 const FRAME = 0.07;
@@ -497,8 +540,10 @@ function wallParts(
         [p.u1 - p.u0, p.v1 - p.v0, W],
         HOUSE_COLORS.plank,
         p.shade,
+        "planks",
       ),
     );
+  gableParts(wall, wood);
   // Base board, broken by the doors; a top board right under the eave.
   const doors = wall.openings.filter((o) => o.v0 < 0.1);
   let start = wall.from;
@@ -571,6 +616,7 @@ function roofParts(volume: Volume, random: () => number): Part[] {
       color: string,
       shade = 1,
       tilt = 0,
+      surface?: Surface,
     ) =>
       parts.push({
         shape: "box",
@@ -579,8 +625,17 @@ function roofParts(volume: Volume, random: () => number): Part[] {
         rotation: [side * (theta - tilt), 0, 0],
         color,
         shade,
+        ...(surface && { surface }),
       });
-    slab(length / 2, t / 2, [width, t, length], HOUSE_COLORS.roof, 0.82);
+    slab(
+      length / 2,
+      t / 2,
+      [width, t, length],
+      HOUSE_COLORS.roof,
+      0.82,
+      0,
+      "shingles",
+    );
     // Shingle rows from the ridge down, tabs staggered on alternate rows; a
     // flatter tilt lifts each row's lower edge into a soft sawtooth.
     const rows = Math.ceil(length / 0.24);
@@ -602,6 +657,7 @@ function roofParts(volume: Volume, random: () => number): Part[] {
           rotation: [side * (theta - 0.07), 0, 0],
           color: HOUSE_COLORS.roof,
           shade,
+          surface: "shingles",
         });
       }
     }
@@ -641,12 +697,14 @@ const flat = (
   y1: number,
   color: string,
   shade = 1,
+  surface?: Surface,
 ): Part => ({
   shape: "box",
   center: [(rect.x0 + rect.x1) / 2, (y0 + y1) / 2, (rect.z0 + rect.z1) / 2],
   size: [rect.x1 - rect.x0, y1 - y0, rect.z1 - rect.z0],
   color,
   shade,
+  ...(surface && { surface }),
 });
 
 const grow = (rect: Rect, by: number): Rect => ({
@@ -684,6 +742,7 @@ function floorParts(random: () => number): Part[] {
           FLOOR_Y + 0.04,
           HOUSE_COLORS.floor,
           0.92 + random() * 0.12,
+          "floor",
         ),
       );
   }

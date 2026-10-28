@@ -398,10 +398,16 @@ function chair(solid: Part[]) {
     part("round", c(0, 0.26, 0), [0.05, 0.3, 0.05], C.cone),
     part("round", c(0, 0.18, 0), [0.07, 0.12, 0.07], C.chair),
     part("box", c(0, 0.42, 0), [0.3, 0.04, 0.3], C.frame, turn),
-    part("box", c(0, 0.48, 0), [0.52, 0.1, 0.5], C.chair, turn),
+    {
+      ...part("box", c(0, 0.48, 0), [0.52, 0.1, 0.5], C.chair, turn),
+      surface: "leather",
+    },
     part("round", c(-0.25, 0.49, 0), [0.1, 0.48, 0.1], C.chair, side, 1.08),
     part("box", c(0.2, 0.5, 0), [0.06, 0.1, 0.18], C.frame, turn),
-    part("box", back(0.4, 0, 0), [0.1, 0.8, 0.48], C.chair, lean),
+    {
+      ...part("box", back(0.4, 0, 0), [0.1, 0.8, 0.48], C.chair, lean),
+      surface: "leather",
+    },
     part("box", back(0.4, 0.052, 0), [0.01, 0.5, 0.08], C.chairWhite, lean),
     part("round", back(0.68, 0.08, 0), [0.12, 0.3, 0.12], C.chairWhite, side),
     part("round", back(0.18, 0.07, 0), [0.1, 0.3, 0.1], C.chair, side, 1.15),
