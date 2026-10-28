@@ -31,8 +31,9 @@ import {
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import House from "@/components/world/House";
+import Living from "@/components/world/Living";
 import Setup from "@/components/world/Setup";
-import { useSurfaceMaps } from "@/components/world/surfaces";
+import { pastelMaterial, useSurfaceMaps } from "@/components/world/surfaces";
 import type { RGB } from "@/lib/room/day-cycle.ts";
 import {
   GUIDE,
@@ -117,6 +118,9 @@ export default function WorldScene({
           <>
             <House reducedMotion={reducedMotion} />
             <Setup hours={hours} reducedMotion={reducedMotion} />
+            <Suspense fallback={null}>
+              <Living hours={hours} />
+            </Suspense>
           </>
         }
       >
@@ -141,6 +145,9 @@ function TexturedHouse({
     <>
       <House reducedMotion={reducedMotion} maps={maps} />
       <Setup hours={hours} maps={maps} reducedMotion={reducedMotion} />
+      <Suspense fallback={null}>
+        <Living hours={hours} maps={maps} />
+      </Suspense>
     </>
   );
 }
@@ -447,24 +454,6 @@ const TINTS: Record<NatureKind, string> = {
   "tuft-small": PALETTE.foliage,
   bush: PALETTE.foliage,
 };
-const PASTEL_LIFT = 0.22;
-
-function pastelMaterial(source: Material, tint: string): Material {
-  const material = (source as MeshStandardMaterial).clone();
-  material.color.set(tint);
-  material.roughness = 1;
-  material.metalness = 0;
-  material.onBeforeCompile = (shader) => {
-    shader.fragmentShader = shader.fragmentShader.replace(
-      "#include <map_fragment>",
-      `#include <map_fragment>
-      diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0, 0.96, 0.92), ${PASTEL_LIFT.toFixed(2)});`,
-    );
-  };
-  material.customProgramCacheKey = () => `world-pastel-${PASTEL_LIFT}`;
-  return material;
-}
-
 const scratch = {
   placement: new Matrix4(),
   normalize: new Matrix4(),

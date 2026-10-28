@@ -128,3 +128,25 @@ export function materialFor(
   }
   return material;
 }
+
+const PASTEL_LIFT = 0.22;
+
+/**
+ * Clone of a pack material tinted toward the owned pastel palette: the atlas
+ * colors are multiplied by `tint` and lifted toward warm cream.
+ */
+export function pastelMaterial(source: Material, tint: string): Material {
+  const material = (source as MeshStandardMaterial).clone();
+  material.color.set(tint);
+  material.roughness = 1;
+  material.metalness = 0;
+  material.onBeforeCompile = (shader) => {
+    shader.fragmentShader = shader.fragmentShader.replace(
+      "#include <map_fragment>",
+      `#include <map_fragment>
+      diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0, 0.96, 0.92), ${PASTEL_LIFT.toFixed(2)});`,
+    );
+  };
+  material.customProgramCacheKey = () => `world-pastel-${PASTEL_LIFT}`;
+  return material;
+}

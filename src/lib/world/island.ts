@@ -17,10 +17,13 @@ export const ISLAND = {
   seed: 7,
 } as const;
 
-/** Building pad for T4: kept flat and empty, slightly back-left of center. */
+/**
+ * Building pad for T4: kept flat and empty, slightly back of center. Grown
+ * 1.8 m toward +x with the main room for the living area (T4j).
+ */
 export const PAD = {
-  center: [-0.4, -0.5] as const,
-  halfX: 2.9,
+  center: [0.5, -0.5] as const,
+  halfX: 3.8,
   halfZ: 2.5,
   height: 0.05,
 } as const;

@@ -65,6 +65,7 @@ fails otherwise (S4). The credits are shown in the "Credits" dialog.
 | KayKit City Builder Bits 1.0 | Kay Lousberg | CC0 1.0 | bushes |
 | Kenney Mini Arena 1.0 | Kenney, Tony Schär | CC0 1.0 | tree |
 | Kenney Starter Kit 3D Platformer | Kenney | CC0 1.0 | grass tufts |
+| KayKit Furniture Bits 1.0 | Kay Lousberg | CC0 1.0 | sofa, coffee table, TV bench, rug, books, cactus |
 | StylizedTextures | CreativeTrio | CC0 1.0 | wall planks, floor, roof shingles, chair leather, speaker grilles, PC panels |
 
 ### Textures (T4e)
@@ -118,6 +119,31 @@ credited under `original` in `credits.json` with the repository's license.
 Quaternius packs were not used: their pack pages say CC0, but
 quaternius.com/license.html now shows the Quaternius Asset License v1.0, which
 is not CC0. Decide before adding them.
+
+## Living area (T4j)
+
+The main room was widened by 1.8 m (main volume x1 2.25 to 4.05; the pad
+grew to center x 0.5, half width 3.8; three east anchors and the small tufts'
+clearance moved so nature stays off the footprint). The setup keeps the
+shared garage wall; a 0.6 m corridor from the door separates it from the
+living area (`src/lib/world/living.ts`, rendered by `Living.tsx`).
+
+- KayKit Furniture Bits (`python3 scripts/prepare-world.py --living`): sofa
+  (`couch_pillows`) with its back to the front wall, coffee table
+  (`table_low`) on a rug (`rug_rectangle_A`), TV bench (`cabinet_medium`)
+  against the back wall, books on the bench and a cactus on the table. Each
+  model is baked at its placement with box-projected world UVs on `uv1`:
+  wood pieces get the plank normal, roughness and grain maps, the sofa and
+  rug the procedural weave normal, all through the pastel tint
+  (`pastelMaterial`) with vertex AO (`livingOcclusion`).
+- Original rounded parts (credited as `living`): a thin-bezel TV on two feet
+  facing the sofa, its screen glowing with `livingGlow(hours)`; a DualSense-
+  style controller (white shell, black core, curved grips, touchpad, light
+  bar, D-pad and face buttons); four PS5-style game cases with coloured
+  covers and spine strips; three terracotta-potted plants with 8-13 leaves.
+  No Nintendo Switch (tested).
+- `tests/world/living.test.ts` checks the room, setup zone, door swing,
+  window sills, walkways, TV/sofa facing, budget and credits.
 
 ## Budgets
 

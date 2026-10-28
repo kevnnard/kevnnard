@@ -63,7 +63,7 @@ const SOLID_MERGE = {
 };
 
 /** An owned DataTexture over a cached procedural normal map, tiled in metres. */
-function proceduralNormal(spec: SetupMaterial): Texture | null {
+export function proceduralNormal(spec: SetupMaterial): Texture | null {
   if (!spec.normal || !spec.tile) return null;
   const texture = new DataTexture(
     normalPixels(spec.normal),
@@ -84,7 +84,7 @@ function proceduralNormal(spec: SetupMaterial): Texture | null {
 }
 
 /** One material per setup material id; textures it creates join `owned`. */
-function setupMaterial(
+export function setupMaterial(
   spec: SetupMaterial,
   maps: SurfaceMaps | undefined,
   owned: { materials: Material[]; textures: Texture[] },

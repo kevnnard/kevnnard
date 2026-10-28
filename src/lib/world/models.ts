@@ -3,14 +3,16 @@
 
 import { CLOUD_SHAPES } from "./clouds.ts";
 import { KIND_SPECS, type NatureKind } from "./layout.ts";
+import { LIVING_FILES } from "./living.ts";
 
 export const MODEL_FILES = Object.fromEntries(
   Object.keys(KIND_SPECS).map((kind) => [kind, `/world/models/${kind}.glb`]),
 ) as Record<NatureKind, string>;
 
-/** Single props outside the island layout (T4i). */
+/** Single props outside the island layout: steam (T4i), living area (T4j). */
 export const PROP_FILES = {
   coffeeSteam: "/world/models/coffee-steam.glb",
+  ...LIVING_FILES,
 } as const;
 
 /**

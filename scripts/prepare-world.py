@@ -22,6 +22,10 @@ refreshes the coffee steam model and the credits for the effects ported from
 his my-room-in-3d (used with his permission, odd/tasks/stylized-house.md L25).
 Sources are cached in node_modules/.cache/world/bruno/<path>; the Draco steam
 model is re-encoded with meshopt, so the runtime needs no Draco decoder.
+
+Living area step (T4j): `python3 scripts/prepare-world.py --living` only
+refreshes the KayKit Furniture Bits models of the living area (sofa, coffee
+table, TV bench, rug, books, cactus) and their credits.
 """
 import hashlib
 import json
@@ -81,6 +85,15 @@ PACKS = {
         "licenseFile": "README.md",
         "quote": "Assets included in this package (2D sprites, 3D models and sound effects) are [CC0 licensed]",
     },
+    "kaykit-furniture-bits": {
+        "pack": "KayKit Furniture Bits 1.0",
+        "author": "Kay Lousberg",
+        "authorUrl": "https://www.kaylousberg.com",
+        "repo": "KayKit-Game-Assets/KayKit-Furniture-Bits-1.0",
+        "commit": "96d5930a8dbdb363409bbc2d3341718b00e17c9c",
+        "licenseFile": "LICENSE.txt",
+        "quote": "License: (Creative Commons Zero, CC0)",
+    },
 }
 
 KAYKIT = "addons/kaykit_medieval_hexagon_pack/Assets/gltf/decoration/nature/"
@@ -108,6 +121,24 @@ ASSETS = [
      [CITY_BITS + "bush.gltf", CITY_BITS + "bush.bin", CITY_BITS + "citybits_texture.png"]),
 ]
 
+FURNITURE = "addons/kaykit_furniture_bits/Assets/gltf/"
+
+
+def furniture(name):
+    return [FURNITURE + name + ".gltf", FURNITURE + name + ".bin",
+            FURNITURE + "furniturebits_texture.png"]
+
+
+# Living area props (T4j): single models placed by src/lib/world/living.ts.
+LIVING = [
+    ("sofa", "kaykit-furniture-bits", furniture("couch_pillows")),
+    ("coffee-table", "kaykit-furniture-bits", furniture("table_low")),
+    ("tv-stand", "kaykit-furniture-bits", furniture("cabinet_medium")),
+    ("rug", "kaykit-furniture-bits", furniture("rug_rectangle_A")),
+    ("books", "kaykit-furniture-bits", furniture("book_set")),
+    ("cactus", "kaykit-furniture-bits", furniture("cactus_small_A")),
+]
+
 # Original work built in code for this project: credited too, under the
 # repository's own license.
 ORIGINAL = [
@@ -124,6 +155,10 @@ ORIGINAL = [
      "asset": "Setup normal maps: noise, speaker cone, fabric weave and keycaps (procedural)",
      "author": "Kevnnard", "license": "Original work (repository license)",
      "source": "src/lib/world/normals.ts"},
+    {"id": "living",
+     "asset": "Living area: TV, PS5-style controller, game cases and leafy potted plants (procedural)",
+     "author": "Kevnnard", "license": "Original work (repository license)",
+     "source": "src/lib/world/living.ts"},
 ]
 
 
@@ -331,6 +366,18 @@ def with_textures(credits, textures):
             "textureBytes": sum(e["bytes"] for e in textures)}
 
 
+def with_living(credits, packs, assets):
+    ids = {pack["id"] for pack in packs}
+    kept = [a for a in credits["assets"] if a["pack"] not in ids]
+    merged = [*kept, *assets]
+    owned = [a for a in merged if a["pack"] in PACKS]
+    return {**credits,
+            "packs": [*[p for p in credits["packs"] if p["id"] not in ids], *packs],
+            "assets": merged, "original": ORIGINAL,
+            "rawBytes": sum(f["bytes"] for a in owned for f in a["sourceFiles"]),
+            "optimizedBytes": sum(a["bytes"] for a in owned)}
+
+
 def write_credits(credits):
     (OUTPUT / "credits.json").write_text(
         json.dumps(credits, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -420,6 +467,12 @@ if __name__ == "__main__":
         current = json.loads((OUTPUT / "credits.json").read_text(encoding="utf-8"))
         write_credits(with_bruno(current, prepare_bruno()))
         sys.exit(0)
+    if sys.argv[1:] == ["--living"]:
+        current = json.loads((OUTPUT / "credits.json").read_text(encoding="utf-8"))
+        used = sorted({pack_id for _, pack_id, _ in LIVING})
+        write_credits(with_living(current, [verify_license(pack_id) for pack_id in used],
+                                  [prepare(*spec) for spec in LIVING]))
+        sys.exit(0)
     if sys.argv[1:] == ["--textures"]:
         current = json.loads((OUTPUT / "credits.json").read_text(encoding="utf-8"))
         write_credits(with_textures(current, prepare_textures()))
@@ -429,9 +482,9 @@ if __name__ == "__main__":
                              check=True, cwd=ROOT).stdout.strip()
     if not version.endswith("4.5.1"):
         raise ValueError("Expected glTF Transform CLI 4.5.1, found " + version)
-    used = sorted({pack_id for _, pack_id, _ in ASSETS})
+    used = sorted({pack_id for _, pack_id, _ in ASSETS + LIVING})
     packs = [verify_license(pack_id) for pack_id in used]
-    assets = [prepare(*spec) for spec in ASSETS]
+    assets = [prepare(*spec) for spec in ASSETS + LIVING]
     write_credits(with_bruno(with_textures({
         "policy": "Every shipped asset is credited, including CC0 ones (odd/tasks/stylized-house.md S4).",
         "userAgent": AGENT,

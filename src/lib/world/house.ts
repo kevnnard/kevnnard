@@ -94,7 +94,8 @@ export const HOUSE = {
   plank: 0.17,
   main: {
     x0: -1.25,
-    x1: 2.25,
+    // Widened by 1.8 m for the living area (T4j, S14).
+    x1: 4.05,
     z0: -2.75,
     z1: 0.85,
     height: 1.95,
@@ -181,6 +182,7 @@ export const WALLS: readonly Wall[] = [
       pane(-0.95, -0.2),
       { kind: "door", u0: 0.14, u1: 0.86, v0: 0, v1: 1.5 },
       pane(1.25, 2),
+      pane(2.75, 3.5),
     ],
   },
   {
