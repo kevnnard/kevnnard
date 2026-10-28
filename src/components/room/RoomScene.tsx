@@ -4,6 +4,7 @@ import { MeshoptDecoder } from "meshoptimizer/decoder";
 import {
   memo,
   type ReactNode,
+  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -17,15 +18,12 @@ import {
   type Object3D,
   type PerspectiveCamera,
   type Texture,
-  Vector3,
 } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import {
   type Bounds,
   type CameraView,
-  fitView,
   focusView,
-  orbitLimits,
   SCREENS,
   type Screen,
 } from "@/lib/room/camera.ts";
@@ -35,17 +33,21 @@ import {
   topStack,
 } from "@/lib/room/content.ts";
 import { WORLD } from "@/lib/room/forest-layout.ts";
+import { HOUSE_BOUNDS, shadowFrustum } from "@/lib/room/house-layout.ts";
 import {
-  HOUSE_BOUNDS,
-  LEVELS,
-  SCENE_BOUNDS,
-  shadowFrustum,
-  TARGET_BOUNDS,
-  unionBounds,
-} from "@/lib/room/house-layout.ts";
+  homePose,
+  WALK_AREA,
+  type WalkPose,
+  walkView,
+} from "@/lib/room/walk-camera.ts";
 import { ForestEnvironment } from "./ForestEnvironment";
 import { HouseDiorama } from "./HouseDiorama";
 import { RoomAtmosphere } from "./RoomAtmosphere";
+import {
+  WALK_HELP,
+  WALK_HELP_ID,
+  WalkCameraControls,
+} from "./WalkCameraControls";
 
 export type RoomView = "overview" | "pc" | "tv";
 
@@ -82,25 +84,35 @@ interface RoomSceneProps extends RoomProps {
 
 export default function RoomScene({ hours, ...props }: RoomSceneProps) {
   return (
-    <Canvas
-      frameloop="demand"
-      shadows
-      dpr={[1, 1.5]}
-      camera={{ fov: 45, near: 0.05, far: WORLD.far, position: [-8, 7, 8] }}
-      gl={{ antialias: true, powerPreference: "high-performance" }}
-      aria-label="Interactive 3D room. Use the controls to focus the PC or the TV."
-      role="img"
-    >
-      <color attach="background" args={["#151923"]} />
-      <fog attach="fog" args={["#151923", WORLD.fogStart, WORLD.fogEnd]} />
-      <RoomAtmosphere
-        hours={hours}
-        reducedMotion={props.reducedMotion}
-        shadow={SHADOW}
-      />
-      <ForestEnvironment />
-      <Room {...props} />
-    </Canvas>
+    <>
+      <Canvas
+        frameloop="demand"
+        shadows
+        dpr={[1, 1.5]}
+        camera={{ fov: 45, near: 0.05, far: WORLD.far, position: [-8, 2, 8] }}
+        gl={{ antialias: true, powerPreference: "high-performance" }}
+        aria-label="Interactive 3D room. Use the controls to focus the PC or the TV."
+        role="group"
+      >
+        <color attach="background" args={["#151923"]} />
+        <fog attach="fog" args={["#151923", WORLD.fogStart, WORLD.fogEnd]} />
+        <RoomAtmosphere
+          hours={hours}
+          reducedMotion={props.reducedMotion}
+          shadow={SHADOW}
+        />
+        <ForestEnvironment />
+        <Room {...props} />
+      </Canvas>
+      {/* Stays in the DOM so the focusable canvas can reference it. */}
+      <p
+        id={WALK_HELP_ID}
+        hidden={props.view !== "overview"}
+        className="pointer-events-none absolute left-4 top-32 max-w-xs text-xs text-zinc-300 md:top-20"
+      >
+        {WALK_HELP}
+      </p>
+    </>
   );
 }
 
@@ -131,23 +143,20 @@ const Room = memo(function Room({
   const [bounds, setBounds] = useState<Bounds | null>(null);
   const camera = useThree((state) => state.camera) as PerspectiveCamera;
   const aspect = useThree((state) => state.size.width / state.size.height);
-  const invalidate = useThree((state) => state.invalidate);
 
-  // The overview frames the whole plot; the limits keep user orbiting above
-  // the ground and on the open side. They only clamp user input, not the
-  // setLookAt focus moves, so PC/TV framing is unchanged.
-  const rig = useMemo(() => {
-    if (!bounds) return null;
-    const scene = unionBounds([bounds, SCENE_BOUNDS]);
-    const overview = fitView(scene, camera.fov, aspect);
-    const limits = orbitLimits({
-      overview,
-      scene,
-      boundary: TARGET_BOUNDS,
-      groundY: LEVELS.terrainTop,
-    });
-    return { overview, limits };
-  }, [bounds, camera, aspect]);
+  // The overview is a grounded walk: low eye, inside a disc around the plot,
+  // outside the house. Focus moves are scripted with setLookAt and keep their
+  // exact PC/TV framing.
+  const home = useMemo(
+    () => (bounds ? homePose(WALK_AREA, camera.fov, aspect, bounds) : null),
+    [bounds, camera, aspect],
+  );
+  const walkPose = useRef<WalkPose | null>(null);
+  // Until the user walks, the start pose follows the aspect ratio.
+  const walked = useRef(false);
+  const onWalk = useCallback(() => {
+    walked.current = true;
+  }, []);
 
   useEffect(
     () => () => {
@@ -171,25 +180,14 @@ const Room = memo(function Room({
     setBounds({ min: box.min.toArray(), max: box.max.toArray() });
   }, []);
 
-  useEffect(() => {
-    const controls = controlsRef.current;
-    if (!rig || !controls) return;
-    const { min, max } = rig.limits.boundary;
-    controls.setBoundary(
-      new Box3(new Vector3().fromArray(min), new Vector3().fromArray(max)),
-    );
-    camera.far = Math.max(rig.limits.far, WORLD.far);
-    camera.updateProjectionMatrix();
-    invalidate();
-  }, [rig, camera, invalidate]);
-
   const firstMove = useRef(true);
   useEffect(() => {
     const controls = controlsRef.current;
-    if (!rig || !controls) return;
+    if (!home || !controls) return;
+    if (!walked.current || !walkPose.current) walkPose.current = home;
     const target: CameraView =
       view === "overview"
-        ? rig.overview
+        ? walkView(WALK_AREA, walkPose.current)
         : focusView(SCREENS[view], camera.fov, aspect);
     const animate = !reducedMotion && !firstMove.current;
     const [x, y, z] = target.position;
@@ -199,24 +197,23 @@ const Room = memo(function Room({
       firstMove.current = false;
       onReady();
     }
-  }, [rig, view, aspect, camera, reducedMotion, onReady]);
+  }, [home, view, aspect, camera, reducedMotion, onReady]);
 
   return (
     <>
+      {/* Scripted transitions only; WalkCameraControls owns user input. */}
       <CameraControls
         ref={controlsRef}
-        enabled={view === "overview"}
+        enabled={false}
         smoothTime={reducedMotion ? 0 : 0.6}
-        {...(rig
-          ? {
-              minDistance: rig.limits.minDistance,
-              maxDistance: rig.limits.maxDistance,
-              minPolarAngle: rig.limits.minPolarAngle,
-              maxPolarAngle: rig.limits.maxPolarAngle,
-              minAzimuthAngle: rig.limits.minAzimuthAngle,
-              maxAzimuthAngle: rig.limits.maxAzimuthAngle,
-            }
-          : {})}
+      />
+      <WalkCameraControls
+        controls={controlsRef}
+        pose={walkPose}
+        area={WALK_AREA}
+        active={view === "overview" && home !== null}
+        reducedMotion={reducedMotion}
+        onMove={onWalk}
       />
       <HouseDiorama showTrees={false} />
       <group ref={groupRef}>

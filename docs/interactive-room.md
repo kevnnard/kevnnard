@@ -18,7 +18,8 @@ A browser-only 3D view of the original Blender room, linked from the static home
 | Day cycle | `src/lib/room/day-cycle.ts` | Pure 24-hour model: phases, sky colors, light positions/colors/intensities. |
 | Terminal UI | `src/components/room/Terminal.tsx` | Accessible input + log; used on the PC screen and as a mobile overlay. |
 | Terminal rules | `src/lib/room/terminal.ts` | Allowlisted commands, URL validation, session history. Never evaluates input. |
-| Camera math | `src/lib/room/camera.ts` | Plot overview framing and orbit limits; focus framing for the PC and TV screens. |
+| Camera math | `src/lib/room/camera.ts` | Shared framing helpers and unchanged PC/TV focus; legacy orbit helpers remain tested. |
+| Grounded walk | `src/lib/room/walk-camera.ts`, `src/components/room/WalkCameraControls.tsx` | Low, bounded exterior movement and canvas-only input. See [room-walk-camera.md](room-walk-camera.md). |
 | House diorama | `src/components/room/HouseDiorama.tsx`, `src/lib/room/house-layout.ts` | Procedural cutaway house and finite home plot. See [house-diorama.md](house-diorama.md). |
 | Forest | `src/components/room/ForestEnvironment.tsx`, `src/lib/room/forest-layout.ts`, `forest-model.ts` | Locally hosted pine/fir instances, continuous ground and mountains. See [forest-environment.md](forest-environment.md) for assets, license and rebuild steps. |
 | Ground materials | `src/components/room/GroundSurface.tsx`, `src/lib/room/ground-materials.ts` | Local PBR grass/forest-soil/rock layers and matching lawn; see [ground-materials.md](ground-materials.md). |
@@ -45,9 +46,11 @@ a clickable link is also printed in case the popup is blocked.
 
 ## Sky and time of day
 
-- Drag the room to orbit (overview only). Orbit, zoom and pan stay above the ground and
-  on the house's open side; see [house-diorama.md](house-diorama.md#camera-limits). The mouse wheel over the room still zooms;
-  the wheel **over the clock** changes the time instead and never reaches the room or page.
+- In overview, drag the scene to look around from a low eye height. Wheel or pinch steps
+  forward/back within the house's bounded exterior walking area. Focus the scene for
+  W/A/S/D movement, arrow-key movement/turning and Page Up/Down look. Looking nearly
+  straight up does not lower the camera under the terrain; see [room-walk-camera.md](room-walk-camera.md).
+  The wheel **over the clock** changes the time instead and never reaches the scene or page.
 - The time controller has a native range input (arrows, Home/End, PageUp/PageDown) and
   Day/Sunset/Night presets in every style; the Orbital clock adds a draggable dial (noon at
   the top). It is hidden on small screens while the PC or TV is focused, so it never covers
