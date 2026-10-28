@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "chosen": "01-forest-entrance.html",
+  "handoffs": {
+    "01-forest-entrance.html": {
+      "status": "in_progress",
+      "queued": false,
+      "sentAt": "2026-10-28T02:49:29.772Z",
+      "startedAt": "2026-10-28T02:52:59.977Z",
+      "implementedAt": null,
+      "note": "Worker implementing stone path, planted beds and mailbox in the 3D room; house unchanged."
+    }
+  }
+}

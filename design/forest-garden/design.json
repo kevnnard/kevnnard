@@ -1,0 +1,13 @@
+{
+  "title": "Forest garden entrance",
+  "brief": "Design-only: realistic stone approach, clustered low planting and a mailbox beside the existing forest house. Preserve the house; no runtime implementation.",
+  "artboards": [
+    {
+      "file": "01-forest-entrance.html",
+      "title": "Forest threshold",
+      "tradeoff": "Human-eye material and planting direction; AI-generated concept, not the live 3D scene or proof of PBR implementation.",
+      "width": 1600,
+      "height": 1000
+    }
+  ]
+}

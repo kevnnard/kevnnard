@@ -41,6 +41,7 @@ import {
   walkView,
 } from "@/lib/room/walk-camera.ts";
 import { ForestEnvironment } from "./ForestEnvironment";
+import { ForestGarden } from "./ForestGarden";
 import { HouseDiorama } from "./HouseDiorama";
 import { RoomAtmosphere } from "./RoomAtmosphere";
 import {
@@ -102,6 +103,7 @@ export default function RoomScene({ hours, ...props }: RoomSceneProps) {
           shadow={SHADOW}
         />
         <ForestEnvironment />
+        <ForestGarden hours={hours} />
         <Room {...props} />
       </Canvas>
       {/* Stays in the DOM so the focusable canvas can reference it. */}
