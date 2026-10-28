@@ -33,9 +33,9 @@ describe("credits.json (S4: every author is credited, even CC0)", () => {
     ]);
   });
 
-  it("credits original procedural work, the flowers, clouds and house, to the project", () => {
+  it("credits original procedural work, the flowers, clouds, house and gaming setup, to the project", () => {
     const original = credits().original ?? [];
-    for (const id of ["flowers", "clouds", "house"]) {
+    for (const id of ["flowers", "clouds", "house", "setup"]) {
       const entry = original.find((item) => item.id === id);
       assert.ok(entry, `${id} credited`);
       assert.equal(entry.license, ORIGINAL_LICENSE);

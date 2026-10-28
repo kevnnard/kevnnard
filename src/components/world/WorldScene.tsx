@@ -29,6 +29,7 @@ import {
 } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import House from "@/components/world/House";
+import Setup from "@/components/world/Setup";
 import type { RGB } from "@/lib/room/day-cycle.ts";
 import {
   GUIDE,
@@ -102,6 +103,7 @@ export default function WorldScene({
       <GuidedCamera reducedMotion={reducedMotion} home={home} />
       <Island />
       <House reducedMotion={reducedMotion} />
+      <Setup hours={hours} />
       <Flowers />
       <Clouds hours={hours} reducedMotion={reducedMotion} />
       <Nature onReady={onReady} />

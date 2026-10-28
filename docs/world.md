@@ -64,9 +64,10 @@ fails otherwise (S4). The credits are shown in the "Credits" dialog.
 | Kenney Mini Arena 1.0 | Kenney, Tony Schär | CC0 1.0 | tree |
 | Kenney Starter Kit 3D Platformer | Kenney | CC0 1.0 | grass tufts |
 
-The flowers, clouds and the wooden house with its garage are original
-procedural geometry (`src/lib/world/flowers.ts`, `src/lib/world/clouds.ts`,
-`src/lib/world/house.ts`),
+The flowers, clouds, the wooden house with its garage and the gaming setup
+in its main room are original procedural geometry
+(`src/lib/world/flowers.ts`, `src/lib/world/clouds.ts`,
+`src/lib/world/house.ts`, `src/lib/world/setup.ts`),
 credited under `original` in `credits.json` with the repository's license.
 
 Quaternius packs were not used: their pack pages say CC0, but

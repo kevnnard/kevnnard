@@ -80,7 +80,7 @@ const scratch = {
 };
 
 /** Merges the parts into one vertex-colored geometry: one draw per mesh. */
-function mergeParts(parts: Part[]): BufferGeometry {
+export function mergeParts(parts: Part[]): BufferGeometry {
   const box = new BoxGeometry(1, 1, 1);
   const round = new CylinderGeometry(0.5, 0.5, 1, 10);
   const positions: number[] = [];
