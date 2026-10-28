@@ -171,7 +171,7 @@ ORIGINAL = [
      "author": "Kevnnard", "license": "Original work (repository license)",
      "source": "src/lib/world/garden.ts"},
     {"id": "shelf",
-     "asset": "Personal collection shelf: white two-column display shelf, football on its stand, cameras, hardware boxes, keyboard and books (procedural; labels and ball skin drawn in code from reference photos supplied by Kevnnard; brand names and marks belong to their owners, no affiliation)",
+     "asset": "Personal collection shelf: white two-column display shelf, football on its stand, cameras, hardware boxes, keyboard and books, personal athlete trophies, tricolor medals, film canisters, lenses and original landscape prints (procedural; labels and ball skin drawn in code from reference photos supplied by Kevnnard; brand names and marks belong to their owners, no affiliation)",
      "author": "Kevnnard", "license": "Original work (repository license)",
      "source": "src/lib/world/shelf.ts"},
 ]

@@ -451,3 +451,23 @@ lies behind it or within 30 cm. It does not fade with the cutaway.
 ## Third-party notices
 
 - `src/lib/world/wheel.ts` ports the wheel normalization logic of the `normalize-wheel` package (originally from Facebook's fixed-data-table), licensed BSD-3-Clause. Its copyright notice and license terms apply to that logic.
+
+
+### Personal awards and analog photography (S23)
+
+The shelf collection is additive: all 78 original parts and the football stay
+unchanged. The top now displays two stylized athlete trophies based on the owner's
+IMG_1634 reference: gold ornamentation with a green column, and a smaller wooden
+base. Three supported medal displays carry yellow/blue/red ribbons. The photo
+tier gains two 35 mm film canisters and two original miniature landscape prints;
+the lower photo/book space has two detached lenses and six additional books.
+The prints are original landscapes, not copies of personal photographs. No badge,
+name, QR code or surrounding reference-photo content is published.
+
+The additions use the existing merged materials and procedural textures: **20,486
+triangles, 206 parts, 8 draw calls**, no new lights, textures or animation. The
+geometry budget guard increases from 16k to 22k to accommodate the collection.
+Shelf dimensions, original object placements and house geometry are unchanged.
+Checks: 346 world/room tests, scoped TypeScript, Biome, production build and HTTP
+200 passed. Build retains the existing large-chunk warning. Actual GPU appearance
+and readability of the new miniature awards still need a close browser view.

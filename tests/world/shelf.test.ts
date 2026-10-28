@@ -389,7 +389,7 @@ describe("collection textures and budget", () => {
 
   it("keeps the shelf within a modest geometry and draw budget", () => {
     const budget = shelfBudget();
-    assert.ok(budget.triangles < 16_000, `${budget.triangles} triangles`);
+    assert.ok(budget.triangles < 22_000, `${budget.triangles} triangles`);
     assert.ok(budget.draws <= 9, `${budget.draws} draws`);
   });
 

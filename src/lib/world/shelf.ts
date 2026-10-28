@@ -29,6 +29,11 @@ export const SHELF = {
 } as const;
 
 export const SHELF_ITEMS = [
+  "trophy",
+  "medal",
+  "film-roll",
+  "lens",
+  "photo-print",
   "carcass",
   "football",
   "polaroid-camera",
@@ -982,6 +987,7 @@ export function shelfParts(): ShelfPart[] {
     ...photography(),
     ...hardware(),
     ...lowerTiers(),
+    ...collectionAdditions(),
   ];
 }
 
@@ -1100,7 +1106,8 @@ function buildLabels(): ShelfLabel[] {
   });
   // Standing spines: six upper, two lower; then the lying stack.
   const standingBooks = parts.filter(
-    (p) => p.item === "book" && p.group !== "stack",
+    (p) =>
+      p.item === "book" && p.group !== "stack" && !p.group.startsWith("extra-"),
   );
   standingBooks.forEach((book, i) => {
     const tall = i < BOOKS_UPPER.length;
@@ -1181,4 +1188,424 @@ export function shelfBudget() {
     labels,
     draws: new Set(parts.map((p) => p.material)).size + 2,
   };
+}
+
+/** S23: additive personal awards, analog photography and books. All coordinates
+ * stay in the original shelf frame; no house or existing object is moved. */
+function collectionAdditions(): ShelfPart[] {
+  const out: ShelfPart[] = [];
+  const gold = "#dcb558";
+  const bronze = "#ba8b51";
+  const top = SHELF.height;
+  // The tall green-column award and shorter wooden-base athlete in IMG_1634.
+  for (const [i, x] of [-0.43, 0.46].entries()) {
+    const group = `trophy-${i + 1}`;
+    const h = i === 0 ? 0.22 : 0.16;
+    const add = (
+      role: string,
+      material: ShelfMaterialId,
+      y: number,
+      size: Vec3,
+      color: string,
+      rotation?: Vec3,
+    ) =>
+      out.push(
+        piece(
+          "trophy",
+          group,
+          role,
+          material,
+          "rounded",
+          [x, top + y, 0],
+          size,
+          color,
+          { radius: 0.003, segments: 1, rotation },
+        ),
+      );
+    add(
+      "base",
+      i === 0 ? "plastic" : "wood",
+      0.009,
+      [0.12, 0.018, 0.095],
+      i === 0 ? "#292b2b" : "#654337",
+    );
+    add("gold-foot", "metal", 0.022, [0.1, 0.008, 0.075], gold);
+    add(
+      "column",
+      i === 0 ? "glass" : "metal",
+      0.046,
+      [0.038, 0.04, 0.04],
+      i === 0 ? "#159768" : gold,
+    );
+    add("cap", "metal", 0.069, [0.074, 0.008, 0.055], gold);
+    // Sculptural curling gold stem and discs instead of a generic cup.
+    if (i === 0) {
+      add(
+        "swept-stem",
+        "metal",
+        0.105,
+        [0.014, 0.075, 0.02],
+        gold,
+        [0, 0, -0.3],
+      );
+      for (let d = 0; d < 2; d++)
+        out.push(
+          ring(
+            "trophy",
+            group,
+            "ornamental-disc",
+            "metal",
+            [x + (d ? 0.018 : -0.018), top + 0.094 + d * 0.035, 0.012],
+            0.018 - d * 0.003,
+            0.007,
+            gold,
+          ),
+        );
+    }
+    const athlete = h - 0.065;
+    add(
+      "athlete-torso",
+      "metal",
+      athlete + 0.022,
+      [0.021, 0.033, 0.017],
+      gold,
+      [0, 0, 0.3],
+    );
+    add("athlete-head", "metal", athlete + 0.048, [0.019, 0.021, 0.019], gold);
+    for (const side of [-1, 1]) {
+      out.push(
+        piece(
+          "trophy",
+          group,
+          "athlete-leg",
+          "metal",
+          "rounded",
+          [x + side * 0.012, top + athlete - 0.006, side * 0.007],
+          [0.009, 0.041, 0.012],
+          gold,
+          {
+            radius: 0.003,
+            segments: 1,
+            rotation: [side * 0.3, 0, side * 0.35],
+          },
+        ),
+      );
+      out.push(
+        piece(
+          "trophy",
+          group,
+          "athlete-arm",
+          "metal",
+          "rounded",
+          [x + side * 0.019, top + athlete + 0.022, 0.007],
+          [0.008, 0.034, 0.009],
+          gold,
+          { radius: 0.003, segments: 1, rotation: [0, 0, side * 0.9] },
+        ),
+      );
+    }
+    out.push(
+      ring(
+        "trophy",
+        group,
+        "athlete-ball",
+        "metal",
+        [x - 0.022, top + athlete - 0.024, 0.01],
+        0.012,
+        0.018,
+        gold,
+      ),
+    );
+  }
+  // Each medal has a small supported display easel and a folded tricolor cord.
+  for (const [i, x] of [-0.25, 0.25, 0.33].entries()) {
+    const group = `medal-${i + 1}`;
+    out.push(
+      standing(
+        "medal",
+        group,
+        "stand-foot",
+        "wood",
+        top,
+        [x, 0],
+        [0.045, 0.008, 0.07],
+        "#654337",
+        { radius: 0.002, segments: 1 },
+      ),
+    );
+    out.push(
+      piece(
+        "medal",
+        group,
+        "stand",
+        "metal",
+        "box",
+        [x, top + 0.078, -0.025],
+        [0.004, 0.14, 0.004],
+        gold,
+      ),
+    );
+    out.push(
+      piece(
+        "medal",
+        group,
+        "hook",
+        "metal",
+        "box",
+        [x, top + 0.145, -0.011],
+        [0.004, 0.004, 0.03],
+        gold,
+      ),
+    );
+    for (const [c, color] of ["#e3c93d", "#294b9e", "#bb3637"].entries())
+      for (const side of [-1, 1])
+        out.push(
+          piece(
+            "medal",
+            group,
+            "tricolor-ribbon",
+            "card",
+            "box",
+            [x + side * 0.008 + (c - 1) * 0.0028, top + 0.105, 0.003],
+            [0.0028, 0.076, 0.0018],
+            color,
+            { rotation: [0, 0, side * -0.13] },
+          ),
+        );
+    out.push(
+      ring(
+        "medal",
+        group,
+        "rim",
+        "metal",
+        [x, top + 0.061, 0.008],
+        0.021,
+        0.005,
+        i === 1 ? bronze : gold,
+      ),
+    );
+    out.push(
+      ring(
+        "medal",
+        group,
+        "embossed-face",
+        "metal",
+        [x, top + 0.061, 0.011],
+        0.016,
+        0.0015,
+        bronze,
+      ),
+    );
+    for (const side of [-1, 1])
+      out.push(
+        piece(
+          "medal",
+          group,
+          "laurel",
+          "metal",
+          "box",
+          [x + side * 0.011, top + 0.061, 0.013],
+          [0.003, 0.019, 0.001],
+          gold,
+          { rotation: [0, 0, side * 0.3] },
+        ),
+      );
+  }
+  // Two 35 mm canisters: silver caps, yellow labels and dark centre bands.
+  for (const [i, x] of [-0.35, -0.3].entries()) {
+    const floor = SHELF_TIERS[3];
+    const group = `film-${i + 1}`;
+    for (const [role, y, r, h, color] of [
+      ["body", 0.021, 0.016, 0.042, "#d8b935"],
+      ["cap", 0.044, 0.017, 0.004, "#cfced0"],
+      ["label-band", 0.026, 0.0162, 0.014, "#292b2b"],
+    ] as const)
+      out.push(
+        piece(
+          "film-roll",
+          group,
+          role,
+          role === "cap" ? "metal" : "plastic",
+          "round",
+          [x, floor + y, 0.085],
+          [r * 2, h, r * 2],
+          color,
+        ),
+      );
+  }
+  // Detached portrait and zoom lenses occupy unused right-hand lower space.
+  for (const [i, x] of [0.45, 0.525].entries()) {
+    const floor = SHELF_TIERS[1];
+    const group = `lens-${i + 1}`;
+    const h = i === 0 ? 0.095 : 0.065;
+    out.push(
+      piece(
+        "lens",
+        group,
+        "barrel",
+        "plastic",
+        "round",
+        [x, floor + h / 2, 0.035],
+        [0.052, h, 0.052],
+        "#26252a",
+      ),
+    );
+    for (const y of [0.012, h * 0.5, h - 0.012])
+      out.push(
+        piece(
+          "lens",
+          group,
+          "focus-ring",
+          "metal",
+          "round",
+          [x, floor + y, 0.035],
+          [0.055, 0.004, 0.055],
+          "#62646a",
+        ),
+      );
+    out.push(
+      piece(
+        "lens",
+        group,
+        "glass",
+        "glass",
+        "round",
+        [x, floor + h + 0.001, 0.035],
+        [0.045, 0.002, 0.045],
+        "#28434f",
+      ),
+    );
+    // A few narrow rubber grip ridges, not a smooth primitive cylinder.
+    for (let r = 0; r < 8; r++) {
+      const a = (r * Math.PI) / 4;
+      out.push(
+        piece(
+          "lens",
+          group,
+          "grip",
+          "plastic",
+          "box",
+          [
+            x + Math.cos(a) * 0.026,
+            floor + h * 0.5,
+            0.035 + Math.sin(a) * 0.026,
+          ],
+          [0.002, 0.023, 0.002],
+          "#49494e",
+        ),
+      );
+    }
+  }
+  // Original miniature photo prints, not private photos or badge reproductions.
+  for (const [i, x] of [-0.2, 0.4].entries()) {
+    const floor = SHELF_TIERS[3];
+    const group = `photo-${i + 1}`;
+    out.push(
+      standing(
+        "photo-print",
+        group,
+        "paper",
+        "paint",
+        floor,
+        [x, -0.13],
+        [0.125, 0.19, 0.006],
+        "#f6f3ee",
+        { radius: 0.001, segments: 1 },
+      ),
+    );
+    out.push(
+      piece(
+        "photo-print",
+        group,
+        "sky",
+        "card",
+        "box",
+        [x, floor + 0.105, -0.126],
+        [0.105, 0.145, 0.001],
+        i === 0 ? "#db9c6c" : "#80aab4",
+      ),
+    );
+    out.push(
+      piece(
+        "photo-print",
+        group,
+        "landscape",
+        "card",
+        "prism",
+        [x, floor + 0.085, -0.124],
+        [0.105, 0.1, 0.001],
+        i === 0 ? "#535e53" : "#3d6570",
+        {
+          profile: [
+            [-0.5, -0.5],
+            [0.5, -0.5],
+            [0.5, 0],
+            [0.15, 0.3],
+            [-0.1, 0],
+            [-0.3, 0.5],
+            [-0.5, 0.1],
+          ],
+        },
+      ),
+    );
+    out.push(
+      ring(
+        "photo-print",
+        group,
+        "sun",
+        "card",
+        [x + 0.026, floor + 0.151, -0.124],
+        0.012,
+        0.001,
+        "#efcb87",
+      ),
+    );
+  }
+  // Six additional slim volumes, each with physical page block and spine bands.
+  for (let i = 0; i < 6; i++) {
+    const floor = SHELF_TIERS[1];
+    const x = 0.285 + i * 0.021;
+    const h = 0.17 + (i % 3) * 0.021;
+    const group = `extra-book-${i + 1}`;
+    const z = -0.055;
+    out.push(
+      standing(
+        "book",
+        group,
+        "cover",
+        "card",
+        floor,
+        [x, z],
+        [0.018, h, 0.15],
+        SHELF_COLORS.books[(i + 3) % SHELF_COLORS.books.length],
+        { radius: 0.001, segments: 1 },
+      ),
+    );
+    out.push(
+      piece(
+        "book",
+        group,
+        "pages",
+        "card",
+        "box",
+        [x, floor + h - 0.004, z],
+        [0.013, 0.004, 0.14],
+        "#e2d8bd",
+      ),
+    );
+    for (const y of [0.025, h - 0.025])
+      out.push(
+        piece(
+          "book",
+          group,
+          "spine-band",
+          "card",
+          "box",
+          [x, floor + y, 0.0207],
+          [0.014, 0.003, 0.001],
+          "#e4c688",
+        ),
+      );
+  }
+  return out;
 }
