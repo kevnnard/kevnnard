@@ -34,6 +34,7 @@ import {
   featuredProjects,
   topStack,
 } from "@/lib/room/content.ts";
+import { WORLD } from "@/lib/room/forest-layout.ts";
 import {
   HOUSE_BOUNDS,
   LEVELS,
@@ -42,6 +43,7 @@ import {
   TARGET_BOUNDS,
   unionBounds,
 } from "@/lib/room/house-layout.ts";
+import { ForestEnvironment } from "./ForestEnvironment";
 import { HouseDiorama } from "./HouseDiorama";
 import { RoomAtmosphere } from "./RoomAtmosphere";
 
@@ -84,17 +86,19 @@ export default function RoomScene({ hours, ...props }: RoomSceneProps) {
       frameloop="demand"
       shadows
       dpr={[1, 1.5]}
-      camera={{ fov: 45, near: 0.05, far: 100, position: [-8, 7, 8] }}
+      camera={{ fov: 45, near: 0.05, far: WORLD.far, position: [-8, 7, 8] }}
       gl={{ antialias: true, powerPreference: "high-performance" }}
       aria-label="Interactive 3D room. Use the controls to focus the PC or the TV."
       role="img"
     >
       <color attach="background" args={["#151923"]} />
+      <fog attach="fog" args={["#151923", WORLD.fogStart, WORLD.fogEnd]} />
       <RoomAtmosphere
         hours={hours}
         reducedMotion={props.reducedMotion}
         shadow={SHADOW}
       />
+      <ForestEnvironment />
       <Room {...props} />
     </Canvas>
   );
@@ -174,7 +178,7 @@ const Room = memo(function Room({
     controls.setBoundary(
       new Box3(new Vector3().fromArray(min), new Vector3().fromArray(max)),
     );
-    camera.far = rig.limits.far;
+    camera.far = Math.max(rig.limits.far, WORLD.far);
     camera.updateProjectionMatrix();
     invalidate();
   }, [rig, camera, invalidate]);
@@ -214,7 +218,7 @@ const Room = memo(function Room({
             }
           : {})}
       />
-      <HouseDiorama />
+      <HouseDiorama showTrees={false} />
       <group ref={groupRef}>
         {gltfs.map((gltf, index) => (
           <primitive key={MODEL_URLS[index]} object={gltf.scene} />

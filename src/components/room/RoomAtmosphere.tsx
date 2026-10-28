@@ -204,6 +204,7 @@ export function RoomAtmosphere({
       setColor(uniforms.zenith.value, state.sky.zenith);
       setColor(uniforms.horizon.value, state.sky.horizon);
       setColor(uniforms.ground.value, state.sky.ground);
+      if (scene.fog) setColor(scene.fog.color, state.sky.horizon);
       uniforms.sunDirection.value.set(...state.sun.direction);
       uniforms.glow.value = state.sun.glow;
 

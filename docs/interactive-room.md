@@ -19,7 +19,8 @@ A browser-only 3D view of the original Blender room, linked from the static home
 | Terminal UI | `src/components/room/Terminal.tsx` | Accessible input + log; used on the PC screen and as a mobile overlay. |
 | Terminal rules | `src/lib/room/terminal.ts` | Allowlisted commands, URL validation, session history. Never evaluates input. |
 | Camera math | `src/lib/room/camera.ts` | Plot overview framing and orbit limits; focus framing for the PC and TV screens. |
-| House diorama | `src/components/room/HouseDiorama.tsx`, `src/lib/room/house-layout.ts` | Procedural cutaway house and finite plot around the room. See [house-diorama.md](house-diorama.md). |
+| House diorama | `src/components/room/HouseDiorama.tsx`, `src/lib/room/house-layout.ts` | Procedural cutaway house and finite home plot. See [house-diorama.md](house-diorama.md). |
+| Forest | `src/components/room/ForestEnvironment.tsx`, `src/lib/room/forest-layout.ts`, `forest-model.ts` | Locally hosted pine/fir instances, continuous ground and mountains. See [forest-environment.md](forest-environment.md) for assets, license and rebuild steps. |
 | Content | `src/lib/room/content.ts` | Reads `src/utils/projects.json` and `experience.json`, the same data as the homepage. |
 
 Models live in `public/models/room/{office,desk,chair,lounge}.glb` (meshopt + WebP). Each
@@ -35,7 +36,7 @@ a clickable link is also printed in case the popup is blocked.
 
 ## Behaviour and performance
 
-- `frameloop="demand"` and DPR capped at 1.5: the canvas renders only while the camera moves.
+- `frameloop="demand"` and DPR capped at 1.5: camera/time transitions request frames instead of a permanent animation loop.
 - Camera transitions use drei `CameraControls`; with `prefers-reduced-motion` they jump instantly.
 - DOM buttons ("Room overview", "PC terminal", "TV") mirror the clickable 3D screens; Esc returns to the overview.
 - Under 768px wide the terminal opens as a bottom sheet instead of the small on-screen one.
@@ -88,7 +89,8 @@ a clickable link is also printed in case the popup is blocked.
   settle; with `prefers-reduced-motion` they jump.
 - The `RoomEnvironment` PMREM is generated once; the cycle only changes
   `scene.environmentIntensity`. Exposure and environment intensity are restored on unmount.
-- No textures, HDRs, postprocessing or new dependencies. The GLB models are unchanged.
+- No remote sky textures, HDRs, postprocessing or new app dependencies. Original room GLBs are unchanged; the forest adds local textured models.
+- Distant fog uses the same eased horizon color as the sky. Forest/mountain scenery is excluded from overview framing and camera bounds.
 - Not yet verified in a browser: colors/brightness per phase, low-sun shadow coverage
   (the shadow camera now covers the house, about ±12.5 units), and frame cost on mobile. Tune keyframes in `day-cycle.ts`
   and lights in `RoomAtmosphere.tsx`.
@@ -105,9 +107,10 @@ checked in a browser after model changes.
 pnpm test:room   # node --test tests/room/ (camera, house layout, terminal, day cycle, clock, controller style, static entry)
 # With pnpm dev running (development module/dependency and asset HTTP checks):
 node scripts/check-room-dev.mjs http://127.0.0.1:4321
+node scripts/check-forest-dev.mjs http://127.0.0.1:4321
 ```
 
-The HTTP check only scans `RoomScene.tsx` imports. `RoomEnvironment` is now imported by
+The room HTTP check only scans `RoomScene.tsx` imports. The forest check covers its nested modules, Vite dependencies and self-hosted model hashes. `RoomEnvironment` is now imported by
 `RoomAtmosphere.tsx`; it remains listed in `optimizeDeps.include`.
 
 ## Development loading failures

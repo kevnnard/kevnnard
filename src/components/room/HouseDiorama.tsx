@@ -159,7 +159,11 @@ function createResources() {
  * a closed wing and carport east of the original room, a patio on its open
  * -x side and a walk and driveway to the street. The room stays untouched.
  */
-export const HouseDiorama = memo(function HouseDiorama() {
+export const HouseDiorama = memo(function HouseDiorama({
+  showTrees = true,
+}: {
+  showTrees?: boolean;
+}) {
   const { geometries, materials } = useMemo(createResources, []);
   useEffect(
     () => () => {
@@ -206,21 +210,25 @@ export const HouseDiorama = memo(function HouseDiorama() {
         geometry={geometries.bays}
         material={materials.marking}
       />
-      <Instances
-        geometry={geometries.trunk}
-        material={materials.bark}
-        items={trunks}
-      />
-      <Instances
-        geometry={geometries.crown}
-        material={materials.foliage}
-        items={crowns}
-      />
-      <Instances
-        geometry={geometries.cone}
-        material={materials.foliage}
-        items={cones}
-      />
+      {showTrees && (
+        <>
+          <Instances
+            geometry={geometries.trunk}
+            material={materials.bark}
+            items={trunks}
+          />
+          <Instances
+            geometry={geometries.crown}
+            material={materials.foliage}
+            items={crowns}
+          />
+          <Instances
+            geometry={geometries.cone}
+            material={materials.foliage}
+            items={cones}
+          />
+        </>
+      )}
       <Instances
         geometry={geometries.crown}
         material={materials.foliage}

@@ -4,6 +4,8 @@ The original room now sits inside a small one-story cutaway house on a finite pl
 no longer floats in the sky. The room, its four GLBs, their baked transforms, the PC/TV
 screens, the terminal and the day/night cycle are unchanged.
 
+The home plot is now embedded in the [forest environment](forest-environment.md), rather than floating alone. In `/room`, its original six geometric yard trees are hidden in favor of the surrounding textured pine/fir forest. House geometry and camera limits remain unchanged.
+
 ## What is built
 
 All geometry is procedural (Three.js primitives in `HouseDiorama.tsx`); no models,
