@@ -168,7 +168,13 @@ export const SETUP_MATERIALS = {
 } as const satisfies Record<string, SetupMaterial>;
 
 export type SetupMaterialId = keyof typeof SETUP_MATERIALS;
-export type SetupPart = Part & { material: SetupMaterialId };
+export type SetupPart = Part & {
+  material: SetupMaterialId;
+  /** Chair rig (T4i): "swivel" turns with the seat, "chair" is its fixed base. */
+  rig?: "swivel" | "chair";
+  /** Breathing LED phase index (T4i), glow parts only. */
+  led?: number;
+};
 
 const part = (
   material: SetupMaterialId,
@@ -417,15 +423,16 @@ function deskTop(solid: SetupPart[], glow: SetupPart[]) {
         C.keys,
       ),
     );
-  glow.push(
-    part(
+  glow.push({
+    ...part(
       "satin",
       "box",
       w(0.643, top + 0.006, KEYBOARD_U),
       [0.006, 0.008, 0.44],
       C.rgb,
     ),
-  );
+    led: 0,
+  });
   // Mouse on its pad.
   solid.push(
     part(
@@ -570,22 +577,31 @@ function tower(solid: SetupPart[], glow: SetupPart[], glass: SetupPart[]) {
         part("base", "round", w(d, 0.0125, z), [0.04, 0.025, 0.04], C.frame),
       );
   glow.push(
-    part("satin", "box", w(0.553, 0.27, u), [0.006, 0.36, 0.025], C.rgb),
-    part(
-      "satin",
-      "box",
-      w(0.33, 0.475, face + 0.004),
-      [0.36, 0.012, 0.008],
-      C.rgbCool,
-    ),
-    part(
-      "satin",
-      "round",
-      w(0.48, 0.2, face + 0.004),
-      [0.08, 0.006, 0.08],
-      C.rgbWarm,
-      ALONG_Z,
-    ),
+    {
+      ...part("satin", "box", w(0.553, 0.27, u), [0.006, 0.36, 0.025], C.rgb),
+      led: 1,
+    },
+    {
+      ...part(
+        "satin",
+        "box",
+        w(0.33, 0.475, face + 0.004),
+        [0.36, 0.012, 0.008],
+        C.rgbCool,
+      ),
+      led: 2,
+    },
+    {
+      ...part(
+        "satin",
+        "round",
+        w(0.48, 0.2, face + 0.004),
+        [0.08, 0.006, 0.08],
+        C.rgbWarm,
+        ALONG_Z,
+      ),
+      led: 3,
+    },
   );
   glass.push(
     part(
@@ -599,6 +615,7 @@ function tower(solid: SetupPart[], glow: SetupPart[], glass: SetupPart[]) {
 }
 
 function chair(solid: SetupPart[]) {
+  const first = solid.length;
   const C = SETUP_COLORS;
   const { yaw, tilt } = CHAIR;
   const [px, , pz] = w(CHAIR.d, 0, CHAIR.u);
@@ -647,6 +664,10 @@ function chair(solid: SetupPart[]) {
     part("base", "round", c(0, 0.08, 0), [0.12, 0.06, 0.12], C.chair),
     part("powder", "round", c(0, 0.26, 0), [0.05, 0.3, 0.05], C.cone),
     part("base", "round", c(0, 0.18, 0), [0.07, 0.12, 0.07], C.chair),
+  );
+  // Star base and gas column stay; everything above swivels (T4i).
+  const top = solid.length;
+  solid.push(
     part("powder", "box", c(0, 0.42, 0), [0.3, 0.04, 0.3], C.frame, turn),
     rounded("leather", 0.045, c(0, 0.48, 0), [0.52, 0.1, 0.5], C.chair, turn),
     part(
@@ -730,7 +751,46 @@ function chair(solid: SetupPart[]) {
         1.1,
       ),
     );
+  solid.slice(first).forEach((item, index) => {
+    item.rig = first + index < top ? "chair" : "swivel";
+  });
 }
+
+/** Column axis the seat swivels around (world x, z). */
+export const CHAIR_PIVOT = [IN + CHAIR.d, CHAIR.u] as const;
+
+/** A swivel part turned `angle` radians around the chair's column (+y, as Object3D.rotation.y). */
+export function swivelPart(p: SetupPart, angle: number): SetupPart {
+  const [a, b, c] = p.rotation ?? [0, 0, 0];
+  if (a !== 0) throw new Error("swivel parts must not roll about x");
+  const [px, pz] = CHAIR_PIVOT;
+  const [x, y, z] = p.center;
+  const [dx, dz] = [x - px, z - pz];
+  const [cos, sin] = [Math.cos(angle), Math.sin(angle)];
+  return {
+    ...p,
+    center: [px + dx * cos + dz * sin, y, pz - dx * sin + dz * cos],
+    // R = Ry(b) Rz(c) when a = 0, so a world turn adds to b.
+    rotation: [0, b + angle, c],
+  };
+}
+
+const SIDE_PANEL = w(0.27, 1.1, -0.74);
+
+/** Desk props placed at runtime (T4i): the mug and the side screen's face. */
+export const SETUP_PROPS = {
+  /** Base centre on the desk top, between the mousepad and the right speaker. */
+  mug: { center: w(0.6, DESK.height, -0.5), radius: 0.045, height: 0.1 },
+  /** Just in front of the side monitor's screen, facing out along its normal. */
+  sideScreen: {
+    center: [
+      SIDE_PANEL[0] + Math.cos(SIDE_YAW) * 0.03,
+      SIDE_PANEL[1],
+      SIDE_PANEL[2] - Math.sin(SIDE_YAW) * 0.03,
+    ] as Vec3,
+    yaw: SIDE_YAW,
+  },
+} as const;
 
 /** Every setup part, by material. */
 export function setupMeshes(): SetupMeshes {

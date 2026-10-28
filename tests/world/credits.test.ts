@@ -3,12 +3,13 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import {
-  ALLOWED_LICENSES,
   type Credits,
   creditProblems,
+  licenseAllowed,
   ORIGINAL_LICENSE,
+  PERMISSION_LICENSE,
 } from "../../src/lib/world/credits.ts";
-import { MODEL_FILES } from "../../src/lib/world/models.ts";
+import { MODEL_FILES, PROP_FILES } from "../../src/lib/world/models.ts";
 import { PUBLIC, shippedModels } from "./glb.ts";
 
 const credits = (): Credits =>
@@ -46,7 +47,7 @@ describe("credits.json (S4: every author is credited, even CC0)", () => {
 
   it("credits exactly the models the runtime loads", () => {
     assert.deepEqual(
-      Object.values(MODEL_FILES)
+      [...Object.values(MODEL_FILES), ...Object.values(PROP_FILES)]
         .map((url) => url.replace("/world/", ""))
         .sort(),
       shippedModels(),
@@ -57,7 +58,7 @@ describe("credits.json (S4: every author is credited, even CC0)", () => {
     const data = credits();
     assert.deepEqual(creditProblems(data), []);
     for (const entry of data.assets) {
-      assert.ok(ALLOWED_LICENSES.includes(entry.license), entry.file);
+      assert.ok(licenseAllowed(entry), entry.file);
       assert.ok(entry.author.trim(), `${entry.file} author`);
       assert.ok(entry.asset.trim(), `${entry.file} asset`);
       assert.ok(entry.sourceFiles.length > 0, `${entry.file} source files`);
@@ -86,10 +87,75 @@ describe("credits.json (S4: every author is credited, even CC0)", () => {
       [...used].sort(),
     );
     for (const pack of data.packs) {
-      assert.ok(ALLOWED_LICENSES.includes(pack.license), pack.id);
+      assert.ok(licenseAllowed(pack), pack.id);
       assert.match(pack.licenseEvidence.url, /^https:\/\//);
       assert.ok(pack.licenseEvidence.quote.trim(), `${pack.id} quote`);
     }
+  });
+});
+
+describe("Bruno Simon's my-room-in-3d (T4i, L25: used with permission)", () => {
+  const COMMIT = "5d00b3f870da81f103e901e0d12e20bbcc816834";
+  const FILES = [
+    "src/Experience/CoffeeSteam.js",
+    "src/Experience/TopChair.js",
+    "src/Experience/GoogleLeds.js",
+    "src/Experience/BouncingLogo.js",
+    "src/Experience/Navigation.js",
+    "src/Experience/shaders/coffeeSteam/vertex.glsl",
+    "src/Experience/shaders/coffeeSteam/fragment.glsl",
+    "src/Experience/shaders/partials/perlin2d.glsl",
+    "static/assets/coffeeSteamModel.glb",
+  ];
+
+  it("credits every ported file to Bruno Simon at the pinned commit, with its hash", () => {
+    const data = credits();
+    const used = [
+      ...(data.ported ?? []).flatMap((entry) => entry.sourceFiles),
+      ...data.assets
+        .filter((entry) => entry.author === "Bruno Simon")
+        .flatMap((entry) => entry.sourceFiles),
+    ];
+    for (const file of FILES) {
+      const url = `https://raw.githubusercontent.com/brunosimon/my-room-in-3d/${COMMIT}/${file}`;
+      const source = used.find((item) => item.url === url);
+      assert.ok(source, `${file} credited`);
+      assert.match(source.sha256, /^[0-9a-f]{64}$/);
+      assert.ok(source.bytes > 0);
+    }
+    for (const entry of data.ported ?? []) {
+      assert.equal(entry.author, "Bruno Simon");
+      assert.equal(entry.license, PERMISSION_LICENSE);
+      assert.ok(entry.source.includes(COMMIT), entry.id);
+      assert.ok(existsSync(new URL(`../../${entry.port}`, import.meta.url)));
+    }
+    const steam = data.assets.find(
+      (entry) => entry.file === "models/coffee-steam.glb",
+    );
+    assert.equal(steam?.author, "Bruno Simon");
+    assert.equal(steam?.license, PERMISSION_LICENSE);
+  });
+
+  it("accepts the permission license only for Bruno Simon's repository", () => {
+    const bruno = {
+      license: PERMISSION_LICENSE,
+      author: "Bruno Simon",
+      source: `https://github.com/brunosimon/my-room-in-3d/tree/${COMMIT}`,
+    };
+    assert.ok(licenseAllowed(bruno));
+    assert.ok(!licenseAllowed({ ...bruno, author: "Someone Else" }));
+    assert.ok(
+      !licenseAllowed({
+        ...bruno,
+        source: "https://github.com/brunosimon/folio-2019",
+      }),
+    );
+    assert.ok(
+      !licenseAllowed({
+        ...bruno,
+        source: "https://example.com/my-room-in-3d",
+      }),
+    );
   });
 });
 
@@ -142,5 +208,24 @@ describe("creditProblems", () => {
       creditProblems({ packs: [pack], assets: [entry, entry] }).length,
       1,
     );
+  });
+
+  it("rejects the permission license from any other author or repository", () => {
+    const problems = creditProblems({
+      packs: [pack],
+      assets: [{ ...entry, license: PERMISSION_LICENSE }],
+      ported: [
+        {
+          id: "x",
+          asset: "x",
+          author: "A",
+          license: PERMISSION_LICENSE,
+          source: "https://github.com/x",
+          port: "src/lib/world/motion.ts",
+          sourceFiles: [{ url: "https://github.com/x", bytes: 1, sha256: "0" }],
+        },
+      ],
+    });
+    assert.equal(problems.length, 2, problems.join("\n"));
   });
 });

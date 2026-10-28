@@ -66,6 +66,7 @@ import {
   worldLight,
 } from "@/lib/world/palette.ts";
 import { seededRandom } from "@/lib/world/random.ts";
+import { normalizeWheel, wheelDolly } from "@/lib/world/wheel.ts";
 
 const KINDS = Object.keys(MODEL_FILES) as NatureKind[];
 const URLS = KINDS.map((kind) => MODEL_FILES[kind]);
@@ -115,7 +116,7 @@ export default function WorldScene({
         fallback={
           <>
             <House reducedMotion={reducedMotion} />
-            <Setup hours={hours} />
+            <Setup hours={hours} reducedMotion={reducedMotion} />
           </>
         }
       >
@@ -139,7 +140,7 @@ function TexturedHouse({
   return (
     <>
       <House reducedMotion={reducedMotion} maps={maps} />
-      <Setup hours={hours} maps={maps} />
+      <Setup hours={hours} maps={maps} reducedMotion={reducedMotion} />
     </>
   );
 }
@@ -314,6 +315,22 @@ function GuidedCamera({
   const motion = guideMotion(reducedMotion);
   const { limits } = GUIDE;
   const first = useRef(true);
+  const element = useThree((state) => state.gl.domElement);
+
+  // Wheel zoom through the ported normalize-wheel logic (T4i), so a notch or
+  // a trackpad swipe zooms alike on every browser; camera-controls' own wheel
+  // handling is off (`wheel: ACTION.NONE`) and still clamps the distance.
+  useEffect(() => {
+    const onWheel = (event: WheelEvent) => {
+      const current = controls.current;
+      if (!current) return;
+      event.preventDefault();
+      const { pixelY } = normalizeWheel(event);
+      current.dolly(wheelDolly(pixelY, current.distance), !reducedMotion);
+    };
+    element.addEventListener("wheel", onWheel, { passive: false });
+    return () => element.removeEventListener("wheel", onWheel);
+  }, [element, reducedMotion]);
 
   useEffect(() => {
     const current = controls.current;
@@ -342,7 +359,7 @@ function GuidedCamera({
         left: ACTION.ROTATE,
         middle: ACTION.DOLLY,
         right: ACTION.NONE,
-        wheel: ACTION.DOLLY,
+        wheel: ACTION.NONE,
       }}
       touches={{
         one: ACTION.TOUCH_ROTATE,

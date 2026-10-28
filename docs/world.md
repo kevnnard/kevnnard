@@ -124,3 +124,31 @@ is not CC0. Decide before adding them.
 `tests/world/budget.test.ts` reports and enforces triangles per frame (all
 instances), main-pass draw calls (one per model primitive, plus sky, stars,
 grass, rock and pad) and model bytes, against `BUDGET` in `models.ts`.
+
+## Desk effects (T4i)
+
+Ported from Bruno Simon's [my-room-in-3d](https://github.com/brunosimon/my-room-in-3d)
+at `5d00b3f8`, used with the author's permission (private message to the site
+owner; the repository has no license file). Rewritten for three 0.186 and
+React Three Fiber, keeping his math:
+
+| Effect | Ours | His |
+| --- | --- | --- |
+| Coffee steam on an original mug | `SetupEffects.tsx`, `models/coffee-steam.glb` | `CoffeeSteam.js`, coffeeSteam shaders, perlin2d partial (inlined, no glslify) |
+| Chair sway, ±0.25 rad around the column | `motion.ts`, `Setup.tsx` | `TopChair.js` (±0.5 rad) |
+| Breathing PC and keyboard LEDs, never below 40% of `setupGlow(hours)` | `motion.ts` | `GoogleLeds.js` |
+| "KV" initials bouncing on the side screen | `motion.ts`, `SetupEffects.tsx` | `BouncingLogo.js` |
+| Normalized wheel zoom | `wheel.ts`, `WorldScene.tsx` | `Navigation.js` (normalize-wheel) |
+
+`/world` renders on demand. The setup requests frames continuously only while
+the camera is within 16 m of it, and never with reduced motion. Otherwise it rests: chair
+centred, LEDs at the hour's glow, logo still, steam frozen (hidden with
+reduced motion). `python3 scripts/prepare-world.py --bruno` re-encodes the
+Draco steam model with meshopt and writes the Bruno Simon credits (pack,
+asset and `ported` entries with each source file's sha256). Only Bruno Simon's
+repository may use the permission license (`licenseAllowed` in
+`src/lib/world/credits.ts`).
+
+## Third-party notices
+
+- `src/lib/world/wheel.ts` ports the wheel normalization logic of the `normalize-wheel` package (originally from Facebook's fixed-data-table), licensed BSD-3-Clause. Its copyright notice and license terms apply to that logic.

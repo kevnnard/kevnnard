@@ -8,6 +8,11 @@ export const MODEL_FILES = Object.fromEntries(
   Object.keys(KIND_SPECS).map((kind) => [kind, `/world/models/${kind}.glb`]),
 ) as Record<NatureKind, string>;
 
+/** Single props outside the island layout (T4i). */
+export const PROP_FILES = {
+  coffeeSteam: "/world/models/coffee-steam.glb",
+} as const;
+
 /**
  * Draws outside the instanced models: sky, stars, grass, rock and pad, plus
  * the procedural flowers (stems with centers, and petals) and one instanced

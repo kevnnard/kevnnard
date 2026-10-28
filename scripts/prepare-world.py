@@ -16,6 +16,12 @@ refreshes the house and setup textures and their credits. Drive ids come from
 node_modules/.cache/world/explore/picks.tsv (rows of the pack's catalog CSV);
 the 4K PNGs are cached in node_modules/.cache/world/textures/ and downscaled to
 1024 WebP with cwebp (CWEBP overrides /opt/homebrew/bin/cwebp).
+
+Bruno Simon step (T4i): `python3 scripts/prepare-world.py --bruno` only
+refreshes the coffee steam model and the credits for the effects ported from
+his my-room-in-3d (used with his permission, odd/tasks/stylized-house.md L25).
+Sources are cached in node_modules/.cache/world/bruno/<path>; the Draco steam
+model is re-encoded with meshopt, so the runtime needs no Draco decoder.
 """
 import hashlib
 import json
@@ -119,6 +125,86 @@ ORIGINAL = [
      "author": "Kevnnard", "license": "Original work (repository license)",
      "source": "src/lib/world/normals.ts"},
 ]
+
+
+BRUNO_COMMIT = "5d00b3f870da81f103e901e0d12e20bbcc816834"
+BRUNO_REPO = "https://github.com/brunosimon/my-room-in-3d"
+BRUNO_LICENSE = "used with the author's permission (private message to the site owner)"
+BRUNO_PACK = {
+    "id": "bruno-my-room-in-3d",
+    "pack": "My Room in 3D",
+    "author": "Bruno Simon",
+    "authorUrl": "https://bruno-simon.com",
+    "license": BRUNO_LICENSE,
+    "licenseUrl": "%s/tree/%s" % (BRUNO_REPO, BRUNO_COMMIT),
+    "source": "%s/tree/%s" % (BRUNO_REPO, BRUNO_COMMIT),
+    "licenseEvidence": {
+        "url": "%s/tree/%s" % (BRUNO_REPO, BRUNO_COMMIT),
+        "quote": "No license file at this commit; " + BRUNO_LICENSE
+                 + ", recorded in odd/tasks/stylized-house.md L25",
+    },
+}
+EXPERIENCE = "src/Experience/"
+# Ported code and shaders: id, what, files, the repository file holding the port.
+BRUNO_PORTS = [
+    ("coffee-steam", "Coffee steam shader (vertex, fragment, perlin2d partial)",
+     [EXPERIENCE + "CoffeeSteam.js", EXPERIENCE + "shaders/coffeeSteam/vertex.glsl",
+      EXPERIENCE + "shaders/coffeeSteam/fragment.glsl",
+      EXPERIENCE + "shaders/partials/perlin2d.glsl"],
+     "src/components/world/SetupEffects.tsx"),
+    ("chair-sway", "Chair sway", [EXPERIENCE + "TopChair.js"], "src/lib/world/motion.ts"),
+    ("breathing-leds", "Breathing LED wave", [EXPERIENCE + "GoogleLeds.js"],
+     "src/lib/world/motion.ts"),
+    ("bouncing-logo", "Bouncing logo limits and velocity", [EXPERIENCE + "BouncingLogo.js"],
+     "src/lib/world/motion.ts"),
+    ("wheel-zoom", "Normalized wheel zoom", [EXPERIENCE + "Navigation.js"],
+     "src/lib/world/wheel.ts"),
+]
+BRUNO_STEAM = "static/assets/coffeeSteamModel.glb"
+
+
+def bruno_cached(path):
+    """Pinned commit, so a cached copy is reused as is."""
+    url = "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/%s/%s" % (BRUNO_COMMIT, path)
+    target = CACHE / "bruno" / path
+    if not target.exists():
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(fetch(url))
+    data = target.read_bytes()
+    return target, {"url": url, "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
+
+
+def prepare_bruno():
+    ported = [{"id": pid, "asset": asset, "author": "Bruno Simon", "license": BRUNO_LICENSE,
+               "source": "%s/blob/%s/%s" % (BRUNO_REPO, BRUNO_COMMIT, files[0]),
+               "port": port, "sourceFiles": [bruno_cached(f)[1] for f in files]}
+              for pid, asset, files, port in BRUNO_PORTS]
+    entry, info = bruno_cached(BRUNO_STEAM)
+    target = OUTPUT / "models" / "coffee-steam.glb"
+    subprocess.run([*CLI, "optimize", str(entry), str(target), "--compress", "meshopt",
+                    "--simplify", "false", "--join", "false", "--instance", "false",
+                    "--palette", "false"], check=True, stdout=subprocess.DEVNULL, cwd=ROOT)
+    data = target.read_bytes()
+    output = glb_json(data)
+    triangles = sum(output["accessors"][p["indices"]]["count"] // 3
+                    for mesh in output["meshes"] for p in mesh["primitives"])
+    print("coffee-steam <-", BRUNO_STEAM, triangles, "triangles,", len(data), "bytes", flush=True)
+    asset = {
+        "file": "models/" + target.name, "asset": "coffeeSteamModel", "pack": BRUNO_PACK["id"],
+        "author": "Bruno Simon", "license": BRUNO_LICENSE, "licenseUrl": BRUNO_PACK["licenseUrl"],
+        "source": "%s/blob/%s/%s" % (BRUNO_REPO, BRUNO_COMMIT, BRUNO_STEAM),
+        "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest(),
+        "triangles": triangles, "sourceFiles": [info],
+    }
+    return asset, ported
+
+
+def with_bruno(credits, bruno):
+    asset, ported = bruno
+    packs = [pack for pack in credits["packs"] if pack["id"] != BRUNO_PACK["id"]]
+    assets = [a for a in credits["assets"] if a["pack"] != BRUNO_PACK["id"]]
+    return {**credits, "packs": [*packs, BRUNO_PACK], "assets": [*assets, asset],
+            "ported": ported}
 
 
 TEXTURE_PACK = {
@@ -330,6 +416,10 @@ def prepare(kind, pack_id, paths):
 
 
 if __name__ == "__main__":
+    if sys.argv[1:] == ["--bruno"]:
+        current = json.loads((OUTPUT / "credits.json").read_text(encoding="utf-8"))
+        write_credits(with_bruno(current, prepare_bruno()))
+        sys.exit(0)
     if sys.argv[1:] == ["--textures"]:
         current = json.loads((OUTPUT / "credits.json").read_text(encoding="utf-8"))
         write_credits(with_textures(current, prepare_textures()))
@@ -342,7 +432,7 @@ if __name__ == "__main__":
     used = sorted({pack_id for _, pack_id, _ in ASSETS})
     packs = [verify_license(pack_id) for pack_id in used]
     assets = [prepare(*spec) for spec in ASSETS]
-    write_credits(with_textures({
+    write_credits(with_bruno(with_textures({
         "policy": "Every shipped asset is credited, including CC0 ones (odd/tasks/stylized-house.md S4).",
         "userAgent": AGENT,
         "toolchain": "@gltf-transform/cli " + version,
@@ -352,5 +442,5 @@ if __name__ == "__main__":
         "packs": packs,
         "assets": assets,
         "original": ORIGINAL,
-    }, prepare_textures()))
+    }, prepare_textures()), prepare_bruno()))
     print("World models:", sum(a["bytes"] for a in assets), "bytes", flush=True)

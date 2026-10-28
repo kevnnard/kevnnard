@@ -15,6 +15,7 @@ S9. "dale aplica todo y meaviasa para revisarlo"
 S10. "si mejoraria la walss intenras a paredes mas como madera lateral no ?"
 S11. "ahora vamos con els etup comleto de normales texturas etc"
 S12. "si sobre todo echale ojo al setuup ys su texturas"
+S13. "Coopialos ya hable con el por mesaje dij qquepodia usar sus cosas"
 
 ## Tasks
 T1 [S1-S2] parent — done: three style directions in Gentle Design (design/stylized-house/) for the house and room with added accessories, guided camera framing. Commit: pending.
@@ -29,6 +30,7 @@ T4e [S9] gentle-ai-worker — done (visual pending): stylized CC0 textures (colo
 T4f [S10] dropped (user: "mentiras se ve bien"; worker cancelled before any code change): interior wall faces use long horizontal wood siding instead of the knotted short-plank texture. Commit: pending.
 T4g [S11] gentle-ai-worker — done (visual pending): full setup materials (normals, textures, PBR tuning) for desk, monitors, PC, speakers, peripherals, chair. Commit: pending.
 T4h [S12] explore then worker — done (visual pending): (1) finer dither + fading groups stop casting shadow as soon as they start fading; (2) environment map (reuse RoomEnvironment like /room) + soft ambient occlusion; (3) rounded/beveled setup and furniture geometry; (4) texture scale/contrast tuning, floor boards matching geometry. Focus on the setup and its textures. Commit: pending.
+T4i [S13] gentle-ai-worker — done (visual pending): port Bruno Simon my-room-in-3d effects (chair sway, breathing LEDs, coffee steam, bouncing logo, wheel normalization) adapted to /world, credited to Bruno Simon. Commit: pending.
 T4b [S1-S4] pending (rest of accessories): interior with accessories (02-cozy-diorama).
 T5 [S1] pending: enter-the-PC experience (Henry Heffernan reference).
 
@@ -57,3 +59,4 @@ L21. User withdrew S10: "mentiras se ve bien". Worker mvseex6f-a-6xqo cancelled;
 L22. Slice boundary: branch feat/interactive-room carries ~22k authored lines in 39 commits since origin/main (old /room forest work + new /world). Delivery strategy: /world commits from 02ee707 onward form their own reviewable chain; split into chained PRs when the user decides to publish.
 L23. StylizedTextures catalog has no fabric or plastic. Available for setup: Metal_Mesh_009 (speaker grilles; has opacity), Stylized_Sci_fi_Metal_Panel_001, Stylized_Metal_Plates_001, Leather_Patch_001 (chair, already used). Rows appended to picks.tsv (name, basecolor, normal, roughness, metallic, opacity for the new two). Plastic surfaces (desk top, monitors, keyboard, PC case) use PBR tuning (roughness/clearcoat) plus subtle original procedural normal; mousepad uses an original procedural fabric weave normal.
 L24. Screenshot 2026-10-28 12.45.56 PM: dotted screen-door on half-faded left wall and its dotted shadow on the desk leg; blocky box silhouettes (chair, desk, speakers); no contact shadow/AO; flat light and dark metals (no env map); wall plank texture too large/contrasty; floor parquet mismatched. User approved all four fixes, with priority on the setup and its textures.
+L25. Permission: user states Bruno Simon told them by message they may use his my-room-in-3d material. Repo has no license file; the parent cannot verify the message. Record in credits as "used with the author's permission (private message to the site owner)"; user should keep that message as proof. Pinned commit 5d00b3f870da81f103e901e0d12e20bbcc816834. Files: src/Experience/{CoffeeSteam,TopChair,GoogleLeds,BouncingLogo,Navigation}.js, shaders/coffeeSteam/{vertex,fragment}.glsl, shaders/partials/perlin2d.glsl, static/assets/coffeeSteamModel.glb (1576 B). Baked textures and roomModel are useless for our geometry: not used. Video screen deferred to the PC-entry task. normalize-wheel is an npm dep: port its small logic instead of adding the package.

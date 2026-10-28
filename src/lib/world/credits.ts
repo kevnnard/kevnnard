@@ -8,6 +8,17 @@ export const ALLOWED_LICENSES: readonly string[] = [
   "CC-BY-4.0",
 ];
 
+/**
+ * Bruno Simon's my-room-in-3d has no license file: its effects are used with
+ * the author's permission, given by private message to the site owner
+ * (odd/tasks/stylized-house.md L25). Accepted for that author and repository
+ * only.
+ */
+export const PERMISSION_LICENSE =
+  "used with the author's permission (private message to the site owner)";
+const PERMISSION_AUTHOR = "Bruno Simon";
+const PERMISSION_REPOSITORY = "/brunosimon/my-room-in-3d/";
+
 /** Official distribution hosts only: the packs' own sites and repositories. */
 export const OFFICIAL_HOSTS: readonly string[] = [
   "github.com",
@@ -76,11 +87,24 @@ export interface OriginalCredit {
   source: string;
 }
 
+/** Code or shaders ported from a permitted author (T4i). */
+export interface PortedCredit {
+  id: string;
+  asset: string;
+  author: string;
+  license: string;
+  source: string;
+  /** Repository-relative file holding the port. */
+  port: string;
+  sourceFiles: SourceFile[];
+}
+
 export interface Credits {
   packs: CreditPack[];
   assets: CreditEntry[];
   textures?: TextureCredit[];
   original?: OriginalCredit[];
+  ported?: PortedCredit[];
 }
 
 function officialHttps(url: string): boolean {
@@ -92,6 +116,30 @@ function officialHttps(url: string): boolean {
   } catch {
     return false;
   }
+}
+
+function permittedUrl(url: string): boolean {
+  return (
+    officialHttps(url) &&
+    new URL(url).pathname.startsWith(PERMISSION_REPOSITORY) &&
+    ["github.com", "raw.githubusercontent.com"].includes(new URL(url).hostname)
+  );
+}
+
+/** An allowed open license, or the permission license for its one author and repository. */
+export function licenseAllowed(entry: {
+  license: string;
+  author: string;
+  source: string;
+  sourceFiles?: SourceFile[];
+}): boolean {
+  if (ALLOWED_LICENSES.includes(entry.license)) return true;
+  return (
+    entry.license === PERMISSION_LICENSE &&
+    entry.author === PERMISSION_AUTHOR &&
+    permittedUrl(entry.source) &&
+    (entry.sourceFiles ?? []).every((file) => permittedUrl(file.url))
+  );
 }
 
 /** Every reason the credits are incomplete; empty when they are valid. */
@@ -107,7 +155,7 @@ export function creditProblems(credits: Credits): string[] {
     }
     seen.add(name);
     if (!entry.author?.trim()) problems.push(`${name}: missing author`);
-    else if (!ALLOWED_LICENSES.includes(entry.license))
+    else if (!licenseAllowed(entry))
       problems.push(`${name}: license ${entry.license} is not allowed`);
     else if (!packs.has(entry.pack))
       problems.push(`${name}: unknown pack ${entry.pack}`);
@@ -123,6 +171,13 @@ export function creditProblems(credits: Credits): string[] {
       problems.push(`${entry.id}: original work must use ${ORIGINAL_LICENSE}`);
     else if (!entry.source.startsWith("src/"))
       problems.push(`${entry.id}: source must be a repository file`);
+  }
+  for (const entry of credits.ported ?? []) {
+    if (!entry.author?.trim()) problems.push(`${entry.id}: missing author`);
+    else if (!licenseAllowed(entry) || entry.sourceFiles.length === 0)
+      problems.push(`${entry.id}: license ${entry.license} is not allowed`);
+    else if (!entry.port.startsWith("src/"))
+      problems.push(`${entry.id}: port must be a repository file`);
   }
   return problems;
 }

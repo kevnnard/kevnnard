@@ -70,6 +70,19 @@
         "url": "https://stylizedtextures.com/faq",
         "quote": "They are released under the CC0 (Creative Commons Zero) license"
       }
+    },
+    {
+      "id": "bruno-my-room-in-3d",
+      "pack": "My Room in 3D",
+      "author": "Bruno Simon",
+      "authorUrl": "https://bruno-simon.com",
+      "license": "used with the author's permission (private message to the site owner)",
+      "licenseUrl": "https://github.com/brunosimon/my-room-in-3d/tree/5d00b3f870da81f103e901e0d12e20bbcc816834",
+      "source": "https://github.com/brunosimon/my-room-in-3d/tree/5d00b3f870da81f103e901e0d12e20bbcc816834",
+      "licenseEvidence": {
+        "url": "https://github.com/brunosimon/my-room-in-3d/tree/5d00b3f870da81f103e901e0d12e20bbcc816834",
+        "quote": "No license file at this commit; used with the author's permission (private message to the site owner), recorded in odd/tasks/stylized-house.md L25"
+      }
     }
   ],
   "assets": [
@@ -345,6 +358,25 @@
           "url": "https://raw.githubusercontent.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/63976910ca04d16f0fc531b9c614244be8128713/addons/kaykit_city_builder_bits/Assets/gltf/citybits_texture.png",
           "bytes": 19885,
           "sha256": "6d2d9a5a13bce32209cd8c04572ab170504d68f34b1519165c9b0c41871e235b"
+        }
+      ]
+    },
+    {
+      "file": "models/coffee-steam.glb",
+      "asset": "coffeeSteamModel",
+      "pack": "bruno-my-room-in-3d",
+      "author": "Bruno Simon",
+      "license": "used with the author's permission (private message to the site owner)",
+      "licenseUrl": "https://github.com/brunosimon/my-room-in-3d/tree/5d00b3f870da81f103e901e0d12e20bbcc816834",
+      "source": "https://github.com/brunosimon/my-room-in-3d/blob/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/coffeeSteamModel.glb",
+      "bytes": 4384,
+      "sha256": "d9303e18ae073b93214c1952887d69af285db9bda253e3da3d7c2022ec190c5c",
+      "triangles": 528,
+      "sourceFiles": [
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/static/assets/coffeeSteamModel.glb",
+          "bytes": 1576,
+          "sha256": "e79bf273fa039859ac9758ae216269922435c6d71ba35ed6c43747148e82d88f"
         }
       ]
     }
@@ -817,5 +849,97 @@
       ]
     }
   ],
-  "textureBytes": 6290000
+  "textureBytes": 6290000,
+  "ported": [
+    {
+      "id": "coffee-steam",
+      "asset": "Coffee steam shader (vertex, fragment, perlin2d partial)",
+      "author": "Bruno Simon",
+      "license": "used with the author's permission (private message to the site owner)",
+      "source": "https://github.com/brunosimon/my-room-in-3d/blob/5d00b3f870da81f103e901e0d12e20bbcc816834/src/Experience/CoffeeSteam.js",
+      "port": "src/components/world/SetupEffects.tsx",
+      "sourceFiles": [
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/src/Experience/CoffeeSteam.js",
+          "bytes": 2704,
+          "sha256": "fecee778d6dab088a6b59cb5d9b55095285519a0ad718bf4ced0cdb1919b0bed"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/src/Experience/shaders/coffeeSteam/vertex.glsl",
+          "bytes": 644,
+          "sha256": "31ae6419024358ef045255a0ff439c826256db9708d45c74563f1894db466c73"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/src/Experience/shaders/coffeeSteam/fragment.glsl",
+          "bytes": 534,
+          "sha256": "c91ba9987254c0fdfeb1a218cec3bd06d6d663187bc50fdb22f16575f96fd17b"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/src/Experience/shaders/partials/perlin2d.glsl",
+          "bytes": 1251,
+          "sha256": "d8292a77b0e652bbd61cbf6df4e7b43cf714a1bfd612e2ca9e7ca6ef094efa84"
+        }
+      ]
+    },
+    {
+      "id": "chair-sway",
+      "asset": "Chair sway",
+      "author": "Bruno Simon",
+      "license": "used with the author's permission (private message to the site owner)",
+      "source": "https://github.com/brunosimon/my-room-in-3d/blob/5d00b3f870da81f103e901e0d12e20bbcc816834/src/Experience/TopChair.js",
+      "port": "src/lib/world/motion.ts",
+      "sourceFiles": [
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/src/Experience/TopChair.js",
+          "bytes": 922,
+          "sha256": "4143562422a84da4568eb9e87733e7e357a05ec9c0c96b5b2ced0f8102176d7a"
+        }
+      ]
+    },
+    {
+      "id": "breathing-leds",
+      "asset": "Breathing LED wave",
+      "author": "Bruno Simon",
+      "license": "used with the author's permission (private message to the site owner)",
+      "source": "https://github.com/brunosimon/my-room-in-3d/blob/5d00b3f870da81f103e901e0d12e20bbcc816834/src/Experience/GoogleLeds.js",
+      "port": "src/lib/world/motion.ts",
+      "sourceFiles": [
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/src/Experience/GoogleLeds.js",
+          "bytes": 2294,
+          "sha256": "d83c341937f55356d44d51224f8cffaee3f53a4ed5ed2fbd3ba50d14dd74efb2"
+        }
+      ]
+    },
+    {
+      "id": "bouncing-logo",
+      "asset": "Bouncing logo limits and velocity",
+      "author": "Bruno Simon",
+      "license": "used with the author's permission (private message to the site owner)",
+      "source": "https://github.com/brunosimon/my-room-in-3d/blob/5d00b3f870da81f103e901e0d12e20bbcc816834/src/Experience/BouncingLogo.js",
+      "port": "src/lib/world/motion.ts",
+      "sourceFiles": [
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/src/Experience/BouncingLogo.js",
+          "bytes": 5541,
+          "sha256": "8333621b1721a964202c01a9acb5747d0f67c273706d6cfa9391b70b29bde25f"
+        }
+      ]
+    },
+    {
+      "id": "wheel-zoom",
+      "asset": "Normalized wheel zoom",
+      "author": "Bruno Simon",
+      "license": "used with the author's permission (private message to the site owner)",
+      "source": "https://github.com/brunosimon/my-room-in-3d/blob/5d00b3f870da81f103e901e0d12e20bbcc816834/src/Experience/Navigation.js",
+      "port": "src/lib/world/wheel.ts",
+      "sourceFiles": [
+        {
+          "url": "https://raw.githubusercontent.com/brunosimon/my-room-in-3d/5d00b3f870da81f103e901e0d12e20bbcc816834/src/Experience/Navigation.js",
+          "bytes": 8653,
+          "sha256": "e2b0c0508c5da33a25e58829c654dc3f540e3e0b0f191ee254f68cc05b791351"
+        }
+      ]
+    }
+  ]
 }
