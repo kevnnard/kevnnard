@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { flowerLayout } from "../../src/lib/world/flowers.ts";
 import {
+  HOUSE,
   HOUSE_FOOTPRINT,
   HOUSE_GROUPS,
   houseMeshes,
@@ -60,14 +61,36 @@ describe("stylized wooden house (T4a, S6)", () => {
     }
   });
 
-  it("keeps the two camera-facing walls separate for a later cutaway", () => {
+  it("gives every wall, with its trim and glass, its own cutaway group", () => {
     const meshes = houseMeshes();
-    for (const group of ["wallFront", "wallRight"] as const) {
-      assert.ok(meshes[group].wood.length > 0, group);
-      assert.ok(
-        WALLS.some((wall) => wall.group === group && wall.openings.length > 0),
-      );
+    const groups = new Set(WALLS.map((wall) => wall.group));
+    assert.equal(groups.size, WALLS.length, "one group per wall");
+    for (const wall of WALLS) {
+      const parts = [...meshes[wall.group].wood, ...meshes[wall.group].glass];
+      assert.ok(parts.length > 0, wall.id);
+      const normal = wall.axis === "x" ? 2 : 0;
+      for (const part of parts)
+        assert.ok(
+          Math.abs(part.center[normal] - wall.at) < 0.2,
+          `${wall.id} part off its wall`,
+        );
     }
+  });
+
+  it("keeps both roofs apart and the base free of walls and roofs", () => {
+    const meshes = houseMeshes();
+    for (const [group, volume] of [
+      ["main-roof", HOUSE.main],
+      ["garage-roof", HOUSE.garage],
+    ] as const) {
+      assert.ok(meshes[group].wood.length > 0, group);
+      for (const part of meshes[group].wood)
+        assert.ok(part.center[1] > HOUSE.floorY + volume.height - 0.3, group);
+    }
+    assert.equal(meshes.base.glass.length, 0);
+    for (const part of meshes.base.wood)
+      assert.ok(part.center[1] < HOUSE.floorY + HOUSE.main.height, "base low");
+    assert.ok(!WALLS.some((wall) => wall.group === "base"));
   });
 
   it("fits the house, garage, roof overhang and driveway on the pad", () => {

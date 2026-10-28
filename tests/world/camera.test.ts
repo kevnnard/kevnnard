@@ -7,6 +7,7 @@ import {
   guidePose,
   poseToPosition,
 } from "../../src/lib/world/camera.ts";
+import { HOUSE_FOCUS } from "../../src/lib/world/house.ts";
 
 describe("guided island camera", () => {
   it("starts on a three-quarter view: front-right, looking down at the island", () => {
@@ -17,24 +18,31 @@ describe("guided island camera", () => {
     assert.ok(x > 0 && z > 0 && y > GUIDE.target[1]);
   });
 
-  it("keeps orbit and zoom gentle: small arcs around the home pose", () => {
+  it("orbits a full circle around the house and zooms close to it", () => {
     const { limits } = GUIDE;
-    assert.ok(limits.maxAzimuth - limits.minAzimuth <= Math.PI / 2);
-    assert.ok(limits.maxPolar - limits.minPolar <= 0.6);
+    assert.deepEqual(GUIDE.target, HOUSE_FOCUS);
+    assert.ok(limits.minPolar > 0.2, "never straight down");
     assert.ok(limits.maxPolar < Math.PI / 2, "never below the island rim");
-    assert.ok(limits.maxDistance / limits.minDistance <= 1.8);
+    assert.ok(limits.minDistance <= 5, "close enough for the cutaway");
+    for (const azimuth of [-9, 0, Math.PI, 2 * Math.PI, 9])
+      assert.equal(
+        clampPose({ azimuth, polar: 1, distance: 10 }).azimuth,
+        azimuth,
+      );
   });
 
-  it("clamps every axis into its limits", () => {
+  it("clamps polar and zoom into their limits", () => {
     const { limits } = GUIDE;
     const wild = clampPose({ azimuth: 9, polar: 3, distance: 500 });
-    assert.equal(wild.azimuth, limits.maxAzimuth);
     assert.equal(wild.polar, limits.maxPolar);
     assert.equal(wild.distance, limits.maxDistance);
     const low = clampPose({ azimuth: -9, polar: 0, distance: 0 });
-    assert.equal(low.azimuth, limits.minAzimuth);
     assert.equal(low.polar, limits.minPolar);
     assert.equal(low.distance, limits.minDistance);
+  });
+
+  it("keeps the home pose far: the house starts whole", () => {
+    assert.ok(guidePose(16 / 9).distance > 20);
   });
 
   it("backs off on portrait screens but stays inside the zoom range", () => {

@@ -95,13 +95,13 @@ export default function WorldScene({
       dpr={[1, 1.5]}
       camera={{ fov: GUIDE.fov, near: 0.1, far: 200, position: [20, 14, 20] }}
       gl={{ antialias: true, powerPreference: "high-performance" }}
-      aria-label="Stylized floating island. Drag to look around a little, scroll to zoom."
+      aria-label="Stylized floating island with a wooden house. Drag to orbit, scroll to zoom in and see inside."
       role="img"
     >
       <WorldLighting hours={hours} />
       <GuidedCamera reducedMotion={reducedMotion} home={home} />
       <Island />
-      <House />
+      <House reducedMotion={reducedMotion} />
       <Flowers />
       <Clouds hours={hours} reducedMotion={reducedMotion} />
       <Nature onReady={onReady} />
@@ -238,7 +238,7 @@ function WorldLighting({ hours }: { hours: number }) {
 
 const { ACTION } = CameraControlsImpl;
 
-/** Fixed three-quarter framing with a small clamped orbit and zoom; no panning. */
+/** Three-quarter home framing, 360° orbit around the house and close zoom; no panning. */
 function GuidedCamera({
   reducedMotion,
   home,
@@ -269,8 +269,6 @@ function GuidedCamera({
       maxDistance={limits.maxDistance}
       minPolarAngle={limits.minPolar}
       maxPolarAngle={limits.maxPolar}
-      minAzimuthAngle={limits.minAzimuth}
-      maxAzimuthAngle={limits.maxAzimuth}
       smoothTime={motion.smoothTime}
       draggingSmoothTime={motion.draggingSmoothTime}
       azimuthRotateSpeed={motion.azimuthRotateSpeed}

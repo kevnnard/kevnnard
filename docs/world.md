@@ -30,10 +30,21 @@ dark, so the sun, moon and phases match `/room` exactly.
 
 ## Camera
 
-Guided, not free: a three-quarter view from the front right. The user can orbit
-±0.6 rad, tilt between 0.8 and 1.3 rad from vertical and zoom between 22.5 and
-40 m. Panning is off. "Recenter view" returns home. With reduced motion, moves
-are instant and clouds stop drifting.
+Guided, not free: a three-quarter home view from the front right, always
+targeting the house (`HOUSE_FOCUS`). The user can orbit a full 360°, tilt
+between 0.35 and 1.35 rad from vertical and zoom between 4 and 40 m. Panning
+is off. "Recenter view" returns home. With reduced motion, moves are instant
+and clouds stop drifting.
+
+## House cutaway
+
+Zoom drives it, no button (`src/lib/world/cutaway.ts`). Far away the house is
+whole. Below 14 m both roofs start dissolving and are gone at 8 m. Below 11 m
+every wall whose outward normal faces the camera dissolves, fully at 6 m, so
+the interior shows from any side. Each wall (with its trim and glass) and each
+roof is its own group; the floor, plinths, porch, driveway and posts never
+fade. `House.tsx` uses a 4x4 ordered-dither discard per group and hides fully
+faded groups so sun and moon light enter. With reduced motion fades snap.
 
 ## Assets and credits
 

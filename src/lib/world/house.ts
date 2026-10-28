@@ -38,14 +38,21 @@ export interface Part {
 }
 
 /**
- * Separately rendered groups. The front (+z) and right (+x) walls face the
- * default camera, so they stay apart for a later cutaway; the roof too.
+ * Separately rendered groups for the cutaway (T4c): every wall with its trim
+ * and glass, and each roof, fade on their own; `base` (plinths, floor, porch,
+ * driveway, corner posts) never fades.
  */
 export const HOUSE_GROUPS = [
-  "shell",
-  "wallFront",
-  "wallRight",
-  "roof",
+  "base",
+  "main-front",
+  "main-right",
+  "main-back",
+  "main-left",
+  "garage-front",
+  "garage-left",
+  "garage-back",
+  "main-roof",
+  "garage-roof",
 ] as const;
 export type HouseGroup = (typeof HOUSE_GROUPS)[number];
 
@@ -97,6 +104,13 @@ export const HOUSE = {
   driveway: { x0: -2.95, x1: -1.42, z0: 0.55, z1: PAD_FRONT },
 } as const;
 
+/** Middle of the house and garage, a little above the floor: the camera target. */
+export const HOUSE_FOCUS: Vec3 = [
+  (HOUSE.garage.x0 + HOUSE.main.x1) / 2,
+  FLOOR_Y + 1.2,
+  (HOUSE.main.z0 + HOUSE.main.z1) / 2,
+];
+
 export interface Opening {
   kind: "window" | "door" | "garage";
   /** Along the wall, in world x (walls along x) or z (walls along z). */
@@ -145,7 +159,7 @@ const gable = (volume: Volume) => ({
 export const WALLS: readonly Wall[] = [
   {
     id: "main-front",
-    group: "wallFront",
+    group: "main-front",
     axis: "x",
     at: M.z1 - W / 2,
     side: 1,
@@ -160,7 +174,7 @@ export const WALLS: readonly Wall[] = [
   },
   {
     id: "main-right",
-    group: "wallRight",
+    group: "main-right",
     axis: "z",
     at: M.x1 - W / 2,
     side: 1,
@@ -172,7 +186,7 @@ export const WALLS: readonly Wall[] = [
   },
   {
     id: "main-back",
-    group: "shell",
+    group: "main-back",
     axis: "x",
     at: M.z0 + W / 2,
     side: -1,
@@ -183,7 +197,7 @@ export const WALLS: readonly Wall[] = [
   },
   {
     id: "main-left",
-    group: "shell",
+    group: "main-left",
     axis: "z",
     at: M.x0 + W / 2,
     side: -1,
@@ -195,7 +209,7 @@ export const WALLS: readonly Wall[] = [
   },
   {
     id: "garage-front",
-    group: "shell",
+    group: "garage-front",
     axis: "x",
     at: G.z1 - W / 2,
     side: 1,
@@ -206,7 +220,7 @@ export const WALLS: readonly Wall[] = [
   },
   {
     id: "garage-left",
-    group: "shell",
+    group: "garage-left",
     axis: "z",
     at: G.x0 + W / 2,
     side: -1,
@@ -218,7 +232,7 @@ export const WALLS: readonly Wall[] = [
   },
   {
     id: "garage-back",
-    group: "shell",
+    group: "garage-back",
     axis: "x",
     at: G.z0 + W / 2,
     side: -1,
@@ -681,7 +695,7 @@ export interface HouseMeshes {
   glass: Part[];
 }
 
-/** Every part of the house, grouped for rendering and the later cutaway. */
+/** Every part of the house, grouped for rendering and the cutaway. */
 export function houseMeshes(
   seed: number = HOUSE.seed,
 ): Record<HouseGroup, HouseMeshes> {
@@ -692,9 +706,8 @@ export function houseMeshes(
   for (const wall of WALLS)
     wallParts(wall, random, meshes[wall.group].wood, meshes[wall.group].glass);
 
-  const shell = meshes.shell.wood;
   const { porch, driveway } = HOUSE;
-  shell.push(
+  meshes.base.wood.push(
     flat(grow(M, 0.05), PAD.height, FLOOR_Y, HOUSE_COLORS.plinth),
     flat(grow(G, 0.05), PAD.height, FLOOR_Y, HOUSE_COLORS.plinth, 0.97),
     flat(driveway, PAD.height, PAD.height + 0.03, HOUSE_COLORS.driveway),
@@ -724,10 +737,9 @@ export function houseMeshes(
     post(G.x0 + W / 2, G.z0 + W / 2, G.height),
     post(G.x0 + W / 2, G.z1 - W / 2, G.height),
     post(G.x1 + 0.02, G.z1 - W / 2, G.height),
-    ...roofParts(G, random),
   );
-  // The front-right post goes with the camera-facing walls.
-  meshes.wallFront.wood.push(post(M.x1 - W / 2, M.z1 - W / 2, M.height));
-  meshes.roof.wood.push(...roofParts(M, random));
+  meshes["garage-roof"].wood.push(...roofParts(G, random));
+  meshes.base.wood.push(post(M.x1 - W / 2, M.z1 - W / 2, M.height));
+  meshes["main-roof"].wood.push(...roofParts(M, random));
   return meshes;
 }

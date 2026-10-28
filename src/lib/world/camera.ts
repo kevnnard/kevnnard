@@ -1,6 +1,9 @@
-// Guided camera for the floating island: a fixed three-quarter framing with a
-// gentle, clamped orbit and zoom. Pure numbers so the limits are unit tested;
-// WorldScene hands them to drei's CameraControls. No free walking (L2).
+// Guided camera for the floating island: a three-quarter home framing, a full
+// 360° orbit around the house, polar clamped above the ground, and a zoom
+// close enough for the cutaway (T4c). Pure numbers so the limits are unit
+// tested; WorldScene hands them to drei's CameraControls. No free walking (L2).
+
+import { HOUSE_FOCUS } from "./house.ts";
 
 export type Vec3 = readonly [number, number, number];
 
@@ -18,16 +21,15 @@ const HOME_POLAR = 1.02;
 
 export const GUIDE = {
   fov: 35,
-  /** Slightly above the grass, so T4's house will sit in the middle. */
-  target: [0, 0.8, 0] as Vec3,
-  /** Island plus tree canopy, as a sphere that must stay in frame. */
-  frameRadius: 7.5,
+  /** Always the house: orbit and zoom pivot on its middle. */
+  target: HOUSE_FOCUS as Vec3,
+  /** Island plus tree canopy around the off-center house target, as a sphere that must stay in frame. */
+  frameRadius: 8.5,
+  /** Azimuth is free: a seamless 360° orbit. */
   limits: {
-    minAzimuth: HOME_AZIMUTH - 0.6,
-    maxAzimuth: HOME_AZIMUTH + 0.6,
-    minPolar: 0.8,
-    maxPolar: 1.3,
-    minDistance: 22.5,
+    minPolar: 0.35,
+    maxPolar: 1.35,
+    minDistance: 4,
     maxDistance: 40,
   },
 } as const;
@@ -35,13 +37,13 @@ export const GUIDE = {
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 
-/** Clamps a pose into the guide limits. Throws a RangeError for non-finite input. */
+/** Clamps polar and distance into the guide limits; azimuth wraps freely. Throws a RangeError for non-finite input. */
 export function clampPose(pose: GuidePose): GuidePose {
   if (![pose.azimuth, pose.polar, pose.distance].every(Number.isFinite))
     throw new RangeError("Camera pose must be finite");
   const { limits } = GUIDE;
   return {
-    azimuth: clamp(pose.azimuth, limits.minAzimuth, limits.maxAzimuth),
+    azimuth: pose.azimuth,
     polar: clamp(pose.polar, limits.minPolar, limits.maxPolar),
     distance: clamp(pose.distance, limits.minDistance, limits.maxDistance),
   };
