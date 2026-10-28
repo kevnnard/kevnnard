@@ -118,7 +118,7 @@ export const SETUP_MATERIALS = {
   /** Black powder-coated steel: desk frame, legs, tray, chair column. */
   powder: {
     roughness: 0.45,
-    metalness: 0.6,
+    metalness: 0.35,
     normal: "noise",
     normalScale: 0.12,
     tile: [0.08, 0.08],
@@ -188,6 +188,23 @@ const part = (
   ...(rotation && { rotation }),
 });
 
+/** Bevelled box with `radius` metre edges (T4h): softer silhouettes. */
+const rounded = (
+  material: SetupMaterialId,
+  radius: number,
+  center: Vec3,
+  size: Vec3,
+  color: string,
+  rotation?: Vec3,
+  shade = 1,
+): SetupPart => ({
+  ...part(material, "rounded", center, size, color, rotation, shade),
+  radius,
+});
+
+/** Sides of the setup's cylinders: smooth knobs, casters and cones. */
+export const SETUP_ROUND_SEGMENTS = 16;
+
 /** Axis of a "round" part laid along world z. */
 const ALONG_Z: Vec3 = [Math.PI / 2, 0, 0];
 /** Axis of a "round" part laid along world x. */
@@ -207,9 +224,9 @@ function desk(solid: SetupPart[]) {
   const front = d0 + depth;
   const top = 0.05;
   solid.push(
-    part(
+    rounded(
       "laminate",
-      "box",
+      0.015,
       w((d0 + front) / 2 - 0.0125, height - top / 2, uc),
       [depth - 0.025, top, du],
       C.deskTop,
@@ -295,19 +312,25 @@ function monitors(solid: SetupPart[], glow: SetupPart[]) {
   // Wide main monitor, centered on the keyboard.
   const u = -1.45;
   solid.push(
-    part("satin", "box", w(0.2, top + 0.01, u), [0.2, 0.02, 0.26], C.bezel),
-    part("satin", "box", w(0.17, top + 0.19, u), [0.05, 0.36, 0.07], C.bezel),
-    part("satin", "box", w(0.21, 1.08, u), [0.08, 0.08, 0.1], C.bezel),
-    part(
+    rounded("satin", 0.008, w(0.2, top + 0.01, u), [0.2, 0.02, 0.26], C.bezel),
+    rounded(
       "satin",
-      "box",
+      0.015,
+      w(0.17, top + 0.19, u),
+      [0.05, 0.36, 0.07],
+      C.bezel,
+    ),
+    rounded("satin", 0.02, w(0.21, 1.08, u), [0.08, 0.08, 0.1], C.bezel),
+    rounded(
+      "satin",
+      0.015,
       w(0.225, 1.1, u),
       [0.04, 0.24, 0.5],
       C.bezel,
       undefined,
       0.9,
     ),
-    part("satin", "box", w(0.26, 1.11, u), [0.045, 0.4, 0.94], C.bezel),
+    rounded("satin", 0.018, w(0.26, 1.11, u), [0.045, 0.4, 0.94], C.bezel),
   );
   glow.push(
     part("satin", "box", w(0.286, 1.115, u), [0.006, 0.35, 0.88], C.screen),
@@ -336,23 +359,23 @@ function monitors(solid: SetupPart[], glow: SetupPart[]) {
     panel[2] + n[2] * out + t[2] * along,
   ];
   solid.push(
-    part(
+    rounded(
       "satin",
-      "box",
+      0.008,
       w(0.22, top + 0.01, s),
       [0.18, 0.02, 0.2],
       C.bezel,
       rot,
     ),
-    part(
+    rounded(
       "satin",
-      "box",
+      0.015,
       w(0.21, top + 0.17, s),
       [0.04, 0.3, 0.06],
       C.bezel,
       rot,
     ),
-    part("satin", "box", panel, [0.04, 0.32, 0.52], C.bezel, rot),
+    rounded("satin", 0.016, panel, [0.04, 0.32, 0.52], C.bezel, rot),
   );
   glow.push(
     part("satin", "box", on(0.024, 0, 0), [0.006, 0.28, 0.48], C.side, rot),
@@ -376,9 +399,9 @@ function deskTop(solid: SetupPart[], glow: SetupPart[]) {
   const top = DESK.height;
   // Keyboard: black case, white key rows, a thin RGB underglow.
   solid.push(
-    part(
+    rounded(
       "satin",
-      "box",
+      0.008,
       w(0.56, top + 0.0125, KEYBOARD_U),
       [0.16, 0.025, 0.46],
       C.frame,
@@ -386,9 +409,9 @@ function deskTop(solid: SetupPart[], glow: SetupPart[]) {
   );
   for (const [i, d] of KEY_ROWS.entries())
     solid.push(
-      part(
+      rounded(
         "keycap",
-        "box",
+        0.004,
         w(d, top + 0.031, KEYBOARD_U + (i === 3 ? 0.02 : 0)),
         [0.028, 0.012, i === 3 ? 0.24 : 0.42],
         C.keys,
@@ -431,8 +454,20 @@ function deskTop(solid: SetupPart[], glow: SetupPart[]) {
   // perforated mesh grille in front of them.
   for (const u of SPEAKERS)
     solid.push(
-      part("satin", "box", w(0.2, top + 0.005, u), [0.18, 0.01, 0.14], C.frame),
-      part("satin", "box", w(0.2, top + 0.15, u), [0.2, 0.28, 0.16], C.speaker),
+      rounded(
+        "satin",
+        0.004,
+        w(0.2, top + 0.005, u),
+        [0.18, 0.01, 0.14],
+        C.frame,
+      ),
+      rounded(
+        "satin",
+        0.02,
+        w(0.2, top + 0.15, u),
+        [0.2, 0.28, 0.16],
+        C.speaker,
+      ),
       part(
         "satin",
         "round",
@@ -482,7 +517,7 @@ function tower(solid: SetupPart[], glow: SetupPart[], glass: SetupPart[]) {
   const u = -2.07;
   const face = u + 0.1;
   solid.push(
-    part("panel", "box", w(0.33, 0.27, u), [0.44, 0.48, 0.2], C.tower),
+    rounded("panel", 0.02, w(0.33, 0.27, u), [0.44, 0.48, 0.2], C.tower),
     part("satin", "box", w(0.33, 0.3, face + 0.01), [0.3, 0.06, 0.02], C.inner),
     part(
       "satin",
@@ -613,9 +648,7 @@ function chair(solid: SetupPart[]) {
     part("powder", "round", c(0, 0.26, 0), [0.05, 0.3, 0.05], C.cone),
     part("base", "round", c(0, 0.18, 0), [0.07, 0.12, 0.07], C.chair),
     part("powder", "box", c(0, 0.42, 0), [0.3, 0.04, 0.3], C.frame, turn),
-    {
-      ...part("leather", "box", c(0, 0.48, 0), [0.52, 0.1, 0.5], C.chair, turn),
-    },
+    rounded("leather", 0.045, c(0, 0.48, 0), [0.52, 0.1, 0.5], C.chair, turn),
     part(
       "leather",
       "round",
@@ -626,16 +659,7 @@ function chair(solid: SetupPart[]) {
       1.08,
     ),
     part("powder", "box", c(0.2, 0.5, 0), [0.06, 0.1, 0.18], C.frame, turn),
-    {
-      ...part(
-        "leather",
-        "box",
-        back(0.4, 0, 0),
-        [0.1, 0.8, 0.48],
-        C.chair,
-        lean,
-      ),
-    },
+    rounded("leather", 0.045, back(0.4, 0, 0), [0.1, 0.8, 0.48], C.chair, lean),
     part(
       "leather",
       "box",
@@ -664,17 +688,17 @@ function chair(solid: SetupPart[]) {
   );
   for (const s of [1, -1])
     solid.push(
-      part(
+      rounded(
         "leather",
-        "box",
+        0.035,
         c(0, 0.505, s * 0.22),
         [0.5, 0.08, 0.08],
         C.trim,
         turn,
       ),
-      part(
+      rounded(
         "leather",
-        "box",
+        0.035,
         back(0.38, 0.04, s * 0.2),
         [0.1, 0.72, 0.08],
         C.trim,
@@ -696,9 +720,9 @@ function chair(solid: SetupPart[]) {
         C.chair,
         turn,
       ),
-      part(
+      rounded(
         "leather",
-        "box",
+        0.018,
         c(-0.02, 0.715, s * 0.29),
         [0.26, 0.04, 0.09],
         C.chair,
@@ -776,6 +800,27 @@ export const SETUP_ZONE: Rect = {
   z0: DESK.u0,
   z1: DESK.u1,
 };
+
+/**
+ * Baked ambient occlusion per setup vertex (T4h): a 0.5..1 factor that
+ * darkens surfaces near the floor, faces turned down and the knee space
+ * under the desk top, so the setup sits on the floor instead of floating.
+ */
+export function setupOcclusion(
+  [x, y, z]: readonly [number, number, number],
+  [, ny]: readonly [number, number, number],
+): number {
+  const h = Math.max(0, y - Y0);
+  let ao = h >= 0.5 ? 1 : 1 - 0.35 * (1 - h / 0.5) ** 2;
+  if (ny < -0.5) ao *= 0.8;
+  const underDesk =
+    x < IN + DESK.d0 + DESK.depth &&
+    z > DESK.u0 &&
+    z < DESK.u1 &&
+    y < Y0 + DESK.height - 0.05;
+  if (underDesk) ao *= 0.85;
+  return Math.max(ao, 0.5);
+}
 
 /** Screen and RGB brightness: soft by day, brighter at night. */
 export function setupGlow(hours: number): number {

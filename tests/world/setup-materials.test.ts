@@ -54,7 +54,7 @@ describe("gaming setup materials (T4g, S11)", () => {
 
   it("tunes PBR per material", () => {
     const M = SETUP_MATERIALS;
-    assert.equal(M.powder.metalness, 0.6);
+    assert.equal(M.powder.metalness, 0.35);
     assert.equal(M.powder.roughness, 0.45);
     assert.equal(M.powder.normal, "noise");
     assert.ok(M.powder.normalScale <= 0.2, "very subtle");

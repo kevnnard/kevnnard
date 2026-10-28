@@ -21,6 +21,43 @@ export const CUTAWAY = {
   facing: { start: 0.1, full: 0.3 },
 } as const;
 
+/** Fades above this stop the group casting shadows (no dotted shadows). */
+const SHADOW_FADE = 0.02;
+
+/**
+ * Whether a fading group casts shadows: off as soon as it starts fading, back
+ * on only once it is whole again.
+ */
+export const castsShadow = (fade: number, casting: boolean) =>
+  casting ? fade <= SHADOW_FADE : fade === 0;
+
+const bayer2 = (x: number, y: number) => {
+  const a = Math.floor(x);
+  const b = Math.floor(y);
+  const t = a / 2 + b * b * 0.75;
+  return t - Math.floor(t);
+};
+const bayer4 = (x: number, y: number) =>
+  bayer2(0.5 * x, 0.5 * y) * 0.25 + bayer2(x, y);
+
+/** 8x8 ordered-dither threshold in [0, 1); mirrors DITHER_GLSL. */
+export const bayer8 = (x: number, y: number) =>
+  bayer4(0.5 * x, 0.5 * y) * 0.25 + bayer2(x, y);
+
+/** GLSL for `cutawayBayer8(gl_FragCoord.xy)`, the screen-door threshold. */
+export const DITHER_GLSL = `
+  float cutawayBayer2(vec2 a) {
+    a = floor(a);
+    return fract(a.x / 2.0 + a.y * a.y * 0.75);
+  }
+  float cutawayBayer4(vec2 a) {
+    return cutawayBayer2(0.5 * a) * 0.25 + cutawayBayer2(a);
+  }
+  float cutawayBayer8(vec2 a) {
+    return cutawayBayer4(0.5 * a) * 0.25 + cutawayBayer2(a);
+  }
+`;
+
 const smoothstep = (edge0: number, edge1: number, x: number) => {
   const t = Math.min(Math.max((x - edge0) / (edge1 - edge0), 0), 1);
   return t * t * (3 - 2 * t);

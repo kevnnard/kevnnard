@@ -27,11 +27,14 @@ export const HOUSE_COLORS = {
 } as const;
 
 /**
- * A box, a 10-sided cylinder ("round", axis along y) or a "prism" (convex
- * `profile` in the unit xy square, extruded along z), scaled to `size`.
+ * A box, a cylinder ("round", axis along y), a "rounded" box (edges bevelled
+ * by `radius` metres, T4h) or a "prism" (convex `profile` in the unit xy
+ * square, extruded along z), scaled to `size`.
  */
 export interface Part {
-  shape: "box" | "round" | "prism";
+  shape: "box" | "round" | "rounded" | "prism";
+  /** Edge radius in metres of a "rounded" box. */
+  radius?: number;
   /** Prism outline, counter-clockwise, within [-0.5, 0.5]. */
   profile?: [number, number][];
   center: Vec3;

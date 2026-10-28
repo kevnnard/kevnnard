@@ -40,13 +40,20 @@ describe("stylized textures (T4e, S9)", () => {
   it("credits every shipped map, and the runtime loads exactly those maps", () => {
     const files = (credits().textures ?? []).map((entry) => entry.file);
     assert.deepEqual([...files].sort(), shipped());
+    const loaded = TEXTURE_URLS.map((url) => url.replace("/world/", ""));
+    for (const file of loaded) assert.ok(shipped().includes(file), file);
+    // The floor now reuses the plank maps (T4h); its old parquet maps are
+    // still shipped until scripts/prepare-world.py drops them.
     assert.deepEqual(
-      TEXTURE_URLS.map((url) => url.replace("/world/", "")).sort(),
-      shipped(),
+      shipped().filter((file) => !loaded.includes(file)),
+      ["color", "normal", "roughness"].map(
+        (map) => `textures/Stylized_Wood_Floor_001-${map}.webp`,
+      ),
     );
     assert.equal(
-      shipped().length,
-      SURFACES.reduce((sum, surface) => sum + TEXTURES[surface].maps.length, 0),
+      loaded.length,
+      new Set(SURFACES.map((surface) => TEXTURES[surface].name)).size * 3 +
+        SURFACES.filter((surface) => TEXTURES[surface].maps.length > 3).length,
     );
   });
 

@@ -46,21 +46,24 @@ export interface SurfaceTexture {
 }
 
 export const TEXTURES: Record<Surface, SurfaceTexture> = {
-  // About ten boards per repeat: roughly the 0.17 m wall planks.
+  // About ten boards per repeat, larger than the geometric wall planks and
+  // at low contrast (T4h): grain rather than a second set of boards.
   planks: {
     name: "Stylized_Wood_Planks_001",
     maps: PBR,
-    tile: 1.7,
+    tile: 2.4,
     mean: [0.04, 0.0167, 0.0047],
-    strength: 0.75,
+    strength: 0.45,
     normalScale: 0.6,
   },
+  // The plank maps again (shared files), at the 0.28 m floor board width:
+  // up faces project x along u, so the boards run with the floor boards.
   floor: {
-    name: "Stylized_Wood_Floor_001",
+    name: "Stylized_Wood_Planks_001",
     maps: PBR,
-    tile: 1.8,
-    mean: [0.1641, 0.0779, 0.0533],
-    strength: 0.7,
+    tile: 2.8,
+    mean: [0.04, 0.0167, 0.0047],
+    strength: 0.4,
     normalScale: 0.5,
   },
   // About ten scale rows per repeat, close to the 0.24 m shingle rows.
@@ -77,7 +80,7 @@ export const TEXTURES: Record<Surface, SurfaceTexture> = {
     maps: PBR,
     tile: 0.6,
     mean: [0.2299, 0.1499, 0.1204],
-    strength: 0.55,
+    strength: 0.35,
     normalScale: 0.6,
   },
   // Speaker grilles: perforated, so the cones show through the holes.
@@ -104,10 +107,18 @@ export const TEXTURES: Record<Surface, SurfaceTexture> = {
 export const textureFile = (surface: Surface, map: TextureMap) =>
   `textures/${TEXTURES[surface].name}-${map}.webp`;
 
-/** Every map the runtime loads, as site URLs. */
-export const TEXTURE_URLS: readonly string[] = SURFACES.flatMap((surface) =>
-  TEXTURES[surface].maps.map((map) => `/world/${textureFile(surface, map)}`),
-);
+/** Site URL of a surface's map; surfaces may share files. */
+export const textureUrl = (surface: Surface, map: TextureMap) =>
+  `/world/${textureFile(surface, map)}`;
+
+/** Every map the runtime loads, once each, as site URLs. */
+export const TEXTURE_URLS: readonly string[] = [
+  ...new Set(
+    SURFACES.flatMap((surface) =>
+      TEXTURES[surface].maps.map((map) => textureUrl(surface, map)),
+    ),
+  ),
+];
 
 /**
  * Box projection in world metres: walls use their horizontal run and height,

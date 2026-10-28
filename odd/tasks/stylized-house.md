@@ -14,6 +14,7 @@ S8. "agrandar pues vamos a mirar si cabe si no la atgrandamos mira mi modelo de 
 S9. "dale aplica todo y meaviasa para revisarlo"
 S10. "si mejoraria la walss intenras a paredes mas como madera lateral no ?"
 S11. "ahora vamos con els etup comleto de normales texturas etc"
+S12. "si sobre todo echale ojo al setuup ys su texturas"
 
 ## Tasks
 T1 [S1-S2] parent — done: three style directions in Gentle Design (design/stylized-house/) for the house and room with added accessories, guided camera framing. Commit: pending.
@@ -27,6 +28,7 @@ T4d [S8] gentle-ai-worker — done (visual pending; house not expanded): gaming 
 T4e [S9] gentle-ai-worker — done (visual pending): stylized CC0 textures (color+normal+roughness) on house walls/floor/roof and setup chair/desk; fix shadow acne and stair-stepped gables. Commit: pending.
 T4f [S10] dropped (user: "mentiras se ve bien"; worker cancelled before any code change): interior wall faces use long horizontal wood siding instead of the knotted short-plank texture. Commit: pending.
 T4g [S11] gentle-ai-worker — done (visual pending): full setup materials (normals, textures, PBR tuning) for desk, monitors, PC, speakers, peripherals, chair. Commit: pending.
+T4h [S12] explore then worker — done (visual pending): (1) finer dither + fading groups stop casting shadow as soon as they start fading; (2) environment map (reuse RoomEnvironment like /room) + soft ambient occlusion; (3) rounded/beveled setup and furniture geometry; (4) texture scale/contrast tuning, floor boards matching geometry. Focus on the setup and its textures. Commit: pending.
 T4b [S1-S4] pending (rest of accessories): interior with accessories (02-cozy-diorama).
 T5 [S1] pending: enter-the-PC experience (Henry Heffernan reference).
 
@@ -54,3 +56,4 @@ L20. Screenshots 2026-10-28 12.37.46/12.37.53 PM: textures render; exterior read
 L21. User withdrew S10: "mentiras se ve bien". Worker mvseex6f-a-6xqo cancelled; no source changes were made. Textures (90a1034) accepted as is.
 L22. Slice boundary: branch feat/interactive-room carries ~22k authored lines in 39 commits since origin/main (old /room forest work + new /world). Delivery strategy: /world commits from 02ee707 onward form their own reviewable chain; split into chained PRs when the user decides to publish.
 L23. StylizedTextures catalog has no fabric or plastic. Available for setup: Metal_Mesh_009 (speaker grilles; has opacity), Stylized_Sci_fi_Metal_Panel_001, Stylized_Metal_Plates_001, Leather_Patch_001 (chair, already used). Rows appended to picks.tsv (name, basecolor, normal, roughness, metallic, opacity for the new two). Plastic surfaces (desk top, monitors, keyboard, PC case) use PBR tuning (roughness/clearcoat) plus subtle original procedural normal; mousepad uses an original procedural fabric weave normal.
+L24. Screenshot 2026-10-28 12.45.56 PM: dotted screen-door on half-faded left wall and its dotted shadow on the desk leg; blocky box silhouettes (chair, desk, speakers); no contact shadow/AO; flat light and dark metals (no env map); wall plank texture too large/contrasty; floor parquet mismatched. User approved all four fixes, with priority on the setup and its textures.

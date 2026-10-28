@@ -16,6 +16,7 @@ import {
   TEXTURE_URLS,
   TEXTURES,
   type TextureMap,
+  textureUrl,
 } from "@/lib/world/textures.ts";
 
 export type SurfaceMaps = Record<Surface, Partial<Record<TextureMap, Texture>>>;
@@ -28,13 +29,15 @@ export type SurfaceMaps = Record<Surface, Partial<Record<TextureMap, Texture>>>;
 export function useSurfaceMaps(): SurfaceMaps {
   const loaded = useLoader(TextureLoader, [...TEXTURE_URLS]);
   const maps = useMemo(() => {
-    let index = 0;
+    const byUrl = new Map(TEXTURE_URLS.map((url, i) => [url, loaded[i]]));
     return Object.fromEntries(
       SURFACES.map((surface) => [
         surface,
         Object.fromEntries(
           TEXTURES[surface].maps.map((map) => {
-            const texture = loaded[index++].clone();
+            const source = byUrl.get(textureUrl(surface, map));
+            if (!source) throw new Error(`${surface} ${map} not loaded`);
+            const texture = source.clone();
             texture.colorSpace =
               map === "color" ? SRGBColorSpace : NoColorSpace;
             texture.wrapS = RepeatWrapping;

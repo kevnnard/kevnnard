@@ -19,6 +19,7 @@ import {
   type Mesh,
   MeshStandardMaterial,
   Object3D,
+  PMREMGenerator,
   type Points,
   type PointsMaterial,
   Quaternion,
@@ -27,6 +28,7 @@ import {
   Vector2,
   Vector3,
 } from "three";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import House from "@/components/world/House";
 import Setup from "@/components/world/Setup";
@@ -57,7 +59,12 @@ import {
   type Placement,
 } from "@/lib/world/layout.ts";
 import { MODEL_FILES } from "@/lib/world/models.ts";
-import { cloudShade, PALETTE, worldLight } from "@/lib/world/palette.ts";
+import {
+  cloudShade,
+  environmentIntensity,
+  PALETTE,
+  worldLight,
+} from "@/lib/world/palette.ts";
 import { seededRandom } from "@/lib/world/random.ts";
 
 const KINDS = Object.keys(MODEL_FILES) as NatureKind[];
@@ -195,6 +202,33 @@ function WorldLighting({ hours }: { hours: number }) {
   }, []);
   useEffect(() => () => starGeometry.dispose(), [starGeometry]);
 
+  // A generated environment, as in /room (T4h): restrained reflections on the
+  // metals and plastics. Computed once; the hour only changes its intensity.
+  useEffect(() => {
+    const generator = new PMREMGenerator(gl);
+    const room = new RoomEnvironment();
+    const environment = generator.fromScene(room, 0.04);
+    const previous = scene.environment;
+    scene.environment = environment.texture;
+    invalidate();
+    room.dispose();
+    generator.dispose();
+    return () => {
+      scene.environment = previous;
+      environment.dispose();
+    };
+  }, [gl, scene, invalidate]);
+
+  // Restore what the cycle overrides on the shared renderer and scene.
+  useLayoutEffect(() => {
+    const exposure = gl.toneMappingExposure;
+    const intensity = scene.environmentIntensity;
+    return () => {
+      gl.toneMappingExposure = exposure;
+      scene.environmentIntensity = intensity;
+    };
+  }, [gl, scene]);
+
   useLayoutEffect(() => {
     const light = worldLight(hours);
     setColor(uniforms.zenith.value, light.sky.zenith);
@@ -218,6 +252,7 @@ function WorldLighting({ hours }: { hours: number }) {
     }
     if (scene.fog) setColor(scene.fog.color, light.fog);
     gl.toneMappingExposure = light.exposure;
+    scene.environmentIntensity = environmentIntensity(hours);
     invalidate();
   }, [hours, uniforms, gl, scene, invalidate]);
 

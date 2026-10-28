@@ -80,6 +80,14 @@ export function worldLight(hours: number): WorldLight {
   };
 }
 
+/**
+ * Strength of the generated environment reflections (T4h): enough by day to
+ * lift the metals and plastics, dim at night so the scene stays dark.
+ */
+export function environmentIntensity(hours: number): number {
+  return 0.15 + 0.35 * (1 - worldLight(hours).stars);
+}
+
 export interface CloudShade {
   color: RGB;
   emissive: RGB;

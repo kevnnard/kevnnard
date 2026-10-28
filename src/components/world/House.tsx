@@ -22,7 +22,7 @@ import {
   materialFor,
   type SurfaceMaps,
 } from "@/components/world/surfaces";
-import { cutaway } from "@/lib/world/cutaway.ts";
+import { castsShadow, cutaway, DITHER_GLSL } from "@/lib/world/cutaway.ts";
 import {
   HOUSE_COLORS,
   HOUSE_GROUPS,
@@ -30,6 +30,7 @@ import {
   houseMeshes,
   type Part,
 } from "@/lib/world/house.ts";
+import { roundedBox } from "@/lib/world/rounded.ts";
 import { boxUv } from "@/lib/world/textures.ts";
 
 /** Object names, one per cutaway group. */
@@ -43,7 +44,7 @@ const HIDDEN = 0.995;
 const EASE = 12;
 
 /**
- * Screen-door transparency: a 4x4 ordered dither discards a `uFade` share of
+ * Screen-door transparency: an 8x8 ordered dither discards a `uFade` share of
  * the pixels. Stays opaque (no sorting) and keeps the vertex colors; runs
  * after the source's own patch (the textured surfaces).
  */
@@ -59,17 +60,13 @@ function cutawayMaterial(
       .replace(
         "void main() {",
         `uniform float uFade;
-        float cutawayBayer2(vec2 a) {
-          a = floor(a);
-          return fract(a.x / 2.0 + a.y * a.y * 0.75);
-        }
+        ${DITHER_GLSL}
         void main() {`,
       )
       .replace(
         "#include <clipping_planes_fragment>",
         `#include <clipping_planes_fragment>
-        vec2 cutawayCell = gl_FragCoord.xy;
-        if (cutawayBayer2(0.5 * cutawayCell) * 0.25 + cutawayBayer2(cutawayCell) < uFade) discard;`,
+        if (cutawayBayer8(gl_FragCoord.xy) < uFade) discard;`,
       );
   };
   material.customProgramCacheKey = () =>
@@ -127,25 +124,57 @@ function prismGeometry(profile: [number, number][]): BufferGeometry {
   return geometry;
 }
 
+/** A "rounded" part at its own size: scaling would squash the radius. */
+function roundedGeometry(part: Part): BufferGeometry {
+  const box = roundedBox(part.size, part.radius ?? 0);
+  const geometry = new BufferGeometry();
+  geometry.setAttribute(
+    "position",
+    new BufferAttribute(new Float32Array(box.position), 3),
+  );
+  geometry.setAttribute(
+    "normal",
+    new BufferAttribute(new Float32Array(box.normal), 3),
+  );
+  geometry.setIndex(box.index);
+  return geometry;
+}
+
+export interface MergeOptions {
+  /** Cylinder sides ("round" parts); 10 by default. */
+  roundSegments?: number;
+  /** Baked occlusion per vertex from world position and normal (T4h). */
+  occlusion?: (
+    position: readonly [number, number, number],
+    normal: readonly [number, number, number],
+  ) => number;
+}
+
 /**
  * Merges the parts into one vertex-colored geometry: one draw per mesh. UVs
  * are box-projected world metres, so textures line up across parts.
  */
-export function mergeParts(parts: Part[]): BufferGeometry {
+export function mergeParts(
+  parts: Part[],
+  { roundSegments = 10, occlusion }: MergeOptions = {},
+): BufferGeometry {
   const box = new BoxGeometry(1, 1, 1);
-  const round = new CylinderGeometry(0.5, 0.5, 1, 10);
+  const round = new CylinderGeometry(0.5, 0.5, 1, roundSegments);
   const positions: number[] = [];
   const normals: number[] = [];
   const colors: number[] = [];
   const uvs: number[] = [];
   const indices: number[] = [];
   for (const part of parts) {
+    const owned = part.shape === "prism" || part.shape === "rounded";
     const source =
       part.shape === "prism"
         ? prismGeometry(part.profile ?? [])
-        : part.shape === "box"
-          ? box
-          : round;
+        : part.shape === "rounded"
+          ? roundedGeometry(part)
+          : part.shape === "box"
+            ? box
+            : round;
     const { matrix, normals: normalMatrix, vertex, color } = scratch;
     scratch.rotation.setFromEuler(
       scratch.euler.set(...(part.rotation ?? [0, 0, 0])),
@@ -153,7 +182,9 @@ export function mergeParts(parts: Part[]): BufferGeometry {
     matrix.compose(
       scratch.center.set(...part.center),
       scratch.rotation,
-      scratch.scale.set(...part.size),
+      part.shape === "rounded"
+        ? scratch.scale.set(1, 1, 1)
+        : scratch.scale.set(...part.size),
     );
     normalMatrix.getNormalMatrix(matrix);
     color.set(part.color).multiplyScalar(part.shade);
@@ -166,14 +197,16 @@ export function mergeParts(parts: Part[]): BufferGeometry {
       positions.push(...world);
       vertex.fromBufferAttribute(normal, i).applyMatrix3(normalMatrix);
       vertex.normalize();
-      normals.push(vertex.x, vertex.y, vertex.z);
-      colors.push(color.r, color.g, color.b);
-      uvs.push(...boxUv(world, [vertex.x, vertex.y, vertex.z]));
+      const facing: [number, number, number] = [vertex.x, vertex.y, vertex.z];
+      normals.push(...facing);
+      const ao = occlusion ? occlusion(world, facing) : 1;
+      colors.push(color.r * ao, color.g * ao, color.b * ao);
+      uvs.push(...boxUv(world, facing));
     }
     const index = source.getIndex();
     if (index)
       for (let i = 0; i < index.count; i++) indices.push(base + index.getX(i));
-    if (part.shape === "prism") source.dispose();
+    if (owned) source.dispose();
   }
   box.dispose();
   round.dispose();
@@ -199,6 +232,9 @@ export function mergeParts(parts: Part[]): BufferGeometry {
 interface FadeGroup {
   object: Object3D;
   fade: { value: number };
+  /** Shadow-casting solids; glass never casts. */
+  solids: Mesh[];
+  casting: boolean;
 }
 
 /**
@@ -248,12 +284,15 @@ export default function House({
         return copy;
       };
       const glassMaterial = faded(glass);
-      if (name !== "base") fading.set(name, { object: part, fade });
+      const solids: Mesh[] = [];
+      if (name !== "base")
+        fading.set(name, { object: part, fade, solids, casting: true });
       for (const [surface, parts] of bySurface(meshes[name].wood)) {
         const material = materialFor(surface, wood, maps, surfaces, owned);
         const solid = new Mesh(mergeParts(parts), faded(material));
         solid.castShadow = true;
         solid.receiveShadow = true;
+        solids.push(solid);
         part.add(solid);
       }
       if (meshes[name].glass.length > 0) {
@@ -277,12 +316,20 @@ export default function House({
     const targets = cutaway(position.current);
     const step = reducedMotion ? 1 : 1 - Math.exp(-EASE * delta);
     let moving = false;
-    for (const [name, { object, fade }] of fades) {
+    for (const [name, group] of fades) {
+      const { object, fade, solids } = group;
       const target = targets[name];
       const next = fade.value + (target - fade.value) * step;
       fade.value = Math.abs(target - next) < 1e-3 ? target : next;
       if (fade.value !== target) moving = true;
       object.visible = fade.value < HIDDEN;
+      // A dithered wall would cast a dotted shadow: stop as soon as it fades.
+      const casting = castsShadow(fade.value, group.casting);
+      if (casting !== group.casting) {
+        group.casting = casting;
+        for (const solid of solids) solid.castShadow = casting;
+        moving = true;
+      }
     }
     // Demand frameloop: keep rendering only while a fade is still easing.
     if (moving) invalidate();

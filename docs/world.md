@@ -43,8 +43,10 @@ whole. Below 14 m both roofs start dissolving and are gone at 8 m. Below 11 m
 every wall whose outward normal faces the camera dissolves, fully at 6 m, so
 the interior shows from any side. Each wall (with its trim and glass) and each
 roof is its own group; the floor, plinths, porch, driveway and posts never
-fade. `House.tsx` uses a 4x4 ordered-dither discard per group and hides fully
-faded groups so sun and moon light enter. With reduced motion fades snap.
+fade. `House.tsx` uses an 8x8 ordered-dither discard per group and hides fully
+faded groups so sun and moon light enter. A group stops casting shadows as
+soon as it starts fading (no dotted shadows) and casts again once whole
+(`castsShadow`). With reduced motion fades snap.
 
 ## Assets and credits
 
@@ -96,6 +98,16 @@ map by its mean luminance and blends it in partly, so vertex colors keep the
 pastel palette and the map only adds grain. The house shows flat materials
 until the maps load (Suspense fallback). Gables are one sloped plank-textured
 panel each; wall planks stop at the eave.
+
+Polish (T4h): a generated `RoomEnvironment` map, as in /room, lights the
+metals and plastics (`environmentIntensity`: 0.5 by day, 0.15 at night). Setup
+bezels, cabinets, PC case, desk top, keycaps and chair cushions are bevelled
+boxes (`src/lib/world/rounded.ts`, `shape: "rounded"`), cylinders use 16
+sides, and `setupOcclusion` bakes a cheap vertex AO near the floor, on
+undersides and under the desk (no postprocessing). Wall plank maps repeat
+every 2.4 m at 0.45 strength; the floor reuses the plank maps at its 0.28 m
+board width, so Wood_Floor_001 is no longer loaded (its files still ship until
+`prepare-world.py` drops them).
 
 The flowers, clouds, the wooden house with its garage and the gaming setup
 in its main room are original procedural geometry

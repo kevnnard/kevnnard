@@ -22,12 +22,19 @@ import { NORMAL_SIZE, normalPixels } from "@/lib/world/normals.ts";
 import {
   SETUP_COLORS,
   SETUP_MATERIALS,
+  SETUP_ROUND_SEGMENTS,
   type SetupMaterial,
   type SetupMaterialId,
   type SetupPart,
   setupGlow,
   setupMeshes,
+  setupOcclusion,
 } from "@/lib/world/setup.ts";
+
+const SOLID_MERGE = {
+  roundSegments: SETUP_ROUND_SEGMENTS,
+  occlusion: setupOcclusion,
+};
 
 /** An owned DataTexture over a cached procedural normal map, tiled in metres. */
 function proceduralNormal(spec: SetupMaterial): Texture | null {
@@ -127,7 +134,7 @@ export default function Setup({
       const spec: SetupMaterial = SETUP_MATERIALS[id];
       if (id === "grille" && !maps) continue;
       const body = new Mesh(
-        mergeParts(parts),
+        mergeParts(parts, SOLID_MERGE),
         setupMaterial(spec, maps, owned),
       );
       body.name = `setup-${id}`;
@@ -135,7 +142,10 @@ export default function Setup({
       body.receiveShadow = true;
       setup.add(body);
     }
-    const lit = new Mesh(mergeParts(meshes.glow), screens);
+    const lit = new Mesh(
+      mergeParts(meshes.glow, { roundSegments: SETUP_ROUND_SEGMENTS }),
+      screens,
+    );
     const pane = new Mesh(mergeParts(meshes.glass), glass);
     pane.renderOrder = 1;
     setup.add(lit, pane);
