@@ -28,6 +28,7 @@ import {
   Vector3,
 } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import House from "@/components/world/House";
 import type { RGB } from "@/lib/room/day-cycle.ts";
 import {
   GUIDE,
@@ -100,6 +101,7 @@ export default function WorldScene({
       <WorldLighting hours={hours} />
       <GuidedCamera reducedMotion={reducedMotion} home={home} />
       <Island />
+      <House />
       <Flowers />
       <Clouds hours={hours} reducedMotion={reducedMotion} />
       <Nature onReady={onReady} />
@@ -290,7 +292,7 @@ function GuidedCamera({
   );
 }
 
-/** Rounded grass slab, rocky underside and the empty building pad (T4). */
+/** Rounded grass slab, rocky underside and the building pad (T4). */
 function Island() {
   const grass = useMemo(() => {
     const outline = islandOutline(72);
@@ -342,7 +344,7 @@ function Island() {
       <mesh geometry={rock} receiveShadow>
         <meshStandardMaterial color={PALETTE.rock} roughness={1} flatShading />
       </mesh>
-      {/* Flat, empty pad reserved for the house (T4). */}
+      {/* Flat pad the house (T4a) stands on. */}
       <mesh
         position={[PAD.center[0], PAD.height / 2, PAD.center[1]]}
         receiveShadow

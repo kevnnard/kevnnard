@@ -102,6 +102,8 @@ ORIGINAL = [
      "license": "Original work (repository license)", "source": "src/lib/world/flowers.ts"},
     {"id": "clouds", "asset": "Puffy clouds (procedural)", "author": "Kevnnard",
      "license": "Original work (repository license)", "source": "src/lib/world/clouds.ts"},
+    {"id": "house", "asset": "Wooden house and garage (procedural)", "author": "Kevnnard",
+     "license": "Original work (repository license)", "source": "src/lib/world/house.ts"},
 ]
 
 
