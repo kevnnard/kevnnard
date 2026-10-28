@@ -1,0 +1,212 @@
+{
+  "provider": "Poly Haven",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://polyhaven.com/license",
+  "runtimeExternalRequests": false,
+  "encoder": "cwebp 1.6.0",
+  "processing": "Official 1K PNG maps verified against API MD5 and byte size, re-encoded once to 1024px WebP without metadata. Color is sRGB lossy; OpenGL normals are lossless; roughness is lossy grayscale linear data. No website preview renders are used.",
+  "totalBytes": 7912382,
+  "materials": [
+    {
+      "layer": "grass",
+      "asset": "grass_ground",
+      "name": "Grass Ground",
+      "source": "https://polyhaven.com/a/grass_ground",
+      "filesApi": "https://api.polyhaven.com/files/grass_ground",
+      "infoApi": "https://api.polyhaven.com/info/grass_ground",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "authors": {
+        "Charlotte Baglioni": "All"
+      },
+      "realWorldSizeMeters": 2.509999990463257,
+      "maps": {
+        "color": {
+          "path": "grass-color.webp",
+          "colorSpace": "srgb",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/grass_ground/grass_ground_diff_1k.png",
+          "sourceMd5": "8501412ae79eea2cf8ab31e68caa5cf4",
+          "sourceBytes": 5696034,
+          "sourceSha256": "fbab95206455b849677a07372ea2050956afbb559d9da6db946e3e6c02aae6a1",
+          "sourcePng": {
+            "bitDepth": 16,
+            "colorType": 2
+          },
+          "encoding": "cwebp -metadata none -q 86 -m 6 -sharp_yuv",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 270770,
+          "sha256": "8b5b7108fb31e89a725f7079d713a46ecdee759914de866f7704c3ada070b57c"
+        },
+        "normal": {
+          "path": "grass-normal.webp",
+          "colorSpace": "linear",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/grass_ground/grass_ground_nor_gl_1k.png",
+          "sourceMd5": "2e799a8262487811e672cb8a847bd64c",
+          "sourceBytes": 6072059,
+          "sourceSha256": "27b4902c4cf5d70c35045f1855ff2bd2eda015037fb5c36187fa69de0077d689",
+          "sourcePng": {
+            "bitDepth": 16,
+            "colorType": 2
+          },
+          "encoding": "cwebp -metadata none -lossless -exact -z 9",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 2151836,
+          "sha256": "d1667290ff07e767782070a03d127e76deea51c2916d698713c6e1d63bdfa78b"
+        },
+        "roughness": {
+          "path": "grass-roughness.webp",
+          "colorSpace": "linear",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/grass_ground/grass_ground_rough_1k.png",
+          "sourceMd5": "7dc49108560aaf4cc506756875d61ac3",
+          "sourceBytes": 1648048,
+          "sourceSha256": "3f9d83af217765364d96fbffcbf384e57c0e9f7b88c9150d4c8657b2c5ef2f13",
+          "sourcePng": {
+            "bitDepth": 16,
+            "colorType": 0
+          },
+          "encoding": "cwebp -metadata none -q 90 -m 6",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 10188,
+          "sha256": "6b9f42daf8784150aa846216765c6409cc42950372d6b4ff8fd3786677fb6880"
+        }
+      }
+    },
+    {
+      "layer": "forest",
+      "asset": "forrest_ground_03",
+      "name": "Forest Ground 03",
+      "source": "https://polyhaven.com/a/forrest_ground_03",
+      "filesApi": "https://api.polyhaven.com/files/forrest_ground_03",
+      "infoApi": "https://api.polyhaven.com/info/forrest_ground_03",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "realWorldSizeMeters": 2.0,
+      "maps": {
+        "color": {
+          "path": "forest-color.webp",
+          "colorSpace": "srgb",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/forrest_ground_03/forrest_ground_03_diff_1k.png",
+          "sourceMd5": "48354b10b95ced758b3eaed8ede4ff4f",
+          "sourceBytes": 2572936,
+          "sourceSha256": "a0a8ea8d4d8384f84bd59dce839ea56f8ef6e748995f4b2d04bc179491dc09d9",
+          "sourcePng": {
+            "bitDepth": 8,
+            "colorType": 2
+          },
+          "encoding": "cwebp -metadata none -q 86 -m 6 -sharp_yuv",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 483630,
+          "sha256": "a53cba07ee0d8e765a828b9d9102d03e656d3a3d0c952756e84b34cf1223b747"
+        },
+        "normal": {
+          "path": "forest-normal.webp",
+          "colorSpace": "linear",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/forrest_ground_03/forrest_ground_03_nor_gl_1k.png",
+          "sourceMd5": "5aedff2f584d79000cea91f09890ba04",
+          "sourceBytes": 2726868,
+          "sourceSha256": "ef72d2cc4cba1f542e45ac262ca0b2c63fd2885e1ca8bd05d02f494662ca3fa1",
+          "sourcePng": {
+            "bitDepth": 8,
+            "colorType": 2
+          },
+          "encoding": "cwebp -metadata none -lossless -exact -z 9",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 2575116,
+          "sha256": "c71790d4bdd94a5a0477a3578de54a425a10a28b6938995541a8a285249548a7"
+        },
+        "roughness": {
+          "path": "forest-roughness.webp",
+          "colorSpace": "linear",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/forrest_ground_03/forrest_ground_03_rough_1k.png",
+          "sourceMd5": "7852b41d5198ea576c6af91ecf52eac4",
+          "sourceBytes": 1904947,
+          "sourceSha256": "1e3704ff8cd0cf138d49324ffd97c8eb27870e6f0c45cd291202d2fc7a375675",
+          "sourcePng": {
+            "bitDepth": 16,
+            "colorType": 0
+          },
+          "encoding": "cwebp -metadata none -q 90 -m 6",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 126568,
+          "sha256": "48d2c3bbe59c365405b4bad6908105800a91d73b51a98764ef069f52f749eca8"
+        }
+      }
+    },
+    {
+      "layer": "rock",
+      "asset": "rocky_terrain",
+      "name": "Rocky Terrain",
+      "source": "https://polyhaven.com/a/rocky_terrain",
+      "filesApi": "https://api.polyhaven.com/files/rocky_terrain",
+      "infoApi": "https://api.polyhaven.com/info/rocky_terrain",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "authors": {
+        "Amal Kumar": "All"
+      },
+      "realWorldSizeMeters": 90.0,
+      "maps": {
+        "color": {
+          "path": "rock-color.webp",
+          "colorSpace": "srgb",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/rocky_terrain/rocky_terrain_diff_1k.png",
+          "sourceMd5": "9b9744f88403e8dfbffa87157e18ce42",
+          "sourceBytes": 6490700,
+          "sourceSha256": "9bf3e40f70fea60831c26379ccae673893778afb4941280e5d266536a78e22a0",
+          "sourcePng": {
+            "bitDepth": 16,
+            "colorType": 6
+          },
+          "encoding": "cwebp -metadata none -q 86 -m 6 -sharp_yuv",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 256040,
+          "sha256": "10132ad56e8da3dce73938ab32bfc52f7a5e7d72cdb1bc173010c43abc974d21"
+        },
+        "normal": {
+          "path": "rock-normal.webp",
+          "colorSpace": "linear",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/rocky_terrain/rocky_terrain_nor_gl_1k.png",
+          "sourceMd5": "c74fbe42bbfeb5118fcc3cac880d9fa8",
+          "sourceBytes": 6554211,
+          "sourceSha256": "dea802ceded8d77dddf26f7161afe66d4dff2d2394c2d6ce041041fdb8f5b00f",
+          "sourcePng": {
+            "bitDepth": 16,
+            "colorType": 6
+          },
+          "encoding": "cwebp -metadata none -lossless -exact -z 9",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 1957930,
+          "sha256": "6acfe1968edfd0d83b551e93bf1b9d4e06b4c0533d3eb4634ded5a0be5919bb1"
+        },
+        "roughness": {
+          "path": "rock-roughness.webp",
+          "colorSpace": "linear",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/rocky_terrain/rocky_terrain_rough_1k.png",
+          "sourceMd5": "c48546e59c1cceb1e2dfa6bfa2e212f0",
+          "sourceBytes": 1731599,
+          "sourceSha256": "7b703599d909cb63f15b14a041b25557e919c8698f7cb10cedd27b32d8380173",
+          "sourcePng": {
+            "bitDepth": 16,
+            "colorType": 0
+          },
+          "encoding": "cwebp -metadata none -q 90 -m 6",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 80304,
+          "sha256": "9d2ebb046716230c71fe4a180e0c81cbd07c927a296f16c87ac28e9ecb93f4b2"
+        }
+      }
+    }
+  ]
+}
