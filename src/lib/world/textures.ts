@@ -1,17 +1,36 @@
-// Stylized CC0 textures for the house and the gaming chair (T4e, S9), from
+// Stylized CC0 textures for the house and the gaming setup (T4e S9, T4g S11), from
 // StylizedTextures by CreativeTrio. scripts/prepare-world.py ships them as
 // 1024 WebP maps in public/world/textures/ and credits each file. Pure numbers
 // here; the components load the maps and patch the materials.
 
-export const SURFACES = ["planks", "floor", "shingles", "leather"] as const;
+export const SURFACES = [
+  "planks",
+  "floor",
+  "shingles",
+  "leather",
+  "grille",
+  "panel",
+] as const;
 export type Surface = (typeof SURFACES)[number];
 
-export const TEXTURE_MAPS = ["color", "normal", "roughness"] as const;
+/** Surfaces added for the gaming setup (T4g): their own 2.5 MB budget. */
+export const SETUP_SURFACES: readonly Surface[] = ["grille", "panel"];
+
+export const TEXTURE_MAPS = [
+  "color",
+  "normal",
+  "roughness",
+  "opacity",
+] as const;
 export type TextureMap = (typeof TEXTURE_MAPS)[number];
+
+const PBR: readonly TextureMap[] = ["color", "normal", "roughness"];
 
 export interface SurfaceTexture {
   /** StylizedTextures material name: files are `<name>-<map>.webp`. */
   name: string;
+  /** Shipped maps; `opacity` is an alpha mask (alpha test). */
+  maps: readonly TextureMap[];
   /** Metres covered by one repeat of the map. */
   tile: number;
   /**
@@ -30,6 +49,7 @@ export const TEXTURES: Record<Surface, SurfaceTexture> = {
   // About ten boards per repeat: roughly the 0.17 m wall planks.
   planks: {
     name: "Stylized_Wood_Planks_001",
+    maps: PBR,
     tile: 1.7,
     mean: [0.04, 0.0167, 0.0047],
     strength: 0.75,
@@ -37,6 +57,7 @@ export const TEXTURES: Record<Surface, SurfaceTexture> = {
   },
   floor: {
     name: "Stylized_Wood_Floor_001",
+    maps: PBR,
     tile: 1.8,
     mean: [0.1641, 0.0779, 0.0533],
     strength: 0.7,
@@ -45,6 +66,7 @@ export const TEXTURES: Record<Surface, SurfaceTexture> = {
   // About ten scale rows per repeat, close to the 0.24 m shingle rows.
   shingles: {
     name: "Stylized_Wood_Shingles_001",
+    maps: PBR,
     tile: 2.4,
     mean: [0.097, 0.1579, 0.4217],
     strength: 0.6,
@@ -52,10 +74,29 @@ export const TEXTURES: Record<Surface, SurfaceTexture> = {
   },
   leather: {
     name: "Stylized_Leather_Patch_001",
+    maps: PBR,
     tile: 0.6,
     mean: [0.2299, 0.1499, 0.1204],
     strength: 0.55,
     normalScale: 0.6,
+  },
+  // Speaker grilles: perforated, so the cones show through the holes.
+  grille: {
+    name: "Metal_Mesh_009",
+    maps: [...PBR, "opacity"],
+    tile: 0.12,
+    mean: [0.0056, 0.0077, 0.1869],
+    strength: 0.5,
+    normalScale: 0.6,
+  },
+  // PC case side and front, at a small scale.
+  panel: {
+    name: "Stylized_Sci_fi_Metal_Panel_001",
+    maps: PBR,
+    tile: 0.3,
+    mean: [0.0158, 0.1591, 0.4758],
+    strength: 0.5,
+    normalScale: 0.5,
   },
 };
 
@@ -65,7 +106,7 @@ export const textureFile = (surface: Surface, map: TextureMap) =>
 
 /** Every map the runtime loads, as site URLs. */
 export const TEXTURE_URLS: readonly string[] = SURFACES.flatMap((surface) =>
-  TEXTURE_MAPS.map((map) => `/world/${textureFile(surface, map)}`),
+  TEXTURES[surface].maps.map((map) => `/world/${textureFile(surface, map)}`),
 );
 
 /**

@@ -13,13 +13,12 @@ import type { Part } from "@/lib/world/house.ts";
 import {
   SURFACES,
   type Surface,
-  TEXTURE_MAPS,
   TEXTURE_URLS,
   TEXTURES,
   type TextureMap,
 } from "@/lib/world/textures.ts";
 
-export type SurfaceMaps = Record<Surface, Record<TextureMap, Texture>>;
+export type SurfaceMaps = Record<Surface, Partial<Record<TextureMap, Texture>>>;
 
 /**
  * Loads every map (suspends until they arrive) and returns owned clones set
@@ -34,7 +33,7 @@ export function useSurfaceMaps(): SurfaceMaps {
       SURFACES.map((surface) => [
         surface,
         Object.fromEntries(
-          TEXTURE_MAPS.map((map) => {
+          TEXTURES[surface].maps.map((map) => {
             const texture = loaded[index++].clone();
             texture.colorSpace =
               map === "color" ? SRGBColorSpace : NoColorSpace;
@@ -52,7 +51,7 @@ export function useSurfaceMaps(): SurfaceMaps {
   useEffect(
     () => () => {
       for (const set of Object.values(maps))
-        for (const texture of Object.values(set)) texture.dispose();
+        for (const texture of Object.values(set)) texture?.dispose();
     },
     [maps],
   );
@@ -62,7 +61,8 @@ export function useSurfaceMaps(): SurfaceMaps {
 /**
  * A textured copy of a vertex-colored material. The color map is divided by
  * its mean luminance, so it only adds grain and board edges around the
- * pastel vertex colors (`strength` of the way).
+ * pastel vertex colors (`strength` of the way). An opacity map cuts holes
+ * (alpha test), shadows included.
  */
 export function surfaceMaterial(
   source: MeshStandardMaterial,
@@ -71,11 +71,16 @@ export function surfaceMaterial(
 ): MeshStandardMaterial {
   const { mean, strength, normalScale } = TEXTURES[surface];
   const luma = mean[0] * 0.2126 + mean[1] * 0.7152 + mean[2] * 0.0722;
+  const set = maps[surface];
   const material = source.clone();
-  material.map = maps[surface].color;
-  material.normalMap = maps[surface].normal;
+  material.map = set.color ?? null;
+  material.normalMap = set.normal ?? null;
   material.normalScale.setScalar(normalScale);
-  material.roughnessMap = maps[surface].roughness;
+  material.roughnessMap = set.roughness ?? null;
+  if (set.opacity) {
+    material.alphaMap = set.opacity;
+    material.alphaTest = 0.5;
+  }
   material.userData.surface = surface;
   material.onBeforeCompile = (shader) => {
     shader.fragmentShader = shader.fragmentShader.replace(

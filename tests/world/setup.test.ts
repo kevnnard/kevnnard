@@ -27,7 +27,7 @@ describe("gaming setup in the main room (T4d, S8)", () => {
     assert.ok(meshes.glow.length >= 3, "two screens and the RGB strip");
     assert.ok(meshes.glass.length >= 1, "PC glass side");
     assert.ok(parts.length < 300, `${parts.length} parts`);
-    assert.equal(SETUP.draws, 3);
+    assert.ok(SETUP.draws <= 12, `${SETUP.draws} draws, one per material`);
   });
 
   it("stays inside the main room, on the floor and under the walls' top", () => {

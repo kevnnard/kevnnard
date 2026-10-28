@@ -12,7 +12,7 @@ Writes public/world/models/<kind>.glb and public/world/credits.json (S4: every
 author is credited, even under CC0).
 
 StylizedTextures step (T4e): `python3 scripts/prepare-world.py --textures` only
-refreshes the house textures and their credits. Drive ids come from
+refreshes the house and setup textures and their credits. Drive ids come from
 node_modules/.cache/world/explore/picks.tsv (rows of the pack's catalog CSV);
 the 4K PNGs are cached in node_modules/.cache/world/textures/ and downscaled to
 1024 WebP with cwebp (CWEBP overrides /opt/homebrew/bin/cwebp).
@@ -114,6 +114,10 @@ ORIGINAL = [
     {"id": "setup", "asset": "Gaming setup: desk, monitors, PC, speakers and chair (procedural)",
      "author": "Kevnnard", "license": "Original work (repository license)",
      "source": "src/lib/world/setup.ts"},
+    {"id": "setup-normals",
+     "asset": "Setup normal maps: noise, speaker cone, fabric weave and keycaps (procedural)",
+     "author": "Kevnnard", "license": "Original work (repository license)",
+     "source": "src/lib/world/normals.ts"},
 ]
 
 
@@ -130,12 +134,18 @@ TEXTURE_PACK = {
         "quote": "They are released under the CC0 (Creative Commons Zero) license",
     },
 }
-# Only these materials ship: walls, floor, roofs and the gaming chair.
-TEXTURES = ["Stylized_Wood_Planks_001", "Stylized_Wood_Floor_001",
-            "Stylized_Wood_Shingles_001", "Stylized_Leather_Patch_001"]
 # Map name, catalog column (after the material name), cwebp encoding.
 MAPS = [("color", 0, ["-q", "82"]), ("normal", 1, ["-lossless", "-z", "9"]),
         ("roughness", 2, ["-q", "70"])]
+# The setup's small surfaces (T4g) use lossy normals to fit their 2.5 MB
+# budget, plus the grille's alpha mask (catalog column 4).
+SETUP_MAPS = [MAPS[0], ("normal", 1, ["-q", "85"]), MAPS[2]]
+# Only these materials ship: walls, floor, roofs, the chair, the speaker
+# grilles and the PC case.
+TEXTURES = [("Stylized_Wood_Planks_001", MAPS), ("Stylized_Wood_Floor_001", MAPS),
+            ("Stylized_Wood_Shingles_001", MAPS), ("Stylized_Leather_Patch_001", MAPS),
+            ("Metal_Mesh_009", [*SETUP_MAPS, ("opacity", 4, ["-lossless", "-z", "9"])]),
+            ("Stylized_Sci_fi_Metal_Panel_001", SETUP_MAPS)]
 CWEBP = os.environ.get("CWEBP", "/opt/homebrew/bin/cwebp")
 DWEBP = str(Path(CWEBP).with_name("dwebp"))
 TEXTURE_SIZE = 1024
@@ -188,8 +198,8 @@ def prepare_textures():
     (CACHE / "textures").mkdir(parents=True, exist_ok=True)
     (OUTPUT / "textures").mkdir(parents=True, exist_ok=True)
     entries = []
-    for name in TEXTURES:
-        for kind, column, flags in MAPS:
+    for name, maps in TEXTURES:
+        for kind, column, flags in maps:
             url = drive_url(picks[name][column])
             source = CACHE / "textures" / ("%s-%s.png" % (name, kind))
             if not source.exists():
@@ -231,7 +241,7 @@ def prepare_textures():
 
 def with_textures(credits, textures):
     packs = [pack for pack in credits["packs"] if pack["id"] != TEXTURE_PACK["id"]]
-    return {**credits, "packs": [*packs, TEXTURE_PACK], "textures": textures,
+    return {**credits, "packs": [*packs, TEXTURE_PACK], "original": ORIGINAL, "textures": textures,
             "textureBytes": sum(e["bytes"] for e in textures)}
 
 

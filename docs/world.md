@@ -63,7 +63,7 @@ fails otherwise (S4). The credits are shown in the "Credits" dialog.
 | KayKit City Builder Bits 1.0 | Kay Lousberg | CC0 1.0 | bushes |
 | Kenney Mini Arena 1.0 | Kenney, Tony Schär | CC0 1.0 | tree |
 | Kenney Starter Kit 3D Platformer | Kenney | CC0 1.0 | grass tufts |
-| StylizedTextures | CreativeTrio | CC0 1.0 | wall planks, floor, roof shingles, chair leather |
+| StylizedTextures | CreativeTrio | CC0 1.0 | wall planks, floor, roof shingles, chair leather, speaker grilles, PC panels |
 
 ### Textures (T4e)
 
@@ -77,7 +77,18 @@ with cwebp. Each map is credited under `textures` in `credits.json` with its
 bytes, hash, size and source file; color maps also record their mean linear
 color, which `src/lib/world/textures.ts` must match
 (`tests/world/textures.test.ts`). Only Wood_Planks_001, Wood_Floor_001,
-Wood_Shingles_001 and Leather_Patch_001 ship (about 5.9 MB).
+Wood_Shingles_001 and Leather_Patch_001 ship for the house (about 5.9 MB).
+
+The gaming setup (T4g) adds Metal_Mesh_009 (speaker grilles: color, lossy
+normal, roughness and a lossless opacity mask cut with alpha test) and
+Stylized_Sci_fi_Metal_Panel_001 (PC case at a 0.3 m repeat; chosen over
+Metal_Plates_001 because its small panel lines read as a case): about 0.4 MB,
+budget 2.5 MB. The catalog has no plastic or fabric, so the desk top
+(laminate, light clearcoat), powder-coated frame, satin and matte plastics,
+keycaps, speaker cones and mousepad use PBR tuning plus original tileable
+normal maps generated in code (`src/lib/world/normals.ts`, credited under
+`original` as `setup-normals`). `SETUP_MATERIALS` in `src/lib/world/setup.ts`
+maps each part to one merged draw per material.
 
 UVs are box-projected world metres (`boxUv`), so boards stay horizontal on
 every wall and shingles point down both slopes. The shader divides the color

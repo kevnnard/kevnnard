@@ -5,6 +5,7 @@ import { describe, it } from "node:test";
 import { type Credits, creditProblems } from "../../src/lib/world/credits.ts";
 import {
   boxUv,
+  SETUP_SURFACES,
   SURFACES,
   TEXTURE_URLS,
   TEXTURES,
@@ -43,14 +44,18 @@ describe("stylized textures (T4e, S9)", () => {
       TEXTURE_URLS.map((url) => url.replace("/world/", "")).sort(),
       shipped(),
     );
-    assert.equal(shipped().length, SURFACES.length * 3);
+    assert.equal(
+      shipped().length,
+      SURFACES.reduce((sum, surface) => sum + TEXTURES[surface].maps.length, 0),
+    );
   });
 
-  it("ships 1024 maps whose bytes and hash match their credit, within 6 MB", () => {
+  it("ships 1024 maps whose bytes and hash match their credit, house maps within 6 MB", () => {
     let total = 0;
+    const setup = SETUP_SURFACES.map((surface) => TEXTURES[surface].name);
     for (const entry of credits().textures ?? []) {
       const data = readFileSync(new URL(entry.file, PUBLIC));
-      total += data.length;
+      if (!setup.includes(entry.asset)) total += data.length;
       assert.deepEqual(webpSize(data), [1024, 1024], entry.file);
       assert.deepEqual([entry.width, entry.height], [1024, 1024], entry.file);
       assert.equal(entry.bytes, data.length, entry.file);

@@ -3,11 +3,13 @@
 // monitor, keyboard, mouse on a pad, a glass-sided PC with a subtle RGB
 // strip, two speakers and a black and white gaming chair pulled out. It backs
 // onto the main room's left wall, which has no openings and faces the home
-// camera from inside. Pure numbers; Setup.tsx merges the parts into three
-// meshes: solid, glow (screens and RGB) and glass.
+// camera from inside. Pure numbers; Setup.tsx merges the solid parts into one
+// mesh per material (T4g, S11), plus glow (screens and RGB) and glass.
 
 import { HOUSE, type Part, type Rect, type Vec3, WALLS } from "./house.ts";
+import type { NormalPattern } from "./normals.ts";
 import { worldLight } from "./palette.ts";
+import type { Surface } from "./textures.ts";
 
 export const SETUP_COLORS = {
   deskTop: "#f7f3ee",
@@ -23,6 +25,8 @@ export const SETUP_COLORS = {
   cone: "#55535c",
   chair: "#2f2e35",
   chairWhite: "#f3eee8",
+  trim: "#efe8de",
+  grille: "#3a3942",
   glass: "#bcd3e6",
   screen: "#76c3f2",
   horizon: "#8fe0b8",
@@ -67,15 +71,115 @@ const w = (d: number, y: number, u: number): Vec3 => [IN + d, Y0 + y, u];
 const DESK = { u0: -2.3, u1: -0.3, d0: 0.03, depth: 0.72, height: 0.76 };
 const CHAIR = { d: 1.12, u: -1.42, yaw: 0.22, tilt: 0.14 };
 const SIDE_YAW = 0.35;
+const SPEAKERS = [-2.12, -0.4] as const;
+const SPEAKER_Y = 0.1;
+const KEY_ROWS = [0.505, 0.54, 0.575, 0.61] as const;
+const KEYBOARD_U = -1.45;
+
+const frac = (x: number) => x - Math.floor(x);
+/** UV offset that centres one `tile` repeat on `at` (box UVs are metres). */
+const centre = (
+  tile: readonly [number, number],
+  at: readonly [number, number],
+) => [0.5 - frac(at[0] / tile[0]), 0.5 - frac(at[1] / tile[1])] as const;
+// Fifteen cone-map repeats between the two speakers, so both cones (and their
+// tweeters) sit on a ring centre. Front faces project to (z, y).
+const CONE_TILE = (SPEAKERS[1] - SPEAKERS[0]) / 15;
+// One keycap repeat per key: row pitch across x, key pitch along z. Up faces
+// project to (x, -z).
+const KEY_TILE = [KEY_ROWS[1] - KEY_ROWS[0], 0.019] as const;
+
+export interface SetupMaterial {
+  roughness: number;
+  metalness: number;
+  /** Clear lacquer layer (physical material) for the laminate top. */
+  clearcoat?: number;
+  /** StylizedTextures surface (color, normal, roughness, opacity maps). */
+  surface?: Surface;
+  /** Original procedural normal map (src/lib/world/normals.ts). */
+  normal?: NormalPattern;
+  normalScale?: number;
+  /** Metres covered by one repeat of the procedural map, along u and v. */
+  tile?: readonly [number, number];
+  offset?: readonly [number, number];
+}
+
+/** PBR per setup material: one merged draw each. */
+export const SETUP_MATERIALS = {
+  /** White matte laminate desk top, lightly lacquered. */
+  laminate: {
+    roughness: 0.6,
+    metalness: 0,
+    clearcoat: 0.2,
+    normal: "noise",
+    normalScale: 0.04,
+    tile: [0.6, 0.6],
+  },
+  /** Black powder-coated steel: desk frame, legs, tray, chair column. */
+  powder: {
+    roughness: 0.45,
+    metalness: 0.6,
+    normal: "noise",
+    normalScale: 0.12,
+    tile: [0.08, 0.08],
+  },
+  /** Satin plastic: monitor bezels, keyboard case, speaker cabinets, mouse. */
+  satin: {
+    roughness: 0.5,
+    metalness: 0,
+    normal: "noise",
+    normalScale: 0.05,
+    tile: [0.3, 0.3],
+  },
+  keycap: {
+    roughness: 0.55,
+    metalness: 0,
+    normal: "keycap",
+    normalScale: 0.9,
+    tile: KEY_TILE,
+    offset: centre(KEY_TILE, [IN + KEY_ROWS[0], -KEYBOARD_U]),
+  },
+  /** Speaker cones: concentric ripples centred on each driver. */
+  cone: {
+    roughness: 0.7,
+    metalness: 0,
+    normal: "radial",
+    normalScale: 0.35,
+    tile: [CONE_TILE, CONE_TILE],
+    offset: centre(
+      [CONE_TILE, CONE_TILE],
+      [SPEAKERS[0], Y0 + DESK.height + SPEAKER_Y],
+    ),
+  },
+  /** Mousepad cloth. */
+  fabric: {
+    roughness: 0.95,
+    metalness: 0,
+    normal: "weave",
+    normalScale: 0.6,
+    tile: [0.02, 0.02],
+  },
+  /** Matte plastic: chair star base, casters, armrests, feet, cables. */
+  base: { roughness: 0.85, metalness: 0 },
+  grille: { roughness: 0.5, metalness: 0.5, surface: "grille" },
+  panel: { roughness: 0.55, metalness: 0.3, surface: "panel" },
+  /** Chair upholstery, and its white trim (tinted vertex color). */
+  leather: { roughness: 0.75, metalness: 0, surface: "leather" },
+} as const satisfies Record<string, SetupMaterial>;
+
+export type SetupMaterialId = keyof typeof SETUP_MATERIALS;
+export type SetupPart = Part & { material: SetupMaterialId };
 
 const part = (
+  material: SetupMaterialId,
   shape: Part["shape"],
   center: Vec3,
   size: Vec3,
   color: string,
   rotation?: Vec3,
   shade = 1,
-): Part => ({
+): SetupPart => ({
+  material,
   shape,
   center,
   size,
@@ -90,12 +194,12 @@ const ALONG_Z: Vec3 = [Math.PI / 2, 0, 0];
 const ALONG_X: Vec3 = [0, 0, Math.PI / 2];
 
 export interface SetupMeshes {
-  solid: Part[];
-  glow: Part[];
-  glass: Part[];
+  solid: SetupPart[];
+  glow: SetupPart[];
+  glass: SetupPart[];
 }
 
-function desk(solid: Part[]) {
+function desk(solid: SetupPart[]) {
   const { u0, u1, d0, depth, height } = DESK;
   const C = SETUP_COLORS;
   const uc = (u0 + u1) / 2;
@@ -104,6 +208,7 @@ function desk(solid: Part[]) {
   const top = 0.05;
   solid.push(
     part(
+      "laminate",
       "box",
       w((d0 + front) / 2 - 0.0125, height - top / 2, uc),
       [depth - 0.025, top, du],
@@ -111,6 +216,7 @@ function desk(solid: Part[]) {
     ),
     // Chunky rounded front edge, and a black lip under it.
     part(
+      "laminate",
       "round",
       w(front - 0.025, height - top / 2, uc),
       [0.05, du, 0.05],
@@ -119,34 +225,51 @@ function desk(solid: Part[]) {
       0.97,
     ),
     part(
+      "powder",
       "box",
       w(front - 0.04, height - top - 0.015, uc),
       [0.04, 0.03, du - 0.1],
       C.frame,
     ),
     part(
+      "powder",
       "box",
       w(0.2, height - top - 0.06, uc),
       [0.05, 0.06, du - 0.14],
       C.frame,
     ),
     // Cable tray with its lips and a bundle of cables.
-    part("box", w(0.17, 0.6, uc), [0.18, 0.02, 1.4], C.tray),
-    part("box", w(0.08, 0.63, uc), [0.02, 0.06, 1.4], C.tray),
-    part("box", w(0.26, 0.63, uc), [0.02, 0.06, 1.4], C.tray),
-    part("round", w(0.17, 0.625, uc), [0.03, 1.3, 0.03], C.cable, ALONG_Z),
+    part("powder", "box", w(0.17, 0.6, uc), [0.18, 0.02, 1.4], C.tray),
+    part("powder", "box", w(0.08, 0.63, uc), [0.02, 0.06, 1.4], C.tray),
+    part("powder", "box", w(0.26, 0.63, uc), [0.02, 0.06, 1.4], C.tray),
+    part(
+      "base",
+      "round",
+      w(0.17, 0.625, uc),
+      [0.03, 1.3, 0.03],
+      C.cable,
+      ALONG_Z,
+    ),
   );
   for (const u of [u0 + 0.07, u1 - 0.07])
     solid.push(
-      part("box", w(0.39, 0.035, u), [0.66, 0.06, 0.08], C.frame),
+      part("powder", "box", w(0.39, 0.035, u), [0.66, 0.06, 0.08], C.frame),
       part(
+        "powder",
         "box",
         w(0.39, (0.06 + height - top) / 2, u),
         [0.08, height - top - 0.06, 0.08],
         C.frame,
       ),
-      part("box", w(0.39, height - top - 0.02, u), [0.62, 0.04, 0.06], C.frame),
       part(
+        "powder",
+        "box",
+        w(0.39, height - top - 0.02, u),
+        [0.62, 0.04, 0.06],
+        C.frame,
+      ),
+      part(
+        "base",
         "round",
         w(0.1, 0.012, u),
         [0.08, 0.024, 0.08],
@@ -155,6 +278,7 @@ function desk(solid: Part[]) {
         0.85,
       ),
       part(
+        "base",
         "round",
         w(0.68, 0.012, u),
         [0.08, 0.024, 0.08],
@@ -165,23 +289,32 @@ function desk(solid: Part[]) {
     );
 }
 
-function monitors(solid: Part[], glow: Part[]) {
+function monitors(solid: SetupPart[], glow: SetupPart[]) {
   const C = SETUP_COLORS;
   const top = DESK.height;
   // Wide main monitor, centered on the keyboard.
   const u = -1.45;
   solid.push(
-    part("box", w(0.2, top + 0.01, u), [0.2, 0.02, 0.26], C.bezel),
-    part("box", w(0.17, top + 0.19, u), [0.05, 0.36, 0.07], C.bezel),
-    part("box", w(0.21, 1.08, u), [0.08, 0.08, 0.1], C.bezel),
-    part("box", w(0.225, 1.1, u), [0.04, 0.24, 0.5], C.bezel, undefined, 0.9),
-    part("box", w(0.26, 1.11, u), [0.045, 0.4, 0.94], C.bezel),
+    part("satin", "box", w(0.2, top + 0.01, u), [0.2, 0.02, 0.26], C.bezel),
+    part("satin", "box", w(0.17, top + 0.19, u), [0.05, 0.36, 0.07], C.bezel),
+    part("satin", "box", w(0.21, 1.08, u), [0.08, 0.08, 0.1], C.bezel),
+    part(
+      "satin",
+      "box",
+      w(0.225, 1.1, u),
+      [0.04, 0.24, 0.5],
+      C.bezel,
+      undefined,
+      0.9,
+    ),
+    part("satin", "box", w(0.26, 1.11, u), [0.045, 0.4, 0.94], C.bezel),
   );
   glow.push(
-    part("box", w(0.286, 1.115, u), [0.006, 0.35, 0.88], C.screen),
-    part("box", w(0.2905, 1.03, u), [0.003, 0.1, 0.88], C.horizon),
-    part("box", w(0.2905, 1.19, u - 0.22), [0.003, 0.07, 0.07], C.sun),
+    part("satin", "box", w(0.286, 1.115, u), [0.006, 0.35, 0.88], C.screen),
+    part("satin", "box", w(0.2905, 1.03, u), [0.003, 0.1, 0.88], C.horizon),
+    part("satin", "box", w(0.2905, 1.19, u - 0.22), [0.003, 0.07, 0.07], C.sun),
     part(
+      "satin",
       "box",
       w(0.2905, 1.265, u + 0.25),
       [0.003, 0.022, 0.25],
@@ -203,14 +336,31 @@ function monitors(solid: Part[], glow: Part[]) {
     panel[2] + n[2] * out + t[2] * along,
   ];
   solid.push(
-    part("box", w(0.22, top + 0.01, s), [0.18, 0.02, 0.2], C.bezel, rot),
-    part("box", w(0.21, top + 0.17, s), [0.04, 0.3, 0.06], C.bezel, rot),
-    part("box", panel, [0.04, 0.32, 0.52], C.bezel, rot),
+    part(
+      "satin",
+      "box",
+      w(0.22, top + 0.01, s),
+      [0.18, 0.02, 0.2],
+      C.bezel,
+      rot,
+    ),
+    part(
+      "satin",
+      "box",
+      w(0.21, top + 0.17, s),
+      [0.04, 0.3, 0.06],
+      C.bezel,
+      rot,
+    ),
+    part("satin", "box", panel, [0.04, 0.32, 0.52], C.bezel, rot),
   );
-  glow.push(part("box", on(0.024, 0, 0), [0.006, 0.28, 0.48], C.side, rot));
+  glow.push(
+    part("satin", "box", on(0.024, 0, 0), [0.006, 0.28, 0.48], C.side, rot),
+  );
   for (const [i, up] of [0.08, 0.035, -0.01, -0.055].entries())
     glow.push(
       part(
+        "satin",
         "box",
         on(0.0285, -0.05 - i * 0.02, up),
         [0.003, 0.02, 0.3 - i * 0.04],
@@ -221,77 +371,121 @@ function monitors(solid: Part[], glow: Part[]) {
     );
 }
 
-function deskTop(solid: Part[], glow: Part[]) {
+function deskTop(solid: SetupPart[], glow: SetupPart[]) {
   const C = SETUP_COLORS;
   const top = DESK.height;
   // Keyboard: black case, white key rows, a thin RGB underglow.
   solid.push(
-    part("box", w(0.56, top + 0.0125, -1.45), [0.16, 0.025, 0.46], C.frame),
+    part(
+      "satin",
+      "box",
+      w(0.56, top + 0.0125, KEYBOARD_U),
+      [0.16, 0.025, 0.46],
+      C.frame,
+    ),
   );
-  for (const [i, d] of [0.505, 0.54, 0.575, 0.61].entries())
+  for (const [i, d] of KEY_ROWS.entries())
     solid.push(
       part(
+        "keycap",
         "box",
-        w(d, top + 0.031, -1.45 + (i === 3 ? 0.02 : 0)),
+        w(d, top + 0.031, KEYBOARD_U + (i === 3 ? 0.02 : 0)),
         [0.028, 0.012, i === 3 ? 0.24 : 0.42],
         C.keys,
       ),
     );
   glow.push(
-    part("box", w(0.643, top + 0.006, -1.45), [0.006, 0.008, 0.44], C.rgb),
+    part(
+      "satin",
+      "box",
+      w(0.643, top + 0.006, KEYBOARD_U),
+      [0.006, 0.008, 0.44],
+      C.rgb,
+    ),
   );
   // Mouse on its pad.
   solid.push(
-    part("box", w(0.52, top + 0.003, -0.95), [0.3, 0.006, 0.32], C.pad),
-    part("round", w(0.54, top + 0.021, -0.95), [0.1, 0.03, 0.065], C.keys),
-    part("box", w(0.508, top + 0.038, -0.95), [0.02, 0.008, 0.012], C.frame),
+    part(
+      "fabric",
+      "box",
+      w(0.52, top + 0.003, -0.95),
+      [0.3, 0.006, 0.32],
+      C.pad,
+    ),
+    part(
+      "satin",
+      "round",
+      w(0.54, top + 0.021, -0.95),
+      [0.1, 0.03, 0.065],
+      C.keys,
+    ),
+    part(
+      "base",
+      "box",
+      w(0.508, top + 0.038, -0.95),
+      [0.02, 0.008, 0.012],
+      C.frame,
+    ),
   );
-  // Speakers flanking the monitors: woofer, tweeter, white rings.
-  for (const u of [-2.12, -0.4])
+  // Speakers flanking the monitors: woofer, tweeter, white rings, and a
+  // perforated mesh grille in front of them.
+  for (const u of SPEAKERS)
     solid.push(
-      part("box", w(0.2, top + 0.005, u), [0.18, 0.01, 0.14], C.frame),
-      part("box", w(0.2, top + 0.15, u), [0.2, 0.28, 0.16], C.speaker),
+      part("satin", "box", w(0.2, top + 0.005, u), [0.18, 0.01, 0.14], C.frame),
+      part("satin", "box", w(0.2, top + 0.15, u), [0.2, 0.28, 0.16], C.speaker),
       part(
+        "satin",
         "round",
-        w(0.301, top + 0.1, u),
+        w(0.301, top + SPEAKER_Y, u),
         [0.13, 0.008, 0.13],
         C.chairWhite,
         ALONG_X,
       ),
       part(
+        "cone",
         "round",
-        w(0.304, top + 0.1, u),
+        w(0.304, top + SPEAKER_Y, u),
         [0.11, 0.012, 0.11],
         C.cone,
         ALONG_X,
       ),
       part(
+        "cone",
         "round",
-        w(0.31, top + 0.1, u),
+        w(0.31, top + SPEAKER_Y, u),
         [0.04, 0.012, 0.04],
         C.cone,
         ALONG_X,
         1.25,
       ),
       part(
+        "satin",
         "round",
         w(0.303, top + 0.225, u),
         [0.05, 0.01, 0.05],
         C.chairWhite,
         ALONG_X,
       ),
+      part(
+        "grille",
+        "box",
+        w(0.32, top + 0.15, u),
+        [0.004, 0.26, 0.15],
+        C.grille,
+      ),
     );
 }
 
-function tower(solid: Part[], glow: Part[], glass: Part[]) {
+function tower(solid: SetupPart[], glow: SetupPart[], glass: SetupPart[]) {
   const C = SETUP_COLORS;
   // On the floor under the desk's far end; the glass side faces +z.
   const u = -2.07;
   const face = u + 0.1;
   solid.push(
-    part("box", w(0.33, 0.27, u), [0.44, 0.48, 0.2], C.tower),
-    part("box", w(0.33, 0.3, face + 0.01), [0.3, 0.06, 0.02], C.inner),
+    part("panel", "box", w(0.33, 0.27, u), [0.44, 0.48, 0.2], C.tower),
+    part("satin", "box", w(0.33, 0.3, face + 0.01), [0.3, 0.06, 0.02], C.inner),
     part(
+      "satin",
       "round",
       w(0.4, 0.4, face + 0.008),
       [0.1, 0.016, 0.1],
@@ -299,6 +493,7 @@ function tower(solid: Part[], glow: Part[], glass: Part[]) {
       ALONG_Z,
     ),
     part(
+      "panel",
       "box",
       w(0.33, 0.502, face + 0.01),
       [0.44, 0.02, 0.02],
@@ -307,6 +502,7 @@ function tower(solid: Part[], glow: Part[], glass: Part[]) {
       0.9,
     ),
     part(
+      "panel",
       "box",
       w(0.33, 0.04, face + 0.01),
       [0.44, 0.02, 0.02],
@@ -315,6 +511,7 @@ function tower(solid: Part[], glow: Part[], glass: Part[]) {
       0.9,
     ),
     part(
+      "panel",
       "box",
       w(0.12, 0.27, face + 0.01),
       [0.02, 0.48, 0.02],
@@ -323,6 +520,7 @@ function tower(solid: Part[], glow: Part[], glass: Part[]) {
       0.9,
     ),
     part(
+      "panel",
       "box",
       w(0.54, 0.27, face + 0.01),
       [0.02, 0.48, 0.02],
@@ -333,11 +531,20 @@ function tower(solid: Part[], glow: Part[], glass: Part[]) {
   );
   for (const d of [0.14, 0.52])
     for (const z of [u - 0.07, u + 0.07])
-      solid.push(part("round", w(d, 0.0125, z), [0.04, 0.025, 0.04], C.frame));
+      solid.push(
+        part("base", "round", w(d, 0.0125, z), [0.04, 0.025, 0.04], C.frame),
+      );
   glow.push(
-    part("box", w(0.553, 0.27, u), [0.006, 0.36, 0.025], C.rgb),
-    part("box", w(0.33, 0.475, face + 0.004), [0.36, 0.012, 0.008], C.rgbCool),
+    part("satin", "box", w(0.553, 0.27, u), [0.006, 0.36, 0.025], C.rgb),
     part(
+      "satin",
+      "box",
+      w(0.33, 0.475, face + 0.004),
+      [0.36, 0.012, 0.008],
+      C.rgbCool,
+    ),
+    part(
+      "satin",
       "round",
       w(0.48, 0.2, face + 0.004),
       [0.08, 0.006, 0.08],
@@ -346,11 +553,17 @@ function tower(solid: Part[], glow: Part[], glass: Part[]) {
     ),
   );
   glass.push(
-    part("box", w(0.33, 0.27, face + 0.022), [0.4, 0.44, 0.004], C.glass),
+    part(
+      "satin",
+      "box",
+      w(0.33, 0.27, face + 0.022),
+      [0.4, 0.44, 0.004],
+      C.glass,
+    ),
   );
 }
 
-function chair(solid: Part[]) {
+function chair(solid: SetupPart[]) {
   const C = SETUP_COLORS;
   const { yaw, tilt } = CHAIR;
   const [px, , pz] = w(CHAIR.d, 0, CHAIR.u);
@@ -377,6 +590,7 @@ function chair(solid: Part[]) {
     const [dx, dz] = [Math.cos(a), Math.sin(a)];
     solid.push(
       part(
+        "base",
         "box",
         [px + 0.15 * dx, Y0 + 0.07, pz + 0.15 * dz],
         [0.3, 0.05, 0.06],
@@ -384,6 +598,7 @@ function chair(solid: Part[]) {
         [0, -a, 0],
       ),
       part(
+        "base",
         "round",
         [px + 0.29 * dx, Y0 + 0.03, pz + 0.29 * dz],
         [0.06, 0.04, 0.06],
@@ -394,37 +609,95 @@ function chair(solid: Part[]) {
     );
   }
   solid.push(
-    part("round", c(0, 0.08, 0), [0.12, 0.06, 0.12], C.chair),
-    part("round", c(0, 0.26, 0), [0.05, 0.3, 0.05], C.cone),
-    part("round", c(0, 0.18, 0), [0.07, 0.12, 0.07], C.chair),
-    part("box", c(0, 0.42, 0), [0.3, 0.04, 0.3], C.frame, turn),
+    part("base", "round", c(0, 0.08, 0), [0.12, 0.06, 0.12], C.chair),
+    part("powder", "round", c(0, 0.26, 0), [0.05, 0.3, 0.05], C.cone),
+    part("base", "round", c(0, 0.18, 0), [0.07, 0.12, 0.07], C.chair),
+    part("powder", "box", c(0, 0.42, 0), [0.3, 0.04, 0.3], C.frame, turn),
     {
-      ...part("box", c(0, 0.48, 0), [0.52, 0.1, 0.5], C.chair, turn),
-      surface: "leather",
+      ...part("leather", "box", c(0, 0.48, 0), [0.52, 0.1, 0.5], C.chair, turn),
     },
-    part("round", c(-0.25, 0.49, 0), [0.1, 0.48, 0.1], C.chair, side, 1.08),
-    part("box", c(0.2, 0.5, 0), [0.06, 0.1, 0.18], C.frame, turn),
+    part(
+      "leather",
+      "round",
+      c(-0.25, 0.49, 0),
+      [0.1, 0.48, 0.1],
+      C.chair,
+      side,
+      1.08,
+    ),
+    part("powder", "box", c(0.2, 0.5, 0), [0.06, 0.1, 0.18], C.frame, turn),
     {
-      ...part("box", back(0.4, 0, 0), [0.1, 0.8, 0.48], C.chair, lean),
-      surface: "leather",
+      ...part(
+        "leather",
+        "box",
+        back(0.4, 0, 0),
+        [0.1, 0.8, 0.48],
+        C.chair,
+        lean,
+      ),
     },
-    part("box", back(0.4, 0.052, 0), [0.01, 0.5, 0.08], C.chairWhite, lean),
-    part("round", back(0.68, 0.08, 0), [0.12, 0.3, 0.12], C.chairWhite, side),
-    part("round", back(0.18, 0.07, 0), [0.1, 0.3, 0.1], C.chair, side, 1.15),
+    part(
+      "leather",
+      "box",
+      back(0.4, 0.052, 0),
+      [0.01, 0.5, 0.08],
+      C.trim,
+      lean,
+    ),
+    part(
+      "leather",
+      "round",
+      back(0.68, 0.08, 0),
+      [0.12, 0.3, 0.12],
+      C.trim,
+      side,
+    ),
+    part(
+      "leather",
+      "round",
+      back(0.18, 0.07, 0),
+      [0.1, 0.3, 0.1],
+      C.chair,
+      side,
+      1.15,
+    ),
   );
   for (const s of [1, -1])
     solid.push(
-      part("box", c(0, 0.505, s * 0.22), [0.5, 0.08, 0.08], C.chairWhite, turn),
       part(
+        "leather",
+        "box",
+        c(0, 0.505, s * 0.22),
+        [0.5, 0.08, 0.08],
+        C.trim,
+        turn,
+      ),
+      part(
+        "leather",
         "box",
         back(0.38, 0.04, s * 0.2),
         [0.1, 0.72, 0.08],
-        C.chairWhite,
+        C.trim,
         lean,
       ),
-      part("box", c(0.02, 0.47, s * 0.27), [0.05, 0.04, 0.06], C.frame, turn),
-      part("box", c(0.02, 0.6, s * 0.29), [0.05, 0.2, 0.05], C.chair, turn),
       part(
+        "base",
+        "box",
+        c(0.02, 0.47, s * 0.27),
+        [0.05, 0.04, 0.06],
+        C.frame,
+        turn,
+      ),
+      part(
+        "base",
+        "box",
+        c(0.02, 0.6, s * 0.29),
+        [0.05, 0.2, 0.05],
+        C.chair,
+        turn,
+      ),
+      part(
+        "leather",
         "box",
         c(-0.02, 0.715, s * 0.29),
         [0.26, 0.04, 0.09],
@@ -492,8 +765,8 @@ export const SETUP = {
   pullOut: 0.6,
   /** Farthest reach into the room: the chair's back and base. */
   chairBack,
-  /** Solid, glow and glass meshes. */
-  draws: 3,
+  /** One mesh per solid material, plus glow and glass. */
+  draws: new Set(solidParts.solid.map((p) => p.material)).size + 2,
 } as const;
 
 /** Desk, chair and pull-out room: kept clear of the door and the walkway. */

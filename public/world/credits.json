@@ -377,6 +377,13 @@
       "author": "Kevnnard",
       "license": "Original work (repository license)",
       "source": "src/lib/world/setup.ts"
+    },
+    {
+      "id": "setup-normals",
+      "asset": "Setup normal maps: noise, speaker cone, fabric weave and keycaps (procedural)",
+      "author": "Kevnnard",
+      "license": "Original work (repository license)",
+      "source": "src/lib/world/normals.ts"
     }
   ],
   "textures": [
@@ -651,7 +658,164 @@
           "sha256": "7f5c8b79afe2dd2120f9a1838db0a965cc473492f0b8e6f9fb0d6b24d7983ff0"
         }
       ]
+    },
+    {
+      "file": "textures/Metal_Mesh_009-color.webp",
+      "asset": "Metal_Mesh_009",
+      "map": "color",
+      "pack": "stylizedtextures",
+      "author": "CreativeTrio",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source": "https://stylizedtextures.com/texture/metal_mesh_009",
+      "bytes": 68740,
+      "sha256": "10582f87c628f880dea2a1e05f2adc2adb5852c71a22db13d51d9846400f3121",
+      "width": 1024,
+      "height": 1024,
+      "sourceFiles": [
+        {
+          "url": "https://drive.google.com/uc?export=download&id=1SDAg4ddCXoxD-khjpa4jPvpCf9wJGTFG",
+          "bytes": 7522473,
+          "sha256": "3eee8e7bbdd7f705f3b95ca0792395d8c08e5788d12b9d8d27316fbee0f176f6"
+        }
+      ],
+      "meanLinear": [
+        0.0056,
+        0.0077,
+        0.1869
+      ]
+    },
+    {
+      "file": "textures/Metal_Mesh_009-normal.webp",
+      "asset": "Metal_Mesh_009",
+      "map": "normal",
+      "pack": "stylizedtextures",
+      "author": "CreativeTrio",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source": "https://stylizedtextures.com/texture/metal_mesh_009",
+      "bytes": 31208,
+      "sha256": "327320b46947c37818da5922c7fbc11aea461905eaf4e162381600877f534469",
+      "width": 1024,
+      "height": 1024,
+      "sourceFiles": [
+        {
+          "url": "https://drive.google.com/uc?export=download&id=154Br9i3aE-VbWOpIxnSzJUmGnt-z6N_a",
+          "bytes": 20651568,
+          "sha256": "ef6679eec3468b4ddc04fa85619eff9ea7ba7ec2a708711214633e629764fb18"
+        }
+      ]
+    },
+    {
+      "file": "textures/Metal_Mesh_009-roughness.webp",
+      "asset": "Metal_Mesh_009",
+      "map": "roughness",
+      "pack": "stylizedtextures",
+      "author": "CreativeTrio",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source": "https://stylizedtextures.com/texture/metal_mesh_009",
+      "bytes": 14390,
+      "sha256": "e477269f401bf261f3b9f99c72a862c9e3acd30eb1c5c322a937cc5b52aa41ae",
+      "width": 1024,
+      "height": 1024,
+      "sourceFiles": [
+        {
+          "url": "https://drive.google.com/uc?export=download&id=1H3NGVvga4Kifo-RVotOpKNVxj085QPQG",
+          "bytes": 1302741,
+          "sha256": "5d627f3326da672d2a9ced66a9ba43a09a41cdfea3751daf785d0a1d5b97cae1"
+        }
+      ]
+    },
+    {
+      "file": "textures/Metal_Mesh_009-opacity.webp",
+      "asset": "Metal_Mesh_009",
+      "map": "opacity",
+      "pack": "stylizedtextures",
+      "author": "CreativeTrio",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source": "https://stylizedtextures.com/texture/metal_mesh_009",
+      "bytes": 26084,
+      "sha256": "baf654d5151d2dd5dc86731d3c9aba6a634206e9533f2cc6342cde4aa7936264",
+      "width": 1024,
+      "height": 1024,
+      "sourceFiles": [
+        {
+          "url": "https://drive.google.com/uc?export=download&id=1u5fSorLpIw5eytK050SkEpaA9YNcfLZt",
+          "bytes": 303753,
+          "sha256": "177121ad0f07d3ef82961fb5654cacae083b73db467b3c3e73093eeab8c86a62"
+        }
+      ]
+    },
+    {
+      "file": "textures/Stylized_Sci_fi_Metal_Panel_001-color.webp",
+      "asset": "Stylized_Sci_fi_Metal_Panel_001",
+      "map": "color",
+      "pack": "stylizedtextures",
+      "author": "CreativeTrio",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source": "https://stylizedtextures.com/texture/stylized_sci_fi_metal_panel_001",
+      "bytes": 110656,
+      "sha256": "e89d3625091da30af97868e30e54fee4cc1195c3230438806e9fd1775d4c660b",
+      "width": 1024,
+      "height": 1024,
+      "sourceFiles": [
+        {
+          "url": "https://drive.google.com/uc?export=download&id=1ZMoH30d8ZgF6v9BN8MY6lpLpMYSlzBRu",
+          "bytes": 9966304,
+          "sha256": "564e097a99f8ca749facf2bfe49e628382258c4e68bc60443b0a2dd1b606fe8a"
+        }
+      ],
+      "meanLinear": [
+        0.0158,
+        0.1591,
+        0.4758
+      ]
+    },
+    {
+      "file": "textures/Stylized_Sci_fi_Metal_Panel_001-normal.webp",
+      "asset": "Stylized_Sci_fi_Metal_Panel_001",
+      "map": "normal",
+      "pack": "stylizedtextures",
+      "author": "CreativeTrio",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source": "https://stylizedtextures.com/texture/stylized_sci_fi_metal_panel_001",
+      "bytes": 66172,
+      "sha256": "993b1a33193bd5c9d12164ba8970151f3ff9e677508437560ccd880333d37c7d",
+      "width": 1024,
+      "height": 1024,
+      "sourceFiles": [
+        {
+          "url": "https://drive.google.com/uc?export=download&id=1HaXQGZY9NH96a3mioPR712BCp2mQFIVY",
+          "bytes": 7164391,
+          "sha256": "e6a0db680b6404d5f25950ecac0f60d796359c1b4ddc23f7e8e5618203897b22"
+        }
+      ]
+    },
+    {
+      "file": "textures/Stylized_Sci_fi_Metal_Panel_001-roughness.webp",
+      "asset": "Stylized_Sci_fi_Metal_Panel_001",
+      "map": "roughness",
+      "pack": "stylizedtextures",
+      "author": "CreativeTrio",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source": "https://stylizedtextures.com/texture/stylized_sci_fi_metal_panel_001",
+      "bytes": 80936,
+      "sha256": "b3f9ede8c928aa6e3caf8ab5dbc862a6395ae5dcd3e6a003198246e83b75ffc0",
+      "width": 1024,
+      "height": 1024,
+      "sourceFiles": [
+        {
+          "url": "https://drive.google.com/uc?export=download&id=1lMJF4cC26uddkW48wvQq3qlw2zf1aewX",
+          "bytes": 6226192,
+          "sha256": "7f0a451348660a513429447007375f40b98e1c4c06b7ee8d5ae42ee5b4d7d439"
+        }
+      ]
     }
   ],
-  "textureBytes": 5891814
+  "textureBytes": 6290000
 }

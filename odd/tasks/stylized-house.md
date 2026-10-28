@@ -13,6 +13,7 @@ S7. "pues no un boton si no podemos manejarlo con el zoom es decir zoom lejano p
 S8. "agrandar pues vamos a mirar si cabe si no la atgrandamos mira mi modelo de mi mesa que es tipo gamer los bafles de sonido y la silla revisa si eso sirve pero revisa si ela web existen modelos para eso que se acoplen a nuestro modelo actual y estilo  y si nos vamos quedanndo sin espacio lo expadimos por ahora eso y bueno la posicion del setup debe ser el pppriicipal de la habitacion vamos con eso y ya depues lo demass vale ? a ver que tal queda"
 S9. "dale aplica todo y meaviasa para revisarlo"
 S10. "si mejoraria la walss intenras a paredes mas como madera lateral no ?"
+S11. "ahora vamos con els etup comleto de normales texturas etc"
 
 ## Tasks
 T1 [S1-S2] parent — done: three style directions in Gentle Design (design/stylized-house/) for the house and room with added accessories, guided camera framing. Commit: pending.
@@ -25,6 +26,7 @@ T4c [S7] explore then worker — done (visual pending): zoom-driven cutaway (far
 T4d [S8] gentle-ai-worker — done (visual pending; house not expanded): gaming setup (desk, monitors, PC, speakers, gaming chair) as the room centerpiece; expand house if it does not fit. Commit: pending.
 T4e [S9] gentle-ai-worker — done (visual pending): stylized CC0 textures (color+normal+roughness) on house walls/floor/roof and setup chair/desk; fix shadow acne and stair-stepped gables. Commit: pending.
 T4f [S10] dropped (user: "mentiras se ve bien"; worker cancelled before any code change): interior wall faces use long horizontal wood siding instead of the knotted short-plank texture. Commit: pending.
+T4g [S11] gentle-ai-worker — done (visual pending): full setup materials (normals, textures, PBR tuning) for desk, monitors, PC, speakers, peripherals, chair. Commit: pending.
 T4b [S1-S4] pending (rest of accessories): interior with accessories (02-cozy-diorama).
 T5 [S1] pending: enter-the-PC experience (Henry Heffernan reference).
 
@@ -50,3 +52,5 @@ L18. User accepted setup (Screenshot 2026-10-28 12.23.54 PM) and asked for textu
 L19. User: apply everything (stylized textures + fixes), skip the comparison design. Parent confirmed StylizedTextures.com: FAQ states CC0 1.0; author CreativeTrio (https://creativetrio.art, Patreon creativetrio). Catalog CSV: https://raw.githubusercontent.com/gendosplace/Material_Library/refs/heads/main/StylizedTextures.csv (columns Material Name, basecolor, normal, ambientOcclusion, height, roughness, metallic, opacity; values are Google Drive uc?export=view&id=...). Direct download works as https://drive.google.com/uc?export=download&id=<id> (probe: 200 image/png, 4096x4096 RGB, 18.7 MB). Rows extracted to node_modules/.cache/world/explore/picks.tsv (name, basecolor, normal, roughness) for Wood_Planks_001, Wood_Floor_001, Wood_Shingles_001, Wood_Wall_001, Wood Siding_001, Leather_Patch_001, Metal_Plates_001, Roof_Tiles_001.
 L20. Screenshots 2026-10-28 12.37.46/12.37.53 PM: textures render; exterior reads well. Interior walls show busy short planks with knots and nails (Stylized_Wood_Planks_001). User wants interior walls like long horizontal (lateral) wood boards. Candidates already in picks.tsv: "Stylized_Wood Siding_001" and Stylized_Wood_Wall_001. Floor parquet pattern still clashes with floor boards (not requested; leave).
 L21. User withdrew S10: "mentiras se ve bien". Worker mvseex6f-a-6xqo cancelled; no source changes were made. Textures (90a1034) accepted as is.
+L22. Slice boundary: branch feat/interactive-room carries ~22k authored lines in 39 commits since origin/main (old /room forest work + new /world). Delivery strategy: /world commits from 02ee707 onward form their own reviewable chain; split into chained PRs when the user decides to publish.
+L23. StylizedTextures catalog has no fabric or plastic. Available for setup: Metal_Mesh_009 (speaker grilles; has opacity), Stylized_Sci_fi_Metal_Panel_001, Stylized_Metal_Plates_001, Leather_Patch_001 (chair, already used). Rows appended to picks.tsv (name, basecolor, normal, roughness, metallic, opacity for the new two). Plastic surfaces (desk top, monitors, keyboard, PC case) use PBR tuning (roughness/clearcoat) plus subtle original procedural normal; mousepad uses an original procedural fabric weave normal.
