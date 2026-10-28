@@ -26,12 +26,12 @@ export function forestTrees(): ForestTree[] {
   };
   const rings = [
     [32, 12],
-    [48, 18],
-    [68, 30],
-    [94, 44],
-    [125, 62],
-    [160, 84],
-    [205, 110],
+    [48, 30],
+    [68, 54],
+    [94, 80],
+    [125, 112],
+    [160, 150],
+    [205, 190],
   ];
   const trees: ForestTree[] = [];
   rings.forEach(([radius, count], ring) => {

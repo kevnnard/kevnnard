@@ -23,15 +23,15 @@
       "files": [
         {
           "path": "pine-near.glb",
-          "bytes": 1593056,
-          "sha256": "3620d15ac30b48bdfc7b17854b367f95cb9e201c5c03508d56c19b0d8f18af49",
-          "triangles": 16795
+          "bytes": 4714928,
+          "sha256": "802c20d84f9494375ae7f405ab739b56fa680768671910ec21010c4690e171dc",
+          "triangles": 176393
         },
         {
           "path": "pine-far.glb",
-          "bytes": 399536,
-          "sha256": "e6c99ee18a208738d787ce14b8463bf21cf6d30056739d0f5374dc778b4dc148",
-          "triangles": 2802
+          "bytes": 1855392,
+          "sha256": "c2143ab1b88c708f9ba29f7c441088580b34e2e84c07dfdfbeb536db4aa6153a",
+          "triangles": 65436
         }
       ]
     },
@@ -53,15 +53,15 @@
       "files": [
         {
           "path": "fir-near.glb",
-          "bytes": 1000456,
-          "sha256": "e36bf8e1759319589cab27948da732cae1e2cf670130b9adfe6c563c8a127a92",
-          "triangles": 11393
+          "bytes": 2813960,
+          "sha256": "2a719979acabaee6e0c4159e70f45eb9de2e6b00489ea03c07128680250c158e",
+          "triangles": 80451
         },
         {
           "path": "fir-far.glb",
-          "bytes": 252200,
-          "sha256": "bd86483b0947e9045f5de40acdc8f1d5d69745d740ef7d1f983876485760e83c",
-          "triangles": 1314
+          "bytes": 1349656,
+          "sha256": "727c6d38278b288a6f47b24424d0af61e6ef089a22625b8f7a72c99744f5ed11",
+          "triangles": 39281
         }
       ]
     }

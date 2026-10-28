@@ -30,7 +30,8 @@ import { treeFrame } from "@/lib/room/forest-model.ts";
 import { GroundSurface } from "./GroundSurface";
 
 const MODELS = ["pine-near", "pine-far", "fir-near", "fir-far"] as const;
-const URLS = MODELS.map((name) => `/models/forest/${name}.glb`);
+// Invalidate useLoader/browser caches after restoring the reduced canopies.
+const URLS = MODELS.map((name) => `/models/forest/${name}.glb?v=canopy-2`);
 const TREES = forestTrees();
 const loaderOptions = (loader: GLTFLoader) =>
   loader.setMeshoptDecoder(MeshoptDecoder);

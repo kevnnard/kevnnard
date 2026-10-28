@@ -2,9 +2,102 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { it } from "node:test";
 import { MeshoptDecoder } from "meshoptimizer/decoder";
-import { Box3, Group, Matrix4, Mesh, Texture } from "three";
+import {
+  Box3,
+  type BufferAttribute,
+  Group,
+  Matrix4,
+  Mesh,
+  Texture,
+} from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { treeFrame } from "../../src/lib/room/forest-model.ts";
+
+// Occupied 128² vertex-projection cells in the original selected twig meshes.
+// Recorded from verified source geometry, not from an older reduced model.
+const SOURCE_CANOPY = {
+  pine: [0.495, 0.541, 0.442],
+  fir: [0.345, 0.433, 0.379],
+};
+function canopyCoverage(position: BufferAttribute, vertices: number[]) {
+  const points = vertices.map((i) => [
+    position.getX(i),
+    position.getY(i),
+    position.getZ(i),
+  ]);
+  const low = [0, 1, 2].map((axis) =>
+    points.reduce((value, p) => Math.min(value, p[axis]), Infinity),
+  );
+  const high = [0, 1, 2].map((axis) =>
+    points.reduce((value, p) => Math.max(value, p[axis]), -Infinity),
+  );
+  return [
+    [0, 1],
+    [0, 2],
+    [1, 2],
+  ].map(([a, b]) => {
+    const cells = new Set(
+      points.map((p) => {
+        const cell = (axis: number) =>
+          Math.min(
+            127,
+            Math.floor(
+              ((p[axis] - low[axis]) / (high[axis] - low[axis])) * 128,
+            ),
+          );
+        return cell(a) + cell(b) * 128;
+      }),
+    );
+    return cells.size / 16384;
+  });
+}
+
+it("preserves a populated canopy in both species and both LODs instead of bare trunks", async () => {
+  const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+  loader.register(() => ({
+    name: "EXT_texture_webp",
+    loadTexture: async () => new Texture(),
+  }));
+  const failures: string[] = [];
+  for (const species of ["pine", "fir"] as const)
+    for (const lod of ["near", "far"]) {
+      const name = `${species}-${lod}`;
+      const bytes = readFileSync(
+        new URL(`../../public/models/forest/${name}.glb`, import.meta.url),
+      );
+      const gltf = await loader.parseAsync(
+        bytes.buffer.slice(
+          bytes.byteOffset,
+          bytes.byteOffset + bytes.byteLength,
+        ),
+        "",
+      );
+      let found = false;
+      gltf.scene.traverse((object) => {
+        if (
+          !(object instanceof Mesh) ||
+          Array.isArray(object.material) ||
+          !object.material.name.includes("twig")
+        )
+          return;
+        found = true;
+        const index = object.geometry.getIndex();
+        assert.ok(index);
+        const coverage = canopyCoverage(
+          object.geometry.getAttribute("position") as BufferAttribute,
+          [...new Set(index.array)],
+        );
+        coverage.forEach((value, axis) => {
+          if (value < SOURCE_CANOPY[species][axis] * 0.7)
+            failures.push(
+              `${name} projection ${axis}: ${(value * 100).toFixed(1)}% canopy occupancy, expected at least ${(SOURCE_CANOPY[species][axis] * 70).toFixed(1)}%`,
+            );
+        });
+      });
+      assert.ok(found, `${name}: foliage primitive must exist`);
+    }
+  assert.deepEqual(failures, []);
+});
 
 it("decodes all four real tree geometries and frames their quantized meshes upright without changing vertices", async () => {
   const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);

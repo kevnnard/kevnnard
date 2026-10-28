@@ -11,7 +11,14 @@ import { PLOT, SCENE_BOUNDS } from "../../src/lib/room/house-layout.ts";
 it("fills a bounded forest with both real tree species and near/far detail without changing placement", () => {
   const trees = forestTrees();
   assert.deepEqual(trees, forestTrees());
-  assert.ok(trees.length >= 300 && trees.length <= 380);
+  assert.ok(
+    trees.length >= 600 && trees.length <= 660,
+    "fill the middle and distant forest without unbounded growth",
+  );
+  assert.ok(
+    trees.filter((tree) => tree.lod === "near").length <= 12,
+    "keep the expensive close-tree population bounded",
+  );
   for (const species of ["pine", "fir"]) {
     assert.ok(
       trees.some((tree) => tree.species === species && tree.lod === "near"),
