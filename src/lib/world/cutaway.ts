@@ -1,8 +1,18 @@
 // Zoom-driven cutaway (T4c, S7): far away the house is whole; zooming in
 // dissolves both roofs, then every wall whose outside faces the camera, so
 // the empty interior shows from any side. Pure numbers; House.tsx turns each
-// fade into a dithered discard and hides fully faded groups.
+// fade into a dithered discard and hides fully faded groups. The shadow
+// shell (S21) is the one three.js piece: it keeps the faded walls and roofs
+// casting, so the sun and moon still enter only through the windows.
 
+import {
+  type Material,
+  Mesh,
+  MeshBasicMaterial,
+  MeshDepthMaterial,
+  Object3D,
+  type Side,
+} from "three";
 import {
   HOUSE,
   HOUSE_FOCUS,
@@ -30,6 +40,45 @@ const SHADOW_FADE = 0.02;
  */
 export const castsShadow = (fade: number, casting: boolean) =>
   casting ? fade <= SHADOW_FADE : fade === 0;
+
+/**
+ * A camera-invisible, always-casting copy of the opaque house solids (S21).
+ * Each blocker reuses its solid's geometry (real window and door holes, no
+ * glass) and renders with colorWrite and depthWrite off, so the camera sees
+ * nothing; the shadow pass draws it through an explicit undithered depth
+ * material. Kept outside the fading groups, so hiding a roof or wall never
+ * lets the sun or moon into the room. The caller owns the shared geometry;
+ * `materials` are the shell's own, to dispose once.
+ */
+export function shadowShell(
+  solids: readonly Mesh[],
+  shadowSide: Side | null = solids[0]
+    ? (solids[0].material as Material).shadowSide
+    : null,
+): { shell: Object3D; materials: Material[] } {
+  const camera = new MeshBasicMaterial({
+    colorWrite: false,
+    depthWrite: false,
+    // The shadow pass takes its side from the mesh material.
+    shadowSide,
+  });
+  const depth = new MeshDepthMaterial({ depthWrite: true });
+  const shell = new Object3D();
+  shell.name = "house-shadow";
+  for (const solid of solids) {
+    const blocker = new Mesh(solid.geometry, camera);
+    blocker.name = `${solid.name || "solid"}-shadow`;
+    blocker.position.copy(solid.position);
+    blocker.quaternion.copy(solid.quaternion);
+    blocker.scale.copy(solid.scale);
+    blocker.updateMatrix();
+    blocker.customDepthMaterial = depth;
+    blocker.castShadow = true;
+    blocker.receiveShadow = false;
+    shell.add(blocker);
+  }
+  return { shell, materials: [camera, depth] };
+}
 
 const bayer2 = (x: number, y: number) => {
   const a = Math.floor(x);

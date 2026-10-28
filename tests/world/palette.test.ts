@@ -84,8 +84,10 @@ describe("world light balance (S18)", () => {
   it("gives the noon sun a strong key-to-fill ratio for visible shadows", () => {
     const noon = worldLight(13);
     assert.equal(noon.key.source, "sun");
-    assert.ok(noon.key.intensity >= dayCycle(13).key.intensity * 1.2);
-    assert.ok(noon.key.intensity / fill(13) >= 4, `${noon.key.intensity}`);
+    // S21: a softer sun than S18 (x1.3), still above the shared cycle.
+    const scale = noon.key.intensity / dayCycle(13).key.intensity;
+    assert.ok(scale >= 1.05 && scale <= 1.15, `${scale}`);
+    assert.ok(noon.key.intensity / fill(13) >= 3.5, `${noon.key.intensity}`);
     // Lit faces stay near the previous total, so colors do not wash out.
     assert.ok(noon.key.intensity + fill(13) <= 3.6);
   });
@@ -106,6 +108,14 @@ describe("world light balance (S18)", () => {
       const [r, , b] = light.key.color;
       assert.ok(b - r >= 0.35, `${hour} moon is blue, not white`);
       assert.equal(light.night, 1);
+    }
+  });
+
+  it("brightens the moon key modestly over the shared cycle (S21)", () => {
+    for (const hour of [0, 21, 23, 3]) {
+      const scale =
+        worldLight(hour).key.intensity / dayCycle(hour).key.intensity;
+      assert.ok(scale > 0.9 && scale <= 1.05, `${hour}: ${scale}`);
     }
   });
 

@@ -34,10 +34,11 @@ const MOON_DEEP: RGB = [0.42, 0.55, 0.95];
  * environment drop, so shadows read; by night the fill falls further and the
  * moon turns bluer, so the night lights carry the interior. Fill scales from
  * day to full night follow the sun's elevation, never the 18:00 fixture gate.
+ * S21 softened the sun (1.3 → 1.12) and lifted the moon (0.85 → 0.97).
  */
 const BALANCE = {
-  sunKey: 1.3,
-  moonKey: 0.85,
+  sunKey: 1.12,
+  moonKey: 0.97,
   fill: { day: 0.8, night: 0.45 },
   environment: { day: 0.16, night: 0.03 },
   chair: { day: 0.8, night: 0.55 },

@@ -40,7 +40,14 @@ dark, so the sun, moon and phases match `/room` exactly.
 | 19:19 before / after | 0.47 / 0.44 moon | 0.44 / 0.13 | 0.15 / 0.03 | 0.8 / 2.8 |
 | 00:00 before / after | 0.50 / 0.47 moon | 0.34 / 0.09 | 0.10 / 0.03 | 1.1 / 3.9 |
 
-- Day: the sun keys 1.3x the cycle and the fill drops, so shadows read while
+S21 softened the sun and raised the moon a little, fill and environment
+unchanged: the sun keys 1.12x (was 1.3x; noon 2.86 → 2.46, key : fill
+4.5 → 3.9), the moon 0.97x (was 0.85x; 19:19 0.44 → 0.51, 00:00
+0.47 → 0.53, key : fill 4.4 at midnight). This is brightness only: the
+shadow edge (penumbra) comes from the map's `radius` and resolution, which
+did not change.
+
+- Day: the sun keys 1.12x the cycle (1.3x in S18) and the fill drops, so shadows read while
   lit faces keep about the same total (no washed-out pastels). Sun color is
   the cycle's warm-neutral `#ffe6c4` at height.
 - Night: fill and the neutral RoomEnvironment (which read as white light)
@@ -59,7 +66,8 @@ sun direction; near/far 2/32 m around the key's 14.4-15 m distance.
 `normalBias` 0.02 keeps contact shadows attached; `radius` 2. three r186
 removed `PCFSoftShadowMap`, so R3F's `shadows` renders PCF with a Vogel-disk
 `radius` blur; 4 smeared contact shadows. Caster and receiver flags were
-already right and the cutaway shadow fade is unchanged.
+already right. S21 replaced the cutaway shadow fade with the shadow shell
+(below).
 
 ## Camera
 
@@ -77,9 +85,24 @@ every wall whose outward normal faces the camera dissolves, fully at 6 m, so
 the interior shows from any side. Each wall (with its trim and glass) and each
 roof is its own group; the floor, plinths, porch, driveway and posts never
 fade. `House.tsx` uses an 8x8 ordered-dither discard per group and hides fully
-faded groups so sun and moon light enter. A group stops casting shadows as
-soon as it starts fading (no dotted shadows) and casts again once whole
-(`castsShadow`). With reduced motion fades snap.
+faded groups. With reduced motion fades snap.
+
+Shadow shell (S21, `shadowShell`): before S21 a fading group stopped casting
+(`castsShadow`, still exported), so with the roof dissolved the sun or moon lit
+every room through the missing roof and walls. Now the fading groups' solids
+never cast; one `house-shadow` sibling of the groups (never hidden with them)
+holds a blocker per opaque solid. Each blocker shares its solid's merged
+geometry (planks split around the real window and door holes, frames,
+mullions, doors, roof slabs and backing; no glass, no bounding boxes), draws
+for the camera with `colorWrite` and `depthWrite` off, and casts through one
+explicit undithered `MeshDepthMaterial` with the wood's `BackSide` shadow side.
+So direct sun and moon still enter only through the window and door openings
+while you look in. The base group casts as before. Limits: only the direct
+key is occluded; the hemisphere fill and RoomEnvironment still reach the
+interior (no ambient occlusion or GI), and thin seams can leak with the
+current bias. The camera still draws each blocker once, writing neither color nor depth.
+Geometry is disposed once (a `Set`, shared by solid and blocker); the shell's
+two materials are disposed with the rest.
 
 ## Assets and credits
 

@@ -9,6 +9,7 @@ import {
   CylinderGeometry,
   Euler,
   type Group,
+  type Material,
   Matrix3,
   Matrix4,
   Mesh,
@@ -22,7 +23,7 @@ import {
   materialFor,
   type SurfaceMaps,
 } from "@/components/world/surfaces";
-import { castsShadow, cutaway, DITHER_GLSL } from "@/lib/world/cutaway.ts";
+import { cutaway, DITHER_GLSL, shadowShell } from "@/lib/world/cutaway.ts";
 import {
   HOUSE_COLORS,
   HOUSE_GROUPS,
@@ -38,7 +39,7 @@ export const HOUSE_NAMES = Object.fromEntries(
   HOUSE_GROUPS.map((group) => [group, `house-${group}`]),
 ) as Record<HouseGroup, string>;
 
-/** Fully faded groups are hidden, so they stop casting shadows too. */
+/** Fully faded groups are hidden; the shadow shell keeps casting. */
 const HIDDEN = 0.995;
 /** Fade easing rate per second; the camera is already smoothed. */
 const EASE = 12;
@@ -232,16 +233,15 @@ export function mergeParts(
 interface FadeGroup {
   object: Object3D;
   fade: { value: number };
-  /** Shadow-casting solids; glass never casts. */
-  solids: Mesh[];
-  casting: boolean;
 }
 
 /**
  * Original procedural wooden house and garage on the island pad. Walls,
  * floor and roof cast and receive shadows; the glass does not, so the sun
  * by day and the moon by night draw window patches on the empty floor.
- * Zooming in dissolves the roofs and camera-facing walls (T4c). With `maps`
+ * Zooming in dissolves the roofs and camera-facing walls (T4c); their shadow
+ * stays, cast by an invisible shell, so light still enters only through the
+ * window and door openings (S21). With `maps`
  * the planks, floor and roofs are textured (T4e); without, they stay flat.
  */
 export default function House({
@@ -271,6 +271,8 @@ export default function House({
     const surfaces = new Map<string, MeshStandardMaterial>();
     const fading = new Map<HouseGroup, FadeGroup>();
     const meshes = houseMeshes();
+    /** Opaque solids of the fading groups; the panes are never added. */
+    const solids: Mesh[] = [];
     const house = new Object3D() as Group;
     house.name = "house";
     for (const name of HOUSE_GROUPS) {
@@ -284,15 +286,16 @@ export default function House({
         return copy;
       };
       const glassMaterial = faded(glass);
-      const solids: Mesh[] = [];
-      if (name !== "base")
-        fading.set(name, { object: part, fade, solids, casting: true });
+      if (name !== "base") fading.set(name, { object: part, fade });
       for (const [surface, parts] of bySurface(meshes[name].wood)) {
         const material = materialFor(surface, wood, maps, surfaces, owned);
         const solid = new Mesh(mergeParts(parts), faded(material));
-        solid.castShadow = true;
+        solid.name = `${part.name}-${surface}`;
+        // Fading solids never cast: the shell does, so no dotted shadows
+        // and no duplicate casters.
+        solid.castShadow = name === "base";
         solid.receiveShadow = true;
-        solids.push(solid);
+        if (name !== "base") solids.push(solid);
         part.add(solid);
       }
       if (meshes[name].glass.length > 0) {
@@ -304,7 +307,11 @@ export default function House({
       }
       house.add(part);
     }
-    return { group: house, materials: owned, fades: fading };
+    // A sibling of the fading groups: hiding them never hides the shell.
+    const { shell, materials: blockers } = shadowShell(solids);
+    house.add(shell);
+    const materials: Material[] = [...owned, ...blockers];
+    return { group: house, materials, fades: fading };
   }, [maps]);
 
   const position = useRef<[number, number, number]>([0, 0, 0]);
@@ -317,19 +324,12 @@ export default function House({
     const step = reducedMotion ? 1 : 1 - Math.exp(-EASE * delta);
     let moving = false;
     for (const [name, group] of fades) {
-      const { object, fade, solids } = group;
+      const { object, fade } = group;
       const target = targets[name];
       const next = fade.value + (target - fade.value) * step;
       fade.value = Math.abs(target - next) < 1e-3 ? target : next;
       if (fade.value !== target) moving = true;
       object.visible = fade.value < HIDDEN;
-      // A dithered wall would cast a dotted shadow: stop as soon as it fades.
-      const casting = castsShadow(fade.value, group.casting);
-      if (casting !== group.casting) {
-        group.casting = casting;
-        for (const solid of solids) solid.castShadow = casting;
-        moving = true;
-      }
     }
     // Demand frameloop: keep rendering only while a fade is still easing.
     if (moving) invalidate();
@@ -338,10 +338,13 @@ export default function House({
   useEffect(
     () => () => {
       for (const material of materials) material.dispose();
+      // The shell shares the solids' geometry: dispose each one once.
+      const geometries = new Set<BufferGeometry>();
       group.traverse((object) => {
         const mesh = object as Mesh;
-        if (mesh.isMesh) mesh.geometry.dispose();
+        if (mesh.isMesh) geometries.add(mesh.geometry);
       });
+      for (const geometry of geometries) geometry.dispose();
     },
     [group, materials],
   );
