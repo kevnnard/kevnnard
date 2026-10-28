@@ -95,8 +95,8 @@ describe("setup and house polish (T4h, S12)", () => {
   });
 
   it("dims the environment reflections at night", () => {
-    assert.ok(Math.abs(environmentIntensity(12) - 0.5) < 0.05);
-    assert.ok(Math.abs(environmentIntensity(0) - 0.15) < 0.05);
+    assert.ok(Math.abs(environmentIntensity(12) - 0.22) < 0.03);
+    assert.ok(Math.abs(environmentIntensity(0) - 0.1) < 0.03);
   });
 
   it("tunes texture scale and contrast, and boards the floor", () => {

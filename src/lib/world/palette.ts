@@ -73,7 +73,8 @@ export function worldLight(hours: number): WorldLight {
     ambient: {
       sky: mix(cycle.ambient.sky, PASTEL_SKY, 0.3 * day),
       ground: cycle.ambient.ground,
-      intensity: cycle.ambient.intensity * 1.6 + 0.15,
+      // Lower than before T4h: the environment map now adds fill light too.
+      intensity: cycle.ambient.intensity * 1.2 + 0.1,
     },
     exposure: cycle.exposure,
     stars: cycle.stars,
@@ -82,10 +83,11 @@ export function worldLight(hours: number): WorldLight {
 
 /**
  * Strength of the generated environment reflections (T4h): enough by day to
- * lift the metals and plastics, dim at night so the scene stays dark.
+ * lift the metals and plastics without washing out the pastel wood, dim at
+ * night so the scene stays dark.
  */
 export function environmentIntensity(hours: number): number {
-  return 0.15 + 0.35 * (1 - worldLight(hours).stars);
+  return 0.1 + 0.12 * (1 - worldLight(hours).stars);
 }
 
 export interface CloudShade {
