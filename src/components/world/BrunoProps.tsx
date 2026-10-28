@@ -65,6 +65,10 @@ const BAKED_FRAGMENT = /* glsl */ `
   uniform vec3 uLightPcColor;
   uniform float uLightPcStrength;
 
+uniform vec3 uTint;
+uniform float uRegrade;
+uniform float uShade;
+
   varying vec2 vUv;
 
   vec3 blend(vec3 base, vec3 color, float opacity) {
@@ -87,6 +91,12 @@ const BAKED_FRAGMENT = /* glsl */ `
     float lightDeskStrength = lightMapColor.g * uLightDeskStrength;
     bakedColor = blend(bakedColor, uLightDeskColor, lightDeskStrength);
 
+    // Our regrade: his bake carries his room's warm orange light. Keep its
+    // shading (luminance) but recolor toward our chair tint, and follow our
+    // scene brightness so the chair sits in the same light as the room.
+    float luma = dot(bakedColor, vec3(0.299, 0.587, 0.114));
+    bakedColor = mix(bakedColor, uTint * luma * 1.6, uRegrade) * uShade;
+
     gl_FragColor = vec4(bakedColor, 1.0);
   }
 `;
@@ -96,6 +106,10 @@ const raw = (hex: string) => new Color().setStyle(hex, LinearSRGBColorSpace);
 
 /** Baked.js strengths: the TV and desk lamp light the chair only at night. */
 const STRENGTH = { tv: 1.47, desk: 1.9, pc: 1.4 } as const;
+/** Charcoal leather, so his warm bake reads like our black gaming chair. */
+const CHAIR_TINT = "#55595f";
+/** Share of his bake's color replaced by our tint (his shading stays). */
+const REGRADE = 0.8;
 /** A little of his neutral bake softens the day/night contrast. */
 const NEUTRAL_MIX = 0.12;
 
@@ -115,6 +129,9 @@ function bakedMaterial([day, night, neutral, lightMap]: Texture[]) {
       uLightDeskStrength: { value: STRENGTH.desk },
       uLightPcColor: { value: raw(SETUP_COLORS.rgb) },
       uLightPcStrength: { value: STRENGTH.pc },
+      uTint: { value: raw(CHAIR_TINT) },
+      uRegrade: { value: REGRADE },
+      uShade: { value: 1 },
     },
     vertexShader: BAKED_VERTEX,
     fragmentShader: BAKED_FRAGMENT,
@@ -129,6 +146,8 @@ function setHours(material: ShaderMaterial, hours: number) {
   uniforms.uLightTvStrength.value = STRENGTH.tv * night * 0.5;
   uniforms.uLightDeskStrength.value = STRENGTH.desk * night * 0.5;
   uniforms.uLightPcStrength.value = STRENGTH.pc * (0.4 + 0.6 * night);
+  // His bake is brighter than our daylight interior: dim it by day.
+  uniforms.uShade.value = 0.8 + 0.2 * night;
 }
 
 /**
