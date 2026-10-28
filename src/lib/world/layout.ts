@@ -1,8 +1,9 @@
 // Seeded nature layout for the floating island. Hand-placed anchors give the
 // composition (tall trees behind, open lawn and path toward the camera); the
-// seed only jitters them and scatters grass tufts, so every visit looks the same.
+// seed only jitters them and scatters bushes, grass tufts and cloud puffs, so
+// every visit looks the same.
 
-import { ISLAND, insideIsland, onPad, PAD } from "./island.ts";
+import { ISLAND, insideIsland, islandRadiusAt, onPad, PAD } from "./island.ts";
 import { seededRandom } from "./random.ts";
 
 export type NatureKind =
@@ -15,8 +16,8 @@ export type NatureKind =
   | "stone"
   | "tuft"
   | "tuft-small"
-  | "cloud-big"
-  | "cloud-small";
+  | "bush"
+  | "cloud";
 
 export interface KindSpec {
   /** Rendered height in meters; the model is scaled uniformly to it. */
@@ -46,8 +47,8 @@ export const KIND_SPECS: Record<NatureKind, KindSpec> = {
   stone: spec(0.1, 0.22, 0.08),
   tuft: spec(0.45, 0.37, 0.2),
   "tuft-small": spec(0.35, 0.2, 0.12),
-  "cloud-big": spec(1.6, 2.2, 0, true),
-  "cloud-small": spec(1.1, 1.4, 0, true),
+  bush: spec(0.55, 0.42, 0.3),
+  cloud: spec(1.1, 1.6, 0, true),
 };
 
 export interface Placement {
@@ -89,12 +90,18 @@ const PATH_FROM = [1.1, PAD.center[1] + PAD.halfZ + 0.45] as const;
 const PATH_TO = [3.7, 4.7] as const;
 const PATH_STONES = 6;
 
-const CLOUDS: readonly [NatureKind, number, number, number][] = [
-  ["cloud-big", -9, 2, -5],
-  ["cloud-small", 6, 3, -9],
-  ["cloud-big", -8, -3, 4],
-  ["cloud-small", 9.5, -2.5, 1.5],
+// Cloud cluster centers; each grows 3-5 overlapping puffs of varied size.
+const CLOUDS: readonly [number, number, number][] = [
+  [-9, 2, -5],
+  [6, 3, -9],
+  [-8, -3, 4],
+  [9.5, -2.5, 1.5],
+  [0.5, 4.2, -11],
 ];
+
+/** Bush clusters spread along the rim, besides those hugging trees and rocks. */
+const RIM_CLUSTERS = 6;
+const BUSHES_PER_RIM_CLUSTER = 3;
 
 const TUFTS = 18;
 const SPACING = 0.8;
@@ -150,6 +157,33 @@ export function islandLayout(seed: number = ISLAND.seed): Placement[] {
     );
   }
 
+  // Bushes hug the trees and rocks, then gather in clusters along the rim.
+  const hosts = placed.filter((item) => /^(tree|pine|rock)/.test(item.kind));
+  for (const host of hosts) {
+    const angle = random() * Math.PI * 2;
+    const reach =
+      KIND_SPECS[host.kind].radius * host.scale + KIND_SPECS.bush.radius;
+    tryPlace(
+      "bush",
+      host.position[0] + Math.cos(angle) * reach,
+      host.position[2] + Math.sin(angle) * reach,
+      0.2,
+      4,
+    );
+  }
+  for (let i = 0; i < RIM_CLUSTERS; i++) {
+    const angle = ((i + random() * 0.5) / RIM_CLUSTERS) * Math.PI * 2;
+    const reach = islandRadiusAt(angle) - 0.8;
+    for (let j = 0; j < BUSHES_PER_RIM_CLUSTER; j++)
+      tryPlace(
+        "bush",
+        Math.cos(angle) * reach,
+        Math.sin(angle) * reach,
+        0.5,
+        4,
+      );
+  }
+
   let tufts = 0;
   for (let attempt = 0; attempt < 400 && tufts < TUFTS; attempt++) {
     const x = (random() - 0.5) * 2 * ISLAND.halfX;
@@ -159,13 +193,26 @@ export function islandLayout(seed: number = ISLAND.seed): Placement[] {
     if (placed.length > before) tufts++;
   }
 
-  for (const [kind, x, y, z] of CLOUDS)
-    placed.push({
-      kind,
-      position: [x, y, z],
-      rotationY: random() * Math.PI * 2,
-      scale: 0.9 + random() * 0.25,
-    });
+  for (const [x, y, z] of CLOUDS) {
+    const puffs = 3 + Math.floor(random() * 3);
+    const heading = random() * Math.PI * 2;
+    for (let i = 0; i < puffs; i++) {
+      // The first puff is the big middle one; the rest trail off both sides.
+      const side = i === 0 ? 0 : (i % 2 === 0 ? 1 : -1) * Math.ceil(i / 2);
+      const along = side * (0.9 + random() * 0.4);
+      const across = (random() - 0.5) * 0.9;
+      placed.push({
+        kind: "cloud",
+        position: [
+          x + Math.cos(heading) * along - Math.sin(heading) * across,
+          y + (random() - 0.5) * 0.35 - Math.abs(side) * 0.12,
+          z + Math.sin(heading) * along + Math.cos(heading) * across,
+        ],
+        rotationY: random() * Math.PI * 2,
+        scale: i === 0 ? 1.15 + random() * 0.25 : 0.55 + random() * 0.45,
+      });
+    }
+  }
 
   return placed;
 }

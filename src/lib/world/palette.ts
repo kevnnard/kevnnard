@@ -17,8 +17,10 @@ export const PALETTE = {
   /** Multiplies the packs' atlas colors, so it stays close to white. */
   foliage: "#f1fbe8",
   stone: "#f6f0f4",
-  cloud: "#ffffff",
 } as const;
+
+/** Warm soft white the clouds start from, before the hour tints them. */
+const CLOUD_WHITE: RGB = [1, 0.98, 0.95];
 
 /** Warm cream the daytime sky is lifted toward. */
 const PASTEL_SKY: RGB = [1, 0.95, 0.9];
@@ -75,5 +77,26 @@ export function worldLight(hours: number): WorldLight {
     },
     exposure: cycle.exposure,
     stars: cycle.stars,
+  };
+}
+
+export interface CloudShade {
+  color: RGB;
+  emissive: RGB;
+  emissiveIntensity: number;
+}
+
+/**
+ * Cloud color for an hour: warm white tinted by the sky fill and key light
+ * (pink at dusk, blue at night), with an emissive lift so the faces turned
+ * away from the sun stay soft instead of reading as gray rock.
+ */
+export function cloudShade(light: WorldLight): CloudShade {
+  const tint = mix(light.ambient.sky, light.key.color, 0.5);
+  const day = 1 - light.stars;
+  return {
+    color: mix(CLOUD_WHITE, tint, 0.3 + 0.4 * (1 - day)),
+    emissive: mix(CLOUD_WHITE, tint, 0.5),
+    emissiveIntensity: 0.06 + 0.24 * day,
   };
 }

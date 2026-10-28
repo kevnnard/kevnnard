@@ -9,6 +9,7 @@ import {
   BufferGeometry,
   Color,
   type DirectionalLight,
+  DoubleSide,
   ExtrudeGeometry,
   type Group,
   type HemisphereLight,
@@ -16,7 +17,7 @@ import {
   type Material,
   Matrix4,
   type Mesh,
-  type MeshStandardMaterial,
+  MeshStandardMaterial,
   Object3D,
   type Points,
   type PointsMaterial,
@@ -35,6 +36,11 @@ import {
   poseToPosition,
 } from "@/lib/world/camera.ts";
 import {
+  FLOWER_COLORS,
+  flowerLayout,
+  flowerMesh,
+} from "@/lib/world/flowers.ts";
+import {
   ISLAND,
   islandOutline,
   PAD,
@@ -47,12 +53,13 @@ import {
   type Placement,
 } from "@/lib/world/layout.ts";
 import { MODEL_FILES } from "@/lib/world/models.ts";
-import { PALETTE, worldLight } from "@/lib/world/palette.ts";
+import { cloudShade, PALETTE, worldLight } from "@/lib/world/palette.ts";
 import { seededRandom } from "@/lib/world/random.ts";
 
 const KINDS = Object.keys(MODEL_FILES) as NatureKind[];
 const URLS = KINDS.map((kind) => MODEL_FILES[kind]);
 const LAYOUT = islandLayout(ISLAND.seed);
+const FLOWERS = flowerLayout(LAYOUT, ISLAND.seed);
 const SKY_RADIUS = 90;
 const STAR_COUNT = 260;
 const SHADOW_EXTENT = 9;
@@ -92,7 +99,8 @@ export default function WorldScene({
       <WorldLighting hours={hours} />
       <GuidedCamera reducedMotion={reducedMotion} home={home} />
       <Island />
-      <Nature reducedMotion={reducedMotion} onReady={onReady} />
+      <Flowers />
+      <Nature hours={hours} reducedMotion={reducedMotion} onReady={onReady} />
     </Canvas>
   );
 }
@@ -355,8 +363,9 @@ const TINTS: Record<NatureKind, string> = {
   stone: PALETTE.stone,
   tuft: PALETTE.foliage,
   "tuft-small": PALETTE.foliage,
-  "cloud-big": PALETTE.cloud,
-  "cloud-small": PALETTE.cloud,
+  bush: PALETTE.foliage,
+  // Clouds use cloudMaterial instead; the hour sets their color.
+  cloud: "#ffffff",
 };
 const PASTEL_LIFT = 0.22;
 
@@ -374,6 +383,14 @@ function pastelMaterial(source: Material, tint: string): Material {
   };
   material.customProgramCacheKey = () => `world-pastel-${PASTEL_LIFT}`;
   return material;
+}
+
+/**
+ * Soft cloud material: no atlas, fully rough, smooth normals and an emissive
+ * lift so shaded puffs stay soft white. Nature tints it from the hour.
+ */
+function cloudMaterial(): MeshStandardMaterial {
+  return new MeshStandardMaterial({ roughness: 1, metalness: 0 });
 }
 
 const scratch = {
@@ -405,7 +422,9 @@ function buildInstances(
   root.traverse((object) => {
     const mesh = object as Mesh;
     if (!mesh.isMesh) return;
-    const material = pastelMaterial(mesh.material as Material, TINTS[kind]);
+    const material = floating
+      ? cloudMaterial()
+      : pastelMaterial(mesh.material as Material, TINTS[kind]);
     const instanced = new InstancedMesh(
       mesh.geometry,
       material,
@@ -434,15 +453,18 @@ function buildInstances(
 }
 
 function Nature({
+  hours,
   reducedMotion,
   onReady,
 }: {
+  hours: number;
   reducedMotion: boolean;
   onReady: () => void;
 }) {
   const gltfs = useLoader(GLTFLoader, URLS, extendLoader);
   const clouds = useRef<Group>(null);
   const { drift } = guideMotion(reducedMotion);
+  const invalidate = useThree((state) => state.invalidate);
 
   const groups = useMemo(
     () =>
@@ -469,6 +491,22 @@ function Nature({
     };
   }, [groups, onReady]);
 
+  // Warm white by day, pink at dusk, dim blue at night.
+  useLayoutEffect(() => {
+    const shade = cloudShade(worldLight(hours));
+    for (const { kind, group } of groups) {
+      if (!KIND_SPECS[kind].floating) continue;
+      for (const child of group.children) {
+        const material = (child as InstancedMesh)
+          .material as MeshStandardMaterial;
+        setColor(material.color, shade.color);
+        setColor(material.emissive, shade.emissive);
+        material.emissiveIntensity = shade.emissiveIntensity;
+      }
+    }
+    invalidate();
+  }, [hours, groups, invalidate]);
+
   // Clouds drift slowly around the island; reduced motion keeps them still.
   useFrame((state, delta) => {
     if (!drift || !clouds.current) return;
@@ -492,4 +530,79 @@ function Nature({
       </group>
     </>
   );
+}
+
+/** Original procedural flowers: two instanced draws for every flower. */
+function Flowers() {
+  const group = useMemo(() => {
+    const { body, petals } = flowerMesh();
+    const color = new Color();
+    const bodyColors = new Float32Array(body.colors.length);
+    for (let i = 0; i < body.colors.length; i += 3) {
+      const [r, g, b] = body.colors.slice(i, i + 3);
+      setColor(color, [r, g, b]);
+      bodyColors.set([color.r, color.g, color.b], i);
+    }
+    const bodyGeometry = new BufferGeometry();
+    bodyGeometry.setAttribute(
+      "position",
+      new BufferAttribute(new Float32Array(body.positions), 3),
+    );
+    bodyGeometry.setAttribute("color", new BufferAttribute(bodyColors, 3));
+    bodyGeometry.computeVertexNormals();
+    const petalGeometry = new BufferGeometry();
+    petalGeometry.setAttribute(
+      "position",
+      new BufferAttribute(new Float32Array(petals.positions), 3),
+    );
+    petalGeometry.computeVertexNormals();
+
+    const stems = new InstancedMesh(
+      bodyGeometry,
+      new MeshStandardMaterial({
+        vertexColors: true,
+        roughness: 1,
+        side: DoubleSide,
+      }),
+      FLOWERS.length,
+    );
+    const blooms = new InstancedMesh(
+      petalGeometry,
+      new MeshStandardMaterial({ roughness: 1, side: DoubleSide }),
+      FLOWERS.length,
+    );
+    FLOWERS.forEach((flower, index) => {
+      scratch.rotation.setFromAxisAngle(scratch.axis, flower.rotationY);
+      scratch.instance.compose(
+        new Vector3(...flower.position),
+        scratch.rotation,
+        new Vector3(flower.scale, flower.scale, flower.scale),
+      );
+      stems.setMatrixAt(index, scratch.instance);
+      blooms.setMatrixAt(index, scratch.instance);
+      blooms.setColorAt(index, color.set(FLOWER_COLORS[flower.color]));
+    });
+    const flowers = new Object3D() as Group;
+    for (const mesh of [stems, blooms]) {
+      mesh.instanceMatrix.needsUpdate = true;
+      mesh.computeBoundingSphere();
+      mesh.receiveShadow = true;
+      flowers.add(mesh);
+    }
+    return flowers;
+  }, []);
+
+  useEffect(
+    () => () => {
+      for (const child of group.children) {
+        const mesh = child as InstancedMesh;
+        (mesh.material as Material).dispose();
+        mesh.geometry.dispose();
+        mesh.dispose();
+      }
+    },
+    [group],
+  );
+
+  return <primitive object={group} />;
 }

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { FLOWER_TRIANGLES, flowerLayout } from "../../src/lib/world/flowers.ts";
 import { ISLAND, undersideMesh } from "../../src/lib/world/island.ts";
 import { islandLayout, KIND_SPECS } from "../../src/lib/world/layout.ts";
 import {
@@ -30,7 +31,10 @@ describe("world budgets", () => {
   it("stays inside the triangle, draw-call and byte budgets", (t) => {
     const layout = islandLayout(ISLAND.seed);
     const used = new Set(layout.map((item) => item.kind));
-    let triangles = undersideMesh(ISLAND.seed).indices.length / 3;
+    const flowers = flowerLayout(layout, ISLAND.seed).length;
+    let triangles =
+      undersideMesh(ISLAND.seed).indices.length / 3 +
+      flowers * FLOWER_TRIANGLES;
     let draws = SCENE_DRAWS;
     let bytes = 0;
     for (const [kind, url] of Object.entries(MODEL_FILES)) {
@@ -43,7 +47,7 @@ describe("world budgets", () => {
       draws += info.primitives;
     }
     t.diagnostic(
-      `triangles ${triangles}/${BUDGET.triangles}, draws ${draws}/${BUDGET.draws}, model bytes ${bytes}/${BUDGET.bytes}, instances ${layout.length}`,
+      `triangles ${triangles}/${BUDGET.triangles}, draws ${draws}/${BUDGET.draws}, model bytes ${bytes}/${BUDGET.bytes}, instances ${layout.length}, flowers ${flowers}`,
     );
     assert.ok(triangles <= BUDGET.triangles, `triangles ${triangles}`);
     assert.ok(draws <= BUDGET.draws, `draws ${draws}`);

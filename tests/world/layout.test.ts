@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { flowerLayout } from "../../src/lib/world/flowers.ts";
 import {
   ISLAND,
   insideIsland,
@@ -118,8 +119,19 @@ describe("islandLayout", () => {
     assert.ok(total("tuft") >= 12);
     assert.ok(total("rock") >= 4);
     assert.ok(total("stone") >= 4);
-    assert.ok(total("cloud") >= 2);
+    assert.ok(total("bush") >= 10);
+    assert.ok(total("cloud") >= 12, "clouds come in clusters of 3-5 puffs");
     assert.ok(layout.length <= 120, "instance budget");
+  });
+
+  it("plants seeded flower patches on the grass, off the pad", () => {
+    const flowers = flowerLayout(layout, ISLAND.seed);
+    assert.deepEqual(flowers, flowerLayout(layout, ISLAND.seed));
+    assert.ok(flowers.length >= 20, `${flowers.length} flowers`);
+    for (const { position } of flowers) {
+      assert.ok(!onPad(position[0], position[2], 0.2), `${position}`);
+      assert.ok(insideIsland(position[0], position[2], 0.25), `${position}`);
+    }
   });
 
   it("uses finite transforms with a positive scale", () => {

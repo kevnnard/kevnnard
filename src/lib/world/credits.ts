@@ -52,9 +52,22 @@ export interface CreditEntry {
   sourceFiles: SourceFile[];
 }
 
+/** Work made for this project (no download): same license as the repository. */
+export const ORIGINAL_LICENSE = "Original work (repository license)";
+
+export interface OriginalCredit {
+  id: string;
+  asset: string;
+  author: string;
+  license: string;
+  /** Repository-relative file that builds it. */
+  source: string;
+}
+
 export interface Credits {
   packs: CreditPack[];
   assets: CreditEntry[];
+  original?: OriginalCredit[];
 }
 
 function officialHttps(url: string): boolean {
@@ -90,6 +103,13 @@ export function creditProblems(credits: Credits): string[] {
       !entry.sourceFiles.every((file) => officialHttps(file.url))
     )
       problems.push(`${name}: source is not an official https URL`);
+  }
+  for (const entry of credits.original ?? []) {
+    if (!entry.author?.trim()) problems.push(`${entry.id}: missing author`);
+    else if (entry.license !== ORIGINAL_LICENSE)
+      problems.push(`${entry.id}: original work must use ${ORIGINAL_LICENSE}`);
+    else if (!entry.source.startsWith("src/"))
+      problems.push(`${entry.id}: source must be a repository file`);
   }
   return problems;
 }

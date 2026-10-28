@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { dayCycle, type RGB } from "../../src/lib/room/day-cycle.ts";
-import { PALETTE, worldLight } from "../../src/lib/world/palette.ts";
+import {
+  cloudShade,
+  PALETTE,
+  worldLight,
+} from "../../src/lib/world/palette.ts";
 
 const luminance = ([r, g, b]: RGB) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
 const inRange = (color: RGB) => color.every((c) => c >= 0 && c <= 1);
@@ -51,5 +55,14 @@ describe("worldLight", () => {
   it("defines an owned pastel palette as hex colors", () => {
     for (const value of Object.values(PALETTE))
       assert.match(value, /^#[0-9a-f]{6}$/);
+  });
+
+  it("keeps clouds warm white by day and tinted, never brighter, at night", () => {
+    const noon = cloudShade(worldLight(13));
+    assert.ok(Math.min(...noon.color) >= 0.85, `${noon.color}`);
+    assert.ok(noon.emissiveIntensity > 0.2);
+    const night = cloudShade(worldLight(23));
+    assert.ok(luminance(night.color) < luminance(noon.color));
+    assert.ok(night.emissiveIntensity < noon.emissiveIntensity);
   });
 });

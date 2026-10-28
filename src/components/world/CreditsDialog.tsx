@@ -115,6 +115,17 @@ export function CreditsDialog() {
                   .map((entry) => entry.asset)}
               />
             ))}
+            {credits.original?.map((entry) => (
+              <li
+                key={entry.id}
+                className="border-t border-border py-3 first:border-t-0"
+              >
+                <h3 className="text-sm font-semibold">{entry.asset}</h3>
+                <p className="text-sm text-muted-foreground">
+                  By {entry.author} · {entry.license}
+                </p>
+              </li>
+            ))}
           </ul>
         )}
         <form method="dialog" className="mt-4 flex justify-end">

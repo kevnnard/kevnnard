@@ -7,8 +7,11 @@ export const MODEL_FILES = Object.fromEntries(
   Object.keys(KIND_SPECS).map((kind) => [kind, `/world/models/${kind}.glb`]),
 ) as Record<NatureKind, string>;
 
-/** Draws outside the instanced models: sky, stars, grass, rock and pad. */
-export const SCENE_DRAWS = 5;
+/**
+ * Draws outside the instanced models: sky, stars, grass, rock and pad, plus
+ * the procedural flowers (stems with centers, and petals).
+ */
+export const SCENE_DRAWS = 7;
 
 /** Triangles per frame (all instances), main-pass draw calls, model bytes. */
 export const BUDGET = {

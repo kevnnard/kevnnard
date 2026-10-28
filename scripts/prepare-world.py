@@ -39,6 +39,15 @@ PACKS = {
         "licenseFile": "LICENSE.txt",
         "quote": "License: (Creative Commons Zero, CC0)",
     },
+    "kaykit-city-builder-bits": {
+        "pack": "KayKit City Builder Bits 1.0",
+        "author": "Kay Lousberg",
+        "authorUrl": "https://www.kaylousberg.com",
+        "repo": "KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0",
+        "commit": "63976910ca04d16f0fc531b9c614244be8128713",
+        "licenseFile": "LICENSE.txt",
+        "quote": "License: (Creative Commons Zero, CC0)",
+    },
     "kenney-mini-arena": {
         "pack": "Kenney Mini Arena 1.0 (Starter Kit Basic Scene)",
         # The pack's License.txt lists Tony Schär as additional credit.
@@ -63,6 +72,7 @@ PACKS = {
 
 KAYKIT = "addons/kaykit_medieval_hexagon_pack/Assets/gltf/decoration/nature/"
 KENNEY_ARENA = "sample/Mini Arena/Models/GLB format/"
+CITY_BITS = "addons/kaykit_city_builder_bits/Assets/gltf/"
 
 
 def kaykit(name):
@@ -81,8 +91,17 @@ ASSETS = [
     ("stone", "kaykit-medieval-hexagon", kaykit("rock_single_A")),
     ("tuft", "kenney-starter-kit-3d-platformer", ["models/grass.glb", "models/Textures/colormap.png"]),
     ("tuft-small", "kenney-starter-kit-3d-platformer", ["models/grass-small.glb", "models/Textures/colormap.png"]),
-    ("cloud-big", "kaykit-medieval-hexagon", kaykit("cloud_big")),
-    ("cloud-small", "kaykit-medieval-hexagon", kaykit("cloud_small")),
+    ("bush", "kaykit-city-builder-bits",
+     [CITY_BITS + "bush.gltf", CITY_BITS + "bush.bin", CITY_BITS + "citybits_texture.png"]),
+    # Self-contained GLB: no external texture.
+    ("cloud", "kenney-starter-kit-3d-platformer", ["models/cloud.glb"]),
+]
+
+# Original work built in code for this project: credited too, under the
+# repository's own license.
+ORIGINAL = [
+    {"id": "flowers", "asset": "Low-poly flowers (procedural)", "author": "Kevnnard",
+     "license": "Original work (repository license)", "source": "src/lib/world/flowers.ts"},
 ]
 
 
@@ -183,5 +202,6 @@ if __name__ == "__main__":
         "optimizedBytes": sum(asset["bytes"] for asset in assets),
         "packs": packs,
         "assets": assets,
+        "original": ORIGINAL,
     }, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print("World models:", sum(a["bytes"] for a in assets), "bytes", flush=True)
