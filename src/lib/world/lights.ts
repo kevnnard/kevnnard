@@ -3,10 +3,11 @@
 // through 05:59; each has its own switch, color and intensity, edited in the
 // scene settings panel. Since T12 (S24) the lamps are gamer lamps on the wall
 // shelf aimed down at the desk, and the setup channel also drives the white
-// monitor light bar and the keyboard's side lights. Pure numbers;
-// NightLights.tsx turns them into five non-shadow spots (two wall-aimed
-// backlights, S18; two lamps and the light bar aimed down), the lamp models
-// and the emissive strips, slit and bulbs.
+// monitor light bar and the keyboard's side lights. Since T13 (S26-S27) the
+// TV and setup channels each add a bounce fill. Pure numbers; NightLights.tsx
+// turns them into seven non-shadow spots (two wall-aimed backlights, S18; two
+// bounce fills out of those walls, T13; two lamps and the light bar aimed
+// down), the lamp models and the emissive strips, slit and bulbs.
 
 import type { Vec3 } from "./house.ts";
 import { TV_PANEL } from "./living.ts";
@@ -140,11 +141,11 @@ export function glowPower(power: boolean, hours: number): number {
 interface FixtureBase {
   /** Light position. */
   position: Vec3;
-  /** Candela at 100 %: restrained, so the room never washes out. */
+  /** At 100 %: candela for decay 2; see `WASH` for the decay 0 backlights. */
   intensity: number;
   /** Metres to zero, so no light reaches the island or the next room. */
   distance: number;
-  decay: 2;
+  decay: 0 | 2;
   castShadow: false;
   /** Where the fixture stands or hangs. */
   base: Vec3;
@@ -215,10 +216,18 @@ const lift = ([x, y, z]: Vec3, dy: number): Vec3 => [x, y + dy, z];
 
 const tvTop = TV_PANEL.center[1] + TV_PANEL.height / 2;
 const monitorTop = MAIN_MONITOR.center[1] + MAIN_MONITOR.size[1] / 2;
-/** Backlight cone: 72° half-angle, soft edge, so the wash runs past the panel. */
-const WASH = { angle: 1.25, penumbra: 0.7 } as const;
-/** Lamp cone: a soft pool on the desk under each lamp. */
-const POOL = { angle: 0.6, penumbra: 0.6 } as const;
+/**
+ * Backlight wash (T13): 86° half-angle with a 60° full-strength core, so the
+ * halo is not cut to a small disc, and decay 0 inside a 1.8 m window. The
+ * strip runs around a panel about 1 m wide only 0.15-0.2 m from the wall; in
+ * that near field an extended source does not fall off like a point's 1/d²,
+ * so the halo follows Lambert's cosine alone and reaches about 0.3 m past the
+ * panel's sides. An approximation, not a physical line light. With decay 0,
+ * `intensity` is the irradiance at the hidden centre, below T12's.
+ */
+const WASH = { angle: 1.5, penumbra: 0.3, decay: 0, distance: 1.8 } as const;
+/** Lamp cone (S27): a wider, brighter but soft pool on the desk under each lamp. */
+const POOL = { angle: 0.8, penumbra: 0.5 } as const;
 
 const tvSpot: Vec3 = [
   TV_PANEL.center[0],
@@ -239,8 +248,8 @@ const lampSpot = (id: "lampLeft" | "lampRight"): SpotFixture => {
     position,
     target: [DESK_TOP.x0 + 0.47, DESK_TOP.y, position[2] - 0.04],
     ...POOL,
-    intensity: 0.3,
-    distance: 1.5,
+    intensity: 0.75,
+    distance: 1.6,
     decay: 2,
     castShadow: false,
     base,
@@ -254,9 +263,7 @@ export const LIGHT_FIXTURES: Record<LightId, LightFixture> = {
     position: tvSpot,
     target: [tvSpot[0], tvSpot[1], MAIN_ROOM.z0],
     ...WASH,
-    intensity: 0.6,
-    distance: 1.6,
-    decay: 2,
+    intensity: 5,
     castShadow: false,
     base: [TV_PANEL.center[0], tvTop, MAIN_ROOM.z0],
   },
@@ -266,9 +273,7 @@ export const LIGHT_FIXTURES: Record<LightId, LightFixture> = {
     position: setupSpot,
     target: [MAIN_ROOM.x0, setupSpot[1], setupSpot[2]],
     ...WASH,
-    intensity: 0.25,
-    distance: 1.4,
-    decay: 2,
+    intensity: 3,
     castShadow: false,
     base: [MAIN_ROOM.x0, monitorTop, MAIN_MONITOR.center[2]],
   },
@@ -297,20 +302,105 @@ export const LIGHTBAR_FIXTURE: SpotFixture & {
     KEYBOARD.center[1] - KEYBOARD.size[1] / 2,
     (KEYBOARD.center[2] + MOUSE.center[2]) / 2 + 0.06,
   ],
-  angle: 0.55,
-  penumbra: 0.6,
-  intensity: 0.35,
+  angle: 0.75,
+  penumbra: 0.5,
+  intensity: 0.4,
   distance: 1.2,
   decay: 2,
   castShadow: false,
   base: LIGHTBAR.center,
 };
 
-/** Every physical light inside the house: the four channels and the light bar. */
-export const INTERIOR_FIXTURES: readonly LightFixture[] = [
-  ...LIGHT_IDS.map((id) => LIGHT_FIXTURES[id]),
-  LIGHTBAR_FIXTURE,
+/** Diffuse reflectance assumed for the painted wood walls (bounce budget). */
+export const WALL_ALBEDO = 0.35;
+
+/**
+ * Bounce fill (T13): the coloured halo on the wall re-lights the room in
+ * front of it. A real-time stand-in for baked indirect light, not GI: one
+ * non-shadow spot per RGB channel, set 1 cm inside its wall at the panel's
+ * centre (so neither face of that wall is lit) and aimed into the room 1 m
+ * out and 0.38 m down (about 20°), onto the desk, the bench and the floor.
+ * Its intensity stays under the wall's reflected share of the wash,
+ * WALL_ALBEDO x flux / pi (a Lambertian patch's on-axis intensity),
+ * checked numerically in tests/world/lights-spread.test.ts.
+ */
+const BOUNCE = { depth: 0.01, reach: 1, drop: 0.38, angle: 1.2, penumbra: 0.5 };
+const bounce = (
+  position: Vec3,
+  target: Vec3,
+  intensity: number,
+): SpotFixture => ({
+  kind: "spot",
+  position,
+  target,
+  angle: BOUNCE.angle,
+  penumbra: BOUNCE.penumbra,
+  intensity,
+  distance: 2.4,
+  decay: 2,
+  castShadow: false,
+  base: position,
+});
+
+export const BOUNCE_FIXTURES: Record<"tv" | "setup", SpotFixture> = {
+  tv: bounce(
+    [tvSpot[0], tvSpot[1], MAIN_ROOM.z0 - BOUNCE.depth],
+    [tvSpot[0], tvSpot[1] - BOUNCE.drop, MAIN_ROOM.z0 + BOUNCE.reach],
+    0.2,
+  ),
+  setup: bounce(
+    [MAIN_ROOM.x0 - BOUNCE.depth, setupSpot[1], setupSpot[2]],
+    [MAIN_ROOM.x0 + BOUNCE.reach, setupSpot[1] - BOUNCE.drop, setupSpot[2]],
+    0.12,
+  ),
+};
+
+/** One scene light, the channel whose setting drives it, and a fixed colour. */
+export interface ChannelFixture {
+  id: string;
+  channel: LightId;
+  fixture: LightFixture;
+  /** Fixed colour (the light bar's white); otherwise the channel's colour. */
+  color?: string;
+}
+
+/** Every physical light inside the house, in mount order. */
+export const CHANNEL_FIXTURES: readonly ChannelFixture[] = [
+  { id: "tv", channel: "tv", fixture: LIGHT_FIXTURES.tv },
+  { id: "tv-bounce", channel: "tv", fixture: BOUNCE_FIXTURES.tv },
+  { id: "setup", channel: "setup", fixture: LIGHT_FIXTURES.setup },
+  { id: "setup-bounce", channel: "setup", fixture: BOUNCE_FIXTURES.setup },
+  {
+    id: "lightbar",
+    channel: "setup",
+    fixture: LIGHTBAR_FIXTURE,
+    color: LIGHTBAR_FIXTURE.color,
+  },
+  { id: "lampLeft", channel: "lampLeft", fixture: LIGHT_FIXTURES.lampLeft },
+  { id: "lampRight", channel: "lampRight", fixture: LIGHT_FIXTURES.lampRight },
 ];
+
+export const INTERIOR_FIXTURES: readonly LightFixture[] = CHANNEL_FIXTURES.map(
+  (c) => c.fixture,
+);
+
+/**
+ * Each interior light's colour and intensity: its fixture's full intensity
+ * times its channel's `lightLevel`, so one slider scales every part of a
+ * channel together and the gate, switch and master zero them all.
+ */
+export function fixtureOutputs(
+  settings: LightSettings,
+  hours: number,
+  power = true,
+): { id: string; channel: LightId; color: string; intensity: number }[] {
+  return CHANNEL_FIXTURES.map(({ id, channel, fixture, color }) => ({
+    id,
+    channel,
+    color: color ?? settings[channel].color,
+    intensity: fixture.intensity * lightLevel(settings[channel], hours, power),
+  }));
+}
 
 /** Keyboard side lights (T12): the setup colour, kept subtle. */
 const SIDE_LIGHT = { min: 0.2, span: 0.3 } as const;

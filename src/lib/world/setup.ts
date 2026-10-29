@@ -111,8 +111,11 @@ export const DESK_TOP = {
 
 // Seated at the desk you face the left wall (-x): your right is -z.
 
-/** Giant black mouse pad across the desk front (S24). */
-const MAT_D = { d: 0.5, u: -1.35, depth: 0.42, width: 1.35, height: 0.006 };
+/** The desk's middle (T14, S27): the ultrawide, keyboard and mat line up on it. */
+const MID = (DESK.u0 + DESK.u1) / 2;
+
+/** Giant black mouse pad across the desk front (S24), centred (T14). */
+const MAT_D = { d: 0.5, u: MID, depth: 0.42, width: 1.45, height: 0.006 };
 export const MAT = {
   center: w(MAT_D.d, DESK.height + MAT_D.height / 2, MAT_D.u),
   size: [MAT_D.depth, MAT_D.height, MAT_D.width] as Vec3,
@@ -170,7 +173,7 @@ const KEY_COLORS: Record<KeyRole, string> = {
 
 /** NuPhy-style wireless keyboard: aluminium case, low caps, no cable. */
 export const KEYBOARD = {
-  center: w(0.53, MAT_TOP + 0.0105, -1.35),
+  center: w(0.53, MAT_TOP + 0.0105, MID),
   /** Depth, height (case and caps), width. */
   size: [0.133, 0.021, 0.316] as Vec3,
   wireless: true,
@@ -179,7 +182,7 @@ const CASE_H = 0.014;
 
 /** The owner's curved mouse, right of the keyboard. */
 export const MOUSE = {
-  center: w(0.54, MAT_TOP + 0.0175, -1.88),
+  center: w(0.54, MAT_TOP + 0.0175, MID - 0.53),
   size: [0.115, 0.035, 0.062] as Vec3,
 } as const;
 
@@ -202,7 +205,7 @@ export const COASTER = {
 } as const;
 
 /** The curved ultrawide's mid-panel; the light bar rides its top. */
-const MAIN = { d: 0.27, y: 1.14, u: -1.55, height: 0.42, width: 1.15 };
+const MAIN = { d: 0.27, y: 1.14, u: MID, height: 0.42, width: 1.15 };
 const PANEL_DEPTH = 0.045;
 const HUMP_DEPTH = 0.03;
 const CURVE_RADIUS = 1.8;
@@ -233,10 +236,14 @@ export const MAIN_MONITOR = {
 const SCREEN_INSET = PANEL_DEPTH / 2 + 0.002;
 const OVERLAY_INSET = SCREEN_INSET + 0.002;
 
-/** The portrait side monitor, turned in toward the chair. */
-const SIDE_YAW = 0.3;
+/**
+ * The portrait side monitor right of the ultrawide (T14, S27), 5 cm past
+ * its end, turned in toward the chair.
+ */
+const SIDE_YAW = -0.3;
+const SIDE_U = -2.09;
 export const SIDE_MONITOR = {
-  center: w(0.27, 1.12, -0.67),
+  center: w(0.27, 1.12, SIDE_U),
   /** Depth, height, width: taller than wide. */
   size: [0.035, 0.54, 0.3] as Vec3,
   yaw: SIDE_YAW,
@@ -255,14 +262,17 @@ const onSide = (out: number, along: number, up: number): Vec3 => {
   ];
 };
 
-/** Clamp arms on the desk's back edge, one per monitor. */
+/**
+ * Clamp arms on the desk's back edge, one per monitor, each beside its VESA
+ * plate; the portrait's sits toward the desk middle, clear of the leg.
+ */
 export const MONITOR_ARMS = {
   main: {
-    clamp: w(0.065, DESK.height, -1.7),
+    clamp: w(0.065, DESK.height, MAIN.u + 0.15),
     vesa: mainCurve(0, -(PANEL_DEPTH / 2 + HUMP_DEPTH + 0.004), Y0 + MAIN.y),
   },
   side: {
-    clamp: w(0.065, DESK.height, -0.58),
+    clamp: w(0.065, DESK.height, SIDE_U + 0.07),
     vesa: onSide(-(SIDE_MONITOR.size[0] / 2 + 0.024), 0, 0),
   },
 } as const;

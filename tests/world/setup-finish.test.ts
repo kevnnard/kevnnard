@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import { describe, it } from "node:test";
+import { fileURLToPath } from "node:url";
 import { Color, SRGBColorSpace } from "three";
 import {
   type Credits,
@@ -438,7 +438,8 @@ describe("T12 shelf over the setup (S24)", () => {
       const d = f.target.map((v, i) => v - f.position[i]);
       assert.ok(d[1] / Math.hypot(...d) < -0.9, "down");
       assert.ok(f.position[0] > SHELF.x1, "head past the shelf front");
-      assert.ok(f.intensity <= 0.5);
+      // S27 raised them; the desk irradiance cap is in lights-spread.test.ts.
+      assert.ok(f.intensity < 1);
       assert.ok(Math.abs(f.base[1] - SHELF.top) < EPS, `${id} on the shelf`);
       assert.ok(Math.abs(f.position[1] - f.base[1] - LAMP.bulb.y) < EPS);
       assert.ok(f.position[1] > SHELF.top + 0.05, "head above the shelf");
@@ -556,13 +557,14 @@ describe("T12 only the requested items on the desk (S25)", () => {
   });
 });
 
-describe("T12 lights: four channels, five interior emitters", () => {
+describe("T12 lights: four channels, seven interior emitters (T13)", () => {
   it("adds the light bar spot to the setup channel only", () => {
     assert.equal(LIGHT_IDS.length, 4);
-    assert.equal(INTERIOR_FIXTURES.length, 5);
+    // T13 added one bounce fill each to the TV and setup channels.
+    assert.equal(INTERIOR_FIXTURES.length, 7);
     for (const fixture of INTERIOR_FIXTURES) {
       assert.equal(fixture.castShadow, false);
-      assert.ok(fixture.distance > 0 && fixture.distance <= 2);
+      assert.ok(fixture.distance > 0 && fixture.distance <= 2.4);
     }
     assert.equal(LIGHTBAR_FIXTURE.channel, "setup");
     assert.match(LIGHT_INFO.setup.where, /light bar/i);

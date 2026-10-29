@@ -317,20 +317,50 @@ keyboard's side lights.
   "Off · power" and the header "lights off". The sun, moon, sky and fill
   never change. By day `glowPower` stays 1, so the daytime scene is
   unaffected whatever the master; the per-light sliders are never locked.
-- Scene: four channels, five interior lights (`INTERIOR_FIXTURES`), never
-  shadow-casting, `decay` 2 and a finite `distance` (1.2-1.6 m), intensities
-  under 1 cd at 100 %. Since S18 the TV
-  and setup backlights are spots placed behind the middle of their panel and
-  aimed square at the wall (72° half-angle, penumbra 0.7): the hotspot hides
-  behind the panel, the wall washes around it, and nothing in front of the
-  panel is lit through it. This approximates the LED strip; a RectAreaLight
-  would need `RectAreaLightUniformsLib` (an extra examples import with large
-  LTC tables). Since T12 the two lamps are spots (0.6 rad, penumbra 0.6,
-  0.3 cd, 1.5 m) from the bulb in each shelf lamp's head straight down onto
-  the desk, and the light bar adds a fifth spot on the setup channel: fixed
-  white, 0.35 cd at 100 %, 1.2 m, 0.55 rad, from under its slit onto the mat
-  between the keyboard and the mouse, its cone's upper edge still pointing
-  down (no ceiling wash or eye glare). They stay mounted and drop to
+- Scene: four channels, seven interior lights (`CHANNEL_FIXTURES`, T13),
+  never shadow-casting, each with a finite `distance` (1.2-2.4 m); 13 scene
+  lights in all with the four lanterns, sun/moon and hemisphere fill.
+  `fixtureOutputs(settings, hours, power)` gives each light its fixture's
+  full intensity times its channel's `lightLevel`, so one slider scales every
+  part of a channel together (0 % off, 100 % full) and the night gate,
+  switch and master zero them all.
+  - Backlight washes (S18, re-shaped in T13 for S26): spots behind the
+    middle of the TV panel and the ultrawide, aimed square at the wall, so
+    nothing in front of the panel is lit through it. T12's 72° cone with
+    penumbra 0.7 had a full-strength core of only 21°, and with the source
+    0.15-0.21 m from the wall `decay` 2 kept the colour to a pool hidden
+    behind the panel. T13: 86° half-angle (1.5 rad), penumbra 0.3 (60°
+    core), `decay` 0 inside 1.8 m, TV 5 and setup 3 at 100 % (with decay 0
+    that is the irradiance at the hidden centre, T12 had 25 and 5.8). Decay
+    0 stands in for the near field of an LED strip around a ~1 m panel; it
+    is an approximation, not a physical line light. A RectAreaLight would
+    need `RectAreaLightUniformsLib` (an extra examples import with large LTC
+    tables).
+  - Bounce fills (T13): one per RGB channel, `BOUNCE_FIXTURES`, a real-time
+    stand-in for the indirect colour Bruno Simon bakes into his textures,
+    not GI. A spot 1 cm inside the wall at the panel's centre (neither face
+    of that wall is lit), aimed into the room 1 m out and 0.38 m down, 1.2
+    rad, penumbra 0.5, `decay` 2, 2.4 m; TV 0.2 cd, setup 0.12 cd, each under
+    the wall's reflected share of its wash (`WALL_ALBEDO` 0.35 x flux / pi).
+    It tints the desk, keyboard, chair, bench and floor in front of the wall.
+  - Deterministic irradiance at 100 % (`tests/world/lights-spread.test.ts`,
+    three's spot and distance terms times n.l on the real planes; not GPU
+    output), T12 then T13: wall colour (>= 0.25) visible outside the panel
+    TV 0.004 -> 1.0 m², setup 0.085 -> 1.58 m², visible peak 0.33/1.22 ->
+    2.24/2.06 (cap 2.6); desk tint in the setup colour 0.004 -> 0.67 m²;
+    living floor 0 -> 0.74 m²; outside the house < 0.02.
+  - Desk downlights (S27): the shelf lamps are spots (0.8 rad, penumbra
+    0.5, 0.75 cd, 1.6 m) from the bulb in each lamp's head straight down
+    onto the desk, and the light bar is a spot on the setup channel, fixed
+    white whatever the setup colour, 0.4 cd at 100 %, 1.2 m, 0.75 rad,
+    penumbra 0.5, from under its slit onto the mat between the keyboard and
+    the mouse, its cone's upper edge still pointing down (no ceiling wash or
+    eye glare). Desk area at >= 0.25: 0.71 -> 1.38 m² of 1.44 m²; lamp target
+    0.35 -> 0.92, bar target 0.71 -> 0.81, overlap peak 1.75 (cap 2).
+  - Every fixture derives from the live setup and living constants
+    (`MAIN_MONITOR`, `TV_PANEL`, `LIGHTBAR`, `KEYBOARD`, `MOUSE`, `SHELF`,
+    `DESK_TOP`), so the pending T14 monitor move carries the lights.
+  They stay mounted and drop to
   intensity 0 by day or when disabled, so the shader light count never
   changes. Emitters: an LED strip behind the TV panel and one following the
   back of the curved ultrawide (dark when off), the light bar's slit, and two
@@ -358,12 +388,12 @@ original (`src/lib/world/setup.ts`, lamps in `lights.ts`), credited as
 | Item | Where (d from the wall, height over the floor boards, z) | Notes |
 | --- | --- | --- |
 | Desk top | 0.72 x 2.0 m, top at 0.76 | five copper wood boards, `wood` material: grain normal and grain colour map (`woodGrainPixels`) |
-| Giant mat | d 0.50, z -1.35, 0.42 x 1.35 m | black cloth with a stitched edge |
-| Keyboard | d 0.53, z -1.35, 0.133 x 0.316 m, 21 mm tall | 84 individual caps in a 75% layout (`KEY_ROWS`), pale modifiers, coral Esc, teal Enter, yellow space, aluminium case, two side light bars, no cable |
-| Mouse | d 0.54, z -1.88 | curved shell (prism profile), two buttons, groove, wheel, side grips |
+| Giant mat | d 0.50, z -1.30 (desk centre), 0.42 x 1.45 m | black cloth with a stitched edge |
+| Keyboard | d 0.53, z -1.30 (desk centre), 0.133 x 0.316 m, 21 mm tall | 84 individual caps in a 75% layout (`KEY_ROWS`), pale modifiers, coral Esc, teal Enter, yellow space, aluminium case, two side light bars, no cable |
+| Mouse | d 0.54, z -1.83 (keyboard - 0.53) | curved shell (prism profile), two buttons, groove, wheel, side grips |
 | Coffee | coaster d 0.59, z -2.17, 12 cm | mug and steam move with `SETUP_PROPS.mug` |
-| Ultrawide | d 0.27, y 1.14, z -1.55, 1.15 m chord | twelve rounded segments on a 1.8 m arc, the screen segments follow it; VESA hump, clamp arm at z -1.70 |
-| Portrait | d 0.27, y 1.12, z -0.67, 0.30 x 0.54 m | own clamp arm at z -0.58, code-editor glow, bouncing logo |
+| Ultrawide | d 0.27, y 1.14, z -1.30 (desk centre), 1.15 m chord | twelve rounded segments on a 1.8 m arc, the screen segments follow it; VESA hump, clamp arm at z -1.15 |
+| Portrait | d 0.27, y 1.12, z -2.09, 0.30 x 0.54 m, yaw -0.3 | seated right of the ultrawide, own clamp arm at z -2.02, code-editor glow, bouncing logo |
 | Light bar | on the ultrawide's top, 0.45 m | white housing, saddle, counterweight, slit behind a front shield |
 | Shelf | 0.33 x 1.90 m board, underside 1.46 | three wall brackets with braces; speakers at z -2.10/-0.45, lamps -1.90/-0.80, plants -1.65/-1.05 |
 | Headphones | hanger under the front edge, d 0.63, z -1.92 | broad flat band, sliders, yokes, cups; 3 cm clear of the PC |
@@ -381,6 +411,20 @@ glow and glass), about 28,100 setup triangles before the lamps (84 caps are
 9,100; parts thinner than 2 cm use one chamfer step). One new 128 px grain
 colour map, no downloaded textures. Five interior lights (eleven in the
 scene with the hemisphere fill, the sun/moon key and four lanterns).
+
+T14 (S27) re-centred the desk: the ultrawide, the keyboard and the mat sit
+on the desk top's middle (`MID`, z -1.30; T12 had them at -1.55, -1.35 and
+-1.35) and the portrait moved from the seated left (z -0.67, yaw 0.3) to the
+right (z -2.09, yaw -0.3), its bounds 5 cm past the ultrawide's end and
+inside the desk. The mat grew 1.35 -> 1.45 m so the mouse keeps 16 cm of pad
+to its right and the coaster stays 8.5 cm beside it; the mouse keeps T12's
+0.53 m from the keyboard (z -1.88 -> -1.83). Clamps follow their monitors
+(main z -1.70 -> -1.15, portrait -0.58 -> -2.02, clear of the leg rail). The
+light bar, the setup wash and bounce, the light bar's spot and the portrait
+logo derive from these constants, so they moved with them; lighting values
+are T13's. PC, headphones, shelf, lamps, chair, collection and living area
+are unchanged; still 297 parts. `tests/world/setup-alignment.test.ts`
+checks it.
 
 ## Front garden entrance (T7, S20)
 

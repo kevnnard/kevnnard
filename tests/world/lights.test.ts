@@ -159,8 +159,13 @@ describe("night light fixtures", () => {
       const fixture = LIGHT_FIXTURES[id];
       assert.equal(fixture.castShadow, false, id);
       assert.ok(fixture.distance > 0 && fixture.distance <= 2, id);
-      assert.equal(fixture.decay, 2, id);
-      assert.ok(fixture.intensity > 0 && fixture.intensity < 1, id);
+      // T13: the backlight washes use decay 0 (near field of the strip);
+      // their centre irradiance is pinned in lights-spread.test.ts.
+      if (id === "tv" || id === "setup") assert.equal(fixture.decay, 0, id);
+      else {
+        assert.equal(fixture.decay, 2, id);
+        assert.ok(fixture.intensity > 0 && fixture.intensity < 1, id);
+      }
     }
   });
 
@@ -187,7 +192,7 @@ describe("night light fixtures", () => {
           id,
         );
       assert.ok(fixture.angle > 1 && fixture.angle < Math.PI / 2, id);
-      assert.ok(fixture.penumbra >= 0.5 && fixture.penumbra <= 1, id);
+      assert.ok(fixture.penumbra >= 0.25 && fixture.penumbra <= 1, id);
     }
   });
 

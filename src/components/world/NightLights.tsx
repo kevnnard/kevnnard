@@ -19,6 +19,8 @@ import {
 import { mergeParts } from "@/components/world/House";
 import { setupMaterial } from "@/components/world/Setup";
 import {
+  CHANNEL_FIXTURES,
+  fixtureOutputs,
   LAMP,
   LIGHT_FIXTURES,
   LIGHT_IDS,
@@ -123,9 +125,8 @@ function shadeGeometry() {
 }
 
 interface Emitters {
-  light: PointLight | SpotLight;
-  /** Extra light on the same channel (the setup's light bar), fixed colour. */
-  extra?: { light: SpotLight; glow: MeshBasicMaterial; color: Color };
+  /** The setup's light bar slit, fixed white. */
+  slit?: { glow: MeshBasicMaterial; color: Color };
   /** Strip or bulb: unlit, tinted by the light. */
   glow: MeshBasicMaterial;
   /** Lamp shades: the fabric glows a little when lit. */
@@ -139,7 +140,9 @@ interface Emitters {
  * the backlights, S18; aimed down at the desk for the lamps) plus its
  * emitter (LED strip behind the TV panel or the curved monitor, lamp bulb and
  * shade). The setup channel also lights the white monitor light bar: its
- * slit and a neutral white downlight onto the keyboard and mouse. Always
+ * slit and a neutral white downlight onto the keyboard and mouse. The TV and
+ * setup channels each add a bounce fill out of their wall (T13). Every light
+ * comes from `CHANNEL_FIXTURES` and takes `fixtureOutputs`. Always
  * mounted, so the shader light count never changes: by day or when disabled
  * a light's intensity drops to zero, as with the scene panel's master
  * `power` off. Settings, the master and the hour only repaint on demand;
@@ -156,7 +159,13 @@ export default function NightLights({
   power?: boolean;
 }) {
   const { invalidate } = useThree();
-  const { group, emitters, owned, geometries } = useMemo(() => {
+  const {
+    group,
+    emitters,
+    lights: sceneLights,
+    owned,
+    geometries,
+  } = useMemo(() => {
     const group = new Object3D() as Group;
     group.name = "night-lights";
     const owned = { materials: [] as Material[], textures: [] as Texture[] };
@@ -214,11 +223,7 @@ export default function NightLights({
       const mesh = new Mesh(mergeParts(parts), glow);
       mesh.name = `night-${id}-strip`;
       group.add(mesh);
-      emitters[id] = {
-        light: fixtureLight(id, LIGHT_FIXTURES[id]),
-        glow,
-        off: new Color(STRIP_OFF),
-      };
+      emitters[id] = { glow, off: new Color(STRIP_OFF) };
     };
     const [tx, ty] = TV_PANEL.center;
     strip(
@@ -248,8 +253,7 @@ export default function NightLights({
     );
     slitMesh.name = "night-lightbar-slit";
     group.add(slitMesh);
-    emitters.setup.extra = {
-      light: fixtureLight("lightbar", LIGHTBAR_FIXTURE) as SpotLight,
+    emitters.setup.slit = {
       glow: slit,
       color: new Color(LIGHTBAR_FIXTURE.color),
     };
@@ -278,37 +282,41 @@ export default function NightLights({
       lit.scale.setScalar(LAMP.bulb.radius);
       group.add(cover, lit);
       emitters[id] = {
-        light: fixtureLight(id, fixture),
         glow,
         shade: fabric,
         off: new Color(LAMP.colors.bulbOff),
       };
     }
-    return { group, emitters, owned, geometries };
+    // Every scene light, channel by channel, in CHANNEL_FIXTURES order.
+    const lights = CHANNEL_FIXTURES.map(({ id, fixture }) =>
+      fixtureLight(id, fixture),
+    );
+    return { group, emitters, lights, owned, geometries };
   }, []);
 
   useLayoutEffect(() => {
+    fixtureOutputs(lights, hours, power).forEach((output, i) => {
+      const light = sceneLights[i];
+      light.color.set(output.color);
+      light.intensity = output.intensity;
+    });
     const color = new Color();
     for (const id of LIGHT_IDS) {
       const setting = lights[id];
       const level = lightLevel(setting, hours, power);
-      const { light, glow, shade, off, extra } = emitters[id];
+      const { glow, shade, off, slit } = emitters[id];
       color.set(setting.color);
-      light.color.copy(color);
-      light.intensity = LIGHT_FIXTURES[id].intensity * level;
       if (level > 0) glow.color.copy(color).multiplyScalar(0.6 + 0.8 * level);
       else glow.color.copy(off);
       if (shade) shade.emissive.copy(color).multiplyScalar(0.2 * level);
-      if (extra) {
-        extra.light.color.copy(extra.color);
-        extra.light.intensity = LIGHTBAR_FIXTURE.intensity * level;
+      if (slit) {
         if (level > 0)
-          extra.glow.color.copy(extra.color).multiplyScalar(0.7 + 0.5 * level);
-        else extra.glow.color.copy(off);
+          slit.glow.color.copy(slit.color).multiplyScalar(0.7 + 0.5 * level);
+        else slit.glow.color.copy(off);
       }
     }
     invalidate();
-  }, [hours, lights, power, emitters, invalidate]);
+  }, [hours, lights, power, emitters, sceneLights, invalidate]);
 
   useEffect(
     () => () => {
