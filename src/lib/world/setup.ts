@@ -5,7 +5,7 @@
 // ultrawide and a portrait monitor on their own clamp arms, a white light bar
 // on the ultrawide, and a coffee mug on a wooden coaster to the right. A
 // wall shelf above carries the speakers, two gamer lamps (lights.ts) and two
-// small plants; over-ear headphones hang under the desk's front edge, the
+// broad-leaf plants; over-ear headphones hang under the desk's front edge, the
 // glass-sided PC stands under its far end and the chair is an original
 // five-star base under Bruno Simon's top chair (T4k). It backs onto the main
 // room's left wall, which has no openings and faces the home camera from
@@ -1207,7 +1207,36 @@ function speakers(solid: SetupPart[]) {
     );
 }
 
-/** Two tiny potted plants on the shelf, each with six leaves (S24). */
+/**
+ * Broad leaves per shelf plant (S28): yaw (0 faces the room, pi/2 is -z),
+ * height up the stem (0..1), upward tilt and length; blades are elliptical
+ * discs about 0.7 times as wide as long. The lamps stand beside the pots, so
+ * the outer leaves fan toward the wall, the room and the other plant.
+ */
+const PLANT_LEAVES = [
+  [
+    [0.35, 0, 0.3, 0.13],
+    [2.5, 0.25, 0.45, 0.15],
+    [-1.35, 0.5, 0.5, 0.17],
+    [1.0, 0.75, 0.7, 0.14],
+    [-2.6, 1, 1.0, 0.12],
+  ],
+  [
+    [-0.4, 0, 0.3, 0.12],
+    [1.45, 0.3, 0.45, 0.15],
+    [-2.7, 0.6, 0.55, 0.14],
+    [0.6, 1, 0.9, 0.11],
+    [-1.3, 0.8, 0.75, 0.1],
+  ],
+] as const;
+/** Stem top above the shelf, taller for the plant left of the screens. */
+const PLANT_STEM = [0.21, 0.16] as const;
+
+/**
+ * Two potted plants on the shelf (S24), grown in S28 into broad-leaf plants
+ * like a young monstera: a stem out of the soil carrying five leaves of
+ * different sizes, the lowest flat and the top one nearly upright.
+ */
 function plants(solid: SetupPart[]) {
   const C = SETUP_COLORS;
   const top = SHELF_TOP;
@@ -1215,36 +1244,32 @@ function plants(solid: SetupPart[]) {
     const group = `plant-${k}`;
     const at = (y: number, dx = 0, dz = 0) => w(0.17 + dx, top + y, u + dz);
     const pot = k === 0 ? C.potWarm : C.pot;
+    const soil = 0.083;
+    const stem = [at(soil), at(PLANT_STEM[k], 0.01, 0.005)] as const;
     const parts: SetupPart[] = [
-      part("base", "round", at(0.026), [0.064, 0.052, 0.064], pot),
-      part(
-        "base",
-        "round",
-        at(0.054),
-        [0.074, 0.01, 0.074],
-        pot,
-        undefined,
-        1.05,
-      ),
-      part("base", "round", at(0.058), [0.06, 0.004, 0.06], C.soil),
+      part("base", "round", at(0.0375), [0.09, 0.075, 0.09], pot),
+      part("base", "round", at(0.078), [0.1, 0.012, 0.1], pot, undefined, 1.05),
+      part("base", "round", at(soil), [0.084, 0.004, 0.084], C.soil),
+      beam("base", stem[0], stem[1], [0.008, 0.008], C.leaf, 0.003),
     ];
-    for (let i = 0; i < 6; i++) {
-      const yaw = (i * Math.PI) / 3 + k * 0.4;
-      const pitch = i % 2 === 0 ? 0.55 : 0.9;
-      const reach = 0.024;
-      const lift = 0.06 + Math.sin(pitch) * reach;
+    for (const [i, [yaw, t, pitch, length]] of PLANT_LEAVES[k].entries()) {
+      const base = stem[0].map((v, a) => v + (stem[1][a] - v) * t);
+      // The blade starts just inside the stem, so every leaf is attached.
+      const r = length / 2 - 0.004;
+      const center: Vec3 = [
+        base[0] + Math.cos(yaw) * Math.cos(pitch) * r,
+        base[1] + Math.sin(pitch) * r,
+        base[2] - Math.sin(yaw) * Math.cos(pitch) * r,
+      ];
       parts.push({
-        ...rounded(
+        ...part(
           "base",
-          0.002,
-          at(
-            lift,
-            Math.cos(yaw) * Math.cos(pitch) * reach,
-            -Math.sin(yaw) * Math.cos(pitch) * reach,
-          ),
-          [0.05, 0.004, 0.022],
+          "round",
+          center,
+          [length, 0.005, length * 0.7],
           i % 2 === 0 ? C.leaf : C.leafLight,
           [0, yaw, pitch],
+          1 - 0.04 * (i % 3),
         ),
         leaf: true,
       });

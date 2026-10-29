@@ -450,7 +450,7 @@ describe("T12 shelf over the setup (S24)", () => {
     );
   });
 
-  it("grows two small potted plants with real leaves", () => {
+  it("grows two potted plants with real leaves", () => {
     const plants = item("plant");
     const leaves = plants.filter((p) => p.leaf);
     assert.ok(leaves.length >= 10, `${leaves.length} leaves`);
@@ -462,7 +462,8 @@ describe("T12 shelf over the setup (S24)", () => {
     assert.equal(pots.length, 2, "two plants");
     for (const pot of pots) {
       const b = box(plants.filter((p) => p.group === pot));
-      assert.ok(b.y1 - b.y0 <= 0.15 + EPS, "tiny");
+      // S28 grew them from 0.10 m sprouts; setup-plants.test.ts has the rest.
+      assert.ok(b.y1 - b.y0 <= 0.35, "shelf-sized");
       assert.ok(plants.filter((p) => p.group === pot && p.leaf).length >= 5);
     }
   });

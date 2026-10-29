@@ -395,7 +395,7 @@ original (`src/lib/world/setup.ts`, lamps in `lights.ts`), credited as
 | Ultrawide | d 0.27, y 1.14, z -1.30 (desk centre), 1.15 m chord | twelve rounded segments on a 1.8 m arc, the screen segments follow it; VESA hump, clamp arm at z -1.15 |
 | Portrait | d 0.27, y 1.12, z -2.09, 0.30 x 0.54 m, yaw -0.3 | seated right of the ultrawide, own clamp arm at z -2.02, code-editor glow, bouncing logo |
 | Light bar | on the ultrawide's top, 0.45 m | white housing, saddle, counterweight, slit behind a front shield |
-| Shelf | 0.33 x 1.90 m board, underside 1.46 | three wall brackets with braces; speakers at z -2.10/-0.45, lamps -1.90/-0.80, plants -1.65/-1.05 |
+| Shelf | 0.33 x 1.90 m board, underside 1.46 | three wall brackets with braces; speakers at z -2.10/-0.45, lamps -1.90/-0.80, broad-leaf plants -1.65/-1.05 (0.31 and 0.24 m tall, S28) |
 | Headphones | hanger under the front edge, d 0.63, z -1.92 | broad flat band, sliders, yokes, cups; 3 cm clear of the PC |
 
 The owner's own mouse was checked: `public/models/room/desk.glb` is one baked
@@ -407,8 +407,8 @@ on the desk, and `tests/world/setup-finish.test.ts` checks each request
 (placements, pairwise clearances, light aims, gates, credits).
 
 Budget: 297 parts (under the 300 limit), 11 draws (nine solid materials plus
-glow and glass), about 28,100 setup triangles before the lamps (84 caps are
-9,100; parts thinner than 2 cm use one chamfer step). One new 128 px grain
+glow and glass), about 27,700 setup triangles before the lamps (28,100 before
+S28; 84 caps are 9,100; parts thinner than 2 cm use one chamfer step). One new 128 px grain
 colour map, no downloaded textures. Five interior lights (eleven in the
 scene with the hemisphere fill, the sun/moon key and four lanterns).
 
@@ -425,6 +425,20 @@ logo derive from these constants, so they moved with them; lighting values
 are T13's. PC, headphones, shelf, lamps, chair, collection and living area
 are unchanged; still 297 parts. `tests/world/setup-alignment.test.ts`
 checks it.
+
+S28 (T15) grew the two shelf plants from 0.10 m sprouts (six 5 x 2.2 cm
+leaves, 0.085 m across) into original broad-leaf plants in the spirit of
+the young monstera in Bruno Simon's room, nothing copied from it: same pots
+and places, a little larger (9 -> 10 cm wide), a stem from the soil and
+five elliptical leaves 10-17 cm long and 0.7 as wide, tilted from nearly
+flat to nearly upright (`PLANT_LEAVES`, `PLANT_STEM`). The plant left of the
+screens stands 0.31 m tall and 0.28 x 0.26 m across, the other 0.24 m and
+0.23 x 0.24 m; blade area per plant 0.056 / 0.043 m² (was 0.0066). They keep
+12 / 14 cm from the lamps (shades included), 25 cm from the speakers, 10 / 17
+cm under the eave, 3.5 cm off the wall and inside the shelf's front edge.
+Same 9 parts per plant (a leaf became the stem), still 297 parts and 11
+draws; the leaves are 16-sided discs, so the pair drops 1680 -> 1240
+triangles. `tests/world/setup-plants.test.ts` checks it.
 
 ## Front garden entrance (T7, S20)
 
