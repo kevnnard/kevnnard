@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blueprint home · World entry</title>
+<style>
+:root {
+  --bg: #09090b; --fg: #fafafa; --muted: #a1a1aa; --line: #27272a; --secondary: #27272a;
+  --accent: #10b981; --focus: #d4d4d8; --error-text: #fca5a5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); overflow: hidden; }
+/* Blueprint grid: emerald at the system's low alphas, fades toward the edges. */
+body::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(16,185,129,0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16,185,129,0.08) 1px, transparent 1px);
+  background-size: 48px 48px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 70% at 50% 45%, #000 20%, transparent 100%);
+  mask-image: radial-gradient(ellipse 70% 70% at 50% 45%, #000 20%, transparent 100%);
+}
+body { display: grid; place-items: center; min-height: 100vh; }
+main { position: relative; display: grid; grid-template-rows: auto 1fr auto; gap: 24px; width: min(1040px, 94vw); height: min(680px, 90vh); }
+
+/* Header: left title, right readout, like a drawing sheet. */
+header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+.kicker { margin: 0 0 6px; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
+h1 { margin: 0; font-size: 22px; font-weight: 600; }
+.readout { text-align: right; font-variant-numeric: tabular-nums; }
+.pct { display: block; font-size: 40px; font-weight: 600; line-height: 1; }
+.pct small { font-size: 14px; color: var(--muted); font-weight: 500; margin-left: 4px; }
+.phase { display: block; margin-top: 6px; font-size: 13px; color: var(--muted); min-height: 18px; }
+
+/* Drawing area */
+.sheet { position: relative; display: grid; place-items: center; }
+svg { width: 100%; height: 100%; max-height: 440px; }
+.ink { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: var(--len); stroke-dashoffset: var(--len); transition: stroke-dashoffset 600ms ease-out; }
+.ink.faint { stroke: #3f3f46; stroke-width: 1; }
+.dim { stroke: #3f3f46; stroke-width: 1; stroke-dasharray: 3 4; }
+.label { font-size: 11px; fill: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+.window { fill: rgba(250,250,250,0); transition: fill 1400ms ease-out; }
+.glow { fill: rgba(16,185,129,0); transition: fill 1400ms ease-out; }
+main.ready .window { fill: rgba(250,250,250,0.9); }
+main.ready .glow { fill: rgba(16,185,129,0.12); }
+main.ready .ink { stroke: var(--fg); transition: stroke-dashoffset 600ms ease-out, stroke 1400ms ease-out; }
+main.ready .ink.faint { stroke: #52525b; }
+
+/* Milestone ticks along the bottom edge: the real loading phases. */
+footer { display: grid; gap: 12px; }
+.ticks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.tick { display: grid; gap: 6px; font-size: 12px; color: var(--muted); }
+.tick i { display: block; height: 2px; background: var(--line); }
+.tick[data-on="true"] { color: var(--fg); }
+.tick[data-on="true"] i { background: var(--accent); }
+.foot { display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 40px; }
+.note { margin: 0; font-size: 14px; color: var(--muted); }
+.note.error { color: var(--error-text); }
+button { font: inherit; font-size: 14px; height: 40px; padding: 0 20px; border: 0; border-radius: 6px; background: var(--fg); color: #18181b; cursor: pointer; }
+button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+button[hidden] { display: none; }
+/* Status line: a single readiness indicator instead of preview chrome. */
+.status { display: flex; align-items: center; gap: 10px; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--line); box-shadow: 0 0 0 3px rgba(16,185,129,0); transition: background 400ms ease-out, box-shadow 400ms ease-out; }
+.status[data-state="loading"] .dot { background: var(--accent); animation: pulse 1.6s ease-in-out infinite; }
+.status[data-state="ready"] { color: var(--fg); }
+.status[data-state="ready"] .dot { background: var(--accent); box-shadow: 0 0 0 3px rgba(16,185,129,0.3); animation: none; }
+.status[data-state="error"] { color: var(--error-text); }
+.status[data-state="error"] .dot { background: var(--error-text); animation: none; }
+@keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+/* Short description of the world, right-aligned, replaces any preview chrome. */
+.about { margin: 0; max-width: 46ch; text-align: right; font-size: 12px; line-height: 18px; color: var(--muted); }
+.about strong { color: var(--fg); font-weight: 500; }
+@media (prefers-reduced-motion: reduce) { .ink, .window, .glow, .status .dot { transition: none; animation: none; } }
+@media (max-width: 720px) { .pct { font-size: 28px; } h1 { font-size: 18px; } .ticks { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<main id="main" aria-labelledby="title">
+  <header>
+    <div>
+      <p class="kicker">Kevnnard · world entry · sheet 01</p>
+      <h1 id="title">Drawing the house</h1>
+    </div>
+    <div class="readout" role="progressbar" aria-label="World loading" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="bar">
+      <span class="pct"><span id="pct">0</span><small>%</small></span>
+      <span class="phase" id="phase">Nature and sky</span>
+    </div>
+  </header>
+
+  <div class="sheet">
+    <!-- Isometric blueprint of the house: ground, main body, garage, roof, porch, windows. Each path is inked in order as progress rises. -->
+    <svg viewBox="0 0 720 440" aria-hidden="true">
+      <!-- soft interior glow, lit on ready -->
+      <polygon class="glow" points="260,150 460,100 560,160 560,300 360,350 260,290"></polygon>
+
+      <!-- ground plate -->
+      <path class="ink faint" data-order="0" d="M120,300 L360,400 L640,300 L400,200 Z"></path>
+      <!-- main body: front face and side face -->
+      <path class="ink" data-order="1" d="M260,290 L260,150 L460,100 L460,240 Z"></path>
+      <path class="ink" data-order="2" d="M460,240 L460,100 L560,160 L560,300 Z"></path>
+      <path class="ink" data-order="3" d="M260,290 L360,350 L560,300"></path>
+      <path class="ink" data-order="3" d="M360,350 L360,210 L460,240"></path>
+      <path class="ink" data-order="3" d="M360,210 L560,160"></path>
+      <!-- roof -->
+      <path class="ink" data-order="4" d="M250,150 L350,90 L470,60 L570,150"></path>
+      <path class="ink" data-order="4" d="M350,90 L350,205"></path>
+      <path class="ink" data-order="4" d="M470,60 L470,100"></path>
+      <!-- garage, lower left -->
+      <path class="ink" data-order="5" d="M160,275 L160,215 L260,185 L260,290"></path>
+      <path class="ink" data-order="5" d="M160,275 L230,310 L260,290"></path>
+      <path class="ink" data-order="5" d="M230,310 L230,250 L260,240"></path>
+      <path class="ink faint" data-order="5" d="M175,225 L175,268 M190,222 L190,275 M205,218 L205,282 M220,215 L220,289"></path>
+      <!-- porch and door -->
+      <path class="ink" data-order="6" d="M400,318 L400,250 L425,242 L425,330"></path>
+      <path class="ink faint" data-order="6" d="M372,340 L372,270 M440,335 L440,262"></path>
+      <!-- windows (front and side) -->
+      <rect class="window" x="290" y="190" width="38" height="48" transform="skewY(-14)"></rect>
+      <rect class="window" x="480" y="150" width="34" height="46" transform="skewY(31)"></rect>
+      <path class="ink" data-order="7" d="M290,190 L328,180 L328,228 L290,238 Z"></path>
+      <path class="ink" data-order="7" d="M480,150 L514,170 L514,216 L480,196 Z"></path>
+      <path class="ink faint" data-order="7" d="M309,185 L309,233 M290,214 L328,204"></path>
+      <!-- chimney -->
+      <path class="ink" data-order="8" d="M520,100 L520,70 L540,75 L540,112"></path>
+      <!-- dimension lines, drawn last -->
+      <path class="dim ink" data-order="9" d="M120,320 L360,420 M640,320 L360,420"></path>
+      <text class="label" x="200" y="392">12.40 m</text>
+      <text class="label" x="520" y="392">9.60 m</text>
+      <text class="label" x="585" y="150">roof · 4.2 m</text>
+    </svg>
+  </div>
+
+  <footer>
+    <div class="ticks" aria-hidden="true">
+      <div class="tick" data-on="false"><i></i>Nature and sky</div>
+      <div class="tick" data-on="false"><i></i>Ground and surfaces</div>
+      <div class="tick" data-on="false"><i></i>Living interior</div>
+      <div class="tick" data-on="false"><i></i>First frame</div>
+    </div>
+    <div class="foot">
+      <p class="note" id="note" aria-live="polite"></p>
+      <button id="enter" type="button" hidden>Enter world</button>
+    </div>
+    <div class="foot">
+      <div class="status" id="status" data-state="loading" role="status"><span class="dot" aria-hidden="true"></span><span id="statusText">Not ready</span></div>
+      <p class="about"><strong>A small house in the forest.</strong> Walk the rooms, read the terminal, play the lo-fi speakers and watch the light change with the real time of day.</p>
+    </div>
+  </footer>
+</main>
+<script>
+const main = document.getElementById("main");
+const bar = document.getElementById("bar");
+const pct = document.getElementById("pct");
+const phase = document.getElementById("phase");
+const note = document.getElementById("note");
+const enter = document.getElementById("enter");
+const ticks = [...document.querySelectorAll(".tick")];
+const status = document.getElementById("status");
+const statusText = document.getElementById("statusText");
+const STATUS = { loading: "Not ready", ready: "Ready to enter", error: "Could not load" };
+function setStatus(state) { status.dataset.state = state; statusText.textContent = STATUS[state]; }
+const PHASES = ["Nature and sky", "Ground and surfaces", "Living interior", "First frame"];
+const inks = [...document.querySelectorAll(".ink")];
+let value = 0;
+let timer;
+
+// Measure each path once so the dash animation draws it in one continuous stroke.
+for (const p of inks) {
+  const len = p.getTotalLength();
+  p.style.setProperty("--len", String(len));
+}
+const ORDERS = Math.max(...inks.map((p) => Number(p.dataset.order))) + 1;
+
+// Progress 0..99 inks the drawing in order; each stroke draws through its own slice.
+function paint(v, label) {
+  value = v;
+  const t = (v / 100) * ORDERS;
+  for (const p of inks) {
+    const o = Number(p.dataset.order);
+    const k = Math.max(0, Math.min(1, t - o));
+    p.style.strokeDashoffset = String(Number(p.style.getPropertyValue("--len")) * (1 - k));
+  }
+  ticks.forEach((el, i) => (el.dataset.on = String(v >= ((i + 1) / 4) * 100 - 1)));
+  bar.setAttribute("aria-valuenow", String(v));
+  pct.textContent = String(v);
+  phase.textContent = label;
+}
+
+function show(state) {
+  clearInterval(timer);
+  note.classList.remove("error");
+  main.classList.remove("ready");
+  enter.hidden = true;
+  setStatus(state);
+  if (state === "ready") {
+    paint(100, "Ready");
+    main.classList.add("ready");
+    note.textContent = "The house is built and the lights are on. Enter when you are ready.";
+    enter.hidden = false;
+    return;
+  }
+  if (state === "error") {
+    paint(value, "Stopped");
+    note.classList.add("error");
+    note.textContent = "The drawing could not finish. Check the connection and retry.";
+    return;
+  }
+  // Simulated: holds at 99 until the real readiness signal arrives.
+  paint(0, PHASES[0]);
+  note.textContent = "";
+  timer = setInterval(() => {
+    if (value >= 99) return clearInterval(timer);
+    const next = Math.min(99, value + 1);
+    paint(next, PHASES[Math.min(3, Math.floor(next / 25))]);
+  }, 70);
+}
+
+// Artboard-only preview: keys 1, 2, 3 switch loading, ready and error. Not part of the product.
+document.addEventListener("keydown", (e) => {
+  const map = { "1": "loading", "2": "ready", "3": "error" };
+  if (map[e.key]) show(map[e.key]);
+});
+show("loading");
+</script>
+</body>
+</html>

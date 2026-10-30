@@ -40,7 +40,7 @@ export const AMBIENT_EVENTS: Readonly<
   owl: { file: `${DIR}/owl-hoot.mp3`, gain: 0.5, start: 20, end: 5 },
   crickets: {
     file: `${DIR}/crickets-night.mp3`,
-    gain: 0.01,
+    gain: 0.005,
     start: 19,
     end: 4,
     burst: [8, 12],
@@ -49,7 +49,7 @@ export const AMBIENT_EVENTS: Readonly<
   rooster: { file: `${DIR}/rooster-crow.mp3`, gain: 0.5, start: 6, end: 7 },
   birds: {
     file: `${DIR}/birds-chirp.mp3`,
-    gain: 0.05,
+    gain: 0.03,
     start: 8,
     end: 15,
     burst: [8, 15],

@@ -1,6 +1,6 @@
 # World entry loader UI
 
-The `/world` entry gate from `design/world-entry-loader/03-world-assembly.html` ("World assembly"). Feature: `odd/tasks/world-entry-loader.md`, T1 (S1, S2, S4).
+The `/world` entry gate from `design/world-loader-refresh/06-blueprint-home.html` ("Blueprint Home", artboard 06). It replaces the earlier "World assembly" layout from `design/world-entry-loader/03-world-assembly.html`. Feature: `odd/tasks/world-entry-loader.md`, T1 (S1, S2, S4, L17).
 
 Files: `src/components/world/WorldEntryLoader.tsx` (default export) and `src/components/world/world-entry-loader.css`.
 
@@ -19,43 +19,50 @@ The component is stateless. It has no timers and no simulated progress. Everythi
 
 | Input | Shown |
 | --- | --- |
-| `phase` is `scene`, `assets` or `frame`, `error` is `null` | `progress`, rounded and clamped to 1–99. Enter is disabled ("Preparing your world…") |
-| `phase` is `ready`, `error` is `null` | 100, all three steps done, "Enter world →" enabled |
-| `error` is a string | Last percentage (1–99), an alert with the message, "Try again" when `onRetry` is given, a "Back to portfolio" link to `/`. Enter stays disabled |
+| `phase` is `scene`, `assets` or `frame`, `error` is `null` | `progress`, rounded and clamped to 1–99. Status dot pulses with "Not ready". Enter is disabled ("Preparing your world…") |
+| `phase` is `ready`, `error` is `null` | 100, all four milestones on, ink turns white, windows light up, warm glow appears, status "Ready to enter", "Enter world →" enabled |
+| `error` is a string | Last percentage (1–99), status "Could not load", an alert with the message, "Try again" when `onRetry` is given, a "Back to portfolio" link to `/`. Enter stays disabled ("World unavailable") |
 
-Phase to status text: `scene` "Preparing the scene", `assets` "Loading models & materials", `frame` "Preparing the first frame", `ready` "Your world is ready".
+Phase line under the percentage: `scene` "Nature and sky", `assets` "Ground and surfaces", `frame` "Living interior", `ready` "Ready to enter". On error it reads "The world could not be prepared".
 
-Checklist rows are marked done by phase: Scene foundations when `assets` starts, Models & materials when `frame` starts, First frame at `ready`.
+## Layout from artboard 06
 
-## Layout from artboard 03
+- Header: a titleblock with "← Back to portfolio", the sheet reference "Kevnnard · world entry · sheet 01" and the heading "Drawing the house". On the right, the large percentage and the phase line.
+- Sheet: an original isometric SVG blueprint of the house (`.world-entry-blueprint`, `viewBox="0 0 720 440"`) on an emerald 48px grid that fades out radially.
+- Footer: four milestone ticks, a status dot with "Not ready" / "Ready to enter", the about copy ("A small house in the forest." plus the walk-through line), the error alert when present, and the Enter world button.
+- The artboard's preview controls and simulated script are not part of the component.
 
-- Left: an original line drawing of the house and desk adapted from the artboard paths, with an emerald stroke on a `#18181b` floor.
-- Right: the "World assembly" eyebrow, the heading "Building a place / to look around.", the three-step checklist, the `NN / 100` count, a 3px bar and the Enter button.
-- Header: "← Back to portfolio" and `KEVNNARD / WORLD`. Footer: the story line and "Sound follows your saved preference."
-- The artboard's preview slider, Replay button and simulated script are not part of the component.
+### Blueprint ink
 
-Each wire path uses `pathLength={1}`. The CSS sets `stroke-dashoffset: calc(1 - var(--world-entry-progress))`. The inline `--world-entry-progress` is the real percentage divided by 100, and the same variable scales the bar.
+The drawing has 10 ink orders (`data-order="0"` to `"9"`): ground plate, front face, side face, structure, roofline, garage and siding, porch and door, windows, chimney, dimension lines. Every ink path (`.world-entry-ink`) uses `pathLength={1}` and `stroke-dasharray: 1`.
 
-Tokens come from `design/system.md`: `#09090b`, `#18181b`, `#27272a`, `#a1a1aa`, `#d4d4d8`, `#fafafa`, the `#10b981` accent and `#7f1d1d` for the error border. Buttons and links have a 44px minimum height and a 6px radius. Focus rings are 3px `#d4d4d8` at 50%.
+The component sets `--world-entry-order-t` to `percent / 100 * 10`. Each order sets `--ink-order`, and the CSS draws it with `stroke-dashoffset: calc(1 - clamp(0, t - order, 1))`. So orders ink one after another, and each one is driven by the real percentage, not by a clock. `--world-entry-progress` (`percent / 100`) is still set on the root.
+
+### Readiness
+
+When `ready` is true the root gets `.world-entry-ready`. The ink turns `#fafafa`, the two `.world-entry-window` polygons fill with white at 0.9 and the `.world-entry-glow` polygon fills with emerald at 0.12. Each fill fades in over 1.4s. Milestone ticks turn on at 24, 49, 74 and 99 percent.
+
+Tokens come from `design/system.md`: `#09090b`, `#18181b`, `#27272a`, `#a1a1aa`, `#d4d4d8`, `#fafafa`, the `#10b981` accent and `#7f1d1d` for the error border and dot. The artboard's off-token grays are replaced by `#a1a1aa` at reduced stroke opacity for faint ink and dimension lines. Buttons and links have a 44px minimum height and a 6px radius. Focus rings are 3px `#d4d4d8` at 50%.
 
 ## Placement
 
 `.world-entry-loader` uses `position: absolute; inset: 0; z-index: 50`. The parent mounts it inside the `position: relative` world viewport, above the HUD. All selectors start with `.world-entry-`, so no page or global styles change. The parent keeps the scene underneath `inert` until entry.
 
-The root is a size container (`world-entry`). At 650px wide or less, the drawing stacks above the panel, Enter takes the full width and the brand label is hidden.
+The root is a size container (`world-entry`). At 720px wide or less, the header stacks, the readout aligns left, the drawing shrinks to 260px high, the milestones use two columns and Enter takes the full width. The drawing sheet is a plain `div`, because `src/pages/world.astro` already provides the page `<main>`.
 
 ## Accessibility
 
 - The root is `role="dialog"` with `aria-modal="true"`, labelled by the heading. There is no focus trap; the parent's `inert` scene does that job.
-- The bar is `role="progressbar"` with `aria-valuenow` and `aria-valuetext` (for example "42 percent, Loading models & materials").
-- Only the phase line is a polite `role="status"`, so a screen reader announces phase changes, not every number. The large count is `aria-hidden`.
+- The readout is `role="progressbar"` with `aria-valuemin`, `aria-valuemax`, `aria-valuenow` and `aria-valuetext` (for example "42 percent, Ground and surfaces").
+- The phase line and the footer status are `role="status"`, so a screen reader announces phase and readiness changes, not every number. The large percentage is `aria-hidden`. The blueprint is one `role="img"` with a label, and the milestone ticks are `aria-hidden`.
 - Errors render in `role="alert"`.
+- Enter is `disabled` until ready, and its click handler is only attached when ready.
 - Focus moves at most twice. On mount it goes to the heading, if nothing else has focus. At readiness it goes to Enter, if focus is still on the body or inside the loader. Percentage updates never move focus.
-- Reduced motion: when the `reducedMotion` prop is set or `prefers-reduced-motion: reduce` matches, the drawing is complete and static. The bar and the count still show the real value without transitions.
+- Reduced motion: when the `reducedMotion` prop is set or `prefers-reduced-motion: reduce` matches, all ink is drawn and static (`stroke-dashoffset: 0`). Ink, glow, windows, status dot and milestone ticks have no transitions or animations. The percentage and milestones still show the real value.
 
 ## Verification limits
 
-`tests/world/world-entry-loader.test.ts` checks the source and the stylesheet. It does not render a DOM. Rendering, focus behavior, screen reader output and the visual match with the artboard still need a browser check after the parent integrates the component.
+`tests/world/world-entry-loader.test.ts` checks the source and the stylesheet. It does not render a DOM. Rendering, focus behavior, screen reader output and the visual match with artboard 06 still need a browser check.
 
 ## Minimum visual reveal
 

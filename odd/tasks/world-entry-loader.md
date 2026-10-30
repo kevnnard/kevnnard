@@ -13,11 +13,11 @@ S5. "CARGA mUY RAPIDIO jaja nos e ve el ppprogresoso toca dalr e tineppo de ver 
 S6. "ahora al enmtra  al asecena igual smooth de la secna como que aparece la escena 3d la musica iguald esde entrar al world etc si ? dale"; "sii asi como escena magica jaja es psible ?"
 
 ## Tasks
-T1 [S1-S2] UI worker — done; real accessible React WorldEntryLoader and scoped CSS matching03, source tests/docs. Commit: none.
-T2 [S4] scene worker — done; honest resource preparation progress and complete critical scene/first-frame readiness, async cleanup tests/docs. Commit: none.
-T3 [S1-S4] parent — done; WorldApp overlay/entry/music/control gate integration, regression tests, full checks and independent concurrency verifier. Commit: none.
-T5 [S5] parent — done; minimum2.5svisualassembly while realassetsload independently; presentation never overtakes actual readiness. Commit: none.
-T6 [S6] parent — done; CSS-only loader crossfade, soft world reveal/glow with no camera/state reset; preserve existing2s audio fade and saved pause. Commit: none.
+T1 [S1-S2] UI worker — done; refreshed to blueprint home (artboard 06), window polygons aligned, on-token colors, 10 ink orders, 23/23 tests and UI doc updated. Commit: none.
+T2 [S4] scene worker — done; honest resource preparation progress and complete critical scene/first-frame readiness, async cleanup tests/docs. Commit: df1337a.
+T3 [S1-S4] parent — done; WorldApp overlay/entry/music/control gate integration, regression tests, full checks and independent concurrency verifier. Commit: df1337a.
+T5 [S5] parent — done; minimum2.5svisualassembly while realassetsload independently; presentation never overtakes actual readiness. Commit: df1337a.
+T6 [S6] parent — done; CSS-only loader crossfade, soft world reveal/glow with no camera/state reset; preserve existing2s audio fade and saved pause. Commit: df1337a.
 T4 [S1-S6] human acceptance — blocked on real browser/GPU/visual/audio test. Commit: none.
 
 ## Log
@@ -45,3 +45,7 @@ L13. T6parent REDsourceguard1/6fail→GREEN72/72focused(gate+actualspeaker/resum
 L14. FinalT6job9exit0:706/706world+room,bothscopedsourceTS,diffcheck,Astrobuild;Biome3PASS. T6doneafterobservedchecks;T4onlyexternalhumanvisual/audioacceptanceblocked. Noactiveworkers/jobs,nocommits/push/serverrestart. ScopedT6Risk:none(CSS/DOMpresentationonly,noresource/audio/camera/lifecyclecontractchanges);historicalT2item4andindependentverificationremainrecorded. Actualvisual/audioacceptancenotclaimed.
 
 L15. User explicit stop/commit authorization verbatim: "vale a vmaoa sdejarlo aais por ahora , commit de todo". Preserve delivered implementation as-is and commit all project changes, excluding local.atl/.pi runtime state as previously. No push authorized. Human browser/GPU/audio acceptance deferred by this explicit stop, never claimed observed. T1/T2/T3/T5/T6 implementation evidence is in the commit containing this document; its resulting hash is recorded in session memory. Native assessment unavailable for intentional untracked files; no native review approval invented.
+
+L16. Loader refresh design requested by the user: three alternative directions (monolith meter, dial readout, phase rail) under design/world-loader-refresh/, same rules: real progress capped at 99 until ready, 2.5 s minimum reveal, errors with retry, Enter world after readiness, reduced motion. No implementation yet; the user chooses an artboard before any code change.
+
+L17. Artboard 06 (Blueprint home) selected by user for implementation. T1 reopened: replace World assembly layout with the blueprint house, keeping the exact WorldLoadState contract, 2.5s minimum reveal, Enter world gate, and CSS-only entry crossfade.

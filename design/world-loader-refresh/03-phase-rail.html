@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phase rail · World entry</title>
+<style>
+:root {
+  --bg: #09090b; --fg: #fafafa; --muted: #a1a1aa; --line: #27272a;
+  --accent: #10b981; --focus: #d4d4d8; --error-text: #fca5a5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); }
+body { display: grid; place-items: center; min-height: 100vh; }
+main { width: min(480px, 90vw); display: grid; gap: 20px; }
+.head { display: flex; justify-content: space-between; align-items: baseline; }
+.kicker { margin: 0; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+h1 { margin: 0; font-size: 20px; font-weight: 600; }
+.pct { font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; }
+ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; border-top: 1px solid var(--line); }
+li { display: grid; grid-template-columns: 32px 1fr auto; gap: 8px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.idx { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.state { font-size: 12px; color: var(--muted); }
+li[data-status="done"] .state { color: var(--accent); }
+li[data-status="active"] .state { color: var(--fg); }
+li[data-status="active"] .name { color: var(--fg); }
+li[data-status="pending"] .name { color: var(--muted); }
+.note { margin: 0; min-height: 40px; font-size: 14px; color: var(--muted); }
+.note.error { color: var(--error-text); }
+button { font: inherit; font-size: 14px; height: 36px; padding: 0 16px; border: 0; border-radius: 6px; background: var(--fg); color: #18181b; cursor: pointer; justify-self: start; }
+button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+button[hidden] { display: none; }
+.preview { display: flex; gap: 8px; padding-top: 16px; border-top: 1px solid var(--line); }
+.preview button { height: 28px; padding: 0 10px; font-size: 12px; background: transparent; color: var(--muted); border: 1px solid var(--line); }
+.preview button[aria-pressed="true"] { color: var(--fg); border-color: var(--accent); }
+.caption { margin: 0; font-size: 12px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { li { transition: none; } }
+</style>
+</head>
+<body>
+<main aria-labelledby="title">
+  <p class="kicker">World · entry</p>
+  <div class="head">
+    <h1 id="title">Assembling the world</h1>
+    <span class="pct" id="pct" aria-live="off">0%</span>
+  </div>
+  <ol id="phases" role="list" aria-label="Loading phases">
+    <li data-key="nature" data-status="pending"><span class="idx">01</span><span class="name">Nature and sky</span><span class="state">waiting</span></li>
+    <li data-key="surfaces" data-status="pending"><span class="idx">02</span><span class="name">Ground and surfaces</span><span class="state">waiting</span></li>
+    <li data-key="living" data-status="pending"><span class="idx">03</span><span class="name">Living interior</span><span class="state">waiting</span></li>
+    <li data-key="frame" data-status="pending"><span class="idx">04</span><span class="name">First frame</span><span class="state">waiting</span></li>
+  </ol>
+  <p class="note" id="note" aria-live="polite"></p>
+  <button id="enter" type="button" hidden>Enter world</button>
+  <div class="preview" role="group" aria-label="Preview states">
+    <button type="button" data-state="loading" aria-pressed="true">Loading</button>
+    <button type="button" data-state="ready" aria-pressed="false">Ready</button>
+    <button type="button" data-state="error" aria-pressed="false">Error</button>
+  </div>
+  <p class="caption">Preview only: the phases are simulated, never real loading telemetry.</p>
+</main>
+<script>
+const items = [...document.querySelectorAll("#phases li")];
+const pct = document.getElementById("pct");
+const note = document.getElementById("note");
+const enter = document.getElementById("enter");
+let timer;
+let step = 0;
+
+function paint(done, activeIndex, percent) {
+  items.forEach((li, i) => {
+    const status = i < done ? "done" : i === activeIndex ? "active" : "pending";
+    li.dataset.status = status;
+    li.querySelector(".state").textContent = status === "done" ? "ready" : status === "active" ? "loading" : "waiting";
+  });
+  pct.textContent = percent + "%";
+}
+
+function show(state) {
+  clearInterval(timer);
+  document.querySelectorAll("[data-state]").forEach((b) =>
+    b.setAttribute("aria-pressed", String(b.dataset.state === state)));
+  note.classList.remove("error");
+  enter.hidden = true;
+  if (state === "ready") {
+    paint(items.length, -1, 100);
+    note.textContent = "Every phase is ready. Enter when you are ready.";
+    enter.hidden = false;
+    return;
+  }
+  if (state === "error") {
+    paint(step, step, Math.floor((step / items.length) * 99));
+    note.classList.add("error");
+    note.textContent = "A phase failed to load. Check the connection and retry.";
+    return;
+  }
+  // Simulated: each phase takes its turn; the percentage never reaches 100 before ready.
+  step = 0;
+  paint(0, 0, 0);
+  note.textContent = "";
+  timer = setInterval(() => {
+    step++;
+    if (step >= items.length) {
+      clearInterval(timer);
+      paint(items.length - 1, items.length - 1, 99);
+      return;
+    }
+    paint(step, step, Math.floor((step / items.length) * 99));
+  }, 900);
+}
+
+document.querySelectorAll("[data-state]").forEach((b) =>
+  b.addEventListener("click", () => show(b.dataset.state)));
+show("loading");
+</script>
+</body>
+</html>

@@ -120,9 +120,9 @@ describe("ambient schedule by world hour", () => {
 
   it("uses the requested gains and files", () => {
     assert.equal(AMBIENT_EVENTS.owl.gain, 0.5);
-    assert.equal(AMBIENT_EVENTS.crickets.gain, 0.01);
+    assert.equal(AMBIENT_EVENTS.crickets.gain, 0.005);
     assert.equal(AMBIENT_EVENTS.rooster.gain, 0.5);
-    assert.equal(AMBIENT_EVENTS.birds.gain, 0.05);
+    assert.equal(AMBIENT_EVENTS.birds.gain, 0.03);
     assert.equal(
       AMBIENT_EVENTS.crickets.file,
       "/world/audio/ambient/crickets-night.mp3",
@@ -262,7 +262,7 @@ describe("AmbientSound player", () => {
     assert.deepEqual(requests, []);
   });
 
-  it("at 19:00 a crickets burst fades in over 2 s at gain 0.01", async () => {
+  it("at 19:00 a crickets burst fades in over 2 s at gain 0.005", async () => {
     const { player, context, requests, timers } = setup({
       random: planned(0),
     });
@@ -275,7 +275,7 @@ describe("AmbientSound player", () => {
     assert.equal(burst.loop, true, "the buffer loops within the burst");
     const envelope = burst.outputs[0] as Gain;
     assert.equal(envelope.gain.events[0][1], 0, "starts silent");
-    assert.deepEqual(envelope.gain.lastRamp(), ["ramp", 0.01, 12]);
+    assert.deepEqual(envelope.gain.lastRamp(), ["ramp", 0.005, 12]);
     assert.deepEqual(timers.delays, [8000], "burst of 8 s at random 0");
     player.setHours(at(19, 30));
     await flush();
@@ -331,7 +331,7 @@ describe("AmbientSound player", () => {
     assert.deepEqual(await delays(planned(-3, 9)), [8000, 482000], "clamped");
   });
 
-  it("birds burst only from 08:00 to 15:00 at gain 0.05, silent in their rest", async () => {
+  it("birds burst only from 08:00 to 15:00 at gain 0.03, silent in their rest", async () => {
     const { player, context, timers } = setup({ random: planned(0, 0) });
     player.unlock();
     player.setHours(at(7, 59));
@@ -342,7 +342,7 @@ describe("AmbientSound player", () => {
     const [bird] = started(context, "birds-chirp");
     assert.ok(bird, "the birds started");
     const envelope = bird.outputs[0] as Gain;
-    assert.deepEqual(envelope.gain.lastRamp(), ["ramp", 0.05, 12]);
+    assert.deepEqual(envelope.gain.lastRamp(), ["ramp", 0.03, 12]);
     timers.advance(8000);
     assert.deepEqual(
       timers.delays,

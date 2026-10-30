@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wordmark fill · World entry</title>
+<style>
+:root {
+  --bg: #09090b; --fg: #fafafa; --muted: #a1a1aa; --line: #27272a;
+  --accent: #10b981; --focus: #d4d4d8; --error-text: #fca5a5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); overflow: hidden; }
+/* Page guide lines from the design system, emerald at low alpha. */
+body::before, body::after {
+  content: ""; position: fixed; top: 0; bottom: 0; width: 1px;
+  background: linear-gradient(transparent, rgba(16,185,129,0.12), transparent);
+  pointer-events: none;
+}
+body::before { left: 20%; }
+body::after { left: 75%; }
+body { display: grid; place-items: center; min-height: 100vh; }
+main { display: grid; justify-items: center; gap: 28px; width: min(900px, 92vw); text-align: center; }
+.kicker { margin: 0; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
+.word {
+  margin: 0; display: flex; gap: 0.02em; font-size: clamp(40px, 9vw, 96px); font-weight: 700; letter-spacing: 0.04em; line-height: 1;
+}
+.letter {
+  position: relative; color: transparent; -webkit-text-stroke: 1px #3f3f46;
+}
+/* Each letter fills from the bottom once its share of progress is reached. */
+.letter::after {
+  content: attr(data-l); position: absolute; inset: 0; color: var(--accent);
+  clip-path: inset(100% 0 0 0); transition: clip-path 500ms ease-out;
+  text-shadow: 0 0 24px rgba(16,185,129,0.45);
+}
+.letter.on::after { clip-path: inset(0 0 0 0); }
+.meta { display: flex; gap: 16px; align-items: baseline; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.pct { color: var(--fg); font-size: 20px; font-weight: 600; }
+.note { margin: 0; min-height: 40px; font-size: 14px; color: var(--muted); }
+.note.error { color: var(--error-text); }
+button { font: inherit; font-size: 14px; height: 40px; padding: 0 20px; border: 0; border-radius: 6px; background: var(--fg); color: #18181b; cursor: pointer; }
+button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+button[hidden] { display: none; }
+.preview { display: flex; gap: 8px; }
+.preview button { height: 28px; padding: 0 10px; font-size: 12px; background: transparent; color: var(--muted); border: 1px solid var(--line); }
+.preview button[aria-pressed="true"] { color: var(--fg); border-color: var(--accent); }
+.caption { margin: 0; font-size: 12px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .letter::after { transition: none; } }
+</style>
+</head>
+<body>
+<main aria-labelledby="title">
+  <p class="kicker" id="title">World · entry</p>
+  <h1 class="word" id="word" aria-hidden="true"></h1>
+  <div class="meta" role="progressbar" aria-label="World loading" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="bar">
+    <span class="pct" id="pct">0%</span><span id="phase">Loading scene</span>
+  </div>
+  <p class="note" id="note" aria-live="polite"></p>
+  <button id="enter" type="button" hidden>Enter world</button>
+  <div class="preview" role="group" aria-label="Preview states">
+    <button type="button" data-state="loading" aria-pressed="true">Loading</button>
+    <button type="button" data-state="ready" aria-pressed="false">Ready</button>
+    <button type="button" data-state="error" aria-pressed="false">Error</button>
+  </div>
+  <p class="caption">Preview only: the progress is simulated, never real loading telemetry.</p>
+</main>
+<script>
+const WORD = "KEVNNARD";
+const word = document.getElementById("word");
+const letters = [...WORD].map((ch) => {
+  const span = document.createElement("span");
+  span.className = "letter";
+  span.dataset.l = ch;
+  span.textContent = ch;
+  word.appendChild(span);
+  return span;
+});
+const bar = document.getElementById("bar");
+const pct = document.getElementById("pct");
+const phase = document.getElementById("phase");
+const note = document.getElementById("note");
+const enter = document.getElementById("enter");
+let value = 0;
+let timer;
+
+// A letter lights when progress reaches its share; 100 lights all of them.
+function paint(v, label) {
+  value = v;
+  const lit = Math.floor((v / 100) * letters.length);
+  letters.forEach((el, i) => el.classList.toggle("on", i < lit));
+  bar.setAttribute("aria-valuenow", String(v));
+  pct.textContent = v + "%";
+  phase.textContent = label;
+}
+
+function show(state) {
+  clearInterval(timer);
+  document.querySelectorAll("[data-state]").forEach((b) =>
+    b.setAttribute("aria-pressed", String(b.dataset.state === state)));
+  note.classList.remove("error");
+  enter.hidden = true;
+  if (state === "ready") {
+    paint(100, "Ready");
+    note.textContent = "The house is assembled. Enter when you are ready.";
+    enter.hidden = false;
+    return;
+  }
+  if (state === "error") {
+    paint(value, "Stopped");
+    note.classList.add("error");
+    note.textContent = "The scene could not load. Check the connection and retry.";
+    return;
+  }
+  // Simulated: holds at 99 until the real readiness signal arrives.
+  paint(0, "Loading scene");
+  note.textContent = "";
+  timer = setInterval(() => {
+    if (value >= 99) return clearInterval(timer);
+    paint(Math.min(99, value + 1), value < 60 ? "Loading scene" : "Finishing the first frame");
+  }, 70);
+}
+
+document.querySelectorAll("[data-state]").forEach((b) =>
+  b.addEventListener("click", () => show(b.dataset.state)));
+show("loading");
+</script>
+</body>
+</html>

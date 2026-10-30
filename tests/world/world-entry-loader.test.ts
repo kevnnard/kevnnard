@@ -69,33 +69,60 @@ describe("world entry loader contract (S1, S4)", () => {
   });
 });
 
-describe("world entry loader copy matches artboard 03 (S1)", () => {
-  it("keeps the heading, the three phases and the entry label", () => {
+describe("world entry loader copy matches artboard 06 (S1)", () => {
+  it("keeps the titleblock, the four milestones, the status and the entry", () => {
     for (const copy of [
-      "World assembly",
-      "Building a place",
-      "to look around.",
-      "Scene foundations",
-      "Models & materials",
+      "Kevnnard · world entry · sheet 01",
+      "Drawing the house",
+      "Nature and sky",
+      "Ground and surfaces",
+      "Living interior",
       "First frame",
-      "Preparing your world…",
+      "Ready to enter",
+      "Not ready",
+      "A small house in the forest.",
       "Enter world",
       "Back to portfolio",
-      "KEVNNARD / WORLD",
-      "Sound follows your saved preference.",
     ]) {
       assert.ok(loader.includes(copy), `missing copy ${copy}`);
     }
     assert.match(loader, /href="\/"/);
+    for (const old of [
+      "World assembly",
+      "KEVNNARD / WORLD",
+      "Building a place",
+    ]) {
+      assert.ok(!loader.includes(old), `stale artboard 03 copy ${old}`);
+    }
   });
 
-  it("draws the house as an original stroked line drawing on the left", () => {
-    assert.match(loader, /<svg[\s\S]*viewBox="0 0 440 360"/);
-    assert.match(loader, /pathLength=\{1\}/);
-    assert.ok(
-      loader.indexOf("<svg") < loader.indexOf("<h2"),
-      "drawing precedes the heading",
+  it("draws the house as a blueprint in ten sequential ink orders", () => {
+    assert.match(loader, /<svg[\s\S]*className="world-entry-blueprint"/);
+    assert.match(loader, /viewBox="0 0 720 440"/);
+    const orders = new Set(
+      [...loader.matchAll(/data-order="(\d+)"/g)].map((m) => Number(m[1])),
     );
+    assert.deepEqual(
+      [...orders].sort((a, b) => a - b),
+      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+    );
+    for (const ink of loader.match(/<path[^>]*>/g) ?? []) {
+      assert.match(ink, /className="world-entry-ink/);
+      assert.match(ink, /pathLength=\{1\}/);
+    }
+    assert.match(loader, /className="world-entry-glow"/);
+    assert.equal(loader.match(/className="world-entry-window"/g)?.length, 2);
+    // Ink order comes from the real percentage, never from a clock.
+    assert.match(loader, /const orderT = \(percent \/ 100\) \* 10;/);
+    assert.match(loader, /"--world-entry-order-t": orderT,/);
+  });
+
+  it("lights the milestones from the real percentage", () => {
+    assert.match(
+      loader,
+      /data-on=\{percent >= m\.threshold \? "true" : "false"\}/,
+    );
+    assert.equal(loader.match(/threshold: \d+/g)?.length, 4);
   });
 });
 
@@ -115,11 +142,17 @@ describe("world entry loader accessibility (S1, S4)", () => {
   it("announces only the phase politely, never every number", () => {
     assert.match(loader, /role="status"/);
     assert.equal(loader.match(/aria-live=/g)?.length ?? 0, 0);
-    assert.match(loader, /aria-hidden="true">\s*\{count\}/);
+    assert.match(
+      loader,
+      /className="world-entry-pct" aria-hidden="true">\s*\{percent\}/,
+    );
   });
 
   it("shows an alert, a retry and the portfolio link on error", () => {
-    assert.match(loader, /role="alert"/);
+    assert.match(
+      loader,
+      /\{failed && \(\s*<div className="world-entry-error" role="alert">/,
+    );
     assert.match(loader, /onRetry && \(/);
     assert.match(loader, /Try again/);
   });
@@ -128,6 +161,9 @@ describe("world entry loader accessibility (S1, S4)", () => {
     assert.match(loader, /role="dialog"/);
     assert.match(loader, /aria-modal="true"/);
     assert.match(loader, /aria-labelledby=\{headingId\}/);
+    assert.match(loader, /id=\{headingId\}/);
+    // The page already owns <main>; the overlay must not nest another one.
+    assert.doesNotMatch(loader, /<main/);
     // Focus effects depend on readiness, never on the percentage.
     const deps = [...loader.matchAll(/\}, \[([^\]]*)\]\);/g)].map((m) => m[1]);
     assert.ok(deps.length >= 2, "expected mount and readiness effects");
@@ -181,22 +217,69 @@ describe("world entry loader stylesheet (S2)", () => {
     assert.match(rule(".world-entry-link"), /min-height: 44px;/);
   });
 
-  it("draws the wire from the real percentage with a stroke dash", () => {
-    const wire = rule(".world-entry-wire path");
-    assert.match(wire, /stroke-dasharray: 1;/);
+  it("inks each order from the real percentage with a stroke dash", () => {
+    const ink = rule(".world-entry-ink");
+    assert.match(ink, /stroke-dasharray: 1;/);
     assert.match(
-      wire,
-      /stroke-dashoffset: calc\(1 - var\(--world-entry-progress\)\);/,
+      ink.replace(/\s+/g, " "),
+      /stroke-dashoffset: calc\( 1 - clamp\(0, calc\(var\(--world-entry-order-t, 0\) - var\(--ink-order, 0\)\), 1\) \);/,
+    );
+    for (let order = 0; order <= 9; order++) {
+      assert.match(
+        rule(`.world-entry-ink[data-order="${order}"]`),
+        new RegExp(`--ink-order: ${order};`),
+        `missing ink order ${order}`,
+      );
+    }
+  });
+
+  it("lights the windows and the warm glow only at readiness", () => {
+    assert.match(rule(".world-entry-glow"), /fill: rgba\(16, 185, 129, 0\);/);
+    assert.match(
+      rule(".world-entry-window"),
+      /fill: rgba\(250, 250, 250, 0\);/,
+    );
+    assert.match(
+      rule(".world-entry-ready .world-entry-glow"),
+      /fill: rgba\(16, 185, 129, 0\.12\);/,
+    );
+    assert.match(
+      rule(".world-entry-ready .world-entry-window"),
+      /fill: rgba\(250, 250, 250, 0\.9\);/,
+    );
+    assert.match(
+      loader,
+      /world-entry-loader \$\{ready \? "world-entry-ready" : ""\}/,
     );
   });
 
   it("stacks on small viewports and stays static under reduced motion", () => {
-    assert.match(css, /@container world-entry \(max-width: 650px\)/);
-    assert.match(css, /grid-template-columns: 1fr;/);
+    assert.match(css, /@container world-entry \(max-width: 720px\)/);
     assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
     assert.match(css, /\.world-entry-loader\[data-reduced-motion="true"\]/);
-    // Reduced motion completes the drawing in CSS; the bar keeps the value.
-    assert.match(loader, /"--world-entry-progress": percent \/ 100,/);
-    assert.doesNotMatch(css, /\.world-entry-bar-fill \{[^}]*transform: none/);
+    const reduced = css.match(
+      /(\.world-entry-loader\[data-reduced-motion="true"\] [^{]+)\{\s*transition: none;\s*animation: none;\s*\}/,
+    );
+    assert.ok(
+      reduced,
+      "reduced-motion prop must drop transitions and animations",
+    );
+    for (const part of [
+      "world-entry-ink",
+      "world-entry-glow",
+      "world-entry-window",
+      "world-entry-status-dot",
+    ]) {
+      assert.ok(reduced[1].includes(part), `reduced motion misses ${part}`);
+    }
+    assert.match(
+      rule('.world-entry-loader[data-reduced-motion="true"] .world-entry-ink'),
+      /stroke-dashoffset: 0;/,
+    );
+    const media = css.slice(
+      css.indexOf("@media (prefers-reduced-motion: reduce)"),
+    );
+    assert.match(media, /transition: none;\s*animation: none;/);
+    assert.match(media, /\.world-entry-ink \{\s*stroke-dashoffset: 0;/);
   });
 });

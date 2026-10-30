@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Signal field · World entry</title>
+<style>
+:root {
+  --bg: #09090b; --fg: #fafafa; --muted: #a1a1aa; --line: #27272a;
+  --accent: #10b981; --focus: #d4d4d8; --error-text: #fca5a5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); overflow: hidden; }
+body { display: grid; place-items: center; min-height: 100vh; }
+canvas { position: fixed; inset: 0; width: 100%; height: 100%; }
+main { position: relative; display: grid; justify-items: center; gap: 16px; width: min(420px, 88vw); text-align: center; }
+.kicker { margin: 0; font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
+h1 { margin: 0; font-size: 20px; font-weight: 600; text-shadow: 0 0 18px var(--bg), 0 0 6px var(--bg); }
+.pct { font-size: 36px; font-weight: 600; font-variant-numeric: tabular-nums; text-shadow: 0 0 18px var(--bg), 0 0 6px var(--bg); }
+.phase { margin: 0; min-height: 20px; font-size: 14px; color: var(--muted); text-shadow: 0 0 14px var(--bg); }
+.note { margin: 0; min-height: 40px; font-size: 14px; color: var(--muted); text-shadow: 0 0 14px var(--bg); }
+.note.error { color: var(--error-text); }
+button { font: inherit; font-size: 14px; height: 40px; padding: 0 20px; border: 0; border-radius: 6px; background: var(--fg); color: #18181b; cursor: pointer; }
+button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+button[hidden] { display: none; }
+.preview { display: flex; gap: 8px; }
+.preview button { height: 28px; padding: 0 10px; font-size: 12px; background: transparent; color: var(--muted); border: 1px solid var(--line); }
+.preview button[aria-pressed="true"] { color: var(--fg); border-color: var(--accent); }
+.caption { margin: 0; font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<canvas id="field" aria-hidden="true"></canvas>
+<main aria-labelledby="title">
+  <p class="kicker">World · entry</p>
+  <h1 id="title">Tuning the signal</h1>
+  <div class="pct" id="pct" role="progressbar" aria-label="World loading" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">0%</div>
+  <p class="phase" id="phase">Loading scene</p>
+  <p class="note" id="note" aria-live="polite"></p>
+  <button id="enter" type="button" hidden>Enter world</button>
+  <div class="preview" role="group" aria-label="Preview states">
+    <button type="button" data-state="loading" aria-pressed="true">Loading</button>
+    <button type="button" data-state="ready" aria-pressed="false">Ready</button>
+    <button type="button" data-state="error" aria-pressed="false">Error</button>
+  </div>
+  <p class="caption">Preview only: the progress is simulated, never real loading telemetry.</p>
+</main>
+<script>
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const canvas = document.getElementById("field");
+const ctx = canvas.getContext("2d");
+const pct = document.getElementById("pct");
+const bar = pct;
+const phase = document.getElementById("phase");
+const note = document.getElementById("note");
+const enter = document.getElementById("enter");
+let value = 0;
+let timer;
+let target = 0;
+let frame;
+
+// Particles drift at random, then pull toward a house outline as progress rises.
+const HOUSE = [[0,-0.55],[0.42,-0.12],[0.42,0.42],[-0.42,0.42],[-0.42,-0.12]];
+const dots = Array.from({ length: 140 }, () => ({
+  x: Math.random(), y: Math.random(),
+  dx: (Math.random() - 0.5) * 0.0006, dy: (Math.random() - 0.5) * 0.0006,
+  a: HOUSE[Math.floor(Math.random() * HOUSE.length)],
+  t: Math.random(),
+}));
+
+function resize() {
+  canvas.width = innerWidth * devicePixelRatio;
+  canvas.height = innerHeight * devicePixelRatio;
+  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  draw();
+}
+
+function anchor(d, w, h) {
+  // Points along the outline: a simple house silhouette in the centre.
+  const i = Math.floor(d.t * 5) % 5;
+  const [ax, ay] = HOUSE[i];
+  const cx = w / 2 + ax * Math.min(w, h) * 0.5;
+  const cy = h / 2 + ay * Math.min(w, h) * 0.5;
+  return [cx, cy];
+}
+
+function draw() {
+  const w = innerWidth, h = innerHeight;
+  ctx.clearRect(0, 0, w, h);
+  const pull = value / 100;
+  for (const d of dots) {
+    if (!reduced) {
+      d.x += d.dx; d.y += d.dy;
+      if (d.x < 0 || d.x > 1) d.dx *= -1;
+      if (d.y < 0 || d.y > 1) d.dy *= -1;
+    }
+    const x = d.x * w, y = d.y * h;
+    const [tx, ty] = anchor(d, w, h);
+    const px = x + (tx - x) * pull * 0.9;
+    const py = y + (ty - y) * pull * 0.9;
+    ctx.fillStyle = `rgba(16,185,129,${0.25 + pull * 0.6})`;
+    ctx.fillRect(px, py, 2, 2);
+  }
+}
+
+function loop() {
+  draw();
+  frame = requestAnimationFrame(loop);
+}
+
+function paint(v, label) {
+  value = v;
+  pct.textContent = v + "%";
+  bar.setAttribute("aria-valuenow", String(v));
+  phase.textContent = label;
+  if (reduced) draw();
+}
+
+function show(state) {
+  clearInterval(timer);
+  document.querySelectorAll("[data-state]").forEach((b) =>
+    b.setAttribute("aria-pressed", String(b.dataset.state === state)));
+  note.classList.remove("error");
+  enter.hidden = true;
+  if (state === "ready") {
+    paint(100, "Ready");
+    note.textContent = "The house is assembled. Enter when you are ready.";
+    enter.hidden = false;
+    return;
+  }
+  if (state === "error") {
+    paint(value, "Stopped");
+    note.classList.add("error");
+    note.textContent = "The scene could not load. Check the connection and retry.";
+    return;
+  }
+  // Simulated: holds at 99 until the real readiness signal arrives.
+  paint(0, "Loading scene");
+  note.textContent = "";
+  timer = setInterval(() => {
+    if (value >= 99) return clearInterval(timer);
+    paint(Math.min(99, value + 1), value < 60 ? "Loading scene" : "Finishing the first frame");
+  }, 70);
+}
+
+window.addEventListener("resize", resize);
+document.querySelectorAll("[data-state]").forEach((b) =>
+  b.addEventListener("click", () => show(b.dataset.state)));
+resize();
+if (!reduced) loop();
+show("loading");
+</script>
+</body>
+</html>

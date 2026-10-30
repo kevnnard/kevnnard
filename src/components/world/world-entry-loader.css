@@ -1,11 +1,12 @@
 /*
- * World entry loader (world-entry-loader T1), from
- * design/world-entry-loader/03-world-assembly.html, in design/system.md's
- * dark tokens: #09090b, #18181b, #27272a, #a1a1aa, #d4d4d8, #fafafa, the
- * #10b981 accent and #7f1d1d for errors. The parent mounts it inside the
- * position: relative world viewport, above the HUD; nothing here styles the
- * page.
+ * World entry loader (world-entry-loader T1 refresh), from
+ * design/world-loader-refresh/06-blueprint-home.html, in design/system.md's
+ * dark tokens: #09090b, #18181b, #27272a, #a1a1aa, #d4d4d8, #fafafa,
+ * the #10b981 accent and #7f1d1d for errors. Faint ink is #a1a1aa at reduced
+ * stroke opacity instead of the artboard's off-token grays.
+ * Overlay over the world viewport, z-index 50, above the HUD.
  */
+
 .world-entry-loader {
   position: absolute;
   inset: 0;
@@ -15,183 +16,341 @@
   background: #09090b;
   color: #fafafa;
   pointer-events: auto;
-  font:
-    14px / 20px ui-sans-serif,
-    system-ui,
-    -apple-system,
-    "Segoe UI",
-    sans-serif;
-}
-.world-entry-shell {
-  box-sizing: border-box;
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  padding: 24px 4cqi;
-  background: linear-gradient(
-    90deg,
-    transparent 19.9%,
-    rgba(16, 185, 129, 0.05) 20%,
-    transparent 20.1%,
-    transparent 74.9%,
-    rgba(16, 185, 129, 0.05) 75%,
-    transparent 75.1%
-  );
-}
-.world-entry-header,
-.world-entry-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
+
+/* Blueprint grid background: system emerald at 0.08 alpha fading radially */
+.world-entry-loader::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(16, 185, 129, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 185, 129, 0.08) 1px, transparent 1px);
+  background-size: 48px 48px;
+  -webkit-mask-image: radial-gradient(
+    ellipse 70% 70% at 50% 45%,
+    #000 20%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    ellipse 70% 70% at 50% 45%,
+    #000 20%,
+    transparent 100%
+  );
+}
+
+.world-entry-shell {
+  position: relative;
+  box-sizing: border-box;
+  min-height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 24px;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* Header: titleblock on the left, readout on the right */
 .world-entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
   border-bottom: 1px solid #27272a;
   padding-bottom: 16px;
 }
-.world-entry-brand {
-  color: #a1a1aa;
-}
-.world-entry-footer {
-  padding: 16px 0;
-  font-size: 12px;
-  line-height: 16px;
-  color: #a1a1aa;
-}
-.world-entry-main {
-  flex: 1;
+
+.world-entry-titleblock {
   display: grid;
-  place-items: center;
-  padding: 48px 0;
-}
-.world-entry-assembly {
-  width: min(880px, 100%);
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  align-items: center;
-  gap: 48px;
+  gap: 6px;
 }
 
-/* Drawing: the wire reveals with the real percentage, never on its own. */
-.world-entry-drawing {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-.world-entry-floor {
-  fill: #18181b;
-  stroke: #27272a;
-}
-.world-entry-wire {
-  fill: none;
-  stroke: #10b981;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.world-entry-wire path {
-  stroke-dasharray: 1;
-  stroke-dashoffset: calc(1 - var(--world-entry-progress));
-  transition: stroke-dashoffset 0.2s ease-out;
-}
-.world-entry-nodes {
-  fill: #fafafa;
-}
-.world-entry-caption {
-  fill: #a1a1aa;
+.world-entry-topline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 16px;
   font-size: 12px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
-/* Panel: heading, checklist, meter and entry. */
-.world-entry-eyebrow {
-  margin: 0;
-  font:
-    12px / 16px ui-monospace,
-    SFMono-Regular,
-    Menlo,
-    Consolas,
-    monospace;
+.world-entry-sheet-ref {
+  letter-spacing: 0.15em;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #10b981;
+  color: #a1a1aa;
 }
+
 .world-entry-heading {
-  margin: 24px 0;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 36px;
-  line-height: 1.1;
-  letter-spacing: -0.03em;
+  margin: 4px 0 0;
+  font-size: 24px;
+  line-height: 1.2;
   font-weight: 600;
+  color: #fafafa;
 }
+
 .world-entry-heading:focus {
   outline: none;
 }
+
 .world-entry-heading:focus-visible {
   outline: 3px solid rgba(212, 212, 216, 0.5);
   outline-offset: 4px;
 }
-.world-entry-steps {
-  list-style: none;
-  margin: 24px 0;
-  padding: 0;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+.world-entry-readout {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  min-width: 120px;
 }
-.world-entry-steps li {
-  display: flex;
-  gap: 12px;
-  padding: 12px 0;
-  border-bottom: 1px solid #27272a;
-  color: #a1a1aa;
-}
-.world-entry-steps li[data-done="true"] {
+
+.world-entry-pct {
+  display: block;
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1;
   color: #fafafa;
 }
-.world-entry-steps span {
-  color: #10b981;
-}
-.world-entry-meter {
-  margin: 24px 0;
-}
-.world-entry-meter-top {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 12px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-}
-.world-entry-phase {
-  margin: 0;
-  font-size: 12px;
-  line-height: 16px;
-  color: #a1a1aa;
-}
-.world-entry-count {
-  font-size: 36px;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.05em;
-}
-.world-entry-count-total {
+
+.world-entry-pct small {
   font-size: 14px;
-  letter-spacing: 0;
+  font-weight: 500;
+  color: #a1a1aa;
+  margin-left: 4px;
+}
+
+.world-entry-phase {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #a1a1aa;
+  min-height: 18px;
+}
+
+/* Drawing sheet */
+.world-entry-sheet {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 320px;
+}
+
+.world-entry-blueprint {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 440px;
+}
+
+.world-entry-glow {
+  fill: rgba(16, 185, 129, 0);
+  transition: fill 1400ms ease-out;
+}
+
+.world-entry-ready .world-entry-glow {
+  fill: rgba(16, 185, 129, 0.12);
+}
+
+.world-entry-window {
+  fill: rgba(250, 250, 250, 0);
+  transition: fill 1400ms ease-out;
+}
+
+.world-entry-ready .world-entry-window {
+  fill: rgba(250, 250, 250, 0.9);
+}
+
+/* Ink paths: stroked via stroke-dashoffset driven by data-order and progress */
+.world-entry-ink {
+  fill: none;
+  stroke: #10b981;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc(
+    1 -
+    clamp(0, calc(var(--world-entry-order-t, 0) - var(--ink-order, 0)), 1)
+  );
+  transition:
+    stroke-dashoffset 0.3s ease-out,
+    stroke 1200ms ease-out;
+}
+
+.world-entry-ink[data-order="0"] {
+  --ink-order: 0;
+}
+.world-entry-ink[data-order="1"] {
+  --ink-order: 1;
+}
+.world-entry-ink[data-order="2"] {
+  --ink-order: 2;
+}
+.world-entry-ink[data-order="3"] {
+  --ink-order: 3;
+}
+.world-entry-ink[data-order="4"] {
+  --ink-order: 4;
+}
+.world-entry-ink[data-order="5"] {
+  --ink-order: 5;
+}
+.world-entry-ink[data-order="6"] {
+  --ink-order: 6;
+}
+.world-entry-ink[data-order="7"] {
+  --ink-order: 7;
+}
+.world-entry-ink[data-order="8"] {
+  --ink-order: 8;
+}
+.world-entry-ink[data-order="9"] {
+  --ink-order: 9;
+}
+
+.world-entry-ink-faint,
+.world-entry-dim {
+  stroke: #a1a1aa;
+  stroke-opacity: 0.35;
+  stroke-width: 1;
+}
+
+.world-entry-dim-label {
+  font-size: 11px;
+  fill: #a1a1aa;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.world-entry-ready .world-entry-ink {
+  stroke: #fafafa;
+}
+
+.world-entry-ready .world-entry-ink-faint,
+.world-entry-ready .world-entry-dim {
+  stroke: #a1a1aa;
+  stroke-opacity: 0.5;
+}
+
+/* Footer: 4 milestone ticks, status line, about copy, errors and enter */
+.world-entry-footer {
+  display: grid;
+  gap: 16px;
+  border-top: 1px solid #27272a;
+  padding-top: 16px;
+}
+
+.world-entry-ticks {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.world-entry-tick {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
   color: #a1a1aa;
 }
-.world-entry-bar {
-  height: 3px;
-  background: #27272a;
-  overflow: hidden;
-}
-.world-entry-bar-fill {
+
+.world-entry-tick i {
   display: block;
-  height: 100%;
-  background: #10b981;
-  transform: scaleX(var(--world-entry-progress));
-  transform-origin: left;
-  transition: transform 0.2s ease-out;
+  height: 2px;
+  background: #27272a;
+  transition: background 300ms ease-out;
 }
+
+.world-entry-tick[data-on="true"] {
+  color: #fafafa;
+}
+
+.world-entry-tick[data-on="true"] i {
+  background: #10b981;
+}
+
+.world-entry-foot-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+
+.world-entry-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #a1a1aa;
+}
+
+.world-entry-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #27272a;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0);
+  transition:
+    background 400ms ease-out,
+    box-shadow 400ms ease-out;
+}
+
+.world-entry-status[data-state="loading"] .world-entry-status-dot {
+  background: #10b981;
+  animation: world-entry-pulse 1.6s ease-in-out infinite;
+}
+
+.world-entry-status[data-state="ready"] {
+  color: #fafafa;
+}
+
+.world-entry-status[data-state="ready"] .world-entry-status-dot {
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
+  animation: none;
+}
+
+.world-entry-status[data-state="error"] {
+  color: #fafafa;
+}
+
+.world-entry-status[data-state="error"] .world-entry-status-dot {
+  background: #7f1d1d;
+  animation: none;
+}
+
+@keyframes world-entry-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.world-entry-about {
+  margin: 0;
+  max-width: 48ch;
+  text-align: right;
+  font-size: 12px;
+  line-height: 18px;
+  color: #a1a1aa;
+}
+
+.world-entry-about strong {
+  color: #fafafa;
+  font-weight: 500;
+}
+
+.world-entry-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
 .world-entry-button {
   min-height: 44px;
   padding: 12px 24px;
@@ -200,30 +359,37 @@
   background: #18181b;
   color: #fafafa;
   font: inherit;
+  font-size: 14px;
   cursor: pointer;
 }
+
 .world-entry-button:hover {
   background: #27272a;
 }
+
 .world-entry-button:disabled {
   opacity: 0.5;
   cursor: wait;
 }
+
 .world-entry-loader[data-state="error"] .world-entry-enter:disabled {
   cursor: not-allowed;
 }
+
 .world-entry-enter {
   min-width: 240px;
-  margin-top: 16px;
 }
+
 .world-entry-enter:not(:disabled) {
   border-color: #fafafa;
   background: #fafafa;
   color: #18181b;
 }
+
 .world-entry-enter:not(:disabled):hover {
   background: rgba(250, 250, 250, 0.9);
 }
+
 .world-entry-link {
   display: inline-flex;
   align-items: center;
@@ -231,14 +397,17 @@
   color: #d4d4d8;
   text-decoration: none;
 }
+
 .world-entry-link:hover {
   color: #fafafa;
 }
+
 .world-entry-button:focus-visible,
 .world-entry-link:focus-visible {
   outline: 3px solid rgba(212, 212, 216, 0.5);
   outline-offset: 4px;
 }
+
 .world-entry-error {
   margin: 16px 0 0;
   padding: 12px 16px;
@@ -246,17 +415,19 @@
   border-radius: 6px;
   background: rgba(127, 29, 29, 0.2);
 }
+
 .world-entry-error p {
   margin: 0;
 }
+
 .world-entry-error-detail {
   margin-top: 4px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 12px;
   line-height: 16px;
   color: #a1a1aa;
   overflow-wrap: anywhere;
 }
+
 .world-entry-error-actions {
   display: flex;
   flex-wrap: wrap;
@@ -265,31 +436,34 @@
   margin-top: 12px;
 }
 
-@container world-entry (max-width: 650px) {
+@container world-entry (max-width: 720px) {
   .world-entry-shell {
     padding: 16px;
-  }
-  .world-entry-main {
-    padding: 24px 0;
-  }
-  .world-entry-assembly {
-    grid-template-columns: 1fr;
     gap: 16px;
   }
-  .world-entry-drawing {
-    max-height: 200px;
+  .world-entry-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
-  .world-entry-heading {
-    font-size: 28px;
+  .world-entry-readout {
+    text-align: left;
   }
-  .world-entry-count {
-    font-size: 28px;
+  .world-entry-blueprint {
+    max-height: 260px;
   }
-  .world-entry-brand {
-    display: none;
+  .world-entry-ticks {
+    grid-template-columns: repeat(2, 1fr);
   }
-  .world-entry-footer {
-    flex-wrap: wrap;
+  .world-entry-foot-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .world-entry-about {
+    text-align: left;
+    max-width: none;
+  }
+  .world-entry-actions {
+    justify-content: stretch;
   }
   .world-entry-enter {
     width: 100%;
@@ -297,20 +471,30 @@
   }
 }
 
-/* Reduced motion: the drawing is complete and still; the bar holds the value. */
-.world-entry-loader[data-reduced-motion="true"] .world-entry-wire path,
-.world-entry-loader[data-reduced-motion="true"] .world-entry-bar-fill {
+/* Reduced motion: ink complete, no transition/pulse; status dot static */
+.world-entry-loader[data-reduced-motion="true"] .world-entry-ink,
+.world-entry-loader[data-reduced-motion="true"] .world-entry-glow,
+.world-entry-loader[data-reduced-motion="true"] .world-entry-window,
+.world-entry-loader[data-reduced-motion="true"] .world-entry-status-dot,
+.world-entry-loader[data-reduced-motion="true"] .world-entry-tick i {
   transition: none;
+  animation: none;
 }
-.world-entry-loader[data-reduced-motion="true"] .world-entry-wire path {
+
+.world-entry-loader[data-reduced-motion="true"] .world-entry-ink {
   stroke-dashoffset: 0;
 }
+
 @media (prefers-reduced-motion: reduce) {
-  .world-entry-wire path,
-  .world-entry-bar-fill {
+  .world-entry-ink,
+  .world-entry-glow,
+  .world-entry-window,
+  .world-entry-status-dot,
+  .world-entry-tick i {
     transition: none;
+    animation: none;
   }
-  .world-entry-wire path {
+  .world-entry-ink {
     stroke-dashoffset: 0;
   }
 }

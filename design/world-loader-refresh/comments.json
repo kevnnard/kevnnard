@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "comments": [
+    {
+      "id": "b4rthgv5",
+      "file": "06-blueprint-home.html",
+      "selector": "#main > footer > div:nth-of-type(3)",
+      "excerpt": "Loading Ready Error Preview only: the progress is simulated, never real loading telemetry.",
+      "comment": "cambiaria esto por una mejor ui de lsito o no",
+      "createdAt": "2026-10-30T17:53:27.086Z",
+      "status": "resolved",
+      "sentAt": "2026-10-30T17:53:27.106Z",
+      "resolvedAt": "2026-10-30T17:53:48.977Z"
+    },
+    {
+      "id": "frybbb0m",
+      "file": "06-blueprint-home.html",
+      "selector": "#main > footer > div:nth-of-type(3) > div:nth-of-type(2)",
+      "excerpt": "Loading Ready Error",
+      "comment": "redudnadte estos btoones implementaria algo mejor o un texto de que trata mi mundo corto y conciso",
+      "createdAt": "2026-10-30T17:54:27.642Z",
+      "status": "resolved",
+      "sentAt": "2026-10-30T17:54:27.652Z",
+      "resolvedAt": "2026-10-30T17:54:42.428Z"
+    }
+  ]
+}

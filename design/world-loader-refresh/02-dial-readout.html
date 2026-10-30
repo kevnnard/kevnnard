@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dial readout · World entry</title>
+<style>
+:root {
+  --bg: #09090b; --fg: #fafafa; --muted: #a1a1aa; --line: #27272a; --card: #09090b;
+  --accent: #10b981; --focus: #d4d4d8; --error-text: #fca5a5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); }
+body { display: grid; place-items: center; min-height: 100vh; }
+main { display: grid; justify-items: center; gap: 20px; width: min(420px, 88vw); text-align: center; }
+.kicker { margin: 0; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+svg { width: 220px; height: 220px; }
+.ring-bg { fill: none; stroke: var(--line); stroke-width: 6; }
+.ring { fill: none; stroke: var(--accent); stroke-width: 6; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 110px 110px; transition: stroke-dashoffset 400ms ease-out; }
+.readout { font-size: 44px; font-weight: 600; fill: var(--fg); font-variant-numeric: tabular-nums; }
+.unit { font-size: 12px; fill: var(--muted); letter-spacing: 0.1em; }
+.phase { margin: 0; font-size: 14px; color: var(--muted); min-height: 20px; }
+.note { margin: 0; min-height: 40px; font-size: 14px; color: var(--muted); }
+.note.error { color: var(--error-text); }
+button { font: inherit; font-size: 14px; height: 36px; padding: 0 16px; border: 0; border-radius: 6px; background: var(--fg); color: #18181b; cursor: pointer; }
+button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+button[hidden] { display: none; }
+.preview { display: flex; gap: 8px; }
+.preview button { height: 28px; padding: 0 10px; font-size: 12px; background: transparent; color: var(--muted); border: 1px solid var(--line); }
+.preview button[aria-pressed="true"] { color: var(--fg); border-color: var(--accent); }
+.caption { margin: 0; font-size: 12px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .ring { transition: none; } }
+</style>
+</head>
+<body>
+<main aria-labelledby="title">
+  <p class="kicker">World · entry</p>
+  <h2 id="title" style="margin:0;font-size:20px;font-weight:600">Preparing the house</h2>
+  <div role="progressbar" aria-label="World loading" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="gauge">
+    <svg viewBox="0 0 220 220" aria-hidden="true">
+      <circle class="ring-bg" cx="110" cy="110" r="96"></circle>
+      <circle class="ring" id="ring" cx="110" cy="110" r="96" stroke-dasharray="603.19" stroke-dashoffset="603.19"></circle>
+      <text class="readout" id="readout" x="110" y="118" text-anchor="middle">0</text>
+      <text class="unit" x="110" y="146" text-anchor="middle">PERCENT</text>
+    </svg>
+  </div>
+  <p class="phase" id="phase">Loading scene</p>
+  <p class="note" id="note" aria-live="polite"></p>
+  <button id="enter" type="button" hidden>Enter world</button>
+  <div class="preview" role="group" aria-label="Preview states">
+    <button type="button" data-state="loading" aria-pressed="true">Loading</button>
+    <button type="button" data-state="ready" aria-pressed="false">Ready</button>
+    <button type="button" data-state="error" aria-pressed="false">Error</button>
+  </div>
+  <p class="caption">Preview only: the counter is simulated, never real loading telemetry.</p>
+</main>
+<script>
+const C = 603.19;
+const gauge = document.getElementById("gauge");
+const ring = document.getElementById("ring");
+const readout = document.getElementById("readout");
+const phase = document.getElementById("phase");
+const note = document.getElementById("note");
+const enter = document.getElementById("enter");
+let value = 0;
+let timer;
+
+function paint(v, label) {
+  value = v;
+  ring.style.strokeDashoffset = String(C * (1 - v / 100));
+  readout.textContent = String(v);
+  gauge.setAttribute("aria-valuenow", String(v));
+  phase.textContent = label;
+}
+
+function show(state) {
+  clearInterval(timer);
+  document.querySelectorAll("[data-state]").forEach((b) =>
+    b.setAttribute("aria-pressed", String(b.dataset.state === state)));
+  note.classList.remove("error");
+  enter.hidden = true;
+  if (state === "ready") {
+    paint(100, "Ready");
+    note.textContent = "Everything the scene needs is in place.";
+    enter.hidden = false;
+    return;
+  }
+  if (state === "error") {
+    paint(value, "Stopped");
+    note.classList.add("error");
+    note.textContent = "The scene could not load. Check the connection and retry.";
+    return;
+  }
+  // Simulated: holds at 99 until the real readiness signal arrives.
+  paint(0, "Loading scene");
+  note.textContent = "";
+  timer = setInterval(() => {
+    if (value >= 99) return clearInterval(timer);
+    paint(Math.min(99, value + 1), value < 60 ? "Loading scene" : "Finishing the first frame");
+  }, 60);
+}
+
+document.querySelectorAll("[data-state]").forEach((b) =>
+  b.addEventListener("click", () => show(b.dataset.state)));
+show("loading");
+</script>
+</body>
+</html>

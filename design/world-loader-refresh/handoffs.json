@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "chosen": "06-blueprint-home.html",
+  "handoffs": {
+    "06-blueprint-home.html": {
+      "status": "implemented",
+      "queued": true,
+      "sentAt": "2026-10-30T17:55:12.190Z",
+      "startedAt": null,
+      "implementedAt": "2026-10-30T18:00:38.661Z",
+      "feature": "odd/tasks/world-entry-loader.md",
+      "note": "Blueprint home (artboard 06) implemented in production: SVG blueprint with 10 sequential ink orders, readiness warm glow and lit windows, status indicator and copy about the world. Full suite 758/758, Biome, scoped tsc and Astro build pass.",
+      "previewUrl": "http://localhost:4321/world"
+    }
+  }
+}

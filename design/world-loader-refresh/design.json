@@ -1,0 +1,49 @@
+{
+  "title": "World entry loader refresh",
+  "brief": "Replace the current /world entry loader with clearer, calmer directions. Same rules: honest real progress capped at 99 until ready, a minimum 2.5 s reveal, errors with retry, Enter world after readiness, and a smooth entry transition with reduced-motion support.",
+  "feature": "odd/tasks/world-entry-loader.md",
+  "artboards": [
+    {
+      "file": "01-monolith-meter.html",
+      "title": "Monolith meter",
+      "tradeoff": "Quietest and smallest to read; shows less about what is preparing",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "02-dial-readout.html",
+      "title": "Dial readout",
+      "tradeoff": "Echoes the clock dial and makes the percentage the hero; a ring is more visual weight",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "03-phase-rail.html",
+      "title": "Phase rail",
+      "tradeoff": "Names each real milestone, so the wait is explained; more text to scan",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "04-wordmark-fill.html",
+      "title": "Wordmark fill",
+      "tradeoff": "Brand-led: KEVNNARD lights letter by letter with progress; the most identity, a little less information",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "05-signal-field.html",
+      "title": "Signal field",
+      "tradeoff": "Most atmosphere: particles gather into the house as progress rises; a canvas loop, static under reduced motion",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "06-blueprint-home.html",
+      "title": "Blueprint home",
+      "tradeoff": "Tells the story of the site: the house draws itself as a blueprint with real progress and lights up on ready; the richest to build, needs care on small screens",
+      "width": 1440,
+      "height": 900
+    }
+  ]
+}
