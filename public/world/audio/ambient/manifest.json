@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "note": "Ambient event sounds for the world. Each one is CC0; listed here for provenance and credits. Freesound candidates were verified but not used: their downloads need a login.",
+  "sounds": [
+    {
+      "id": "owl-hoot",
+      "event": "night owl",
+      "author": "SFXMint",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source": "https://sfxmint.com/sounds/animal-owl-01",
+      "download": "https://sfxmint.com/dl/animal-owl-01.mp3",
+      "evidence": "CC0 · no signup ... Free CC0 WAV and MP3 for apps and games, no attribution.",
+      "file": "/world/audio/ambient/owl-hoot.mp3",
+      "bytes": 33061,
+      "sha256": "234888341bb2e8e386d568a8db987419559689b1b5427de789fde3864d3af83b"
+    },
+    {
+      "id": "rooster-crow",
+      "event": "wake-up rooster",
+      "author": "SFXMint",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source": "https://sfxmint.com/sounds/rooster-crow-02",
+      "download": "https://sfxmint.com/dl/rooster-crow-02.mp3",
+      "evidence": "CC0 · no signup ... Free CC0 WAV and MP3 for apps and games, no attribution.",
+      "file": "/world/audio/ambient/rooster-crow.mp3",
+      "bytes": 63990,
+      "sha256": "7d64b3703b93b14e648f6fa3ee2218f8d70c58edab436340b861871691a95e63"
+    },
+    {
+      "id": "birds-chirp",
+      "event": "midday birds",
+      "author": "syncopika",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source": "https://opengameart.org/content/bird-chirping-sounds",
+      "download": "https://opengameart.org/sites/default/files/birdchirping071414.mp3",
+      "evidence": "License(s): CC0 (OpenGameArt page, July 15, 2014; file birdchirping071414.mp3).",
+      "file": "/world/audio/ambient/birds-chirp.mp3",
+      "bytes": 120417,
+      "sha256": "40310829b1f5a295731a974f7da783be5a46e77b9859a930cce19eca13430cb6"
+    },
+    {
+      "id": "crickets-night",
+      "event": "night crickets",
+      "author": "SFXMint",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source": "https://sfxmint.com/sounds/animal-insect-71",
+      "download": "https://sfxmint.com/dl/animal-insect-71.mp3",
+      "evidence": "CC0 · no signup ... Free CC0 WAV and MP3 for apps and games, no attribution. (Cricket Chirping Insect Buzzing 71, 7.9 s)",
+      "file": "/world/audio/ambient/crickets-night.mp3",
+      "bytes": 129192,
+      "sha256": "64abd2ab5aa264cc19b36b87b114893c15f48337d1c0df891d7327d2c6abd4c7"
+    }
+  ]
+}

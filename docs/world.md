@@ -54,12 +54,16 @@ unchanged: the sun keys 1.12x (was 1.3x; noon 2.86 → 2.46, key : fill
 shadow edge (penumbra) comes from the map's `radius` and resolution, which
 did not change.
 
-- Day: the sun keys 1.12x the cycle (1.3x in S18) and the fill drops, so shadows read while
-  lit faces keep about the same total (no washed-out pastels). Sun color is
-  the cycle's warm-neutral `#ffe6c4` at height.
-- Night: fill and the neutral RoomEnvironment (which read as white light)
-  fall to near zero; the moon is pulled 60 % toward a deeper blue, so the
-  night lights carry the interior.
+- Ambient preview (not committed): the sun keys 0.82x the cycle, the moon
+  0.52x, day fill 0.62 and environment 0.10 by day. Night fill is 0.22,
+  environment 0.01 and the unlit chair 0.4. Exposure, sky palette and fixture
+  output are unchanged, so the window light and lamps keep their values.
+- Day: lower sun and fill reduce the blown-out highlights while keeping
+  directional shadows. Sun color is still the cycle's warm-neutral
+  `#ffe6c4` at height.
+- Night: fill, moonlight and the neutral RoomEnvironment fall further, so the
+  interior is darker and the local lights carry the scene. The moon is still
+  pulled 60 % toward a deeper blue.
 - Transitions follow a `night` factor, `1 - smoothstep(-0.2, 0.3, sunY)`,
   never the 18:00 fixture gate; tests bound every per-minute step.
 - Bruno's chair bake is unlit, so `chairShade` dims it from 0.8 by day to

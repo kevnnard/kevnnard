@@ -6,14 +6,18 @@ import {
   updateLight,
 } from "../../src/lib/world/lights.ts";
 import {
+  AMBIENT_STORAGE_KEY,
+  DEFAULT_AMBIENT_PREFERENCES,
   DEFAULT_LIGHT_PREFERENCES,
   DEFAULT_MUSIC_PREFERENCES,
   LIGHTS_STORAGE_KEY,
+  loadAmbientPreferences,
   loadLightPreferences,
   loadMusicPreferences,
   MUSIC_STORAGE_KEY,
   PREFERENCES_VERSION,
   type PreferenceStorage,
+  saveAmbientPreferences,
   saveLightPreferences,
   saveMusicPreferences,
 } from "../../src/lib/world/world-preferences.ts";
@@ -353,5 +357,70 @@ describe("world preferences never throw at the UI", () => {
       range: 0.2,
       enabled: false,
     });
+  });
+});
+
+describe("ambient sound preference", () => {
+  it("defaults to enabled under world:ambient", () => {
+    assert.equal(AMBIENT_STORAGE_KEY, "world:ambient");
+    assert.deepEqual(DEFAULT_AMBIENT_PREFERENCES, { enabled: true });
+  });
+
+  it("missing, blocked or absent storage loads a fresh default", () => {
+    for (const storage of [new FakeStorage(), blocked, undefined]) {
+      const loaded = loadAmbientPreferences(storage);
+      assert.deepEqual(loaded, DEFAULT_AMBIENT_PREFERENCES);
+      assert.notEqual(loaded, DEFAULT_AMBIENT_PREFERENCES);
+    }
+  });
+
+  it("a stored false survives a reload and keeps the other records", () => {
+    const storage = new FakeStorage();
+    saveMusicPreferences(storage, { volume: 0.3, range: 0.4, enabled: false });
+    assert.equal(saveAmbientPreferences(storage, { enabled: false }), true);
+    assert.deepEqual(loadAmbientPreferences(storage), { enabled: false });
+    assert.deepEqual(loadMusicPreferences(storage), {
+      volume: 0.3,
+      range: 0.4,
+      enabled: false,
+    });
+    assert.deepEqual(JSON.parse(storage.getItem(AMBIENT_STORAGE_KEY) ?? ""), {
+      version: PREFERENCES_VERSION,
+      enabled: false,
+    });
+  });
+
+  it("writes only the known field", () => {
+    const storage = new FakeStorage();
+    saveAmbientPreferences(storage, { enabled: true, extra: 1 } as never);
+    assert.deepEqual(JSON.parse(storage.getItem(AMBIENT_STORAGE_KEY) ?? ""), {
+      version: PREFERENCES_VERSION,
+      enabled: true,
+    });
+  });
+
+  it("falls back to the default for bad values", () => {
+    for (const value of [
+      "not json{",
+      "null",
+      "[]",
+      JSON.stringify({ version: PREFERENCES_VERSION, enabled: "no" }),
+      JSON.stringify({ version: PREFERENCES_VERSION, enabled: 0 }),
+      JSON.stringify({ version: PREFERENCES_VERSION + 1, enabled: false }),
+      JSON.stringify({ enabled: false }),
+    ]) {
+      const storage = new FakeStorage();
+      storage.setItem(AMBIENT_STORAGE_KEY, value);
+      assert.deepEqual(
+        loadAmbientPreferences(storage),
+        DEFAULT_AMBIENT_PREFERENCES,
+        value,
+      );
+    }
+  });
+
+  it("reports blocked, full or missing storage as an unsaved write", () => {
+    for (const storage of [blocked, new FullStorage(), undefined])
+      assert.equal(saveAmbientPreferences(storage, { enabled: false }), false);
   });
 });

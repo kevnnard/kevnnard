@@ -23,6 +23,11 @@ describe("worldLight", () => {
       const light = worldLight(hour);
       const cycle = dayCycle(hour);
       assert.equal(light.phase, cycle.phase);
+      assert.equal(
+        light.exposure,
+        cycle.exposure,
+        "preserve exposure for local lights and screens",
+      );
       assert.equal(light.key.source, cycle.key.source);
       assert.deepEqual(light.key.position, cycle.key.position);
     }
@@ -81,15 +86,15 @@ describe("world light balance (S18)", () => {
     worldLight(hour).ambient.intensity + environmentIntensity(hour);
   const minutes = Array.from({ length: 24 * 60 + 1 }, (_, m) => m / 60);
 
-  it("gives the noon sun a strong key-to-fill ratio for visible shadows", () => {
+  it("reduces daylight washout while preserving directional shadow contrast", () => {
     const noon = worldLight(13);
     assert.equal(noon.key.source, "sun");
-    // S21: a softer sun than S18 (x1.3), still above the shared cycle.
+    // Preview: reduce incoming light, not global exposure or fixture power.
     const scale = noon.key.intensity / dayCycle(13).key.intensity;
-    assert.ok(scale >= 1.05 && scale <= 1.15, `${scale}`);
+    assert.ok(scale >= 0.75 && scale <= 0.85, `${scale}`);
     assert.ok(noon.key.intensity / fill(13) >= 3.5, `${noon.key.intensity}`);
     // Lit faces stay near the previous total, so colors do not wash out.
-    assert.ok(noon.key.intensity + fill(13) <= 3.6);
+    assert.ok(noon.key.intensity + fill(13) <= 2.7);
   });
 
   it("keeps the noon sun warm-neutral, not orange", () => {
@@ -111,11 +116,14 @@ describe("world light balance (S18)", () => {
     }
   });
 
-  it("brightens the moon key modestly over the shared cycle (S21)", () => {
+  it("lowers moonlight and neutral fill so local night lights stand out", () => {
     for (const hour of [0, 21, 23, 3]) {
       const scale =
         worldLight(hour).key.intensity / dayCycle(hour).key.intensity;
-      assert.ok(scale > 0.9 && scale <= 1.05, `${hour}: ${scale}`);
+      assert.ok(scale >= 0.45 && scale <= 0.6, `${hour}: ${scale}`);
+      assert.ok(worldLight(hour).ambient.intensity <= 0.05);
+      assert.ok(environmentIntensity(hour) <= 0.015);
+      assert.ok(chairShade(hour) <= 0.4);
     }
   });
 

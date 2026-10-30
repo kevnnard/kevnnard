@@ -23,8 +23,23 @@ export interface MusicCredit {
   note: string;
 }
 
+/** A CC0 ambient event sound, mirrored from audio/ambient/manifest.json. */
+export interface AmbientCredit {
+  id: string;
+  event: string;
+  author: string;
+  license: string;
+  licenseUrl: string;
+  source: string;
+  /** Site path under /world/audio/ambient/. */
+  file: string;
+  bytes: number;
+  sha256: string;
+}
+
 export interface WorldCredits extends Credits {
   music?: MusicCredit[];
+  ambient?: AmbientCredit[];
 }
 
 export interface MusicAcknowledgement {
@@ -36,6 +51,16 @@ export interface MusicAcknowledgement {
   manifestUrl: string;
   copyright: string;
   tracks: string[];
+}
+
+export interface AmbientAcknowledgement {
+  /** The event label, e.g. "Night owl". */
+  name: string;
+  author: string;
+  license: string;
+  licenseUrl: string;
+  source: string;
+  file: string;
 }
 
 export interface AssetAcknowledgement {
@@ -52,6 +77,7 @@ export interface AssetAcknowledgement {
 
 export interface CreditSections {
   music: MusicAcknowledgement[];
+  ambient: AmbientAcknowledgement[];
   assets: AssetAcknowledgement[];
 }
 
@@ -76,6 +102,10 @@ const trackName = (file: string) =>
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 
+/** "night owl" → "Night owl". */
+const eventLabel = (event: string) =>
+  event.charAt(0).toUpperCase() + event.slice(1);
+
 export function creditSections(credits: WorldCredits): CreditSections {
   const music = (credits.music ?? []).map((entry) => ({
     name: GENTLE_STREAM,
@@ -86,6 +116,14 @@ export function creditSections(credits: WorldCredits): CreditSections {
     manifestUrl: `/world/${entry.manifest}`,
     copyright: entry.engineCopyright,
     tracks: entry.files.map(trackName),
+  }));
+  const ambient = (credits.ambient ?? []).map((entry) => ({
+    name: eventLabel(entry.event),
+    author: entry.author,
+    license: entry.license,
+    licenseUrl: entry.licenseUrl,
+    source: entry.source,
+    file: entry.file,
   }));
   const files = [
     ...credits.assets,
@@ -119,5 +157,5 @@ export function creditSections(credits: WorldCredits): CreditSections {
       used: [...used, ...ports],
     };
   });
-  return { music, assets };
+  return { music, ambient, assets };
 }

@@ -22,7 +22,7 @@ describe("world entry gate", () => {
     );
     assert.match(
       app,
-      /if \(musicEnabled\) music\.unlock\(\);\s*setEntered\(true\);/,
+      /if \(musicEnabled\) music\.unlock\(\);\s*if \(ambientEnabled\) ambient\.unlock\(\);\s*setEntered\(true\);/,
     );
     assert.match(
       app,

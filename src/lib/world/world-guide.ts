@@ -20,6 +20,7 @@ export type GuideActionId =
   | "video"
   | "music"
   | "speakers"
+  | "ambient"
   | "recenter";
 
 export interface GuideKey {
@@ -140,6 +141,7 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     paragraphs: [
       "Click a speaker to play or pause. Double-click it, or Focus speakers, to open the console with the track, volume and listening range.",
       "Five local loops rendered with gentle-stream by Gentleman Programming. Leaving the close-up keeps the music playing; it fades with the camera's distance.",
+      "Outdoor sounds follow the world's clock: three owl hoots at night, crickets from dusk to dawn, a rooster as the morning starts, and birds through the working day. The Outdoor sounds button turns them on or off.",
     ],
     keys: [
       { keys: ["Space"], action: "Play or pause, in speaker focus." },
@@ -149,7 +151,7 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
       { keys: ["−"], action: "Quieter, in speaker focus." },
       { keys: ["Esc"], action: "Leave speaker focus; the music keeps going." },
     ],
-    actions: ["music", "speakers"],
+    actions: ["music", "speakers", "ambient"],
     links: [],
   },
   {

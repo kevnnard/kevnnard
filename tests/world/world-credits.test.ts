@@ -92,6 +92,26 @@ describe("curated world credits", () => {
     assert.doesNotMatch(text, /Original work \(repository license\)/);
   });
 
+  it("credits the four CC0 ambient sounds with author, license and source", () => {
+    const data = shipped();
+    const ambient = creditSections(data).ambient;
+    assert.equal(ambient.length, 4);
+    assert.deepEqual(
+      ambient.map((sound) => sound.name),
+      ["Night owl", "Wake-up rooster", "Midday birds", "Night crickets"],
+    );
+    for (const sound of ambient) {
+      assert.ok(sound.author.length > 0, `${sound.name} has an author`);
+      assert.equal(sound.license, "CC0-1.0");
+      assert.equal(
+        sound.licenseUrl,
+        "https://creativecommons.org/publicdomain/zero/1.0/",
+      );
+      assert.match(sound.source, /^https:\/\//);
+      assert.match(sound.file, /^\/world\/audio\/ambient\/[\w-]+\.mp3$/);
+    }
+  });
+
   it("does not mutate the manifest it reads", () => {
     const data = shipped();
     const before = JSON.stringify(data);
@@ -104,6 +124,7 @@ describe("curated world credits", () => {
     const bare: Credits = { packs: data.packs, assets: data.assets };
     const sections = creditSections(bare);
     assert.deepEqual(sections.music, []);
+    assert.deepEqual(sections.ambient, []);
     assert.ok(sections.assets.length > 0);
   });
 });

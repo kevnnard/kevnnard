@@ -76,11 +76,18 @@ describe("world game guide sections", () => {
 
   it("launches only the actions the world already has", () => {
     const actions = GUIDE_SECTIONS.flatMap((entry) => entry.actions);
-    for (const id of ["terminal", "video", "music", "speakers", "recenter"])
+    for (const id of [
+      "terminal",
+      "video",
+      "music",
+      "speakers",
+      "ambient",
+      "recenter",
+    ])
       assert.ok(actions.includes(id as (typeof actions)[number]), id);
     assert.deepEqual(section("terminal").actions, ["terminal"]);
     assert.deepEqual(section("video").actions, ["video"]);
-    assert.deepEqual(section("lofi").actions, ["music", "speakers"]);
+    assert.deepEqual(section("lofi").actions, ["music", "speakers", "ambient"]);
     assert.ok(section("controls").actions.includes("recenter"));
   });
 });

@@ -53,6 +53,7 @@ import SpeakerWaves from "@/components/world/SpeakerWaves";
 import type { SpeakerControl } from "@/components/world/SpeakerZone";
 import { pastelMaterial, useSurfaceMaps } from "@/components/world/surfaces";
 import type { RGB } from "@/lib/room/day-cycle.ts";
+import { outdoorLevel, SHELTER } from "@/lib/world/ambient-sound.ts";
 import {
   GUIDE,
   guideMotion,
@@ -130,6 +131,8 @@ interface WorldSceneProps {
    * artificial light and glow; the sun, moon and sky never change.
    */
   power?: boolean;
+  /** Listener level for the outdoor ambient beds: 0 inside the house, 1 outdoors. */
+  onOutdoor?: (level: number) => void;
   /**
    * Called once, after every critical asset has committed and this canvas
    * has rendered its first prepared frame (world entry loader T2).
@@ -160,6 +163,27 @@ type Prepared = Record<
  * come from the tracker, not from any single group. Failures are reported
  * as progress errors, then rethrown to the parent's error boundary.
  */
+/** Reports the camera's outdoor level from rendered frames only; no loop of its own. */
+function OutdoorListener({
+  onOutdoor,
+}: {
+  onOutdoor?: (level: number) => void;
+}) {
+  const latest = useRef(onOutdoor);
+  useLayoutEffect(() => {
+    latest.current = onOutdoor;
+  }, [onOutdoor]);
+  const last = useRef<number | null>(null);
+  useFrame((state) => {
+    const { x, z } = state.camera.position;
+    const level = outdoorLevel(x, z, SHELTER);
+    if (level === last.current) return;
+    last.current = level;
+    latest.current?.(level);
+  });
+  return null;
+}
+
 export default function WorldScene({
   onReady,
   onProgress,
@@ -226,6 +250,7 @@ function SceneCanvas({
   portrait,
   speakers,
   tracker,
+  onOutdoor,
 }: Omit<WorldSceneProps, "onReady" | "onProgress"> & {
   tracker: WorldLoadTracker;
 }) {
@@ -307,6 +332,7 @@ function SceneCanvas({
       {speakers && (
         <SpeakerWaves music={speakers.music} reducedMotion={reducedMotion} />
       )}
+      <OutdoorListener onOutdoor={onOutdoor} />
       <Flowers />
       <Clouds hours={hours} reducedMotion={reducedMotion} />
       {/* Its own boundary, so the scene root commits (and counts) first. */}

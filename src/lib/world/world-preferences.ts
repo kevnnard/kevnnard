@@ -1,7 +1,7 @@
 // The visitor's /world choices that survive a reload (world-persistent-settings
 // S1-S3): the night lights with their master switch, and the music's volume,
-// listening range and play/pause intent. Two separate versioned records, so
-// saving one never rewrites the other. Reads validate every known field on
+// listening range and play/pause intent, and the outdoor ambient sound's
+// on/off. Separate versioned records, so saving one never rewrites another. Reads validate every known field on
 // its own: a missing, malformed or out-of-range field falls back to its
 // default, unknown fields are dropped, and blocked or full storage never
 // throws. Track, position, errors and loading state are never stored.
@@ -16,6 +16,7 @@ import {
 
 export const LIGHTS_STORAGE_KEY = "world:lights";
 export const MUSIC_STORAGE_KEY = "world:music";
+export const AMBIENT_STORAGE_KEY = "world:ambient";
 /** Bumped when a record's shape changes; other versions read as defaults. */
 export const PREFERENCES_VERSION = 1;
 
@@ -37,6 +38,11 @@ export interface MusicPreferences {
   enabled: boolean;
 }
 
+export interface AmbientPreferences {
+  /** The outdoor ambient sounds (ambient-sound.ts) are on. */
+  enabled: boolean;
+}
+
 export const DEFAULT_LIGHT_PREFERENCES: Readonly<LightPreferences> = {
   lights: DEFAULT_LIGHTS,
   power: true,
@@ -46,6 +52,11 @@ export const DEFAULT_LIGHT_PREFERENCES: Readonly<LightPreferences> = {
 export const DEFAULT_MUSIC_PREFERENCES: Readonly<MusicPreferences> = {
   volume: 0.5,
   range: 1,
+  enabled: true,
+};
+
+/** Ambient sounds on. */
+export const DEFAULT_AMBIENT_PREFERENCES: Readonly<AmbientPreferences> = {
   enabled: true,
 };
 
@@ -163,4 +174,21 @@ export function saveMusicPreferences(
   { volume, range, enabled }: MusicPreferences,
 ): boolean {
   return writeRecord(storage, MUSIC_STORAGE_KEY, { volume, range, enabled });
+}
+
+/** The stored ambient switch, validated; a fresh object. */
+export function loadAmbientPreferences(
+  storage: PreferenceStorage | undefined,
+): AmbientPreferences {
+  const record = readRecord(storage, AMBIENT_STORAGE_KEY) ?? {};
+  return {
+    enabled: flag(record.enabled, DEFAULT_AMBIENT_PREFERENCES.enabled),
+  };
+}
+
+export function saveAmbientPreferences(
+  storage: PreferenceStorage | undefined,
+  { enabled }: AmbientPreferences,
+): boolean {
+  return writeRecord(storage, AMBIENT_STORAGE_KEY, { enabled });
 }

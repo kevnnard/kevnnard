@@ -20,6 +20,7 @@ import {
   saveControllerStyle,
 } from "@/lib/room/controller-style.ts";
 import { cn } from "@/lib/utils";
+import { AmbientSound } from "@/lib/world/ambient-sound.ts";
 import {
   DEFAULT_LIGHTS,
   type LightId,
@@ -55,9 +56,11 @@ import {
 import { presentWorldLoad } from "@/lib/world/world-load-presentation.ts";
 import type { WorldLoadState } from "@/lib/world/world-loading.ts";
 import {
+  loadAmbientPreferences,
   loadLightPreferences,
   loadMusicPreferences,
   type PreferenceStorage,
+  saveAmbientPreferences,
   saveLightPreferences,
   saveMusicPreferences,
 } from "@/lib/world/world-preferences.ts";
@@ -484,6 +487,41 @@ export default function WorldApp() {
     [volume, range, musicEnabled],
   );
   useStoredRecord(musicPreferences, storedMusic, saveMusicPreferences);
+  // Outdoor sounds (owl, crickets, rooster, birds) follow the world's clock.
+  // Like the music they start with Enter world: unlock runs inside that click,
+  // and nothing loads before it. A hidden tab silences them until it returns.
+  const [ambient] = useState(() => new AmbientSound());
+  const [storedAmbient] = useState(() =>
+    loadAmbientPreferences(browserStorage()),
+  );
+  const [ambientEnabled, setAmbientEnabled] = useState(storedAmbient.enabled);
+  useSyncExternalStore(ambient.subscribe, ambient.getState);
+  useEffect(() => () => ambient.dispose(), [ambient]);
+  // Beds fade with the visitor's distance from the house (outdoor level).
+  const onOutdoor = useMemo(
+    () => (level: number) => ambient.setOutdoor(level),
+    [ambient],
+  );
+  useEffect(() => {
+    ambient.setEnabled(ambientEnabled);
+  }, [ambient, ambientEnabled]);
+  useEffect(() => {
+    ambient.setHours(clock.hours);
+  }, [ambient, clock.hours]);
+  useEffect(() => {
+    const onVisibility = () => ambient.setHidden(document.hidden);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [ambient]);
+  const ambientPreferences = useMemo(
+    () => ({ enabled: ambientEnabled }),
+    [ambientEnabled],
+  );
+  useStoredRecord(ambientPreferences, storedAmbient, saveAmbientPreferences);
+  const toggleAmbient = useCallback(() => {
+    if (!ambientEnabled) ambient.unlock();
+    setAmbientEnabled(!ambientEnabled);
+  }, [ambient, ambientEnabled]);
   const [limits, setLimits] = useState<ListeningRange | null>(null);
   useEffect(() => {
     if (!ready || !viewport) return;
@@ -560,6 +598,7 @@ export default function WorldApp() {
     if (!ready || loading.phase !== "ready" || loading.error) return;
     if (presented.phase !== "ready" || presented.progress !== 100) return;
     if (musicEnabled) music.unlock();
+    if (ambientEnabled) ambient.unlock();
     setEntered(true);
   }, [
     ready,
@@ -569,6 +608,8 @@ export default function WorldApp() {
     presented.progress,
     music,
     musicEnabled,
+    ambient,
+    ambientEnabled,
   ]);
   useLayoutEffect(() => {
     // Keep these direct world children mounted: their own state and overlap
@@ -608,9 +649,23 @@ export default function WorldApp() {
           pressed: song.playing,
         },
         speakers: { label: "Focus speakers", run: enterSpeakers },
+        ambient: {
+          label: "Outdoor sounds",
+          run: toggleAmbient,
+          pressed: ambientEnabled,
+        },
       }),
     }),
-    [ready, enter, enterPortrait, song.playing, playMusic, enterSpeakers],
+    [
+      ready,
+      enter,
+      enterPortrait,
+      song.playing,
+      playMusic,
+      enterSpeakers,
+      toggleAmbient,
+      ambientEnabled,
+    ],
   );
 
   const screen = useMemo<MonitorTerminal>(
@@ -668,6 +723,7 @@ export default function WorldApp() {
         >
           <Suspense fallback={null}>
             <WorldScene
+              onOutdoor={onOutdoor}
               hours={clock.hours}
               reducedMotion={reducedMotion}
               home={home}

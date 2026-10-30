@@ -92,8 +92,8 @@ describe("setup and house polish (T4h, S12)", () => {
   it("dims the environment reflections at night", () => {
     // S18: the neutral studio environment flattened the sun's shadows by day
     // and read as white moonlight by night; both are lower now.
-    assert.ok(Math.abs(environmentIntensity(12) - 0.16) < 0.02);
-    assert.ok(Math.abs(environmentIntensity(0) - 0.03) < 0.01);
+    assert.ok(Math.abs(environmentIntensity(12) - 0.1) < 0.02);
+    assert.ok(Math.abs(environmentIntensity(0) - 0.01) < 0.01);
   });
 
   it("tunes texture scale and contrast, and boards the floor", () => {
