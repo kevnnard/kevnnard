@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "chosen": "03-world-assembly.html",
+  "handoffs": {
+    "03-world-assembly.html": {
+      "status": "implemented",
+      "queued": false,
+      "sentAt": "2026-10-30T16:25:06.342Z",
+      "startedAt": "2026-10-30T16:25:08.761Z",
+      "implementedAt": "2026-10-30T16:46:46.370Z",
+      "note": "Added user-requested magical entry:900msloadercrossfade,1.4sscenereveal,subtle1.6semeraldglowandHUDfade;staticinstantreducedmotion. No camera/reset/resource/audio changes; existing2smusicfadeandsavedpausepreserved.706/706tests,bothTS,Biome/buildPASS. Actualvisual/audioacceptanceawaitsuser. No commits.",
+      "previewUrl": "http://localhost:4321/world"
+    }
+  }
+}

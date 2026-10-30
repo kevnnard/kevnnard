@@ -183,9 +183,12 @@ export const extendLoader = (loader: GLTFLoader) => {
 export function CoffeeSteam({
   material,
   visible,
+  onPrepared,
 }: {
   material: ShaderMaterial;
   visible: boolean;
+  /** Called once the loaded steam has committed (world entry loader). */
+  onPrepared?: () => void;
 }) {
   const gltf = useLoader(GLTFLoader, PROP_FILES.coffeeSteam, extendLoader);
   const { geometry, position, quaternion } = useMemo(() => {
@@ -212,6 +215,7 @@ export function CoffeeSteam({
     return { geometry, position, quaternion };
   }, [gltf]);
   useEffect(() => () => geometry.dispose(), [geometry]);
+  useEffect(() => onPrepared?.(), [onPrepared]);
   return (
     <mesh
       geometry={geometry}

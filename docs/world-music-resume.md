@@ -23,7 +23,7 @@ existing message for a start that the autoplay policy blocked.
 ## Resume (`src/lib/world/speaker-resume.ts`)
 
 `bindMusicResume(music, target)` returns a cleanup. WorldApp calls it once
-the world is ready, the listening limits are known and music is left on,
+the visitor has selected **Enter world**, the world is ready, the listening limits are known and music is left on,
 after the volume and reach are applied.
 
 1. **One startup attempt.** It plays unless a start is already under way

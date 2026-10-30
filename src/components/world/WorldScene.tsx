@@ -1,7 +1,16 @@
 import { CameraControls, CameraControlsImpl } from "@react-three/drei";
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import { MeshoptDecoder } from "meshoptimizer/decoder";
-import { Suspense, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import {
+  Component,
+  type ReactNode,
+  Suspense,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   BackSide,
   Box3,
@@ -84,6 +93,14 @@ import { portraitFocus } from "@/lib/world/portrait.ts";
 import { seededRandom } from "@/lib/world/random.ts";
 import { lensKeeper, speakerFocus } from "@/lib/world/speaker.ts";
 import { normalizeWheel, wheelDolly } from "@/lib/world/wheel.ts";
+import {
+  bindWorldContextLoss,
+  createWorldLoadTracker,
+  prepareFirstFrame,
+  type WorldLoadState,
+  type WorldLoadTracker,
+  worldLoadError,
+} from "@/lib/world/world-loading.ts";
 
 const KINDS = Object.keys(MODEL_FILES) as NatureKind[];
 const URLS = KINDS.map((kind) => MODEL_FILES[kind]);
@@ -113,7 +130,13 @@ interface WorldSceneProps {
    * artificial light and glow; the sun, moon and sky never change.
    */
   power?: boolean;
+  /**
+   * Called once, after every critical asset has committed and this canvas
+   * has rendered its first prepared frame (world entry loader T2).
+   */
   onReady: () => void;
+  /** Preparation progress, on every change (world-loading.ts). */
+  onProgress?: (state: WorldLoadState) => void;
   /** The camera holds the terminal close-up (T16). */
   focus?: boolean;
   /** The terminal on the ultrawide's screen, for both Setup branches. */
@@ -126,19 +149,96 @@ interface WorldSceneProps {
   speakers?: SpeakerControl;
 }
 
+/** Critical groups that report their commit; the textured branch only. */
+type Prepared = Record<
+  "nature" | "surfaces" | "living" | "steam" | "chair",
+  () => void
+>;
+
+/**
+ * The world canvas plus its preparation tracker (T2): progress and ready
+ * come from the tracker, not from any single group. Failures are reported
+ * as progress errors, then rethrown to the parent's error boundary.
+ */
 export default function WorldScene({
+  onReady,
+  onProgress,
+  ...props
+}: WorldSceneProps) {
+  const [tracker] = useState(() => createWorldLoadTracker());
+  const callbacks = useRef({ onReady, onProgress });
+  useLayoutEffect(() => {
+    callbacks.current = { onReady, onProgress };
+  }, [onReady, onProgress]);
+  // Child effects run first: subscribing replays the current state, and
+  // ready is taken once even across StrictMode's second subscription.
+  useEffect(
+    () =>
+      tracker.subscribe((state) => {
+        callbacks.current.onProgress?.(state);
+        if (state.phase === "ready" && tracker.takeReady())
+          callbacks.current.onReady();
+      }),
+    [tracker],
+  );
+  return (
+    <PreparationBoundary onError={tracker.fail}>
+      <SceneCanvas {...props} tracker={tracker} />
+    </PreparationBoundary>
+  );
+}
+
+/**
+ * Reports a failure from the canvas (a loader, WebGL or the frame barrier)
+ * to the tracker once it has committed, then rethrows it so the parent's
+ * boundary still shows its fallback.
+ */
+class PreparationBoundary extends Component<
+  { onError: (error: unknown) => void; children: ReactNode },
+  { error: unknown; failed: boolean; reported: boolean }
+> {
+  state = { error: null as unknown, failed: false, reported: false };
+
+  static getDerivedStateFromError(error: unknown) {
+    return { error, failed: true };
+  }
+
+  componentDidCatch(error: unknown) {
+    this.props.onError(error);
+    this.setState({ reported: true });
+  }
+
+  render() {
+    if (this.state.reported) throw this.state.error;
+    return this.state.failed ? null : this.props.children;
+  }
+}
+
+function SceneCanvas({
   hours,
   reducedMotion,
   home,
   lights,
   power = true,
-  onReady,
   focus = false,
   terminal,
   onMonitorArrive,
   portrait,
   speakers,
-}: WorldSceneProps) {
+  tracker,
+}: Omit<WorldSceneProps, "onReady" | "onProgress"> & {
+  tracker: WorldLoadTracker;
+}) {
+  const prepared = useMemo<Prepared>(
+    () => ({
+      nature: () => tracker.complete("nature"),
+      surfaces: () => tracker.complete("surfaces"),
+      living: () => tracker.complete("living"),
+      steam: () => tracker.complete("steam"),
+      chair: () => tracker.complete("chair"),
+    }),
+    [tracker],
+  );
   // One close-up at a time (WorldApp): the terminal's, the portrait's or
   // the speakers'.
   const closeUp = portrait?.focused
@@ -159,6 +259,7 @@ export default function WorldScene({
       // (T18): kept inside this wrapper, under the world controls.
       style={{ isolation: "isolate" }}
     >
+      <Preparation tracker={tracker} />
       <WorldLighting hours={hours} />
       <GuidedCamera
         reducedMotion={reducedMotion}
@@ -198,6 +299,7 @@ export default function WorldScene({
           terminal={terminal}
           portrait={portrait}
           speakers={speakers}
+          prepared={prepared}
         />
       </Suspense>
       <NightLights hours={hours} lights={lights} power={power} />
@@ -207,9 +309,80 @@ export default function WorldScene({
       )}
       <Flowers />
       <Clouds hours={hours} reducedMotion={reducedMotion} />
-      <Nature onReady={onReady} />
+      {/* Its own boundary, so the scene root commits (and counts) first. */}
+      <Suspense fallback={null}>
+        <Nature onPrepared={prepared.nature} />
+      </Suspense>
     </Canvas>
   );
+}
+
+/**
+ * The scene root has committed (canvas, lights, island); once every
+ * critical asset has too, compile the programs and wait for this canvas's
+ * first main render after that: its default camera, to the screen. Late
+ * results after unmount are dropped; failures throw to the boundary.
+ */
+function Preparation({ tracker }: { tracker: WorldLoadTracker }) {
+  const { gl, scene, camera, invalidate } = useThree();
+  const [armed, setArmed] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(
+    () =>
+      bindWorldContextLoss(gl.domElement, (failure) => {
+        // Freeze progress immediately; React then replaces the canvas with the
+        // retry fallback. The frame barrier's cleanup drops late compile work.
+        tracker.fail(failure);
+        setError(failure);
+      }),
+    [gl, tracker],
+  );
+  useEffect(() => tracker.complete("scene"), [tracker]);
+  useEffect(
+    () =>
+      tracker.subscribe((state) => {
+        if (state.phase === "frame" && state.error === null) setArmed(true);
+      }),
+    [tracker],
+  );
+
+  useEffect(() => {
+    if (!armed || tracker.getState().phase === "ready") return;
+    const barrier = prepareFirstFrame(
+      {
+        compile: () => gl.compileAsync(scene, camera),
+        requestFrame: invalidate,
+        // Chained onto this scene only, and restored: three calls it at the
+        // end of each renderer.render(scene, ...), never for shadow passes.
+        onMainRender: (listener) => {
+          const previous = scene.onAfterRender;
+          const hook: typeof previous = function (this: Object3D, ...args) {
+            previous.apply(this, args);
+            const [renderer, , view] = args;
+            if (view === camera && renderer.getRenderTarget() === null)
+              listener();
+          };
+          scene.onAfterRender = hook;
+          return () => {
+            if (scene.onAfterRender === hook) scene.onAfterRender = previous;
+          };
+        },
+      },
+      {
+        onCompiled: () => tracker.complete("compile"),
+        onFrame: () => tracker.complete("frame"),
+        onError: (cause) =>
+          setError(
+            cause instanceof Error ? cause : new Error(worldLoadError(cause)),
+          ),
+      },
+    );
+    return barrier.cancel;
+  }, [armed, gl, scene, camera, invalidate, tracker]);
+
+  if (error) throw error;
+  return null;
 }
 
 function TexturedHouse({
@@ -220,6 +393,7 @@ function TexturedHouse({
   terminal,
   portrait,
   speakers,
+  prepared,
 }: {
   reducedMotion: boolean;
   hours: number;
@@ -228,8 +402,11 @@ function TexturedHouse({
   terminal?: MonitorTerminal;
   portrait?: PortraitControl;
   speakers?: SpeakerControl;
+  prepared: Prepared;
 }) {
   const maps = useSurfaceMaps();
+  // The textured house replaced the flat fallback.
+  useEffect(() => prepared.surfaces(), [prepared]);
   return (
     <>
       <House reducedMotion={reducedMotion} maps={maps} />
@@ -243,10 +420,16 @@ function TexturedHouse({
         terminal={terminal}
         portrait={portrait}
         speakers={speakers}
+        prepared={prepared}
       />
       <Shelf maps={maps} />
       <Suspense fallback={null}>
-        <Living hours={hours} maps={maps} power={power} />
+        <Living
+          hours={hours}
+          maps={maps}
+          power={power}
+          onPrepared={prepared.living}
+        />
       </Suspense>
     </>
   );
@@ -701,7 +884,7 @@ function buildInstances(
   return group;
 }
 
-function Nature({ onReady }: { onReady: () => void }) {
+function Nature({ onPrepared }: { onPrepared: () => void }) {
   const gltfs = useLoader(GLTFLoader, URLS, extendLoader);
 
   const groups = useMemo(
@@ -717,17 +900,18 @@ function Nature({ onReady }: { onReady: () => void }) {
     [gltfs],
   );
 
-  useEffect(() => {
-    onReady();
-    return () => {
+  useEffect(
+    () => () => {
       for (const { group } of groups)
         for (const child of group.children) {
           const mesh = child as InstancedMesh;
           (mesh.material as Material).dispose();
           mesh.dispose();
         }
-    };
-  }, [groups, onReady]);
+    },
+    [groups],
+  );
+  useEffect(() => onPrepared(), [onPrepared]);
 
   return (
     <>

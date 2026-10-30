@@ -437,7 +437,10 @@ describe("speaker wiring (T2)", () => {
   });
 
   it("hides the world controls the way the other close-ups do", () => {
-    assert.match(app, /inert=\{focus \|\| portrait \|\| speakers\}/);
+    assert.match(
+      app,
+      /inert=\{!entered \|\| focus \|\| portrait \|\| speakers\}/,
+    );
     assert.match(app, /speakers && "world-terminal-focus"/);
   });
 });
@@ -507,7 +510,7 @@ describe("persistent music wiring (world-persistent-settings T1, S1-S2)", () => 
       /music\.setReach\(limits \? rangeReach\(limits, range\) : null\)/,
     );
     const bind = at(
-      /useEffect\(\(\) => \{\s*if \(!ready \|\| !limits \|\| !musicEnabled\) return;\s*return bindMusicResume\(music, document\);\s*\}, \[music, ready, limits, musicEnabled\]\);/,
+      /useEffect\(\(\) => \{\s*if \(!entered \|\| !ready \|\| !limits \|\| !musicEnabled\) return;\s*return bindMusicResume\(music, document\);\s*\}, \[music, entered, ready, limits, musicEnabled\]\);/,
     );
     assert.ok(volume < reach && reach < bind, "volume, reach, then resume");
     // Cleanup only drops the resume listeners: pausing there would stop the

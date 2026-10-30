@@ -1,0 +1,109 @@
+.world-entry-scene {
+  position: absolute;
+  inset: 0;
+}
+
+.world-entry-pending > .world-entry-scene,
+.world-entry-pending .world-entry-scene[inert] {
+  pointer-events: none;
+}
+
+/* Direct children stay mounted and keep their settings and measured width. */
+.world-entry-pending > .scene-panel,
+.world-entry-pending > [aria-label="Time of day"] {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.world-entry-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+}
+
+/* Pure compositor opacity: never move the camera or distort pointer rays. */
+.world-entry-revealed .world-entry-scene {
+  animation: world-entry-scene-in 1400ms ease-out both;
+}
+
+.world-entry-revealed .world-entry-veil {
+  pointer-events: none;
+  animation: world-entry-veil-out 900ms ease-out both;
+}
+
+.world-entry-revealed::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 58%, #10b98133, transparent 65%);
+  animation: world-entry-glow 1600ms ease-out both;
+}
+
+.world-entry-revealed > header,
+.world-entry-revealed > .scene-panel,
+.world-entry-revealed > [aria-label="Time of day"] {
+  animation: world-entry-hud-in 1100ms ease-out both;
+}
+
+@keyframes world-entry-scene-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes world-entry-veil-out {
+  from {
+    opacity: 1;
+    visibility: visible;
+  }
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes world-entry-glow {
+  0% {
+    opacity: 0;
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes world-entry-hud-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .world-entry-revealed .world-entry-scene,
+  .world-entry-revealed > header,
+  .world-entry-revealed > .scene-panel,
+  .world-entry-revealed > [aria-label="Time of day"] {
+    animation: none;
+    opacity: 1;
+  }
+  .world-entry-revealed .world-entry-veil {
+    animation: none;
+    opacity: 0;
+    visibility: hidden;
+  }
+  .world-entry-revealed::after {
+    animation: none;
+    display: none;
+  }
+}

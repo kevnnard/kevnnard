@@ -257,6 +257,7 @@ export default function Setup({
   terminal,
   portrait,
   speakers,
+  prepared,
 }: {
   hours: number;
   maps?: SurfaceMaps;
@@ -274,6 +275,11 @@ export default function Setup({
   portrait?: PortraitControl;
   /** The shelf speakers' music and close-up (world-speaker-music T2). */
   speakers?: SpeakerControl;
+  /**
+   * World entry loader: only the textured instance reports its steam and
+   * chair; the flat fallback instance is replaced and never counts.
+   */
+  prepared?: { steam?: () => void; chair?: () => void };
 }) {
   const { invalidate } = useThree();
   const { group, glow, owned, swivel, leds, steam } = useMemo(() => {
@@ -425,11 +431,20 @@ export default function Setup({
       />
       {speakers && <SpeakerZone occluders={group} control={speakers} />}
       <Suspense fallback={null}>
-        <CoffeeSteam material={steam} visible={!reducedMotion} />
+        <CoffeeSteam
+          material={steam}
+          visible={!reducedMotion}
+          onPrepared={prepared?.steam}
+        />
       </Suspense>
       {createPortal(
         <Suspense fallback={null}>
-          <BrunoChair hours={hours} lights={lights} power={power} />
+          <BrunoChair
+            hours={hours}
+            lights={lights}
+            power={power}
+            onPrepared={prepared?.chair}
+          />
         </Suspense>,
         swivel,
       )}

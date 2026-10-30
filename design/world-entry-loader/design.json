@@ -1,0 +1,34 @@
+{
+  "title": "Kevnnard \u00b7 World entry",
+  "brief": "Three lightweight entry loaders: letter-by-letter identity, a particle signature and an assembling world. Simulated previews only; production progress must follow real readiness.",
+  "artboards": [
+    {
+      "file": "01-letterpress.html",
+      "title": "Letterpress",
+      "tradeoff": "Most minimal and strongest name recognition; less illustrative.",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "02-particle-signature.html",
+      "title": "Particle signature",
+      "tradeoff": "Recommended: a memorable signature with a bounded 2D particle field; modest extra drawing work.",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "03-world-assembly.html",
+      "title": "World assembly",
+      "tradeoff": "An architectural drawing explains preparation; more informative and less mysterious.",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "04-particle-world.html",
+      "title": "Particle world \u00b7 combined",
+      "tradeoff": "House-first hierarchy: a larger architectural drawing builds during 1\u201360%; only then does the smaller KEVNNARD particle signature appear underneath during 61\u2013100%. One shared percentage; reduced motion shows a static composition.",
+      "width": 1440,
+      "height": 900
+    }
+  ]
+}

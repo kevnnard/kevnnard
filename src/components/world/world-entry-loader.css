@@ -1,0 +1,316 @@
+/*
+ * World entry loader (world-entry-loader T1), from
+ * design/world-entry-loader/03-world-assembly.html, in design/system.md's
+ * dark tokens: #09090b, #18181b, #27272a, #a1a1aa, #d4d4d8, #fafafa, the
+ * #10b981 accent and #7f1d1d for errors. The parent mounts it inside the
+ * position: relative world viewport, above the HUD; nothing here styles the
+ * page.
+ */
+.world-entry-loader {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  overflow-y: auto;
+  container: world-entry / inline-size;
+  background: #09090b;
+  color: #fafafa;
+  pointer-events: auto;
+  font:
+    14px / 20px ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+}
+.world-entry-shell {
+  box-sizing: border-box;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 4cqi;
+  background: linear-gradient(
+    90deg,
+    transparent 19.9%,
+    rgba(16, 185, 129, 0.05) 20%,
+    transparent 20.1%,
+    transparent 74.9%,
+    rgba(16, 185, 129, 0.05) 75%,
+    transparent 75.1%
+  );
+}
+.world-entry-header,
+.world-entry-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.world-entry-header {
+  border-bottom: 1px solid #27272a;
+  padding-bottom: 16px;
+}
+.world-entry-brand {
+  color: #a1a1aa;
+}
+.world-entry-footer {
+  padding: 16px 0;
+  font-size: 12px;
+  line-height: 16px;
+  color: #a1a1aa;
+}
+.world-entry-main {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 48px 0;
+}
+.world-entry-assembly {
+  width: min(880px, 100%);
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  align-items: center;
+  gap: 48px;
+}
+
+/* Drawing: the wire reveals with the real percentage, never on its own. */
+.world-entry-drawing {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.world-entry-floor {
+  fill: #18181b;
+  stroke: #27272a;
+}
+.world-entry-wire {
+  fill: none;
+  stroke: #10b981;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.world-entry-wire path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc(1 - var(--world-entry-progress));
+  transition: stroke-dashoffset 0.2s ease-out;
+}
+.world-entry-nodes {
+  fill: #fafafa;
+}
+.world-entry-caption {
+  fill: #a1a1aa;
+  font-size: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* Panel: heading, checklist, meter and entry. */
+.world-entry-eyebrow {
+  margin: 0;
+  font:
+    12px / 16px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #10b981;
+}
+.world-entry-heading {
+  margin: 24px 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 36px;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-weight: 600;
+}
+.world-entry-heading:focus {
+  outline: none;
+}
+.world-entry-heading:focus-visible {
+  outline: 3px solid rgba(212, 212, 216, 0.5);
+  outline-offset: 4px;
+}
+.world-entry-steps {
+  list-style: none;
+  margin: 24px 0;
+  padding: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.world-entry-steps li {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #27272a;
+  color: #a1a1aa;
+}
+.world-entry-steps li[data-done="true"] {
+  color: #fafafa;
+}
+.world-entry-steps span {
+  color: #10b981;
+}
+.world-entry-meter {
+  margin: 24px 0;
+}
+.world-entry-meter-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.world-entry-phase {
+  margin: 0;
+  font-size: 12px;
+  line-height: 16px;
+  color: #a1a1aa;
+}
+.world-entry-count {
+  font-size: 36px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.05em;
+}
+.world-entry-count-total {
+  font-size: 14px;
+  letter-spacing: 0;
+  color: #a1a1aa;
+}
+.world-entry-bar {
+  height: 3px;
+  background: #27272a;
+  overflow: hidden;
+}
+.world-entry-bar-fill {
+  display: block;
+  height: 100%;
+  background: #10b981;
+  transform: scaleX(var(--world-entry-progress));
+  transform-origin: left;
+  transition: transform 0.2s ease-out;
+}
+.world-entry-button {
+  min-height: 44px;
+  padding: 12px 24px;
+  border: 1px solid #27272a;
+  border-radius: 6px;
+  background: #18181b;
+  color: #fafafa;
+  font: inherit;
+  cursor: pointer;
+}
+.world-entry-button:hover {
+  background: #27272a;
+}
+.world-entry-button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.world-entry-loader[data-state="error"] .world-entry-enter:disabled {
+  cursor: not-allowed;
+}
+.world-entry-enter {
+  min-width: 240px;
+  margin-top: 16px;
+}
+.world-entry-enter:not(:disabled) {
+  border-color: #fafafa;
+  background: #fafafa;
+  color: #18181b;
+}
+.world-entry-enter:not(:disabled):hover {
+  background: rgba(250, 250, 250, 0.9);
+}
+.world-entry-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: #d4d4d8;
+  text-decoration: none;
+}
+.world-entry-link:hover {
+  color: #fafafa;
+}
+.world-entry-button:focus-visible,
+.world-entry-link:focus-visible {
+  outline: 3px solid rgba(212, 212, 216, 0.5);
+  outline-offset: 4px;
+}
+.world-entry-error {
+  margin: 16px 0 0;
+  padding: 12px 16px;
+  border: 1px solid #7f1d1d;
+  border-radius: 6px;
+  background: rgba(127, 29, 29, 0.2);
+}
+.world-entry-error p {
+  margin: 0;
+}
+.world-entry-error-detail {
+  margin-top: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 16px;
+  color: #a1a1aa;
+  overflow-wrap: anywhere;
+}
+.world-entry-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+@container world-entry (max-width: 650px) {
+  .world-entry-shell {
+    padding: 16px;
+  }
+  .world-entry-main {
+    padding: 24px 0;
+  }
+  .world-entry-assembly {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .world-entry-drawing {
+    max-height: 200px;
+  }
+  .world-entry-heading {
+    font-size: 28px;
+  }
+  .world-entry-count {
+    font-size: 28px;
+  }
+  .world-entry-brand {
+    display: none;
+  }
+  .world-entry-footer {
+    flex-wrap: wrap;
+  }
+  .world-entry-enter {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+/* Reduced motion: the drawing is complete and still; the bar holds the value. */
+.world-entry-loader[data-reduced-motion="true"] .world-entry-wire path,
+.world-entry-loader[data-reduced-motion="true"] .world-entry-bar-fill {
+  transition: none;
+}
+.world-entry-loader[data-reduced-motion="true"] .world-entry-wire path {
+  stroke-dashoffset: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .world-entry-wire path,
+  .world-entry-bar-fill {
+    transition: none;
+  }
+  .world-entry-wire path {
+    stroke-dashoffset: 0;
+  }
+}

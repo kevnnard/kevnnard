@@ -44,7 +44,7 @@ and controls (T2).
 
 ## Playback (`src/lib/world/speaker-music.ts`)
 
-- **Music enabled on entry.** Once the scene and listening range are ready,
+- **Music enabled on entry.** After **Enter world** and once the scene and listening range are ready,
   the saved music preference starts playback (enabled by default). A saved
   pause stays paused. If autoplay is blocked, a trusted gesture unlocks audio
   and a bounded fallback respects the gesture's own transport action. See

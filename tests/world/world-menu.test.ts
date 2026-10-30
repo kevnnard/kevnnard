@@ -78,7 +78,7 @@ describe("world game guide modal", () => {
     assert.match(app, /setHome\(\(count\) => count \+ 1\)/);
     assert.equal(
       (app.match(/menuButton\.current\?\.focus\(\)/g) ?? []).length,
-      3,
+      4, // Three close-up exits plus the new world-entry transition.
     );
     assert.match(
       app,

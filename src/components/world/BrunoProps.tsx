@@ -194,10 +194,13 @@ export function BrunoChair({
   hours,
   lights = DEFAULT_LIGHTS,
   power = true,
+  onPrepared,
 }: {
   hours: number;
   lights?: LightSettings;
   power?: boolean;
+  /** Called once the loaded chair has committed (world entry loader). */
+  onPrepared?: () => void;
 }) {
   const { invalidate } = useThree();
   const gltf = useLoader(GLTFLoader, BRUNO_FILES.chair, extendLoader);
@@ -238,6 +241,7 @@ export function BrunoChair({
     invalidate();
   }, [material, hours, lights, power, invalidate]);
   useEffect(() => () => material.dispose(), [material]);
+  useEffect(() => onPrepared?.(), [onPrepared]);
 
   return <primitive object={group} />;
 }

@@ -205,11 +205,14 @@ export default function Living({
   hours,
   maps,
   power = true,
+  onPrepared,
 }: {
   hours: number;
   maps?: SurfaceMaps;
   /** The scene panel's master switch: off at night darkens the screen. */
   power?: boolean;
+  /** Called once the loaded room has committed (world entry loader). */
+  onPrepared?: () => void;
 }) {
   const { invalidate } = useThree();
   const gltfs = useLoader(GLTFLoader, URLS, extendLoader);
@@ -282,6 +285,7 @@ export default function Living({
     },
     [group, owned],
   );
+  useEffect(() => onPrepared?.(), [onPrepared]);
 
   return <primitive object={group} />;
 }

@@ -5,6 +5,7 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -51,6 +52,8 @@ import {
   spanColumn,
   terminalLayout,
 } from "@/lib/world/terminal-layout.ts";
+import { presentWorldLoad } from "@/lib/world/world-load-presentation.ts";
+import type { WorldLoadState } from "@/lib/world/world-loading.ts";
 import {
   loadLightPreferences,
   loadMusicPreferences,
@@ -58,6 +61,8 @@ import {
   saveLightPreferences,
   saveMusicPreferences,
 } from "@/lib/world/world-preferences.ts";
+import WorldEntryLoader from "./WorldEntryLoader";
+import "./world-entry-gate.css";
 import type { MonitorTerminal } from "./MonitorScreen";
 import type { PortraitControl } from "./PortraitScreen";
 import { ScenePanel } from "./ScenePanel";
@@ -153,11 +158,22 @@ class SceneErrorBoundary extends Component<
           <p className="text-muted-foreground">
             Everything in it is also on the static portfolio.
           </p>
+          <button
+            type="button"
+            onClick={reloadWorld}
+            className="rounded-md border px-6 py-3"
+          >
+            Try again
+          </button>
         </Fallback>
       );
     }
     return this.props.children;
   }
+}
+
+function reloadWorld() {
+  window.location.reload();
 }
 
 const pillClass =
@@ -166,6 +182,32 @@ const pillClass =
 export default function WorldApp() {
   const [webgl] = useState(hasWebGL);
   const [ready, setReady] = useState(false);
+  const [entered, setEntered] = useState(false);
+  const [loading, setLoading] = useState<WorldLoadState>({
+    progress: 1,
+    phase: "scene",
+    error: null,
+  });
+  const [presented, setPresented] = useState(loading);
+  const presentationStart = useRef<number | null>(null);
+  useEffect(() => {
+    presentationStart.current ??= performance.now();
+    const began = presentationStart.current;
+    let closed = false;
+    let frame: number | undefined;
+    const tick = () => {
+      if (closed) return;
+      const next = presentWorldLoad(loading, performance.now() - began);
+      setPresented(next);
+      if (!next.error && next.progress < loading.progress)
+        frame = requestAnimationFrame(tick);
+    };
+    tick();
+    return () => {
+      closed = true;
+      if (frame !== undefined) cancelAnimationFrame(frame);
+    };
+  }, [loading]);
   const menuButton = useRef<HTMLElement>(null);
   const [home, setHome] = useState(0);
   const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
@@ -460,9 +502,9 @@ export default function WorldApp() {
   // those listeners: pausing here would stop the music on every focus or
   // resize. An explicit Pause is what turns the intent off.
   useEffect(() => {
-    if (!ready || !limits || !musicEnabled) return;
+    if (!entered || !ready || !limits || !musicEnabled) return;
     return bindMusicResume(music, document);
-  }, [music, ready, limits, musicEnabled]);
+  }, [music, entered, ready, limits, musicEnabled]);
   const stepVolume = useCallback(
     (direction: 1 | -1) =>
       setVolume((current) =>
@@ -514,6 +556,31 @@ export default function WorldApp() {
     previousTrack,
     stepVolume,
   ]);
+  const enterWorld = useCallback(() => {
+    if (!ready || loading.phase !== "ready" || loading.error) return;
+    if (presented.phase !== "ready" || presented.progress !== 100) return;
+    if (musicEnabled) music.unlock();
+    setEntered(true);
+  }, [
+    ready,
+    loading.phase,
+    loading.error,
+    presented.phase,
+    presented.progress,
+    music,
+    musicEnabled,
+  ]);
+  useLayoutEffect(() => {
+    // Keep these direct world children mounted: their own state and overlap
+    // measurement survive the entry transition, just like focus modes.
+    for (const element of root.current?.querySelectorAll<HTMLElement>(
+      ':scope > .scene-panel, :scope > [aria-label="Time of day"]',
+    ) ?? [])
+      element.inert = !entered;
+  }, [ready, entered]);
+  useEffect(() => {
+    if (entered) menuButton.current?.focus();
+  }, [entered]);
   const speakerControl = useMemo<SpeakerControl>(
     () => ({
       music,
@@ -586,40 +653,49 @@ export default function WorldApp() {
       ref={root}
       className={cn(
         "relative h-full w-full",
+        !entered && "world-entry-pending",
+        entered && "world-entry-revealed",
         focus && "world-terminal-focus",
         portrait && "world-terminal-focus",
         speakers && "world-terminal-focus",
       )}
     >
       <SceneErrorBoundary>
-        <Suspense fallback={null}>
-          <WorldScene
-            hours={clock.hours}
+        <div
+          inert={!entered}
+          aria-hidden={!entered}
+          className="world-entry-scene"
+        >
+          <Suspense fallback={null}>
+            <WorldScene
+              hours={clock.hours}
+              reducedMotion={reducedMotion}
+              home={home}
+              lights={lights}
+              power={power}
+              onReady={onReady}
+              onProgress={setLoading}
+              focus={focus}
+              terminal={screen}
+              onMonitorArrive={arrive}
+              portrait={portraitControl}
+              speakers={speakerControl}
+            />
+          </Suspense>
+        </div>
+        <div className="world-entry-veil" inert={entered} aria-hidden={entered}>
+          <WorldEntryLoader
+            state={presented}
             reducedMotion={reducedMotion}
-            home={home}
-            lights={lights}
-            power={power}
-            onReady={onReady}
-            focus={focus}
-            terminal={screen}
-            onMonitorArrive={arrive}
-            portrait={portraitControl}
-            speakers={speakerControl}
+            onEnter={enterWorld}
+            onRetry={reloadWorld}
           />
-        </Suspense>
-        {!ready && (
-          <p
-            role="status"
-            className="absolute inset-0 flex items-center justify-center text-muted-foreground"
-          >
-            Loading the world…
-          </p>
-        )}
+        </div>
       </SceneErrorBoundary>
 
       <header
-        inert={focus || portrait || speakers}
-        className={`pointer-events-none absolute inset-x-0 top-0 flex flex-wrap items-center justify-between gap-3 p-4${focus || portrait || speakers ? " invisible" : ""}`}
+        inert={!entered || focus || portrait || speakers}
+        className={`pointer-events-none absolute inset-x-0 top-0 flex flex-wrap items-center justify-between gap-3 p-4${!entered || focus || portrait || speakers ? " invisible" : ""}`}
       >
         <a
           href="/"
