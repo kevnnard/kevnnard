@@ -57,6 +57,15 @@ describe("night light settings", () => {
     }
   });
 
+  it("defaults to the requested colours and intensities (S3)", () => {
+    assert.deepEqual(DEFAULT_LIGHTS, {
+      tv: { enabled: true, color: "#a68d64", intensity: 50 },
+      setup: { enabled: true, color: "#ee2020", intensity: 100 },
+      lampLeft: { enabled: true, color: "#ffffff", intensity: 100 },
+      lampRight: { enabled: true, color: "#ffffff", intensity: 100 },
+    });
+  });
+
   it("clamps intensity, rejects bad colors and never mutates", () => {
     const before = structuredClone(DEFAULT_LIGHTS);
     const high = updateLight(DEFAULT_LIGHTS, "tv", { intensity: 180 });
@@ -121,9 +130,9 @@ describe("master power (Power off / Power on, night only)", () => {
     const on = lightOutputs(custom, night, true);
     assert.deepEqual(on, {
       tv: 0.35,
-      setup: 0.6,
+      setup: 1,
       lampLeft: 0,
-      lampRight: 0.8,
+      lampRight: 1,
     });
     const off = lightOutputs(custom, night, false);
     for (const id of LIGHT_IDS) {

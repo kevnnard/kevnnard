@@ -237,11 +237,11 @@ const SCREEN_INSET = PANEL_DEPTH / 2 + 0.002;
 const OVERLAY_INSET = SCREEN_INSET + 0.002;
 
 /**
- * The portrait side monitor right of the ultrawide (T14, S27), 5 cm past
+ * The portrait side monitor left of the ultrawide (S30), 5 cm past
  * its end, turned in toward the chair.
  */
-const SIDE_YAW = -0.3;
-const SIDE_U = -2.09;
+const SIDE_YAW = 0.4;
+const SIDE_U = MID + 0.79;
 export const SIDE_MONITOR = {
   center: w(0.27, 1.12, SIDE_U),
   /** Depth, height, width: taller than wide. */
@@ -272,7 +272,7 @@ export const MONITOR_ARMS = {
     vesa: mainCurve(0, -(PANEL_DEPTH / 2 + HUMP_DEPTH + 0.004), Y0 + MAIN.y),
   },
   side: {
-    clamp: w(0.065, DESK.height, SIDE_U + 0.07),
+    clamp: w(0.065, DESK.height, SIDE_U - 0.07),
     vesa: onSide(-(SIDE_MONITOR.size[0] / 2 + 0.024), 0, 0),
   },
 } as const;

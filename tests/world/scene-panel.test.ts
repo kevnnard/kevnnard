@@ -72,7 +72,15 @@ describe("scene panel (T6b UI fix)", () => {
       app,
       /const resetLights = useCallback\(\(\) => setLights\(DEFAULT_LIGHTS\), \[\]\);/,
     );
-    assert.match(app, /useState\(true\)/, "master defaults on");
+    // Lights and master come back from storage (world-persistent-settings
+    // S1); the master still defaults on (world-preferences.test.ts).
+    assert.match(
+      app,
+      /useState\(\(\) =>\s*loadLightPreferences\(browserStorage\(\)\),?\s*\)/,
+    );
+    assert.match(app, /useState<LightSettings>\(storedLights\.lights\)/);
+    assert.match(app, /useState\(storedLights\.power\)/, "stored master");
+    assert.match(app, /saveLightPreferences/);
     assert.match(panel, /stateOf\(lights\[id\], night, power\) === "on"/);
     assert.match(panel, /night && power\n/, "header honors the master");
   });
@@ -84,10 +92,15 @@ describe("scene panel (T6b UI fix)", () => {
     assert.match(globals, /--color-background: var\(--background\);/);
     assert.match(panel, /import "\.\/scene-panel\.css";/);
     assert.doesNotMatch(css, /var\(--/, "no theme variables");
-    // Every className in the panel is one of the scoped sp-* classes.
+    // Every className in the panel is one of the scoped sp-* classes, plus
+    // the shared compact trigger of world-hud.css (S1).
     for (const [, names] of panel.matchAll(/className="([^"]+)"/g))
       for (const name of names.split(" "))
-        assert.match(name, /^(?:scene-panel|sp-[a-z-]+)$/, name);
+        assert.match(
+          name,
+          /^(?:scene-panel|sp-[a-z-]+|world-hud-trigger)$/,
+          name,
+        );
     assert.doesNotMatch(panel, /className=\{/, "no computed utility classes");
     const root = rule(".scene-panel");
     assert.match(root, /background: rgba\(9, 9, 11, 0\.9\);/, "dark");
@@ -95,12 +108,14 @@ describe("scene panel (T6b UI fix)", () => {
     assert.match(rule(".scene-panel .sp-card"), /background: #09090b;/);
   });
 
-  it("is one column console, bottom right, 320px max, opening upward", () => {
+  it("is one column console, bottom right, 21rem wide, opening upward", () => {
     const root = rule(".scene-panel");
     assert.match(root, /position: absolute;/);
     assert.match(root, /right: 16px;/);
     assert.match(root, /display: flex;\n\s*flex-direction: column;/);
-    assert.match(root, /width: 320px;\n\s*max-width: calc\(100% - 32px\);/);
+    // Both states match the compact clock width, regardless of label length.
+    assert.match(root, /width: 21rem;\n\s*max-width: calc\(100% - 32px\);/);
+    assert.match(rule('.scene-panel[data-open="true"]'), /width: 21rem;/);
     assert.doesNotMatch(css, /flex-direction: row-reverse|column-reverse/);
     const body = rule(".scene-panel .sp-body");
     assert.match(body, /flex-direction: column;/);

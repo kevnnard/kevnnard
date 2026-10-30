@@ -1,0 +1,6 @@
+{
+  "title": "World game guide · Kevnnard Home",
+  "brief": "Implement the concrete supplied game-menu references: image and tutorial panels, Home and curated credits tabs, compact whole-surface HUD controls matching the existing time card. Preserve all actual key bindings.",
+  "feature": "odd/tasks/world-game-menu.md",
+  "artboards": [{"file":"01-game-guide.html","title":"Game guide","tradeoff":"One faithful reference direction: tabs, large contextual illustration and clear key/action tutorials; more expansive than a dropdown, without inventing driving controls.","width":1440,"height":900}]
+}

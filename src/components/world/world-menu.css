@@ -1,0 +1,339 @@
+/*
+ * World game guide (world-game-menu T1), from
+ * design/world-game-menu/01-game-guide.html, in design/system.md's dark
+ * tokens: #09090b, #18181b, #27272a, #a1a1aa, #d4d4d8, #fafafa and the
+ * #10b981 accent. The Menu button and the portfolio link take the shared
+ * .world-hud-trigger style (world-hud.css); nothing here restyles them.
+ */
+.world-guide {
+  width: min(62rem, calc(100vw - 2rem));
+  max-width: none;
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fafafa;
+  overflow: visible;
+  /* The header that holds it ignores the pointer; the guide must not. */
+  pointer-events: auto;
+  font:
+    14px / 1.6 system-ui,
+    sans-serif;
+}
+.world-guide::backdrop {
+  background: rgba(9, 9, 11, 0.72);
+  backdrop-filter: blur(4px);
+}
+.world-guide[open] {
+  animation: world-guide-in 160ms ease-out;
+}
+@keyframes world-guide-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.world-guide-frame {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 2rem);
+}
+.world-guide button,
+.world-guide a {
+  font: inherit;
+  color: inherit;
+}
+.world-guide button:focus-visible,
+.world-guide a:focus-visible,
+.world-guide-sheet:focus-visible {
+  outline: 2px solid #d4d4d8;
+  outline-offset: 2px;
+}
+.world-guide-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.world-guide-name {
+  margin: 0 auto 0 0;
+  font:
+    500 12px / 1 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #a1a1aa;
+  white-space: nowrap;
+}
+.world-guide-tabs {
+  display: flex;
+  gap: 0.25rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.world-guide-tabs button,
+.world-guide-close,
+.world-guide-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border: 1px solid #27272a;
+  border-radius: 6px;
+  background: #09090b;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.world-guide-tabs button:hover,
+.world-guide-close:hover,
+.world-guide-actions button:hover {
+  background: #18181b;
+}
+.world-guide-tabs button[aria-selected="true"] {
+  background: #27272a;
+  color: #10b981;
+}
+.world-guide-close {
+  flex: none;
+  width: 44px;
+  padding: 0;
+}
+.world-guide-sheet {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  min-height: 0;
+  height: min(34rem, calc(100dvh - 8rem));
+  overflow: hidden;
+  border: 1px solid #27272a;
+  border-radius: 8px;
+  background: rgba(9, 9, 11, 0.94);
+}
+.world-guide-sheet[hidden] {
+  display: none;
+}
+.world-guide-image {
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  border-right: 1px solid #27272a;
+  background: rgba(39, 39, 42, 0.5);
+}
+.world-guide-art {
+  width: 100%;
+  max-height: 100%;
+  height: auto;
+}
+.world-guide-copy {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 2rem;
+}
+.world-guide-copy p {
+  margin: 0 0 0.85rem;
+  color: #d4d4d8;
+}
+.world-guide-copy .world-guide-eyebrow {
+  margin: 0 0 0.5rem;
+  font:
+    12px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #10b981;
+}
+.world-guide-title {
+  margin: 0 0 1.25rem;
+  font:
+    500 28px / 1.2 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+}
+.world-guide kbd {
+  display: inline-block;
+  min-width: 1.75rem;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid #27272a;
+  border-radius: 4px;
+  background: #18181b;
+  font:
+    12px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  text-align: center;
+  color: #fafafa;
+}
+.world-guide-keys {
+  display: grid;
+  gap: 0.6rem;
+  margin: 1.25rem 0;
+}
+.world-guide-keys > div {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  align-items: baseline;
+  gap: 1rem;
+}
+.world-guide-keys dt {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+.world-guide-keys dd {
+  margin: 0;
+  color: #d4d4d8;
+}
+.world-guide-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+.world-guide-actions button {
+  color: #10b981;
+}
+.world-guide-actions button[aria-pressed="true"] {
+  background: #27272a;
+}
+.world-guide-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.world-guide-links a,
+.world-credits a {
+  display: inline-flex;
+  align-items: center;
+  color: #fafafa;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.world-guide-links a {
+  min-height: 44px;
+}
+.world-guide-links a:hover,
+.world-credits a:hover {
+  color: #10b981;
+}
+.world-guide-hint {
+  margin: 0.5rem 0 0;
+  text-align: right;
+  font:
+    12px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  color: #a1a1aa;
+}
+.world-guide-hint kbd {
+  min-width: 0;
+  margin-right: 0.25rem;
+}
+.world-credits h3 {
+  margin: 1.25rem 0 0.5rem;
+  font:
+    500 12px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #10b981;
+}
+.world-credits h4 {
+  margin: 0 0 0.25rem;
+  font-size: 14px;
+  font-weight: 600;
+}
+.world-credits-feature {
+  padding: 0.75rem 1rem;
+  border: 1px solid #27272a;
+  border-radius: 6px;
+  background: #18181b;
+}
+.world-credits ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.world-credits li {
+  padding: 0.75rem 0;
+  border-top: 1px solid #27272a;
+}
+.world-credits li:first-child {
+  border-top: 0;
+}
+.world-credits .world-credits-used {
+  font-size: 12px;
+  color: #a1a1aa;
+}
+@media (max-width: 700px) {
+  .world-guide {
+    width: calc(100vw - 1rem);
+    max-height: calc(100dvh - 1rem);
+  }
+  .world-guide-frame {
+    max-height: calc(100dvh - 1rem);
+  }
+  .world-guide-bar {
+    flex-wrap: wrap;
+  }
+  .world-guide-tabs {
+    order: 3;
+    flex-basis: 100%;
+  }
+  .world-guide-sheet {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    height: calc(100dvh - 9.5rem);
+  }
+  .world-guide-image {
+    height: 11rem;
+    padding: 0.75rem;
+    border-right: 0;
+    border-bottom: 1px solid #27272a;
+  }
+  .world-guide-art {
+    height: 100%;
+    width: auto;
+  }
+  .world-guide-copy {
+    padding: 1.25rem;
+  }
+  .world-guide-title {
+    font-size: 22px;
+  }
+  .world-guide-keys > div {
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+  }
+  .world-guide-hint {
+    display: none;
+  }
+}
+@media (max-height: 480px) {
+  .world-guide-image {
+    display: none;
+  }
+  .world-guide-sheet {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .world-guide[open] {
+    animation: none;
+  }
+}

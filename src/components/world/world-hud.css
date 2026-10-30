@@ -1,0 +1,52 @@
+/*
+ * Shared compact HUD trigger (S1): the surface of the compact day controller
+ * (TimeController CompactConsole: rounded-xl, border-zinc-800, bg-zinc-950/90,
+ * backdrop-blur, font-mono text-xs, zinc-300 focus ring) for the native
+ * button, summary or anchor that opens a world HUD control. Visually small,
+ * but at least 44px tall to touch. Plain literal colors, like scene-panel.css.
+ * Palette: zinc-950 #09090b, zinc-900 #18181b, zinc-800 #27272a,
+ * zinc-700 #3f3f46, zinc-300 #d4d4d8, zinc-50 #fafafa.
+ */
+.world-hud-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  min-height: 44px;
+  /* Same desktop width as the compact time selector, even for short labels. */
+  width: 21rem;
+  max-width: 100%;
+  margin: 0;
+  padding: 12px 16px;
+  border: 1px solid #27272a;
+  border-radius: 12px;
+  background: rgba(9, 9, 11, 0.9);
+  backdrop-filter: blur(8px);
+  box-shadow: none;
+  color: #fafafa;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: normal;
+  text-align: left;
+  text-decoration: none;
+  list-style: none;
+  user-select: none;
+  cursor: pointer;
+}
+
+.world-hud-trigger::-webkit-details-marker {
+  display: none;
+}
+
+.world-hud-trigger:hover {
+  border-color: #3f3f46;
+  background: rgba(24, 24, 27, 0.9);
+}
+
+.world-hud-trigger:focus-visible {
+  outline: 2px solid #d4d4d8;
+  outline-offset: 2px;
+}

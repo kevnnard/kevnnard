@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "chosen": "01-game-guide.html",
+  "handoffs": {
+    "01-game-guide.html": {
+      "status": "implemented",
+      "queued": false,
+      "sentAt": "2026-10-30T15:34:44.466Z",
+      "startedAt": "2026-10-30T15:34:46.989Z",
+      "implementedAt": "2026-10-30T15:50:06.030Z",
+      "feature": "odd/tasks/world-game-menu.md",
+      "note": "Game guide and compact HUD integrated: six illustrated tabs, actual-control tutorials and curated credits. 613/613 tests, scoped TypeScript, Biome and build pass; HTTP 200. Browser rendering, modal DOM/focus and mobile visual acceptance remain unverified because the browser runtime is unavailable. No commits.",
+      "previewUrl": "http://localhost:4321/world"
+    }
+  }
+}

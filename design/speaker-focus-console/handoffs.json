@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "chosen": "02-split-console.html",
+  "handoffs": {
+    "02-split-console.html": {
+      "status": "implemented",
+      "queued": false,
+      "sentAt": "2026-10-30T14:54:26.295Z",
+      "startedAt": "2026-10-30T14:54:31.089Z",
+      "implementedAt": "2026-10-30T15:14:46.378Z",
+      "feature": "odd/tasks/speaker-focus-console.md",
+      "note": "Implemented in React/Web Audio/R3F: real FFT spectrum, keyboard transport, independent volume and measured House→Initial view range; subtle waves on BOTH sides of each speaker. 592 tests, scoped TS/Biome/build pass. Independent lifecycle probe 7/7 passes in mock scope. No commits. Real browser/audio/GPU/DOM acceptance remains pending; native assessment unavailable due untracked scope.",
+      "previewUrl": "http://localhost:4321/world"
+    }
+  }
+}

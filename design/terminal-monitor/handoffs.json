@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "chosen": "01-dashboard.html",
+  "handoffs": {
+    "01-dashboard.html": {
+      "status": "in_progress",
+      "queued": false,
+      "sentAt": "2026-10-30T00:29:31.941Z",
+      "startedAt": "2026-10-30T00:52:26.720Z",
+      "implementedAt": null,
+      "feature": "odd/tasks/stylized-house.md",
+      "note": "Implementation and 439 tests/TS/build/HTTP checks complete, uncommitted. User preview required: interface on physical screen (not modal), alignment/mobile readability, restored bottom-right lighting panel before entry and after exit. No GPU/browser proof available.",
+      "previewUrl": "http://localhost:4321/world"
+    }
+  }
+}

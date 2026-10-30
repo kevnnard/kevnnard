@@ -3,12 +3,13 @@
   "chosen": "01-forest-entrance.html",
   "handoffs": {
     "01-forest-entrance.html": {
-      "status": "in_progress",
+      "status": "implemented",
       "queued": false,
       "sentAt": "2026-10-28T02:49:29.772Z",
       "startedAt": "2026-10-28T02:52:59.977Z",
-      "implementedAt": null,
-      "note": "Worker implementing stone path, planted beds and mailbox in the 3D room; house unchanged."
+      "implementedAt": "2026-10-28T03:09:28.582Z",
+      "note": "Stone path, gravel, fern beds, mailbox and bollards in the 3D scene. GPU look unverified.",
+      "previewUrl": "http://localhost:4321/room"
     }
   }
 }

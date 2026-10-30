@@ -19,6 +19,7 @@ import {
   type Mesh,
   MeshStandardMaterial,
   Object3D,
+  type PerspectiveCamera,
   PMREMGenerator,
   type Points,
   type PointsMaterial,
@@ -27,15 +28,20 @@ import {
   SRGBColorSpace,
   Vector2,
   Vector3,
+  type Vector3Tuple,
 } from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import Garden from "@/components/world/Garden";
 import House from "@/components/world/House";
 import Living from "@/components/world/Living";
+import type { MonitorTerminal } from "@/components/world/MonitorScreen";
 import NightLights from "@/components/world/NightLights";
+import type { PortraitControl } from "@/components/world/PortraitScreen";
 import Setup from "@/components/world/Setup";
 import Shelf from "@/components/world/Shelf";
+import SpeakerWaves from "@/components/world/SpeakerWaves";
+import type { SpeakerControl } from "@/components/world/SpeakerZone";
 import { pastelMaterial, useSurfaceMaps } from "@/components/world/surfaces";
 import type { RGB } from "@/lib/room/day-cycle.ts";
 import {
@@ -65,6 +71,7 @@ import {
 } from "@/lib/world/layout.ts";
 import type { LightSettings } from "@/lib/world/lights.ts";
 import { MODEL_FILES } from "@/lib/world/models.ts";
+import { MONITOR_FOCUS, monitorFocus } from "@/lib/world/monitor.ts";
 import {
   cloudShade,
   environmentIntensity,
@@ -73,7 +80,9 @@ import {
   WORLD_SHADOW,
   worldLight,
 } from "@/lib/world/palette.ts";
+import { portraitFocus } from "@/lib/world/portrait.ts";
 import { seededRandom } from "@/lib/world/random.ts";
+import { lensKeeper, speakerFocus } from "@/lib/world/speaker.ts";
 import { normalizeWheel, wheelDolly } from "@/lib/world/wheel.ts";
 
 const KINDS = Object.keys(MODEL_FILES) as NatureKind[];
@@ -105,6 +114,16 @@ interface WorldSceneProps {
    */
   power?: boolean;
   onReady: () => void;
+  /** The camera holds the terminal close-up (T16). */
+  focus?: boolean;
+  /** The terminal on the ultrawide's screen, for both Setup branches. */
+  terminal?: MonitorTerminal;
+  /** The close-up transition finished (at once with reduced motion). */
+  onMonitorArrive?: () => void;
+  /** The portrait monitor's close-up (T18), for both Setup branches. */
+  portrait?: PortraitControl;
+  /** The speakers' music and close-up (world-speaker-music T2). */
+  speakers?: SpeakerControl;
 }
 
 export default function WorldScene({
@@ -114,7 +133,19 @@ export default function WorldScene({
   lights,
   power = true,
   onReady,
+  focus = false,
+  terminal,
+  onMonitorArrive,
+  portrait,
+  speakers,
 }: WorldSceneProps) {
+  // One close-up at a time (WorldApp): the terminal's, the portrait's or
+  // the speakers'.
+  const closeUp = portrait?.focused
+    ? "portrait"
+    : speakers?.focused
+      ? "speakers"
+      : "terminal";
   return (
     <Canvas
       frameloop="demand"
@@ -124,9 +155,18 @@ export default function WorldScene({
       gl={{ antialias: true, powerPreference: "high-performance" }}
       aria-label="Stylized floating island with a wooden house. Drag to orbit, scroll to zoom in and see inside."
       role="img"
+      // The portrait page's depth blending stacks the canvas over its DOM
+      // (T18): kept inside this wrapper, under the world controls.
+      style={{ isolation: "isolate" }}
     >
       <WorldLighting hours={hours} />
-      <GuidedCamera reducedMotion={reducedMotion} home={home} />
+      <GuidedCamera
+        reducedMotion={reducedMotion}
+        home={home}
+        focus={focus || closeUp !== "terminal"}
+        closeUp={closeUp}
+        onArrive={closeUp === "terminal" ? onMonitorArrive : undefined}
+      />
       <Island />
       {/* Flat materials until the texture maps arrive (T4e). */}
       <Suspense
@@ -139,6 +179,9 @@ export default function WorldScene({
               reducedMotion={reducedMotion}
               lights={lights}
               power={power}
+              terminal={terminal}
+              portrait={portrait}
+              speakers={speakers}
             />
             <Shelf />
             <Suspense fallback={null}>
@@ -152,9 +195,16 @@ export default function WorldScene({
           hours={hours}
           lights={lights}
           power={power}
+          terminal={terminal}
+          portrait={portrait}
+          speakers={speakers}
         />
       </Suspense>
       <NightLights hours={hours} lights={lights} power={power} />
+      {/* Once, outside both Setup branches: waves while music plays. */}
+      {speakers && (
+        <SpeakerWaves music={speakers.music} reducedMotion={reducedMotion} />
+      )}
       <Flowers />
       <Clouds hours={hours} reducedMotion={reducedMotion} />
       <Nature onReady={onReady} />
@@ -167,11 +217,17 @@ function TexturedHouse({
   hours,
   lights,
   power,
+  terminal,
+  portrait,
+  speakers,
 }: {
   reducedMotion: boolean;
   hours: number;
   lights: LightSettings;
   power: boolean;
+  terminal?: MonitorTerminal;
+  portrait?: PortraitControl;
+  speakers?: SpeakerControl;
 }) {
   const maps = useSurfaceMaps();
   return (
@@ -184,6 +240,9 @@ function TexturedHouse({
         reducedMotion={reducedMotion}
         lights={lights}
         power={power}
+        terminal={terminal}
+        portrait={portrait}
+        speakers={speakers}
       />
       <Shelf maps={maps} />
       <Suspense fallback={null}>
@@ -355,20 +414,66 @@ function WorldLighting({ hours }: { hours: number }) {
 
 const { ACTION } = CameraControlsImpl;
 
-/** Three-quarter home framing, 360° orbit around the house and close zoom; no panning. */
+type Pose = { position: Vector3Tuple; target: Vector3Tuple };
+
+/**
+ * Three-quarter home framing, 360° orbit around the house and close zoom; no
+ * panning. With `focus` (T16) it saves the pose it had once, moves to the
+ * terminal close-up with its own temporary limits and input off, reports
+ * arrival, and on exit returns to the saved pose (Recenter goes home).
+ * `closeUp` picks the pose: the terminal's, or the portrait's face-on one
+ * fitted to the viewport (T18), refitted on resize, or the speakers' (T2),
+ * whose narrow views widen the lens; the lens it had is restored on exit.
+ */
 function GuidedCamera({
   reducedMotion,
   home,
+  focus,
+  closeUp = "terminal",
+  onArrive,
 }: {
   reducedMotion: boolean;
   home: number;
+  focus: boolean;
+  closeUp?: "terminal" | "portrait" | "speakers";
+  onArrive?: () => void;
 }) {
   const controls = useRef<CameraControls>(null);
+  const camera = useThree((state) => state.camera) as PerspectiveCamera;
+  const invalidate = useThree((state) => state.invalidate);
+  // Saves the lens once per visit; only the speaker close-up changes it.
+  const lens = useMemo(
+    () => lensKeeper(camera, invalidate),
+    [camera, invalidate],
+  );
+  useEffect(() => () => lens.release(), [lens]);
   const aspect = useThree((state) => state.size.width / state.size.height);
+  // The portrait's fit needs the viewport's pixels; other poses only refit
+  // on aspect changes, as before.
+  const portraitFit = useThree((state) =>
+    focus && closeUp === "portrait"
+      ? `${state.size.width}x${state.size.height}`
+      : "",
+  );
   const motion = guideMotion(reducedMotion);
   const { limits } = GUIDE;
   const first = useRef(true);
   const element = useThree((state) => state.gl.domElement);
+  const focused = useRef(focus);
+  const saved = useRef<Pose | null>(null);
+  const epoch = useRef(0);
+  const lastHome = useRef(home);
+  const arrive = useRef(onArrive);
+  useEffect(() => {
+    arrive.current = onArrive;
+  }, [onArrive]);
+  // Unmounting cancels a pending arrival.
+  useEffect(
+    () => () => {
+      epoch.current++;
+    },
+    [],
+  );
 
   // Wheel zoom through the ported normalize-wheel logic (T4i), so a notch or
   // a trackpad swipe zooms alike on every browser; camera-controls' own wheel
@@ -378,6 +483,8 @@ function GuidedCamera({
       const current = controls.current;
       if (!current) return;
       event.preventDefault();
+      // The terminal close-up owns the camera: no zoom out of it.
+      if (focused.current) return;
       const { pixelY } = normalizeWheel(event);
       current.dolly(wheelDolly(pixelY, current.distance), !reducedMotion);
     };
@@ -388,20 +495,58 @@ function GuidedCamera({
   useEffect(() => {
     const current = controls.current;
     if (!current) return;
+    focused.current = focus;
+    const run = ++epoch.current;
+    const animate = !reducedMotion && !first.current;
+    first.current = false;
+    const recentered = lastHome.current !== home;
+    lastHome.current = home;
+    if (focus) {
+      // Saved once per visit: resizing re-frames the close-up only.
+      saved.current ??= {
+        position: current.getPosition(new Vector3()).toArray(),
+        target: current.getTarget(new Vector3()).toArray(),
+      };
+      const [width, height] = portraitFit.split("x").map(Number);
+      const speaker = closeUp === "speakers" ? speakerFocus(aspect) : null;
+      lens.focus(speaker ? speaker.fov : null);
+      const { position, target } =
+        speaker ??
+        (portraitFit ? portraitFocus({ width, height }) : monitorFocus(aspect));
+      current.setLookAt(...position, ...target, animate).then(() => {
+        if (epoch.current === run) arrive.current?.();
+      });
+      return;
+    }
+    lens.release();
+    const back = recentered ? null : saved.current;
+    saved.current = null;
+    if (back) {
+      current.setLookAt(...back.position, ...back.target, animate);
+      return;
+    }
     const [x, y, z] = poseToPosition(guidePose(aspect));
     const [tx, ty, tz] = GUIDE.target;
-    current.setLookAt(x, y, z, tx, ty, tz, !reducedMotion && !first.current);
-    first.current = false;
-  }, [aspect, home, reducedMotion]);
+    current.setLookAt(x, y, z, tx, ty, tz, animate);
+  }, [aspect, home, reducedMotion, focus, portraitFit, closeUp, lens]);
+
+  // Disabled controls hand touch gestures back to the browser; on the
+  // terminal a touch drag scrolls the screen instead (MonitorScreen).
+  useEffect(() => {
+    if (focus) element.style.touchAction = "none";
+  }, [focus, element]);
+
+  const bounds = focus ? MONITOR_FOCUS.limits : null;
 
   return (
     <CameraControls
       ref={controls}
       makeDefault
-      minDistance={limits.minDistance}
-      maxDistance={limits.maxDistance}
-      minPolarAngle={limits.minPolar}
-      maxPolarAngle={limits.maxPolar}
+      enabled={!focus}
+      minDistance={bounds?.minDistance ?? limits.minDistance}
+      maxDistance={bounds?.maxDistance ?? limits.maxDistance}
+      minPolarAngle={bounds?.minPolar ?? limits.minPolar}
+      maxPolarAngle={bounds?.maxPolar ?? limits.maxPolar}
       smoothTime={motion.smoothTime}
       draggingSmoothTime={motion.draggingSmoothTime}
       azimuthRotateSpeed={motion.azimuthRotateSpeed}

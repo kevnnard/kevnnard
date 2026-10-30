@@ -1,0 +1,28 @@
+{
+  "title": "Speaker focus \u00b7 gentle-stream console",
+  "brief": "Subtle wall-glass music console in the existing speaker focus: measured audio spectrum, transport shortcuts, volume, listening range and discreet cartoon speaker waves. No solid or distorted panel.",
+  "feature": "odd/tasks/speaker-focus-console.md",
+  "artboards": [
+    {
+      "file": "01-wall-console.html",
+      "title": "Wall console",
+      "tradeoff": "Compact centered glass console; strongest gentle-stream resemblance without covering either speaker.",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "02-split-console.html",
+      "title": "Split console",
+      "tradeoff": "Spectrum and transport on the left, volume/range always visible on the right; wider but faster to tune.",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "03-spectral-ribbon.html",
+      "title": "Spectral ribbon",
+      "tradeoff": "Shallow horizontal strip leaves more wall visible; smaller spectrum and denser controls.",
+      "width": 1440,
+      "height": 900
+    }
+  ]
+}

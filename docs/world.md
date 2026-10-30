@@ -14,13 +14,19 @@ is untouched; the house and room arrive in T4 on the empty pad in the middle.
 | Route | `src/pages/world.astro` |
 | App shell, clock, controls | `src/components/world/WorldApp.tsx` |
 | Scene: sky, lights, island, models, camera | `src/components/world/WorldScene.tsx` |
-| Credits dialog | `src/components/world/CreditsDialog.tsx` |
+| Game guide, tutorials and actions | `src/components/world/WorldMenu.tsx`, `src/lib/world/world-guide.ts` |
+| Guide Credits tab | `src/components/world/CreditsDialog.tsx`, `src/lib/world/world-credits.ts` |
 | Island shape, pad, rocky underside | `src/lib/world/island.ts` |
 | Seeded layout | `src/lib/world/layout.ts` |
 | Guided camera limits | `src/lib/world/camera.ts` |
 | Pastel palette and light | `src/lib/world/palette.ts` |
 | Model list and budgets | `src/lib/world/models.ts` |
 | Personal collection shelf | `src/lib/world/shelf.ts`, `src/components/world/Shelf.tsx` |
+
+The game-style Menu includes Kevnnard Home, Controls, Terminal, Video,
+Kevnnard Lo-fi and Credits tabs. It documents the existing controls without
+changing shortcuts. See [the guide](world-game-menu.md) and
+[compact HUD controls](world-compact-hud.md).
 
 ## Day cycle
 
@@ -585,3 +591,171 @@ Shelf dimensions, original object placements and house geometry are unchanged.
 Checks: 346 world/room tests, scoped TypeScript, Biome, production build and HTTP
 200 passed. Build retains the existing large-chunk warning. Actual GPU appearance
 and readability of the new miniature awards still need a close browser view.
+
+## Main monitor terminal (T16, S29)
+
+The curved ultrawide shows an original Ghostty × Neovim dashboard
+(`design/terminal-monitor/01-dashboard.html`): a large KEVNNARD ASCII header
+and four buffers, `a` about, `p` projects, `e` experience, `c` contact.
+Nothing executes: there is no Ghostty, Neovim or shell, only read-only
+buffers. Henry Heffernan's PC entry is an inspiration only; no asset copied.
+
+- **One screen, idle and active** (`MonitorScreen.tsx`, L64-L66): the terminal
+  is drawn only on the ultrawide's curved screen. One strip on the monitor's
+  own arc (`screenSurface()` in `src/lib/world/monitor.ts`, 12 facets, joins
+  share vertices and u is linear in angle) carries a 2048 × 700 layout canvas
+  (4096 × 1400 texture pixels, the screen's own 2.93 aspect, no stretch).
+  `terminalLayout()` (`src/lib/world/terminal-layout.ts`) lays out the Ghostty
+  bar, Neovim tabs, buffer, command and status lines edge to edge, plus every
+  button, tab, link and Exit as a region in canvas pixels. The canvas is
+  redrawn only when the buffer, scroll, focus ring or hover changes. It
+  replaces only the old screen, horizon, sun and HUD glow parts
+  (`isMainScreenGlow`); its brightness is `setupGlow(hours) × glowPower(power,
+  hours)` like every screen. Geometry, material and texture are owned and
+  disposed. There is no visible DOM editor, dialog, rectangle or full-view
+  panel; an earlier DOM rectangle over the projected screen was rejected by
+  the user (L64).
+- **Entering**: click the screen's front face (from the room side, once the
+  cutaway has opened the walls, with no setup part in the way; a drag never
+  counts) or the **Enter terminal** button in the top bar. The camera saves
+  its exact pose and target once, then moves to a close-up
+  (`monitorFocus(aspect)`): face-on in plan, raised and looking down 0.2 rad
+  on purpose, because Bruno's chair back (top 1.38 m) stands between a
+  seated-height camera and the screen. 1.0–1.5 m away, clear of the chair
+  through its whole sway. Orbit input is off, the wheel handler returns
+  early, touch gestures stay on the canvas, and only this mode loosens the
+  distance and polar limits; `GUIDE` is unchanged.
+- **On the screen**: once the camera arrives (at once with reduced motion; a
+  3 s fallback), a click's ray UV maps to a canvas point (`uvToCanvas`) and
+  `hitAt()` returns the control drawn there, so hits follow the curve
+  exactly. Entries and tabs open buffers, links open the validated URL with
+  `window.open(url, "_blank", "noopener,noreferrer")` from the click, Exit
+  leaves. The wheel and a touch or mouse drag scroll the buffer, bounded; a
+  drag never activates a control, and content scrolled under the bars is
+  never hit. Phones see the middle of the ultrawide (`visibleSpan()`): the
+  layout reflows into that column, with all four entries, Exit and every
+  link inside it. The dashboard's ASCII name takes at most a quarter of the
+  screen height and all four entries fit without scrolling. Analytic
+  projection gives body text >= 14 CSS px at every tested size (320 × 568 to
+  3440 × 1440); that is math, not GPU proof.
+- **Measured text (L68)**: layout widths come from the canvas's own font
+  (`canvasMeasure()`, `ctx.measureText` at 100 px, cached; a 0.62 em mono
+  fallback without a canvas). Dashboard entries keep label and file name at
+  least 1 em apart: four in a row or 2 × 2 with file names, else 4 or 2 × 2
+  without them, and a single column only on a phone's narrow view. Lines wrap
+  by measured width; the ASCII name scales to its widest measured row.
+- **Keys and assistive tech**: an off-screen companion (`TerminalMonitor.tsx`,
+  clipped to nothing by `terminal-monitor.css`) holds the same buffers as
+  text, native links and buttons, and takes keyboard focus when the terminal
+  opens and after each screen click. Keys go through one document listener
+  in WorldApp while the terminal is open (`terminalKeydown`): they count when
+  focus is the page body (after a click on the canvas) or inside the world
+  container, never in fields, during IME composition, on the Exit pill, or
+  when already handled:
+  `a`, `p`, `e`, `c` open a buffer, `j`/`k` scroll, Esc goes from a buffer to
+  the dashboard and from the dashboard leaves. Modifiers, fields, Space, Tab,
+  Enter and arrows stay native. Tabbing through it draws a focus ring
+  around the matching control on the screen and scrolls it into view. A
+  world **Exit terminal** button stays at the top left while focused. On
+  exit the camera returns to the saved pose, the dashboard comes back and
+  focus returns to Enter terminal.
+- **Content**: `portfolioBuffers()` (`src/lib/world/terminal-content.ts`) reads
+  the same `projects.json` and `experience.json` the homepage renders, the
+  homepage footer's GitHub, LinkedIn and X profiles and the About section's
+  CV links; no email or dates are invented. Every link passes the room's
+  `safeExternalUrl` (https/http only) and opens in a new tab with
+  `rel="noopener noreferrer"`; content is React text, never HTML.
+- **World controls**: while the terminal holds the camera the top bar is
+  inert and invisible, and `terminal-monitor.css` hides the clock and the
+  lights panel by `visibility` only. Both stay direct children of the world
+  container (L61: ScenePanel measures its parent to sit above the clock; a
+  wrapper broke it), mounted and in place, and come back unchanged on exit.
+- **Limits**: no browser or GPU proof yet. Hit regions are tested by casting
+  real three.js rays through the screen mesh from the close-up camera, but
+  canvas font metrics, the texture's sharpness, the downward angle and phone
+  readability need a new user capture at `http://localhost:4321/world`.
+
+### Portrait monitor on the left (S30)
+
+The portrait display now sits on the seated left (+z), at z -0.51 m, with yaw +0.4 rad toward the chair. Its back-edge clamp follows at z -0.58 m. This supersedes T14's right-side placement. The main display, keyboard and mat remain centred at z -1.30 m. Existing screen props follow the portrait transform. Rotated bounds keep both panels apart by at least 4 cm, over the desk, and clear of the light bar; the under-desk clamps remain clear of the frame, PC and headphones. This is a placement update only: a video excerpt or cover/link and the NestJS documentation layout are not implemented yet.
+
+## Portrait monitor page (T18, S31-S32)
+
+The left portrait screen shows Gentleman Programming's official YouTube
+player above the official NestJS **Controllers** documentation, framed live
+from `https://docs.nestjs.com/controllers` (S32 replaced the original local
+preview of S31) (`src/components/world/PortraitScreen.tsx`, numbers in
+`src/lib/world/portrait.ts`). It replaces the screen's old code lines and the
+bouncing KV logo; the screen backing, bezel and stand are unchanged.
+
+- **Video**: `https://www.youtube-nocookie.com/embed/NN6vlDRjg5Y` with
+  `playlist=NN6vlDRjg5Y&loop=1&start=0&end=10&autoplay=1&mute=1&playsinline=1&controls=1&rel=0`.
+  `loop` needs `playlist` set to the same id. YouTube seeks `start` to the
+  nearest keyframe, so the ten-second loop is not frame exact. With reduced
+  motion `autoplay=0`. The iframe asks only for
+  `autoplay; encrypted-media; picture-in-picture`, uses
+  `referrerPolicy="strict-origin-when-cross-origin"` (YouTube rejects embeds
+  without a referrer) and has no fullscreen permission. If the browser
+  blocks autoplay, YouTube's own play button shows. Nothing is downloaded,
+  proxied or drawn into a texture.
+- **Page**: real DOM, 480 x 889 CSS px, laid on the flat 0.27 x 0.50 m screen
+  by drei's `<Html transform>` (`distanceFactor` 0.225: 1 px = 0.5625 mm),
+  rotated `π/2 + yaw` so it faces the screen normal `(cos yaw, 0, -sin yaw)`.
+  `occlude="blending"` with a screen-sized plane punches a depth hole in the
+  canvas, so walls, the chair and the desk hide the page like any mesh; the
+  page sits behind the canvas, which is isolated in its wrapper so it never
+  covers the world controls. Layout: a 64 px header (original "GP"
+  monogram, not the channel avatar, and a channel link), a 480 x 360 player
+  (4:3, YouTube letterboxes the 16:9 video) and the docs pane: a bar with a
+  native **Open NestJS documentation** link, always outside the frame, over
+  the official page in its own iframe (480 px wide, about 430 px tall, it
+  scrolls inside itself). Links open a new tab with
+  `rel="noopener noreferrer"`.
+- **Docs frame** (S32): fixed `src` `https://docs.nestjs.com/controllers`,
+  `title="NestJS official documentation"`,
+  `referrerPolicy="strict-origin-when-cross-origin"`, no `allow`, no
+  `sandbox`, no fullscreen. No proxy, mirror or screenshot. When checked
+  (L77) the site sent no `X-Frame-Options` or `Content-Security-Policy`
+  header; that is not proof a browser renders it, the site can change it,
+  and blockers can stop it, so the outside link stays. A frame `load` event
+  does not prove content rendered. It loads only in the powered portrait
+  close-up, also when the window is too small for the player; outside it
+  the pane shows an original still with the same link and makes no request.
+  Exit, power off or the terminal remove it. Esc pressed inside either frame
+  stays in that frame (cross-origin), so **Back** and **Exit portrait**
+  remain the way out; scrolling inside the frame never zooms the world,
+  whose wheel zoom is off in the close-up.
+- **Why a close-up** (L75): the orbit pivots on the house focus at 4 m or
+  more, so the player never projects above about 115 x 86 px per 1000 px of
+  viewport height there, under YouTube's 200 x 200 minimum. Clicking the
+  screen, or the **Watch video** button, moves the camera face-on to the
+  portrait (`portraitFocus`) with the terminal close-up's limits, input off.
+  It fits the whole page when the player still renders at 200 x 200, else
+  just the player: phone 375 x 812 gives 338 x 253 px, 1440 x 900 gives
+  437 x 328 px, 1920 x 1080 gives 525 x 394 px. Too small a viewport keeps the
+  still with "This window is too small for the YouTube player." **Exit
+  portrait**, the page's **Back** button or Esc return to the saved view
+  (instant with reduced motion) and focus to Watch video. The terminal and
+  the portrait close-ups never open together.
+- **When the iframe exists**: only in the portrait close-up, powered, with
+  the projected player at least 200 x 200 px (measured on rendered frames
+  from the clipped, shortest edges). Elsewhere the page shows an original
+  still and a native **Watch on YouTube** link; leaving unmounts the iframe,
+  which stops playback. The night master off unmounts the page and darkens
+  the screen. The canvas gives up pointer events only during the portrait
+  close-up, so the page and the player take clicks only there.
+- **Third-party contact**: the browser contacts YouTube
+  (`youtube-nocookie.com`, then YouTube's media hosts) only while the
+  close-up shows the player, and `docs.nestjs.com` (and whatever that page
+  loads) only during the close-up; either may set cookies. Leaving the
+  close-up removes both iframes (`runtimeExternalRequests: true` in the
+  manifest). Credits:
+  `portrait-page` in `public/world/credits.json`.
+- **Limits**: no browser or GPU proof yet. Playback, the loop, autoplay,
+  whether the docs actually render in the frame, the depth blending and the
+  page's sharpness need a user check at
+  `http://localhost:4321/world`.
+
+### World action menu (S33)
+
+The upper-right **Menu** is a dark native disclosure opened by click, Enter or Space; its panel opens downward. It holds Enter terminal, Watch video, Play/Pause music, Focus speakers, Recenter view and Credits. Actions close the panel; Escape and an outside click also close it. Credits retains its native modal focus handling, then closes the menu when dismissed. Returning from a camera close-up focuses the visible Menu trigger rather than its collapsed items. The upper-left **Back to portfolio** link uses the same dark treatment and still navigates to `/`. The panel has a viewport-bounded scroll area and reduced-motion support; it does not change the clock or lighting settings. Actual click/focus and visual acceptance need a browser.

@@ -8,6 +8,7 @@ import {
   nightLightsOn,
 } from "@/lib/world/lights.ts";
 import "./scene-panel.css";
+import "./world-hud.css";
 
 type State = "on" | "standby" | "off" | "disabled";
 const STATE_LABEL: Record<State, string> = {
@@ -29,8 +30,8 @@ const ZONES = [
 /** Gap to the viewport edges and to the day controller, in px. */
 const EDGE = 16;
 const GAP = 8;
-/** Panel width on wide screens (scene-panel.css). */
-const WIDTH = 320;
+/** Compact clock/card width on wide screens (21rem in scene-panel.css). */
+const WIDTH = 336;
 
 function LightRow({
   id,
@@ -115,6 +116,9 @@ function LightRow({
  * controller spans under the panel (narrow screens, timeline dock), the panel
  * lifts above it. Beside Reset, one master Power off / Power on button (S20)
  * darkens every artificial light at night; by day it is disabled.
+ * The whole header row is one native disclosure button styled like the
+ * compact day controller (world-hud-trigger, S1); closed, the panel shrinks
+ * to that row.
  */
 export function ScenePanel({
   hours,
@@ -199,6 +203,7 @@ export function ScenePanel({
       ref={rootRef}
       aria-labelledby={`${uid}-title`}
       className="scene-panel"
+      data-open={open}
       style={{
         bottom: lift,
         // Below the top action buttons (5rem), above the bottom offset.
@@ -271,24 +276,29 @@ export function ScenePanel({
           </div>
         </div>
       )}
-      <div className="sp-head">
-        <span aria-hidden="true" className="sp-dot" data-on={onCount > 0} />
-        <h2 id={`${uid}-title`}>Scene</h2>
-        <span className="sp-muted">
-          {night && power
-            ? `${onCount}/${LIGHT_IDS.length} lights on`
-            : "lights off"}
-        </span>
+      {/* Heading around one button: the whole row toggles the cards. */}
+      <h2 className="sp-head">
         <button
           type="button"
           aria-expanded={open}
           aria-controls={`${uid}-cards`}
           onClick={() => setOpen((value) => !value)}
-          className="sp-btn"
+          className="world-hud-trigger sp-trigger"
         >
-          {open ? "Hide" : "Show"}
+          <span aria-hidden="true" className="sp-dot" data-on={onCount > 0} />
+          <span id={`${uid}-title`} className="sp-title">
+            Scene
+          </span>
+          <span className="sp-muted">
+            {night && power
+              ? `${onCount}/${LIGHT_IDS.length} lights on`
+              : "lights off"}
+          </span>
+          <span aria-hidden="true" className="sp-chevron">
+            ▾
+          </span>
         </button>
-      </div>
+      </h2>
     </section>
   );
 }

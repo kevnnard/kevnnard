@@ -55,12 +55,16 @@ export const LIGHT_INFO: Record<
   },
 };
 
-/** The chosen design's swatches (design/world-lighting/03-grouped-cards.html). */
+/**
+ * The requested defaults (world-persistent-settings S3): a warm TV halo, a
+ * red desk backlight and white shelf lamps. A fresh visit and Reset lights
+ * use them; otherwise the stored choice wins (world-preferences.ts).
+ */
 export const DEFAULT_LIGHTS: LightSettings = {
-  tv: { enabled: true, color: "#7c6cff", intensity: 70 },
-  setup: { enabled: true, color: "#22d3ee", intensity: 60 },
-  lampLeft: { enabled: true, color: "#ffb36b", intensity: 80 },
-  lampRight: { enabled: true, color: "#ffb36b", intensity: 80 },
+  tv: { enabled: true, color: "#a68d64", intensity: 50 },
+  setup: { enabled: true, color: "#ee2020", intensity: 100 },
+  lampLeft: { enabled: true, color: "#ffffff", intensity: 100 },
+  lampRight: { enabled: true, color: "#ffffff", intensity: 100 },
 };
 
 /** Night gate in simulated minutes: on at 18:00, off at 06:00. */

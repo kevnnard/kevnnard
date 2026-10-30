@@ -185,6 +185,41 @@ ORIGINAL = [
      "asset": "Personal collection shelf: white two-column display shelf, football on its stand, cameras, hardware boxes, keyboard and books, personal athlete trophies, tricolor medals, film canisters, lenses and original landscape prints (procedural; labels and ball skin drawn in code from reference photos supplied by Kevnnard; brand names and marks belong to their owners, no affiliation)",
      "author": "Kevnnard", "license": "Original work (repository license)",
      "source": "src/lib/world/shelf.ts"},
+    # T18 (S31-S32): the portrait page; the video and docs stream from their sites.
+    {"id": "portrait-page",
+     "asset": ("Portrait monitor page: the layout, frames and a Gentleman Programming header with an original GP "
+               "monogram (not the channel's avatar) are original; it embeds YouTube's official player for the "
+               "channel's video NN6vlDRjg5Y (youtube-nocookie.com) above the official NestJS Controllers documentation "
+               "framed live from docs.nestjs.com; both stream from their owners' sites, never downloaded, proxied or "
+               "rehosted, and their content is not part of this credit; YouTube, Gentleman Programming and NestJS "
+               "names and marks belong to their owners, no affiliation"),
+     "author": "Kevnnard", "license": "Original work (repository license)",
+     "source": "src/components/world/PortraitScreen.tsx",
+     "references": ["https://www.youtube.com/watch?v=NN6vlDRjg5Y",
+                    "https://www.youtube.com/c/GentlemanProgramming",
+                    "https://docs.nestjs.com/controllers"]},
+]
+
+# World speaker music (odd/tasks/world-speaker-music.md T1): rendered by
+# scripts/generate-world-music.py with the MIT gentle-stream engine, whose notice
+# ships beside the tracks; hashes and loop bounds live in audio/manifest.json.
+GENTLE_STREAM_COMMIT = "381290451544ad2ca3348a68a81b3056bdac73b7"
+MUSIC = [
+    {"id": "speaker-music",
+     "asset": ("Speaker music: five looping tracks (Cafe Drift, Ambient Focus, Velvet Jazz, Soft Circuit, "
+               "Midnight Code) rendered offline for this site by the gentle-stream engine's procedural "
+               "instruments from fixed seeds and styles; no soundfont, samples or mood model"),
+     "author": "Kevnnard (seeds, styles and loop edit); gentle-stream engine by Alan Buscaglia (Gentleman Programming)",
+     "engine": "https://github.com/Gentleman-Programming/gentle-stream/tree/" + GENTLE_STREAM_COMMIT,
+     "engineLicense": "MIT",
+     "engineLicenseFile": "audio/gentle-stream-LICENSE.txt",
+     "engineCopyright": "Copyright (c) 2026 Alan Buscaglia (Gentleman Programming)",
+     "generator": "scripts/generate-world-music.py",
+     "manifest": "audio/manifest.json",
+     "files": ["audio/%s.m4a" % name for name in
+               ("cafe-drift", "ambient-focus", "velvet-jazz", "soft-circuit", "midnight-code")],
+     "note": ("The engine is used under its MIT license, whose notice ships unchanged; this credit claims no "
+              "other license for the rendered audio.")},
 ]
 
 
@@ -808,11 +843,12 @@ if __name__ == "__main__":
         "policy": "Every shipped asset is credited, including CC0 ones (odd/tasks/stylized-house.md S4).",
         "userAgent": AGENT,
         "toolchain": "@gltf-transform/cli " + version,
-        "runtimeExternalRequests": False,
+        "runtimeExternalRequests": True,
         "rawBytes": sum(f["bytes"] for asset in assets for f in asset["sourceFiles"]),
         "optimizedBytes": sum(asset["bytes"] for asset in assets),
         "packs": packs,
         "assets": assets,
         "original": ORIGINAL,
+        "music": MUSIC,
     }, prepare_textures()), prepare_bruno()))
     print("World models:", sum(a["bytes"] for a in assets), "bytes", flush=True)

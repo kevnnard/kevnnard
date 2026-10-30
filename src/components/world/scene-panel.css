@@ -13,7 +13,8 @@
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  width: 320px;
+  /* Match the compact clock in both disclosure states. */
+  width: 21rem;
   max-width: calc(100% - 32px);
   overflow: hidden;
   border: 1px solid #27272a;
@@ -25,6 +26,10 @@
   font-size: 12px;
   line-height: 16px;
   text-align: left;
+}
+
+.scene-panel[data-open="true"] {
+  width: 21rem;
 }
 
 .scene-panel *,
@@ -71,22 +76,44 @@
   border-bottom: 1px solid #27272a;
 }
 
+/* The heading only wraps the disclosure button (world-hud.css). */
 .scene-panel .sp-head {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
   flex: none;
-  padding: 8px 8px 8px 16px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-variant-numeric: tabular-nums;
+  font-size: inherit;
+  line-height: inherit;
+  font-weight: inherit;
 }
 
-.scene-panel .sp-head h2 {
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  font-size: 14px;
-  line-height: 20px;
+/* The panel is the card surface, as the compact clock's section is. */
+.scene-panel .world-hud-trigger {
+  width: 100%;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.scene-panel .world-hud-trigger:hover {
+  background: rgba(24, 24, 27, 0.9);
+}
+
+/* Inset, so the panel's overflow: hidden never clips the ring. */
+.scene-panel .world-hud-trigger:focus-visible {
+  outline-offset: -2px;
+}
+
+.scene-panel .sp-title {
   font-weight: 600;
+}
+
+.scene-panel .sp-chevron {
+  margin-left: auto;
+  color: #a1a1aa;
+}
+
+.scene-panel[data-open="true"] .sp-chevron {
+  transform: rotate(180deg);
 }
 
 .scene-panel .sp-dot {
@@ -120,10 +147,6 @@
 
 .scene-panel .sp-btn:hover {
   background: #27272a;
-}
-
-.scene-panel .sp-head .sp-btn {
-  margin-left: auto;
 }
 
 /* Grouped cards (03-grouped-cards.html), one per zone, inside the console. */

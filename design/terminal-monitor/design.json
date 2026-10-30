@@ -1,0 +1,28 @@
+{
+  "title": "Ghostty \u00d7 Neovim portfolio monitor",
+  "brief": "Click the main monitor to enter Ghostty with Neovim already open. Large personal ASCII header, letter and click navigation, portfolio buffers. Idle screen previews the same dashboard. Review before any commit or production change.",
+  "feature": "odd/tasks/stylized-house.md",
+  "artboards": [
+    {
+      "file": "01-dashboard.html",
+      "title": "Dashboard first",
+      "tradeoff": "A recognisable Neovim start screen; strongest name and fastest entry, less persistent navigation.",
+      "width": 1440,
+      "height": 1000
+    },
+    {
+      "file": "02-workspace.html",
+      "title": "Persistent workspace",
+      "tradeoff": "An explorer keeps navigation visible beside every buffer; more editor-like, less space for content.",
+      "width": 1440,
+      "height": 1000
+    },
+    {
+      "file": "03-reader.html",
+      "title": "Portfolio buffers",
+      "tradeoff": "Large readable buffers with quieter editor chrome; easiest to browse, less dense than a daily coding workspace.",
+      "width": 1440,
+      "height": 1000
+    }
+  ]
+}

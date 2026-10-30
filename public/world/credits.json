@@ -2,7 +2,7 @@
   "policy": "Every shipped asset is credited, including CC0 ones (odd/tasks/stylized-house.md S4).",
   "userAgent": "KevnnardPortfolioWorldBuild/1.0",
   "toolchain": "@gltf-transform/cli 4.5.1",
-  "runtimeExternalRequests": false,
+  "runtimeExternalRequests": true,
   "rawBytes": 481256,
   "optimizedBytes": 122340,
   "packs": [
@@ -775,6 +775,39 @@
       "author": "Kevnnard",
       "license": "Original work (repository license)",
       "source": "src/lib/world/shelf.ts"
+    },
+    {
+      "id": "portrait-page",
+      "asset": "Portrait monitor page: the layout, frames and a Gentleman Programming header with an original GP monogram (not the channel's avatar) are original; it embeds YouTube's official player for the channel's video NN6vlDRjg5Y (youtube-nocookie.com) above the official NestJS Controllers documentation framed live from docs.nestjs.com; both stream from their owners' sites, never downloaded, proxied or rehosted, and their content is not part of this credit; YouTube, Gentleman Programming and NestJS names and marks belong to their owners, no affiliation",
+      "author": "Kevnnard",
+      "license": "Original work (repository license)",
+      "source": "src/components/world/PortraitScreen.tsx",
+      "references": [
+        "https://www.youtube.com/watch?v=NN6vlDRjg5Y",
+        "https://www.youtube.com/c/GentlemanProgramming",
+        "https://docs.nestjs.com/controllers"
+      ]
+    }
+  ],
+  "music": [
+    {
+      "id": "speaker-music",
+      "asset": "Speaker music: five looping tracks (Cafe Drift, Ambient Focus, Velvet Jazz, Soft Circuit, Midnight Code) rendered offline for this site by the gentle-stream engine's procedural instruments from fixed seeds and styles; no soundfont, samples or mood model",
+      "author": "Kevnnard (seeds, styles and loop edit); gentle-stream engine by Alan Buscaglia (Gentleman Programming)",
+      "engine": "https://github.com/Gentleman-Programming/gentle-stream/tree/381290451544ad2ca3348a68a81b3056bdac73b7",
+      "engineLicense": "MIT",
+      "engineLicenseFile": "audio/gentle-stream-LICENSE.txt",
+      "engineCopyright": "Copyright (c) 2026 Alan Buscaglia (Gentleman Programming)",
+      "generator": "scripts/generate-world-music.py",
+      "manifest": "audio/manifest.json",
+      "files": [
+        "audio/cafe-drift.m4a",
+        "audio/ambient-focus.m4a",
+        "audio/velvet-jazz.m4a",
+        "audio/soft-circuit.m4a",
+        "audio/midnight-code.m4a"
+      ],
+      "note": "The engine is used under its MIT license, whose notice ships unchanged; this credit claims no other license for the rendered audio."
     }
   ],
   "textures": [

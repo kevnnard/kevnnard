@@ -1,0 +1,134 @@
+/*
+ * Portrait monitor page (T18, PortraitScreen.tsx). Laid on the flat screen
+ * by drei's <Html transform>: 480 CSS px across the 0.27 m screen, clipped
+ * to it. Same zinc and emerald as the terminal (MonitorScreen.tsx).
+ */
+.portrait-page {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #09090b;
+  color: #fafafa;
+  font:
+    16px / 1.4 ui-sans-serif,
+    system-ui,
+    sans-serif;
+}
+.portrait-page * {
+  box-sizing: border-box;
+}
+.portrait-page a {
+  color: #10b981;
+}
+.portrait-page a:focus-visible,
+.portrait-page button:focus-visible {
+  outline: 3px solid #d4d4d8;
+  outline-offset: 2px;
+}
+.portrait-channel {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  background: #18181b;
+  border-bottom: 1px solid #27272a;
+}
+/* Original monogram, not the channel's avatar. */
+.portrait-mark {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #10b981;
+  color: #09090b;
+  font-size: 15px;
+  font-weight: 700;
+}
+.portrait-channel-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.portrait-channel-text a {
+  color: #fafafa;
+  font-size: 18px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.portrait-channel-text span {
+  color: #a1a1aa;
+  font-size: 13px;
+}
+.portrait-back {
+  flex: none;
+  padding: 6px 14px;
+  border: 1px solid #27272a;
+  border-radius: 999px;
+  background: #09090b;
+  color: #fafafa;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.portrait-player {
+  flex: none;
+  background: #000;
+}
+.portrait-player iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.portrait-still {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  height: 100%;
+  padding: 24px;
+  background: radial-gradient(circle at 50% 40%, #18181b, #09090b 70%);
+  color: #a1a1aa;
+  text-align: center;
+}
+.portrait-still .portrait-mark {
+  width: 72px;
+  height: 72px;
+  font-size: 26px;
+}
+.portrait-still p {
+  margin: 0;
+  font-size: 17px;
+}
+.portrait-docs {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  border-top: 1px solid #27272a;
+}
+.portrait-docs-bar {
+  display: flex;
+  flex: none;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  padding: 8px 16px;
+  background: #18181b;
+  color: #a1a1aa;
+  font-size: 14px;
+}
+/* The official site, scrolled inside its own frame. */
+.portrait-docs iframe {
+  display: block;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  border: 0;
+  background: #fff;
+}

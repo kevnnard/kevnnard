@@ -3,13 +3,14 @@
   "chosen": "03-grouped-cards.html",
   "handoffs": {
     "03-grouped-cards.html": {
-      "status": "in_progress",
+      "status": "implemented",
       "queued": false,
       "sentAt": "2026-10-28T18:51:33.816Z",
       "startedAt": "2026-10-28T18:51:37.016Z",
-      "implementedAt": null,
+      "implementedAt": "2026-10-28T19:00:51.077Z",
       "feature": "odd/tasks/stylized-house.md",
-      "note": "Implementando tarjetas por zona, colores y luces con horario nocturno."
+      "note": "Panel y cuatro luces implementados en 5bcd972. 263 pruebas, Biome, TypeScript y build pasan; aspecto y rendimiento GPU pendientes de revisión visual.",
+      "previewUrl": "http://localhost:4321/world"
     }
   }
 }

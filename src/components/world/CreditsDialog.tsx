@@ -1,150 +1,114 @@
-import { useEffect, useId, useRef, useState } from "react";
-import type { CreditPack, Credits } from "@/lib/world/credits.ts";
+import { useEffect, useState } from "react";
+import {
+  type AssetAcknowledgement,
+  BRUNO_INSPIRATION,
+  type CreditSections,
+  creditSections,
+  type WorldCredits,
+} from "@/lib/world/world-credits.ts";
 
-const linkClass =
-  "underline underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 rounded-sm";
+/** One request per page: the tab can open and close without refetching. */
+let pending: Promise<CreditSections> | null = null;
+function loadCredits() {
+  pending ??= fetch("/world/credits.json")
+    .then((response) => {
+      if (!response.ok) throw new Error(String(response.status));
+      return response.json() as Promise<WorldCredits>;
+    })
+    .then(creditSections)
+    .catch((error) => {
+      pending = null;
+      throw error;
+    });
+  return pending;
+}
 
-function PackCredit({ pack, files }: { pack: CreditPack; files: string[] }) {
+function External({ href, children }: { href: string; children: string }) {
   return (
-    <li className="border-t border-border py-3 first:border-t-0">
-      <h3 className="text-sm font-semibold">{pack.pack}</h3>
-      <p className="text-sm text-muted-foreground">
-        By{" "}
-        <a
-          className={linkClass}
-          href={pack.authorUrl}
-          target="_blank"
-          rel="noreferrer"
-        >
-          {pack.author}
-        </a>{" "}
-        ·{" "}
-        <a
-          className={linkClass}
-          href={pack.licenseUrl}
-          target="_blank"
-          rel="noreferrer"
-        >
-          {pack.license}
-        </a>{" "}
-        ·{" "}
-        <a
-          className={linkClass}
-          href={pack.source}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Source
-        </a>
+    <a href={href} target="_blank" rel="noreferrer">
+      {children}
+    </a>
+  );
+}
+
+function PackCredit({ pack }: { pack: AssetAcknowledgement }) {
+  return (
+    <li>
+      <h4>{pack.pack}</h4>
+      <p>
+        By <External href={pack.authorUrl}>{pack.author}</External> ·{" "}
+        <External href={pack.licenseUrl}>{pack.license}</External> ·{" "}
+        <External href={pack.source}>Source</External>
       </p>
-      <p className="mt-1 text-xs text-muted-foreground">
-        Used: {files.join(", ")}
-      </p>
+      <p className="world-credits-used">Used: {pack.used.join(", ")}</p>
     </li>
   );
 }
 
 /**
- * Credits for every shipped asset (S4). A native modal dialog: it traps focus,
- * closes on Escape and returns focus to the button that opened it.
+ * The guide's Credits tab (S4): gentle-stream's music engine first, Bruno
+ * Simon's inspiration, then every external asset pack from
+ * /world/credits.json. The site's own procedural work stays in that file and
+ * is not listed here as a third-party credit.
  */
-export function CreditsDialog() {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const titleId = useId();
-  const [credits, setCredits] = useState<Credits | null>(null);
+export function CreditsList() {
+  const [credits, setCredits] = useState<CreditSections | null>(null);
   const [failed, setFailed] = useState(false);
-  const [open, setOpen] = useState(false);
-
   useEffect(() => {
-    if (!open || credits) return;
-    fetch("/world/credits.json")
-      .then((response) => {
-        if (!response.ok) throw new Error(String(response.status));
-        return response.json() as Promise<Credits>;
-      })
-      .then(setCredits)
-      .catch(() => setFailed(true));
-  }, [open, credits]);
+    let live = true;
+    loadCredits()
+      .then((sections) => live && setCredits(sections))
+      .catch(() => live && setFailed(true));
+    return () => {
+      live = false;
+    };
+  }, []);
 
-  const show = () => {
-    setOpen(true);
-    dialogRef.current?.showModal();
-  };
-
+  if (failed)
+    return (
+      <p role="alert">
+        Credits could not load. They are also in{" "}
+        <a href="/world/credits.json">/world/credits.json</a>.
+      </p>
+    );
+  if (!credits) return <p role="status">Loading credits…</p>;
   return (
-    <>
-      <button
-        type="button"
-        onClick={show}
-        aria-haspopup="dialog"
-        className="pointer-events-auto rounded-full bg-zinc-950/70 px-4 py-2 text-sm text-zinc-100 backdrop-blur hover:bg-zinc-900 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-      >
-        Credits
-      </button>
-      <dialog
-        ref={dialogRef}
-        aria-labelledby={titleId}
-        onClose={() => setOpen(false)}
-        className="m-auto w-[min(32rem,calc(100%-2rem))] rounded-xl border border-border bg-card p-6 text-card-foreground backdrop:bg-background/80"
-      >
-        <h2 id={titleId} className="text-base font-semibold">
-          Credits
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Every model in this world is credited to its author, including CC0
-          ones. The island and lighting are original code.
-        </p>
-        {failed && (
-          <p role="alert" className="mt-4 text-sm">
-            Credits could not load. They are also in /world/credits.json.
-          </p>
-        )}
-        {!credits && !failed && (
-          <p role="status" className="mt-4 text-sm text-muted-foreground">
-            Loading credits…
-          </p>
-        )}
-        {credits && (
-          <ul className="mt-4 max-h-[60vh] overflow-y-auto">
-            {credits.packs.map((pack) => (
-              <PackCredit
-                key={pack.id}
-                pack={pack}
-                files={[
-                  ...new Set(
-                    [
-                      ...credits.assets,
-                      ...(credits.textures ?? []),
-                      ...(credits.maps ?? []),
-                    ]
-                      .filter((entry) => entry.pack === pack.id)
-                      .map((entry) => entry.asset),
-                  ),
-                ]}
-              />
-            ))}
-            {credits.original?.map((entry) => (
-              <li
-                key={entry.id}
-                className="border-t border-border py-3 first:border-t-0"
-              >
-                <h3 className="text-sm font-semibold">{entry.asset}</h3>
-                <p className="text-sm text-muted-foreground">
-                  By {entry.author} · {entry.license}
-                </p>
-              </li>
-            ))}
-          </ul>
-        )}
-        <form method="dialog" className="mt-4 flex justify-end">
-          <button
-            type="submit"
-            className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-          >
-            Close
-          </button>
-        </form>
-      </dialog>
-    </>
+    <div className="world-credits">
+      <section aria-labelledby="world-credits-music">
+        <h3 id="world-credits-music">Music</h3>
+        {credits.music.map((music) => (
+          <div key={music.engineUrl} className="world-credits-feature">
+            <h4>
+              <External href={music.engineUrl}>{music.name}</External>
+            </h4>
+            <p>
+              The procedural music engine behind the {music.tracks.length} local
+              loops: {music.tracks.join(", ")}. By {music.author} ·{" "}
+              <External href={music.licenseUrl}>{music.license}</External> ·{" "}
+              <External href={music.manifestUrl}>Track manifest</External>
+            </p>
+          </div>
+        ))}
+      </section>
+      <section aria-labelledby="world-credits-inspiration">
+        <h3 id="world-credits-inspiration">Inspiration</h3>
+        <div className="world-credits-feature">
+          <h4>
+            <External href={BRUNO_INSPIRATION.url}>
+              {BRUNO_INSPIRATION.name}
+            </External>
+          </h4>
+          <p>{BRUNO_INSPIRATION.note}</p>
+        </div>
+      </section>
+      <section aria-labelledby="world-credits-assets">
+        <h3 id="world-credits-assets">Assets</h3>
+        <ul>
+          {credits.assets.map((pack) => (
+            <PackCredit key={pack.id} pack={pack} />
+          ))}
+        </ul>
+      </section>
+    </div>
   );
 }

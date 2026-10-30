@@ -21,12 +21,20 @@ import {
 } from "three";
 import { BrunoChair } from "@/components/world/BrunoProps";
 import { mergeParts } from "@/components/world/House";
+import MonitorScreen, {
+  type MonitorTerminal,
+} from "@/components/world/MonitorScreen";
+import PortraitScreen, {
+  type PortraitControl,
+} from "@/components/world/PortraitScreen";
 import {
   CoffeeSteam,
-  logoMesh,
   mugGeometry,
   steamMaterial,
 } from "@/components/world/SetupEffects";
+import SpeakerZone, {
+  type SpeakerControl,
+} from "@/components/world/SpeakerZone";
 import { type SurfaceMaps, surfaceMaterial } from "@/components/world/surfaces";
 import {
   DEFAULT_LIGHTS,
@@ -34,19 +42,14 @@ import {
   type LightSettings,
   sideLight,
 } from "@/lib/world/lights.ts";
-import {
-  BOUNCE,
-  type BounceState,
-  bounceStep,
-  chairSway,
-  ledLevel,
-  setupAnimates,
-} from "@/lib/world/motion.ts";
+import { isMainScreenGlow } from "@/lib/world/monitor.ts";
+import { chairSway, ledLevel, setupAnimates } from "@/lib/world/motion.ts";
 import {
   NORMAL_SIZE,
   normalPixels,
   woodGrainPixels,
 } from "@/lib/world/normals.ts";
+import { isPortraitCodeGlow } from "@/lib/world/portrait.ts";
 import {
   CHAIR_PIVOT,
   SETUP_COLORS,
@@ -67,9 +70,6 @@ const FOCUS = new Vector3(
   SETUP_PROPS.mug.center[1],
   CHAIR_PIVOT[1],
 );
-/** Frames after a pause (demand loop) step at most this long, in ms. */
-const MAX_STEP = 100;
-
 const SOLID_MERGE = {
   roundSegments: SETUP_ROUND_SEGMENTS,
   occlusion: setupOcclusion,
@@ -211,32 +211,14 @@ function paintLeds(
   colors.needsUpdate = true;
 }
 
-/** Puts the bouncing logo on the portrait screen, axes swapped and scaled there. */
-function placeLogo(logo: ReturnType<typeof logoMesh>, bounce: BounceState) {
-  const { swap } = SETUP_PROPS.sideScreen.logo;
-  logo.mesh.position.x = swap ? bounce.y : bounce.x;
-  logo.mesh.position.y = swap ? bounce.x : bounce.y;
-}
-
 /** The resting pose, also what reduced motion and far views show. */
 function rest(
-  {
-    swivel,
-    leds,
-    logo,
-  }: {
-    swivel: Object3D;
-    leds: ReturnType<typeof ledMesh>;
-    logo: ReturnType<typeof logoMesh>;
-  },
+  { swivel, leds }: { swivel: Object3D; leds: ReturnType<typeof ledMesh> },
   base: number,
   side: Color,
 ) {
   swivel.rotation.y = 0;
   paintLeds(leds, () => base, side);
-  const start = { ...BOUNCE.start };
-  placeLogo(logo, start);
-  return start;
 }
 
 /**
@@ -251,16 +233,20 @@ function rest(
  * shader (T4k, BrunoProps.tsx).
  *
  * Effects ported from Bruno Simon's my-room-in-3d (T4i, with permission):
- * the seat sways on its column, the PC LEDs breathe, steam rises from an
- * original mug on its wooden coaster and the site's initials bounce on the
- * portrait screen. The keyboard's side lights (T12) never animate: they take
+ * the seat sways on its column, the PC LEDs breathe and steam rises from an
+ * original mug on its wooden coaster. The keyboard's side lights (T12) never animate: they take
  * the setup light's colour at a subtle strength, only at night, through its
  * switch and the master. Frames are requested continuously only while the
  * camera is near the house and motion is allowed; otherwise the setup rests
- * (chair centred, LEDs at the hour's glow, logo still, steam frozen, or
+ * (chair centred, LEDs at the hour's glow, steam frozen, or
  * hidden with reduced motion). At night the scene panel's master `power` off
  * turns every screen, LED and the chair bake's artificial channels dark;
  * motion keeps running on the dark values.
+ *
+ * The ultrawide's screen is the terminal's idle dashboard (T16,
+ * MonitorScreen.tsx): its old landscape glow parts are left out here. The
+ * portrait's code lines and bouncing logo give way to its page (T18,
+ * PortraitScreen.tsx): YouTube's official player and a NestJS docs preview.
  */
 export default function Setup({
   hours,
@@ -268,6 +254,9 @@ export default function Setup({
   reducedMotion = false,
   lights,
   power = true,
+  terminal,
+  portrait,
+  speakers,
 }: {
   hours: number;
   maps?: SurfaceMaps;
@@ -279,9 +268,15 @@ export default function Setup({
   lights?: LightSettings;
   /** The scene panel's master switch (night only). */
   power?: boolean;
+  /** The terminal drawn on the ultrawide's screen (T16), from WorldApp. */
+  terminal?: MonitorTerminal;
+  /** The portrait monitor's close-up (T18), from WorldApp. */
+  portrait?: PortraitControl;
+  /** The shelf speakers' music and close-up (world-speaker-music T2). */
+  speakers?: SpeakerControl;
 }) {
   const { invalidate } = useThree();
-  const { group, glow, owned, swivel, leds, steam, logo } = useMemo(() => {
+  const { group, glow, owned, swivel, leds, steam } = useMemo(() => {
     const meshes = setupMeshes();
     const owned = { materials: [] as Material[], textures: [] as Texture[] };
     const screens = new MeshBasicMaterial({ vertexColors: true });
@@ -333,7 +328,12 @@ export default function Setup({
       (child as Mesh).geometry.translate(-CHAIR_PIVOT[0], 0, -CHAIR_PIVOT[1]);
     const lit = new Mesh(
       mergeParts(
-        meshes.glow.filter((part) => part.led === undefined),
+        meshes.glow.filter(
+          (part) =>
+            part.led === undefined &&
+            !isMainScreenGlow(part) &&
+            !isPortraitCodeGlow(part),
+        ),
         { roundSegments: SETUP_ROUND_SEGMENTS },
       ),
       screens,
@@ -349,10 +349,7 @@ export default function Setup({
     mug.position.set(...SETUP_PROPS.mug.center);
     mug.castShadow = true;
     mug.receiveShadow = true;
-    const logo = logoMesh();
-    owned.materials.push(logo.mesh.material);
-    if (logo.mesh.material.map) owned.textures.push(logo.mesh.material.map);
-    setup.add(swivel, lit, leds.mesh, pane, mug, logo.group);
+    setup.add(swivel, lit, leds.mesh, pane, mug);
     return {
       group: setup,
       glow: screens,
@@ -360,7 +357,6 @@ export default function Setup({
       swivel,
       leds,
       steam,
-      logo,
     };
   }, [maps]);
 
@@ -373,18 +369,17 @@ export default function Setup({
         : SIDE_OFF.clone(),
     [side.level, side.color, side.strength],
   );
-  const effects = useMemo(() => ({ swivel, leds, logo }), [swivel, leds, logo]);
-  const motion = useRef({ active: false, bounce: { ...BOUNCE.start } });
+  const effects = useMemo(() => ({ swivel, leds }), [swivel, leds]);
+  const motion = useRef({ active: false });
 
   useLayoutEffect(() => {
     glow.color.setScalar(base);
-    logo.mesh.material.color.setScalar(base);
-    motion.current.bounce = rest(effects, base, sideColor);
+    rest(effects, base, sideColor);
     motion.current.active = false;
     invalidate();
-  }, [base, sideColor, reducedMotion, glow, logo, effects, invalidate]);
+  }, [base, sideColor, reducedMotion, glow, effects, invalidate]);
 
-  useFrame((frame, delta) => {
+  useFrame((frame) => {
     const active = setupAnimates({
       reducedMotion,
       distance: frame.camera.position.distanceTo(FOCUS),
@@ -392,7 +387,7 @@ export default function Setup({
     if (!active) {
       if (motion.current.active) {
         motion.current.active = false;
-        motion.current.bounce = rest(effects, base, sideColor);
+        rest(effects, base, sideColor);
         frame.invalidate();
       }
       return;
@@ -402,11 +397,6 @@ export default function Setup({
     swivel.rotation.y = chairSway(t);
     paintLeds(leds, (index) => ledLevel(t, index, base), sideColor);
     steam.uniforms.uTime.value = t;
-    motion.current.bounce = bounceStep(
-      motion.current.bounce,
-      Math.min(delta * 1000, MAX_STEP),
-    );
-    placeLogo(logo, motion.current.bounce);
     frame.invalidate();
   });
 
@@ -425,6 +415,15 @@ export default function Setup({
   return (
     <>
       <primitive object={group} />
+      <MonitorScreen glow={base} occluders={group} terminal={terminal} />
+      <PortraitScreen
+        powered={glowPower(power, hours) > 0}
+        terminal={terminal?.focused ?? false}
+        reducedMotion={reducedMotion}
+        occluders={group}
+        control={portrait}
+      />
+      {speakers && <SpeakerZone occluders={group} control={speakers} />}
       <Suspense fallback={null}>
         <CoffeeSteam material={steam} visible={!reducedMotion} />
       </Suspense>

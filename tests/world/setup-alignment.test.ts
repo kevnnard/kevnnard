@@ -1,6 +1,6 @@
 // T14 (S27): the ultrawide centred on the desk with the keyboard and mat
-// under it, the portrait monitor moved to the seated right. Seated at the
-// desk you face the left wall (-x), so your right is -z.
+// under it. S30 moves the portrait back to the seated left (+z).
+// Seated at the desk you face the left wall (-x), so your right is -z.
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
@@ -101,14 +101,13 @@ describe("T14 ultrawide, keyboard and mat on the desk's centre (S27)", () => {
   });
 });
 
-describe("T14 portrait monitor on the seated right (S27)", () => {
+describe("S30 portrait monitor on the seated left", () => {
   const main = box(item("monitor"));
   const portrait = box(item("portrait"));
 
-  it("moves the portrait to -z, past the ultrawide's right end", () => {
-    assert.ok(T12.portrait > CENTRE, "T12 had it on the left");
-    assert.ok(SIDE_MONITOR.center[2] < MAIN_MONITOR.center[2]);
-    assert.ok(portrait.z1 <= main.z0 - 0.04, "a panel gap of 4 cm or more");
+  it("moves the portrait to +z, past the ultrawide's left end", () => {
+    assert.ok(SIDE_MONITOR.center[2] > MAIN_MONITOR.center[2]);
+    assert.ok(portrait.z0 >= main.z1 + 0.04, "a panel gap of 4 cm or more");
     assert.ok(minGap(item("monitor"), item("portrait")) >= 0.04, "no clash");
     const lightbar = box(item("lightbar"));
     assert.ok(gap(portrait, lightbar) >= 0.04, "clear of the light bar");
@@ -117,7 +116,7 @@ describe("T14 portrait monitor on the seated right (S27)", () => {
   it("turns toward the seat from its new side", () => {
     const n = [Math.cos(SIDE_MONITOR.yaw), 0, -Math.sin(SIDE_MONITOR.yaw)];
     assert.ok(n[0] > 0.9, "into the room");
-    assert.ok(n[2] > 0.2, "turned in toward the desk centre");
+    assert.ok(n[2] < -0.2, "turned in toward the desk centre");
     const [px, pz] = CHAIR_PIVOT;
     const [sx, , sz] = SIDE_MONITOR.center;
     const toSeat = [px - sx, pz - sz];

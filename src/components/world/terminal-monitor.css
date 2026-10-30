@@ -1,0 +1,26 @@
+/*
+ * Main monitor terminal (T16, L64-L66). The terminal is drawn on the
+ * ultrawide's curved screen (MonitorScreen.tsx), never as a page element.
+ * This file only clips its accessible companion to nothing (screen readers
+ * and keyboard focus keep it) and hides the clock and lights panel while
+ * the terminal holds the camera.
+ */
+.terminal-companion {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/*
+ * While the terminal holds the camera (L61), the clock and the lights panel
+ * are hidden, not unmounted or moved: they stay direct children of the
+ * world container, so their layout, measurements and state come back
+ * unchanged. Only these two roots, matched exactly.
+ */
+.world-terminal-focus > .scene-panel,
+.world-terminal-focus > section[aria-label="Time of day"] {
+  visibility: hidden;
+}
