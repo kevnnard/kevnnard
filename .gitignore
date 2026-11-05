@@ -13,11 +13,16 @@ yarn-error.log*
 pnpm-debug.log*
 
 
-# environment variables
+# Local environment and secrets; keep shareable templates
 .env
-.env.production
+.env.*
+!.env.example
+!.env.*.example
 
 # macOS-specific files
 .DS_Store
-# Local Pi runtime state
-.atl/
+# Regenerable code intelligence index
+.codegraph/
+
+# Agent context (.pi/, .atl/), design/ and odd/ are shared with the project.
+# Do not ignore these directories: they preserve cross-machine context.

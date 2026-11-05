@@ -1,0 +1,7 @@
+# Keep project agent context versionable across machines.
+# Exclude only disposable logs and local secrets.
+*.log
+.env
+.env.*
+!.env.example
+!.env.*.example
