@@ -185,6 +185,23 @@ ORIGINAL = [
      "asset": "Personal collection shelf: white two-column display shelf, football on its stand, cameras, hardware boxes, keyboard and books, personal athlete trophies, tricolor medals, film canisters, lenses and original landscape prints (procedural; labels and ball skin drawn in code from reference photos supplied by Kevnnard; brand names and marks belong to their owners, no affiliation)",
      "author": "Kevnnard", "license": "Original work (repository license)",
      "source": "src/lib/world/shelf.ts"},
+    # collection-display-models T5 (S12): the left display case's football helmet,
+    # written to its GLB by scripts/prepare-display-football.mjs; write_credits()
+    # records the shipped file's bytes and hash.
+    {"id": "football-helmet",
+     "asset": ("Football helmet: an original SpeedFlex-inspired model built in code (shell with a flex forehead "
+               "panel and its seam, through vents, front and rear bumpers and shell thickness; a padded liner; a "
+               "black curved open-eye facemask with black clips and hardware; a separate tinted black eye shield), "
+               "painted in a UV atlas with the owner's gold and black Rams-style curled horn livery, #32 and 18 disc, "
+               "redrawn from the "
+               "owner's photos of their own Schutt helmet (the photos are not shipped); modelled from Riddell's "
+               "official SpeedFlex varsity product photos, not Riddell's CAD and not an exact Riddell SpeedFlex "
+               "replica; Riddell, SpeedFlex and Schutt belong to their owners, no affiliation"),
+     "author": "Kevnnard", "license": "Original work (repository license)",
+     "source": "src/lib/world/football-helmet-asset.ts",
+     "references": ["https://www.riddell.com/riddell/en/Open-Catalogue/Helmets/Varsity/SPEEDFLEX/p/FB_HELMET_SPDFX"],
+     "file": "models/display-football-helmet.glb",
+     "generator": "scripts/prepare-display-football.mjs"},
     # T18 (S31-S32): the portrait page; the video and docs stream from their sites.
     {"id": "portrait-page",
      "asset": ("Portrait monitor page: the layout, frames and a Gentleman Programming header with an original GP "
@@ -733,8 +750,45 @@ def with_living(credits, packs, assets):
 
 
 def write_credits(credits):
-    (OUTPUT / "credits.json").write_text(
-        json.dumps(credits, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    # The gallery's CC BY models are independently sourced and optimized.
+    # Preserve their credited provenance whenever base-world assets regenerate.
+    # The football helmet is original work (ORIGINAL), never a downloaded mesh.
+    path = OUTPUT / "credits.json"
+    if path.exists():
+        previous = json.loads(path.read_text(encoding="utf-8"))
+        gallery_files = {"models/display-offroad-helmet.glb",
+                         "models/display-jordan-1.glb"}
+        gallery_assets = [asset for asset in previous.get("assets", [])
+                          if asset["file"] in gallery_files]
+        if gallery_assets:
+            gallery_packs = {asset["pack"] for asset in gallery_assets}
+            credits["assets"] = [asset for asset in credits["assets"]
+                                 if asset["file"] not in gallery_files] + gallery_assets
+            credits["packs"] = [pack for pack in credits["packs"]
+                                if pack["id"] not in gallery_packs] + [
+                                    pack for pack in previous["packs"]
+                                    if pack["id"] in gallery_packs]
+    # A file built here as original work is never also credited as a download,
+    # so a stale credits.json cannot bring a retired mesh or its pack back.
+    original_files = {entry["file"] for entry in credits.get("original", [])
+                      if "file" in entry}
+    credits["assets"] = [asset for asset in credits["assets"]
+                         if asset["file"] not in original_files]
+    used = {entry["pack"] for key in ("assets", "textures", "maps")
+            for entry in credits.get(key, [])}
+    credits["packs"] = [pack for pack in credits["packs"] if pack["id"] in used]
+    # Original work that ships as a file records that file's bytes and hash.
+    if "original" in credits:
+        originals = []
+        for entry in credits["original"]:
+            if "file" in entry:
+                data = (OUTPUT / entry["file"]).read_bytes()
+                entry = {**entry, "bytes": len(data),
+                         "sha256": hashlib.sha256(data).hexdigest()}
+            originals.append(entry)
+        credits["original"] = originals
+    path.write_text(json.dumps(credits, indent=2, ensure_ascii=False) + "\n",
+                    encoding="utf-8")
 
 
 def raw_url(pack, path):

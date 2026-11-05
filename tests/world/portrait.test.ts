@@ -3,6 +3,7 @@
 // (no floating window).
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -458,14 +459,17 @@ describe("T18 wiring: one surface-bound page and a reversible close-up", () => {
     assert.match(app, /Exit portrait/);
     assert.match(app, /menuButton\.current\?\.focus\(\)/);
     // Each close-up only opens from the room.
-    assert.match(app, /if \(!focus\) setPortrait\(true\)/);
+    assert.match(
+      app,
+      /if \(!focus\) \{\s*setGalleryCase\(null\);\s*setPortrait\(true\)/,
+    );
     assert.match(app, /onEnter: ready && !portrait \? enter : undefined/);
     const scene = read("src/components/world/WorldScene.tsx");
     assert.match(scene, /portraitFocus\(/);
     // Only the terminal close-up reports arrival to the terminal.
     assert.match(
       scene,
-      /onArrive=\{closeUp === "terminal" \? onMonitorArrive : undefined\}/,
+      /onArrive=\{focus && closeUp === "terminal" \? onMonitorArrive : undefined\}/,
     );
   });
 });
@@ -521,6 +525,26 @@ describe("T18 credit", () => {
       { encoding: "utf8", timeout: 10_000 },
     );
     assert.equal(out.status, 0, out.stderr);
-    assert.deepEqual(JSON.parse(out.stdout), shipped.original);
+    // write_credits() adds the bytes and hash of an original entry that ships
+    // a file; they must match that file, and nothing else may differ.
+    const derived = (shipped.original ?? []).map((entry) => {
+      const { bytes, sha256, ...rest } = entry as typeof entry & {
+        file?: string;
+        bytes?: number;
+        sha256?: string;
+      };
+      if (rest.file === undefined) return entry;
+      const data = readFileSync(
+        new URL(`../../public/world/${rest.file}`, import.meta.url),
+      );
+      assert.equal(bytes, data.length, rest.file);
+      assert.equal(
+        sha256,
+        createHash("sha256").update(data).digest("hex"),
+        rest.file,
+      );
+      return rest;
+    });
+    assert.deepEqual(JSON.parse(out.stdout), derived);
   });
 });

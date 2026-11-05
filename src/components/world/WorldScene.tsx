@@ -41,6 +41,8 @@ import {
 } from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import DisplayCases from "@/components/world/DisplayCases";
+import FloorLamp from "@/components/world/FloorLamp";
 import Garden from "@/components/world/Garden";
 import House from "@/components/world/House";
 import Living from "@/components/world/Living";
@@ -49,6 +51,7 @@ import NightLights from "@/components/world/NightLights";
 import type { PortraitControl } from "@/components/world/PortraitScreen";
 import Setup from "@/components/world/Setup";
 import Shelf from "@/components/world/Shelf";
+import SofaLamps from "@/components/world/SofaLamps";
 import SpeakerWaves from "@/components/world/SpeakerWaves";
 import type { SpeakerControl } from "@/components/world/SpeakerZone";
 import { pastelMaterial, useSurfaceMaps } from "@/components/world/surfaces";
@@ -61,11 +64,13 @@ import {
   poseToPosition,
 } from "@/lib/world/camera.ts";
 import { cloudLayout, cloudShapes } from "@/lib/world/clouds.ts";
+import type { DisplayItemId } from "@/lib/world/display-cases.ts";
 import {
   FLOWER_COLORS,
   flowerLayout,
   flowerMesh,
 } from "@/lib/world/flowers.ts";
+import { galleryCaseFocus } from "@/lib/world/gallery-camera.ts";
 import { clearOfGarden } from "@/lib/world/garden.ts";
 import {
   ISLAND,
@@ -150,11 +155,14 @@ interface WorldSceneProps {
   portrait?: PortraitControl;
   /** The speakers' music and close-up (world-speaker-music T2). */
   speakers?: SpeakerControl;
+  /** The selected gallery case; null restores the adapted home framing. */
+  galleryCase?: DisplayItemId | null;
+  onInspectCase?: (id: DisplayItemId) => void;
 }
 
 /** Critical groups that report their commit; the textured branch only. */
 type Prepared = Record<
-  "nature" | "surfaces" | "living" | "steam" | "chair",
+  "nature" | "surfaces" | "living" | "steam" | "chair" | "display",
   () => void
 >;
 
@@ -249,6 +257,8 @@ function SceneCanvas({
   onMonitorArrive,
   portrait,
   speakers,
+  galleryCase,
+  onInspectCase,
   tracker,
   onOutdoor,
 }: Omit<WorldSceneProps, "onReady" | "onProgress"> & {
@@ -261,6 +271,7 @@ function SceneCanvas({
       living: () => tracker.complete("living"),
       steam: () => tracker.complete("steam"),
       chair: () => tracker.complete("chair"),
+      display: () => tracker.complete("display"),
     }),
     [tracker],
   );
@@ -287,11 +298,12 @@ function SceneCanvas({
       <Preparation tracker={tracker} />
       <WorldLighting hours={hours} />
       <GuidedCamera
+        galleryCase={galleryCase}
         reducedMotion={reducedMotion}
         home={home}
         focus={focus || closeUp !== "terminal"}
         closeUp={closeUp}
-        onArrive={closeUp === "terminal" ? onMonitorArrive : undefined}
+        onArrive={focus && closeUp === "terminal" ? onMonitorArrive : undefined}
       />
       <Island />
       {/* Flat materials until the texture maps arrive (T4e). */}
@@ -324,6 +336,8 @@ function SceneCanvas({
           terminal={terminal}
           portrait={portrait}
           speakers={speakers}
+          galleryCase={galleryCase}
+          onInspectCase={onInspectCase}
           prepared={prepared}
         />
       </Suspense>
@@ -419,6 +433,8 @@ function TexturedHouse({
   terminal,
   portrait,
   speakers,
+  galleryCase,
+  onInspectCase,
   prepared,
 }: {
   reducedMotion: boolean;
@@ -428,6 +444,8 @@ function TexturedHouse({
   terminal?: MonitorTerminal;
   portrait?: PortraitControl;
   speakers?: SpeakerControl;
+  galleryCase?: DisplayItemId | null;
+  onInspectCase?: (id: DisplayItemId) => void;
   prepared: Prepared;
 }) {
   const maps = useSurfaceMaps();
@@ -449,6 +467,15 @@ function TexturedHouse({
         prepared={prepared}
       />
       <Shelf maps={maps} />
+      <FloorLamp power={power} hours={hours} />
+      <SofaLamps power={power} hours={hours} />
+      <DisplayCases
+        power={power}
+        hours={hours}
+        onPrepared={prepared.display}
+        focused={galleryCase}
+        onInspect={onInspectCase}
+      />
       <Suspense fallback={null}>
         <Living
           hours={hours}
@@ -639,12 +666,14 @@ function GuidedCamera({
   home,
   focus,
   closeUp = "terminal",
+  galleryCase = null,
   onArrive,
 }: {
   reducedMotion: boolean;
   home: number;
   focus: boolean;
   closeUp?: "terminal" | "portrait" | "speakers";
+  galleryCase?: DisplayItemId | null;
   onArrive?: () => void;
 }) {
   const controls = useRef<CameraControls>(null);
@@ -704,22 +733,25 @@ function GuidedCamera({
   useEffect(() => {
     const current = controls.current;
     if (!current) return;
-    focused.current = focus;
+    focused.current = focus || galleryCase !== null;
     const run = ++epoch.current;
     const animate = !reducedMotion && !first.current;
     first.current = false;
     const recentered = lastHome.current !== home;
     lastHome.current = home;
-    if (focus) {
+    if (focus || galleryCase) {
       // Saved once per visit: resizing re-frames the close-up only.
       saved.current ??= {
         position: current.getPosition(new Vector3()).toArray(),
         target: current.getTarget(new Vector3()).toArray(),
       };
       const [width, height] = portraitFit.split("x").map(Number);
-      const speaker = closeUp === "speakers" ? speakerFocus(aspect) : null;
-      lens.focus(speaker ? speaker.fov : null);
+      const speaker =
+        closeUp === "speakers" && focus ? speakerFocus(aspect) : null;
+      const gallery = galleryCase ? galleryCaseFocus(galleryCase) : null;
+      lens.focus(gallery?.fov ?? speaker?.fov ?? GUIDE.fov);
       const { position, target } =
+        gallery ??
         speaker ??
         (portraitFit ? portraitFocus({ width, height }) : monitorFocus(aspect));
       current.setLookAt(...position, ...target, animate).then(() => {
@@ -737,7 +769,16 @@ function GuidedCamera({
     const [x, y, z] = poseToPosition(guidePose(aspect));
     const [tx, ty, tz] = GUIDE.target;
     current.setLookAt(x, y, z, tx, ty, tz, animate);
-  }, [aspect, home, reducedMotion, focus, portraitFit, closeUp, lens]);
+  }, [
+    aspect,
+    home,
+    reducedMotion,
+    focus,
+    galleryCase,
+    portraitFit,
+    closeUp,
+    lens,
+  ]);
 
   // Disabled controls hand touch gestures back to the browser; on the
   // terminal a touch drag scrolls the screen instead (MonitorScreen).
@@ -745,13 +786,13 @@ function GuidedCamera({
     if (focus) element.style.touchAction = "none";
   }, [focus, element]);
 
-  const bounds = focus ? MONITOR_FOCUS.limits : null;
+  const bounds = focus || galleryCase ? MONITOR_FOCUS.limits : null;
 
   return (
     <CameraControls
       ref={controls}
       makeDefault
-      enabled={!focus}
+      enabled={!focus && !galleryCase}
       minDistance={bounds?.minDistance ?? limits.minDistance}
       maxDistance={bounds?.maxDistance ?? limits.maxDistance}
       minPolarAngle={bounds?.minPolar ?? limits.minPolar}

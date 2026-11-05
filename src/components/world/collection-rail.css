@@ -1,0 +1,47 @@
+.world-gallery-focus > [aria-label="Time of day"],
+.world-gallery-focus > .scene-panel { display: none; }
+.collection-rail {
+  position: absolute;
+  z-index: 15;
+  inset: auto 24px 20px;
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 16px 24px;
+  padding: 16px 24px;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-xl);
+  background: hsl(var(--background) / 0.9);
+  backdrop-filter: blur(8px);
+  color: hsl(var(--foreground));
+  font-size: 14px;
+}
+.collection-rail-mono { font: 12px/16px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.collection-rail-intro h2 { margin: 4px 0; font-size: 20px; font-weight: 600; }
+.collection-rail-intro p { margin: 4px 0 0; font-size: 12px; color: hsl(var(--muted-foreground)); }
+.collection-rail-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.collection-rail button { cursor: pointer; color: inherit; font: inherit; }
+.collection-rail button:focus-visible { outline: 3px solid hsl(var(--ring)); outline-offset: 2px; }
+.collection-rail-tabs button { min-height: 104px; padding: 12px; border: 1px solid hsl(var(--border)); border-radius: var(--radius-lg); background: hsl(var(--secondary)); text-align: left; }
+.collection-rail-tabs button:hover, .collection-rail-tabs button[aria-selected="true"] { border-color: hsl(var(--ring)); background: hsl(var(--accent)); }
+.collection-rail-tabs button[aria-selected="true"] { border-left: 3px solid #10b981; }
+.collection-rail-index { display: block; margin-bottom: 6px; color: #10b981; }
+.collection-rail-tabs strong, .collection-rail-tabs small { display: block; }
+.collection-rail-tabs small { margin-top: 3px; color: hsl(var(--muted-foreground)); font-size: 12px; }
+.collection-rail-detail { grid-column: 2; display: flex; min-height: 36px; align-items: center; justify-content: space-between; gap: 12px; color: hsl(var(--muted-foreground)); font-size: 12px; }
+.collection-rail-detail button { flex-shrink: 0; min-height: 40px; padding: 6px 12px; border: 1px solid hsl(var(--ring)); border-radius: var(--radius-md); background: hsl(var(--secondary)); }
+.collection-rail-detail button:hover { background: hsl(var(--accent)); }
+@media(max-width: 1100px) {
+  .collection-rail { left: 16px; right: 16px; }
+}
+@media(max-width: 700px) {
+  .world-entry-revealed > .scene-panel { top: 120px; bottom: auto !important; }
+  .world-entry-revealed > [aria-label="Time of day"] { top: 180px; bottom: auto; max-height: 164px; overflow-y: auto; }
+  .collection-rail { inset: auto 16px 16px; display: block; padding: 12px; }
+  .collection-rail-intro h2 { font-size: 16px; }
+  .collection-rail-intro p, .collection-rail-tabs small { display: none; }
+  .collection-rail-tabs { gap: 4px; margin-top: 12px; }
+  .collection-rail-tabs button { min-height: 80px; padding: 8px; }
+  .collection-rail-tabs strong { font-size: 12px; }
+  .collection-rail-detail { margin-top: 10px; font-size: 11px; }
+}
+@media(prefers-reduced-motion: reduce) { .collection-rail *, .collection-rail { animation: none !important; transition: none !important; } }

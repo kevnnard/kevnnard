@@ -96,6 +96,32 @@
         "url": "https://github.com/brunosimon/my-room-in-3d/tree/5d00b3f870da81f103e901e0d12e20bbcc816834",
         "quote": "No license file at this commit; used with the author's permission (private message to the site owner), recorded in odd/tasks/stylized-house.md L25"
       }
+    },
+    {
+      "id": "sketchfab-makoto-air-jordan-1",
+      "pack": "Air Jordan 1 (Sketchfab, redistributed by SceneView)",
+      "author": "makoto",
+      "authorUrl": "https://sketchfab.com/lu87813",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "source": "https://sketchfab.com/3d-models/air-jordan-1-a4b434181fbb48008ad460722fd53725",
+      "licenseEvidence": {
+        "url": "https://raw.githubusercontent.com/sceneview/sceneview/0b96f5009a86d39e513aa9609e634d4ebaa3290f/assets/manifest.json",
+        "quote": "\"path\": \"website-static/models/platforms/air_jordan_1.glb\", \"sha256\": \"3537837022a6e852e21e1408e4d8684b056c486d909e23e18204026bda9ce53e\", \"size\": 3516852, \"source\": \"https://sketchfab.com/3d-models/air-jordan-1-a4b434181fbb48008ad460722fd53725\", \"license\": \"CC-BY-4.0\", \"author\": \"makoto\"; Sketchfab API v3 for a4b434181fbb48008ad460722fd53725: Creative Commons Attribution, http://creativecommons.org/licenses/by/4.0/"
+      }
+    },
+    {
+      "id": "sketchfab-pieter-ferreira-off-road-helmet",
+      "pack": "Off road helmet (Sketchfab)",
+      "author": "Pieter Ferreira",
+      "authorUrl": "https://sketchfab.com/Badboy17Aiden",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "source": "https://sketchfab.com/3d-models/off-road-helmet-c9d968e024b749a7a9d0e257277a2d5c",
+      "licenseEvidence": {
+        "url": "https://sketchfab.com/3d-models/off-road-helmet-c9d968e024b749a7a9d0e257277a2d5c",
+        "quote": "Sketchfab download (2k GLB), asset extras: \"author\": \"Pieter Ferreira (https://sketchfab.com/Badboy17Aiden)\", \"license\": \"CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)\", \"source\": \"https://sketchfab.com/3d-models/off-road-helmet-c9d968e024b749a7a9d0e257277a2d5c\", \"title\": \"off road helmet\"; Creative Commons Attribution 4.0"
+      }
     }
   ],
   "assets": [
@@ -713,6 +739,50 @@
           "sha256": "ad3aa228e61c24a04ff078ab43a9d3d577b7a5d33a88b014cb3620e01767c124"
         }
       ]
+    },
+    {
+      "file": "models/display-jordan-1.glb",
+      "asset": "Air Jordan 1",
+      "pack": "sketchfab-makoto-air-jordan-1",
+      "author": "makoto",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "source": "https://github.com/sceneview/sceneview/blob/0b96f5009a86d39e513aa9609e634d4ebaa3290f/assets/manifest.json",
+      "bytes": 726296,
+      "sha256": "f590d45ed77340487751a969e077ed901a358ed5dccd2dafc4feb1d0d0cfade9",
+      "triangles": 59512,
+      "changes": "Optimized with glTF-Transform (meshopt, quantized, 512 px WebP textures); geometry and colors otherwise unchanged.",
+      "sourceFiles": [
+        {
+          "url": "https://github.com/sceneview/sceneview/releases/download/assets-v1/3537837022a6e852e21e1408e4d8684b056c486d909e23e18204026bda9ce53e",
+          "bytes": 3516852,
+          "sha256": "3537837022a6e852e21e1408e4d8684b056c486d909e23e18204026bda9ce53e"
+        }
+      ]
+    },
+    {
+      "file": "models/display-offroad-helmet.glb",
+      "asset": "Off road helmet",
+      "pack": "sketchfab-pieter-ferreira-off-road-helmet",
+      "author": "Pieter Ferreira",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "source": "https://sketchfab.com/3d-models/off-road-helmet-c9d968e024b749a7a9d0e257277a2d5c",
+      "bytes": 265304,
+      "sha256": "d06e0f04f25a994d27e8ae71e23bbcc5947398be6bf979e0204d995e762fc52a",
+      "triangles": 3386,
+      "changes": "Split into its connected parts with the source UVs, tangents and normal map kept; the shell, peak and peak screws repainted in the source UV atlas with a red, black and gray graphic recreated from a photo of a Fox V1 F-A18 (front only: the sides, back and crown are approximated, and a plain outlined badge stands in for the Fox head logo); the peak's overhang stretched forward so its tip clears the chin, its rear mount unchanged; liner and goggle texels kept; satin, non-metallic paint without the source transmission; optimized with glTF-Transform (meshopt, quantized, 1024 px WebP) by scripts/prepare-display-offroad.mjs. Not the owner's exact Fox V1.",
+      "sourceFiles": [
+        {
+          "url": "https://sketchfab.com/3d-models/off-road-helmet-c9d968e024b749a7a9d0e257277a2d5c",
+          "bytes": 6546284,
+          "sha256": "72662d520218577c66c6ec5e4679b502200c65789a0e453a5e50cf7f8952c1f6"
+        }
+      ],
+      "graphicReference": {
+        "url": "https://www.ebay.com/itm/157680317522",
+        "note": "Marketplace photo of the front of a Fox V1 F-A18 in red, black and gray, used only as a visual reference for the recreated paint; the photo is not shipped and is not covered by this license. Fox, V1 and F-A18 belong to their owners; no affiliation."
+      }
     }
   ],
   "original": [
@@ -775,6 +845,20 @@
       "author": "Kevnnard",
       "license": "Original work (repository license)",
       "source": "src/lib/world/shelf.ts"
+    },
+    {
+      "id": "football-helmet",
+      "asset": "Football helmet: an original SpeedFlex-inspired model built in code (shell with a flex forehead panel and its seam, through vents, front and rear bumpers and shell thickness; a padded liner; a black curved open-eye facemask with black clips and hardware; a separate tinted black eye shield), painted in a UV atlas with the owner's gold and black Rams-style curled horn livery, #32 and 18 disc, redrawn from the owner's photos of their own Schutt helmet (the photos are not shipped); modelled from Riddell's official SpeedFlex varsity product photos, not Riddell's CAD and not an exact Riddell SpeedFlex replica; Riddell, SpeedFlex and Schutt belong to their owners, no affiliation",
+      "author": "Kevnnard",
+      "license": "Original work (repository license)",
+      "source": "src/lib/world/football-helmet-asset.ts",
+      "references": [
+        "https://www.riddell.com/riddell/en/Open-Catalogue/Helmets/Varsity/SPEEDFLEX/p/FB_HELMET_SPDFX"
+      ],
+      "file": "models/display-football-helmet.glb",
+      "generator": "scripts/prepare-display-football.mjs",
+      "bytes": 658616,
+      "sha256": "6bcbf6fe305792039a89c70fc3bf0a89966b65d55678b7d6a0c8273bbb7126e1"
     },
     {
       "id": "portrait-page",

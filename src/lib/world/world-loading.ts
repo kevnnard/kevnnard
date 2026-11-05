@@ -1,3 +1,4 @@
+import { DISPLAY_MODEL_FILES } from "./display-cases.ts";
 import { LIVING_FILES, LIVING_MODELS } from "./living.ts";
 import { MODEL_FILES, PROP_FILES } from "./models.ts";
 import { BRUNO_FILES, BRUNO_MAPS } from "./setup.ts";
@@ -33,6 +34,7 @@ export type WorldMilestoneId =
   | "living"
   | "steam"
   | "chair"
+  | "display"
   | "compile"
   | "frame";
 
@@ -70,6 +72,7 @@ export const WORLD_MILESTONES: readonly WorldMilestone[] = [
     BRUNO_MAPS.neutral,
     BRUNO_MAPS.lightMap,
   ]),
+  milestone("display", "assets", DISPLAY_MODEL_FILES),
   milestone("compile", "frame"),
   milestone("frame", "frame"),
 ];

@@ -6,6 +6,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
+import { DISPLAY_MODEL_FILES } from "../../src/lib/world/display-cases.ts";
 import { LIVING_FILES, LIVING_MODELS } from "../../src/lib/world/living.ts";
 import { MODEL_FILES, PROP_FILES } from "../../src/lib/world/models.ts";
 import { BRUNO_FILES, BRUNO_MAPS } from "../../src/lib/world/setup.ts";
@@ -31,6 +32,7 @@ const ASSETS: WorldMilestoneId[] = [
   "living",
   "steam",
   "chair",
+  "display",
 ];
 
 /** A tracker with every emission recorded. */
@@ -58,6 +60,7 @@ describe("world loading: critical milestones", () => {
         ["living", "assets"],
         ["steam", "assets"],
         ["chair", "assets"],
+        ["display", "assets"],
         ["compile", "frame"],
         ["frame", "frame"],
       ],
@@ -84,6 +87,7 @@ describe("world loading: critical milestones", () => {
         BRUNO_MAPS.lightMap,
       ],
     );
+    assert.deepEqual([...urls("display")], [...DISPLAY_MODEL_FILES]);
     for (const milestone of WORLD_MILESTONES)
       assert.equal(milestone.weight, Math.max(1, milestone.urls.length));
     const all = WORLD_MILESTONES.flatMap((m) => m.urls);
@@ -383,6 +387,7 @@ describe("world loading: first prepared frame", () => {
 describe("world loading: scene wiring (source supplement)", () => {
   const scene = read("src/components/world/WorldScene.tsx");
   const setup = read("src/components/world/Setup.tsx");
+  const cases = read("src/components/world/DisplayCases.tsx");
 
   it("reports ready from the tracker, not from Nature", () => {
     assert.match(scene, /onProgress\?: \(state: WorldLoadState\) => void/);
@@ -404,6 +409,10 @@ describe("world loading: scene wiring (source supplement)", () => {
     const textured = scene.slice(scene.indexOf("function TexturedHouse"));
     assert.match(textured, /<Living[^>]*onPrepared=\{prepared\.living\}/);
     assert.match(textured, /prepared=\{prepared\}/);
+    assert.match(
+      textured,
+      /<DisplayCases[^>]*onPrepared=\{prepared\.display\}/,
+    );
     assert.match(setup, /<CoffeeSteam[^>]*onPrepared=\{prepared\?\.steam\}/);
     assert.match(setup, /<BrunoChair[\s\S]*?onPrepared=\{prepared\?\.chair\}/);
   });
@@ -417,6 +426,17 @@ describe("world loading: scene wiring (source supplement)", () => {
       'from "three/examples/jsm/environments/RoomEnvironment.js"',
       'from "three/examples/jsm/loaders/GLTFLoader.js"',
     ]);
+  });
+
+  it("suspends the case meshes on their own, the lights always mounted", () => {
+    assert.match(cases, /useLoader\(\s*GLTFLoader,\s*DISPLAY_MODEL_FILES/);
+    assert.match(cases, /setMeshoptDecoder\(MeshoptDecoder\)/);
+    assert.match(cases, /useEffect\(\(\) => onPrepared\(\), \[onPrepared\]\)/);
+    const suspense = cases.slice(cases.indexOf("<Suspense"));
+    assert.doesNotMatch(
+      suspense.slice(0, suspense.indexOf("</Suspense>")),
+      /pointLight/,
+    );
   });
 
   it("rethrows scene failures to the parent boundary after reporting them", () => {

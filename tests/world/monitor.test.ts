@@ -355,7 +355,7 @@ describe("terminal wiring (T16)", () => {
   it("guards the wheel and locks orbit input while the monitor has focus", () => {
     const scene = read("src/components/world/WorldScene.tsx");
     assert.match(scene, /if \(focused\.current\) return;/);
-    assert.match(scene, /enabled=\{!focus\}/);
+    assert.match(scene, /enabled=\{!focus && !galleryCase\}/);
   });
 
   it("draws the terminal only on the curved screen: no visible DOM editor (L64)", () => {

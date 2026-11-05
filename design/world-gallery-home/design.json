@@ -1,0 +1,9 @@
+{
+  "title": "World gallery home · desk and collection",
+  "brief": "Design three alternative previews for an adapted main camera framing: screens and speakers lead the scene while all three glass display cases behind the sofa remain visible and individually discoverable. Design only; live /world camera and interaction are unchanged.",
+  "artboards": [
+    {"file":"01-in-scene-markers.html","title":"In-scene markers","tradeoff":"Direct object-linked buttons with minimal persistent chrome; depends on accurate projected positions and occlusion handling in the eventual 3D implementation.","width":1440,"height":900},
+    {"file":"02-gallery-rail.html","title":"Collection rail","tradeoff":"Stable, accessible labels and clear case mapping across camera angles; bottom rail covers part of the sofa and scene.","width":1440,"height":900},
+    {"file":"03-focus-preview.html","title":"Focus preview","tradeoff":"Explicit one-case-at-a-time navigation and return path; uses a larger side menu and temporarily shifts attention away from the desk.","width":1440,"height":900}
+  ]
+}

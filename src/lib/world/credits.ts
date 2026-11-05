@@ -28,6 +28,7 @@ export const OFFICIAL_HOSTS: readonly string[] = [
   "quaternius.com",
   "poly.pizza",
   "static.poly.pizza",
+  "sketchfab.com",
   "kenney.nl",
   // StylizedTextures: the site, and the Drive files its catalog links to.
   "stylizedtextures.com",

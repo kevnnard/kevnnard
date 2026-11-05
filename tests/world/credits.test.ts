@@ -9,6 +9,7 @@ import {
   ORIGINAL_LICENSE,
   PERMISSION_LICENSE,
 } from "../../src/lib/world/credits.ts";
+import { DISPLAY_MODEL_FILES } from "../../src/lib/world/display-cases.ts";
 import { MODEL_FILES, PROP_FILES } from "../../src/lib/world/models.ts";
 import { BRUNO_CHAIR, BRUNO_MAPS } from "../../src/lib/world/setup.ts";
 import { PUBLIC, shippedModels } from "./glb.ts";
@@ -16,9 +17,26 @@ import { PUBLIC, shippedModels } from "./glb.ts";
 const credits = (): Credits =>
   JSON.parse(readFileSync(new URL("credits.json", PUBLIC), "utf8"));
 
+/** An original-work credit for a shipped file built in this repository. */
+type OriginalFile = {
+  id: string;
+  file?: string;
+  bytes?: number;
+  sha256?: string;
+};
+const originalFiles = (data: Credits) =>
+  (data.original ?? []).filter(
+    (entry): entry is typeof entry & Required<OriginalFile> =>
+      typeof (entry as OriginalFile).file === "string",
+  );
+
 describe("credits.json (S4: every author is credited, even CC0)", () => {
   it("has an entry for every shipped model, and every entry ships", () => {
-    const files = credits().assets.map((entry) => entry.file);
+    const data = credits();
+    const files = [
+      ...data.assets.map((entry) => entry.file),
+      ...originalFiles(data).map((entry) => entry.file),
+    ];
     assert.deepEqual([...files].sort(), shippedModels());
     for (const file of files)
       assert.ok(existsSync(new URL(file, PUBLIC)), `${file} is credited`);
@@ -48,7 +66,11 @@ describe("credits.json (S4: every author is credited, even CC0)", () => {
 
   it("credits exactly the models the runtime loads", () => {
     assert.deepEqual(
-      [...Object.values(MODEL_FILES), ...Object.values(PROP_FILES)]
+      [
+        ...Object.values(MODEL_FILES),
+        ...Object.values(PROP_FILES),
+        ...DISPLAY_MODEL_FILES,
+      ]
         .map((url) => url.replace("/world/", ""))
         .sort(),
       shippedModels(),
@@ -67,7 +89,8 @@ describe("credits.json (S4: every author is credited, even CC0)", () => {
   });
 
   it("records the shipped bytes and hash, so a re-export cannot drift from its credit", () => {
-    for (const entry of credits().assets) {
+    const data = credits();
+    for (const entry of [...data.assets, ...originalFiles(data)]) {
       const data = readFileSync(new URL(entry.file, PUBLIC));
       assert.equal(entry.bytes, data.length, entry.file);
       assert.equal(
@@ -92,6 +115,95 @@ describe("credits.json (S4: every author is credited, even CC0)", () => {
       assert.match(pack.licenseEvidence.url, /^https:\/\//);
       assert.ok(pack.licenseEvidence.quote.trim(), `${pack.id} quote`);
     }
+  });
+});
+
+describe("display case meshes (collection-display-models T2)", () => {
+  it("credits the SpeedFlex-inspired football helmet as original work (T5)", () => {
+    const data = credits();
+    const file = "models/display-football-helmet.glb";
+    assert.equal(
+      data.assets.find((asset) => asset.file === file),
+      undefined,
+      "no downloaded mesh behind it",
+    );
+    assert.ok(
+      !data.packs.some((pack) => pack.id === "poly-pizza-football-helmet"),
+      "the generic Poly Pizza helmet is gone",
+    );
+    const entry = originalFiles(data).find((item) => item.file === file);
+    assert.ok(entry, "credited as original work");
+    assert.equal(entry.id, "football-helmet");
+    assert.equal(entry.license, ORIGINAL_LICENSE);
+    assert.equal(entry.source, "src/lib/world/football-helmet-asset.ts");
+    assert.ok(existsSync(new URL(`../../${entry.source}`, import.meta.url)));
+    assert.deepEqual(entry.references, [
+      "https://www.riddell.com/riddell/en/Open-Catalogue/Helmets/Varsity/SPEEDFLEX/p/FB_HELMET_SPDFX",
+    ]);
+    assert.match(entry.asset, /SpeedFlex-inspired/);
+    assert.match(entry.asset, /not an exact Riddell/i);
+    assert.match(entry.asset, /owner's photos/);
+    assert.match(entry.asset, /no affiliation/);
+    // Regenerating base-world credits keeps the original record and never
+    // brings the downloaded helmet's CC BY credit back.
+    const script = readFileSync(
+      new URL("../../scripts/prepare-world.py", import.meta.url),
+      "utf8",
+    );
+    const gallery = script.match(/gallery_files = \{([^}]*)\}/)?.[1] ?? "";
+    assert.match(gallery, /display-offroad-helmet\.glb/);
+    assert.match(gallery, /display-jordan-1\.glb/);
+    assert.doesNotMatch(gallery, /display-football-helmet/);
+    assert.match(script, /"id": "football-helmet"/);
+    assert.doesNotMatch(script, /poly-pizza-football-helmet|8Htf9hrbXkE/);
+  });
+
+  const SOURCES = {
+    "models/display-jordan-1.glb": {
+      pack: "sketchfab-makoto-air-jordan-1",
+      author: "makoto",
+      license: "CC-BY-4.0",
+      source:
+        "https://github.com/sceneview/sceneview/blob/0b96f5009a86d39e513aa9609e634d4ebaa3290f/assets/manifest.json",
+      url: "https://github.com/sceneview/sceneview/releases/download/assets-v1/3537837022a6e852e21e1408e4d8684b056c486d909e23e18204026bda9ce53e",
+      sha256:
+        "3537837022a6e852e21e1408e4d8684b056c486d909e23e18204026bda9ce53e",
+    },
+  } as const;
+
+  it("credits each mesh to its author under CC BY, with the exact source bytes", () => {
+    const data = credits();
+    for (const [file, expected] of Object.entries(SOURCES)) {
+      const entry = data.assets.find((asset) => asset.file === file);
+      assert.ok(entry, `${file} credited`);
+      assert.equal(entry.pack, expected.pack);
+      assert.equal(entry.author, expected.author);
+      assert.equal(entry.license, expected.license);
+      assert.equal(entry.source, expected.source);
+      assert.deepEqual(
+        entry.sourceFiles.map((file) => [file.url, file.sha256]),
+        [[expected.url, expected.sha256]],
+      );
+      const pack = data.packs.find((item) => item.id === expected.pack);
+      assert.ok(pack, `${expected.pack} pack`);
+      assert.equal(pack.license, expected.license);
+      assert.match(
+        pack.licenseEvidence.quote,
+        /Creative Commons Attribution|CC-BY/,
+      );
+    }
+  });
+
+  it("names the original Sketchfab work behind the SceneView redistribution", () => {
+    const pack = credits().packs.find(
+      (item) => item.id === "sketchfab-makoto-air-jordan-1",
+    );
+    assert.ok(pack);
+    assert.equal(pack.authorUrl, "https://sketchfab.com/lu87813");
+    assert.match(
+      pack.licenseEvidence.quote,
+      /air-jordan-1-a4b434181fbb48008ad460722fd53725/,
+    );
   });
 });
 

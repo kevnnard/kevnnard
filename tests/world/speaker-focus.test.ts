@@ -421,14 +421,20 @@ describe("speaker wiring (T2)", () => {
   it("only the terminal close-up reports arrival", () => {
     assert.match(
       scene,
-      /onArrive=\{closeUp === "terminal" \? onMonitorArrive : undefined\}/,
+      /onArrive=\{focus && closeUp === "terminal" \? onMonitorArrive : undefined\}/,
     );
     assert.match(scene, /"terminal" \| "portrait" \| "speakers"/);
   });
 
   it("keeps the close-ups mutually exclusive", () => {
-    assert.match(app, /if \(!focus && !portrait\) setSpeakers\(true\)/);
-    assert.match(app, /if \(!speakers\) setFocus\(true\)/);
+    assert.match(
+      app,
+      /if \(!focus && !portrait\) \{\s*setGalleryCase\(null\);\s*setSpeakers\(true\)/,
+    );
+    assert.match(
+      app,
+      /if \(!speakers\) \{\s*setGalleryCase\(null\);\s*setFocus\(true\)/,
+    );
     assert.match(app, /onEnter: ready && !focus && !speakers \? enterPortrait/);
     assert.match(
       app,

@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "chosen": "02-gallery-rail.html",
+  "handoffs": {
+    "02-gallery-rail.html": {
+      "status": "implemented",
+      "queued": false,
+      "sentAt": "2026-10-31T15:34:01.185Z",
+      "startedAt": "2026-10-31T15:34:04.349Z",
+      "implementedAt": "2026-10-31T15:59:43.012Z",
+      "note": "Implemented with the user's correction: original exterior home remains unchanged; rail appears only after a case click, when the camera inspects that case from inside. Tabs switch cases; return restores the previous camera. No commit. Numbered 3D overlay anchors from the schematic were omitted to avoid extra React roots and preserve the demand-rendered canvas.",
+      "previewUrl": "http://localhost:4321/world"
+    }
+  }
+}

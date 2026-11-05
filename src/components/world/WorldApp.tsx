@@ -21,6 +21,7 @@ import {
 } from "@/lib/room/controller-style.ts";
 import { cn } from "@/lib/utils";
 import { AmbientSound } from "@/lib/world/ambient-sound.ts";
+import type { DisplayItemId } from "@/lib/world/display-cases.ts";
 import {
   DEFAULT_LIGHTS,
   type LightId,
@@ -64,6 +65,7 @@ import {
   saveLightPreferences,
   saveMusicPreferences,
 } from "@/lib/world/world-preferences.ts";
+import CollectionRail from "./CollectionRail";
 import WorldEntryLoader from "./WorldEntryLoader";
 import "./world-entry-gate.css";
 import type { MonitorTerminal } from "./MonitorScreen";
@@ -213,6 +215,7 @@ export default function WorldApp() {
   }, [loading]);
   const menuButton = useRef<HTMLElement>(null);
   const [home, setHome] = useState(0);
+  const [galleryCase, setGalleryCase] = useState<DisplayItemId | null>(null);
   const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const narrow = useMediaQuery("(max-width: 767px)");
   // Same shared clock and controller styles as /room, imported read-only.
@@ -265,7 +268,10 @@ export default function WorldApp() {
   const root = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState<Viewport | null>(null);
   const enter = useCallback(() => {
-    if (!speakers) setFocus(true);
+    if (!speakers) {
+      setGalleryCase(null);
+      setFocus(true);
+    }
   }, [speakers]);
   const arrive = useCallback(() => setTerminal(true), []);
   const [buffer, setBuffer] = useState<BufferId>("home");
@@ -380,7 +386,10 @@ export default function WorldApp() {
   const exitPortrait = useRef<HTMLButtonElement>(null);
   const returnPortrait = useRef(false);
   const enterPortrait = useCallback(() => {
-    if (!focus) setPortrait(true);
+    if (!focus) {
+      setGalleryCase(null);
+      setPortrait(true);
+    }
   }, [focus]);
   const leavePortrait = useCallback(() => {
     returnPortrait.current = true;
@@ -440,7 +449,10 @@ export default function WorldApp() {
   const speakerPlay = useRef<HTMLButtonElement>(null);
   const returnSpeakers = useRef(false);
   const enterSpeakers = useCallback(() => {
-    if (!focus && !portrait) setSpeakers(true);
+    if (!focus && !portrait) {
+      setGalleryCase(null);
+      setSpeakers(true);
+    }
   }, [focus, portrait]);
   const leaveSpeakers = useCallback(() => {
     returnSpeakers.current = true;
@@ -632,13 +644,26 @@ export default function WorldApp() {
     [music, speakers, ready, focus, portrait, enterSpeakers, playMusic],
   );
 
+  useEffect(() => {
+    if (!galleryCase) return;
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !focus && !portrait && !speakers)
+        setGalleryCase(null);
+    };
+    document.addEventListener("keydown", onEscape);
+    return () => document.removeEventListener("keydown", onEscape);
+  }, [galleryCase, focus, portrait, speakers]);
+
   // The guide's buttons (world-game-menu T1): the same callbacks the menu
   // always ran; the close-ups wait for the world to be ready, as before.
   const menuActions = useMemo<GuideActions>(
     () => ({
       recenter: {
         label: "Recenter view",
-        run: () => setHome((count) => count + 1),
+        run: () => {
+          setGalleryCase(null);
+          setHome((count) => count + 1);
+        },
       },
       ...(ready && {
         terminal: { label: "Enter terminal", run: enter },
@@ -713,6 +738,7 @@ export default function WorldApp() {
         focus && "world-terminal-focus",
         portrait && "world-terminal-focus",
         speakers && "world-terminal-focus",
+        galleryCase && "world-gallery-focus",
       )}
     >
       <SceneErrorBoundary>
@@ -736,6 +762,12 @@ export default function WorldApp() {
               onMonitorArrive={arrive}
               portrait={portraitControl}
               speakers={speakerControl}
+              galleryCase={galleryCase}
+              onInspectCase={
+                ready && entered && !focus && !portrait && !speakers
+                  ? setGalleryCase
+                  : undefined
+              }
             />
           </Suspense>
         </div>
@@ -769,6 +801,14 @@ export default function WorldApp() {
           </p>
         )}
       </header>
+
+      {ready && entered && galleryCase && !focus && !portrait && !speakers && (
+        <CollectionRail
+          focused={galleryCase}
+          onInspect={setGalleryCase}
+          onReturn={() => setGalleryCase(null)}
+        />
+      )}
 
       {/* Direct children of the world container: ScenePanel measures its
           parent to sit above the clock (L61). */}
