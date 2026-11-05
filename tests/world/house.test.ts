@@ -23,7 +23,7 @@ describe("stylized wooden house (T4a, S6)", () => {
     const windows = WALLS.flatMap((wall) =>
       wall.openings.filter((opening) => opening.kind === "window"),
     );
-    assert.ok(windows.length >= 6, "windows on several sides");
+    assert.ok(windows.length >= 4, "windows on several sides");
     for (const wall of WALLS)
       for (const opening of wall.openings)
         for (const plank of planks(wall))
@@ -91,6 +91,17 @@ describe("stylized wooden house (T4a, S6)", () => {
         `${wall.id}: panel rendered`,
       );
     }
+  });
+
+  it("keeps every other main-room window, from right of the door leftward", () => {
+    const windows = (id: string) =>
+      WALLS.find((wall) => wall.id === id)
+        ?.openings.filter((opening) => opening.kind === "window")
+        .map((opening) => [opening.u0, opening.u1]);
+    assert.deepEqual(windows("main-front"), [[1.25, 2]]);
+    assert.deepEqual(windows("main-right"), [[-0.6, 0.2]]);
+    assert.deepEqual(windows("main-back"), [[0.9, 1.7]]);
+    assert.deepEqual(windows("main-left"), []);
   });
 
   it("glazes every window with a pane kept apart from the opaque wood", () => {

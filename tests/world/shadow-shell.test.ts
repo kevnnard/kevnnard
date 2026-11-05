@@ -138,7 +138,7 @@ describe("cutaway shadow shell (S21)", () => {
           assert.equal(cover, undefined, `${group} pane at ${point.toArray()}`);
         }
       }
-    assert.ok(panes >= 6);
+    assert.ok(panes >= 4);
   });
 
   it("House builds the shell from wood solids only, outside the fading groups", () => {

@@ -182,11 +182,12 @@ export const WALLS: readonly Wall[] = [
     from: M.x0,
     to: M.x1,
     height: M.height,
+    // Seen from inside, every other window is kept, starting with the one
+    // right of the door and running leftward round the room: front, right,
+    // then back wall.
     openings: [
-      pane(-0.95, -0.2),
       { kind: "door", u0: 0.14, u1: 0.86, v0: 0, v1: 1.5 },
       pane(1.25, 2),
-      pane(2.75, 3.5),
     ],
   },
   {
@@ -199,7 +200,7 @@ export const WALLS: readonly Wall[] = [
     to: M.z1 - W,
     height: M.height,
     gable: gable(M),
-    openings: [pane(-2.2, -1.4), pane(-0.6, 0.2)],
+    openings: [pane(-0.6, 0.2)],
   },
   {
     id: "main-back",
@@ -210,7 +211,7 @@ export const WALLS: readonly Wall[] = [
     from: M.x0,
     to: M.x1,
     height: M.height,
-    openings: [pane(-0.6, 0.2), pane(0.9, 1.7)],
+    openings: [pane(0.9, 1.7)],
   },
   {
     id: "main-left",

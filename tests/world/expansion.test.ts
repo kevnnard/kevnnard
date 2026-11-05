@@ -62,14 +62,12 @@ describe("house extension toward the entrance (T10, S22)", () => {
       assert.ok(Math.abs(wall.to - (1.5 - HOUSE.wall)) < EPS, id);
       assert.ok(Math.abs((wall.gable?.center ?? 0) - (-2.75 + 1.5) / 2) < EPS);
     }
-    // Same front openings: door, windows, nothing narrowed.
+    // Front openings: the door and the one window kept beside it.
     assert.deepEqual(
       front.openings.map((o) => [o.kind, o.u0, o.u1]),
       [
-        ["window", -0.95, -0.2],
         ["door", 0.14, 0.86],
         ["window", 1.25, 2],
-        ["window", 2.75, 3.5],
       ],
     );
   });
