@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Case story · cinematic number</title>
+<style>
+  :root {
+    --bg: #09090b; --surface: #18181b; --panel: #27272a; --fg: #fafafa;
+    --muted: #a1a1aa; --ring: #d4d4d8; --signal: #10b981;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; width: 1440px; height: 900px; overflow: hidden; background: var(--bg); color: var(--fg); font: 14px/20px var(--sans); }
+  .scene { position: absolute; inset: 0; background: radial-gradient(40% 50% at 68% 45%, rgba(16,185,129,0.1), transparent 70%), linear-gradient(90deg, #09090b 0%, #09090b 30%, #18181b 100%); }
+  .numeral { position: absolute; right: 120px; top: 40px; font: 700 560px/1 var(--sans); color: transparent; -webkit-text-stroke: 2px rgba(212,212,216,0.12); letter-spacing: -20px; }
+  .case { position: absolute; left: 860px; top: 150px; width: 300px; height: 470px; border: 1px solid rgba(212,212,216,0.2); border-radius: 4px; }
+  .light { position: absolute; left: 50%; top: 8px; width: 36px; height: 6px; margin-left: -18px; border-radius: 3px; background: var(--ring); box-shadow: 0 0 40px 16px rgba(250,250,250,0.12); }
+  .helmet { position: absolute; left: 40px; top: 140px; width: 220px; animation: turn 20s linear infinite; }
+  @keyframes turn { 0%,100% { transform: scaleX(1); } 25%,75% { transform: scaleX(0.35); } 50% { transform: scaleX(-1); } }
+
+  .story { position: absolute; left: 80px; top: 120px; width: 560px; }
+  .kicker { margin: 0; font: 12px/16px var(--mono); color: var(--signal); letter-spacing: 0.12em; }
+  .story h1 { margin: 16px 0 12px; font-size: 64px; line-height: 64px; font-weight: 700; letter-spacing: -1px; }
+  .story h1 span { display: block; color: var(--muted); font-size: 24px; line-height: 32px; font-weight: 500; letter-spacing: 0; }
+  .lede { margin: 0 0 28px; font-size: 18px; line-height: 28px; }
+  .stats { display: flex; gap: 32px; margin: 0 0 32px; padding: 20px 0; border-top: 1px solid var(--panel); border-bottom: 1px solid var(--panel); list-style: none; }
+  .stats b { display: block; font-size: 32px; line-height: 36px; font-weight: 600; }
+  .stats span { color: var(--muted); font-size: 12px; }
+  .clip { display: flex; gap: 16px; align-items: center; }
+  .thumb { position: relative; width: 220px; height: 124px; border: 1px dashed rgba(212,212,216,0.3); border-radius: 8px; background: repeating-linear-gradient(135deg, #18181b 0 12px, rgba(39,39,42,0.5) 12px 24px); }
+  .thumb::after { content: ""; position: absolute; left: 50%; top: 50%; margin: -11px 0 0 -6px; border: 11px solid transparent; border-left: 16px solid var(--fg); }
+  .clip p { margin: 0; color: var(--muted); font-size: 12px; }
+  .clip strong { display: block; color: var(--fg); font-size: 14px; }
+  .actions { display: flex; gap: 8px; margin-top: 28px; }
+  .btn { display: inline-flex; align-items: center; min-height: 40px; padding: 8px 16px; border: 1px solid var(--ring); border-radius: 6px; background: var(--panel); color: var(--fg); text-decoration: none; }
+  .btn.ghost { background: transparent; border-color: var(--panel); }
+  a:focus-visible, button:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; }
+
+  .dock { position: absolute; left: 80px; right: 80px; bottom: 28px; display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--panel); border-radius: 12px; background: rgba(9,9,11,0.9); }
+  .dock .mono { font: 12px/16px var(--mono); color: var(--muted); margin-right: auto; }
+  .chip { min-height: 40px; padding: 8px 14px; border: 1px solid var(--panel); border-radius: 6px; background: var(--panel); color: var(--fg); font: inherit; }
+  .chip[aria-current="true"] { border-color: var(--ring); border-left: 3px solid var(--signal); }
+  @media (prefers-reduced-motion: reduce) { .helmet { animation: none; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="scene" aria-hidden="true">
+    <div class="numeral">32</div>
+    <div class="case">
+      <div class="light"></div>
+      <svg class="helmet" viewBox="0 0 220 180" fill="none" stroke="#a1a1aa" stroke-width="3">
+        <path d="M30 120 C20 60 70 18 130 22 C182 26 205 70 196 112 L178 132 L120 138 L104 160 L60 158 Z"/>
+        <path d="M150 70 C120 60 100 80 110 104 C118 120 140 116 142 100" stroke="#10b981"/>
+        <path d="M178 96 L214 96 M180 116 L212 128 M196 96 L200 150"/>
+      </svg>
+    </div>
+  </div>
+
+  <article class="story" aria-labelledby="story-title">
+    <p class="kicker">CASE 01 · FOOTBALL HELMET · BOGOTÁ, COLOMBIA</p>
+    <h1 id="story-title">Carneros DC<span>Free safety · strong safety · cornerback</span></h1>
+    <p class="lede">Carneros means rams. For twelve seasons I have taken the field in Bogotá wearing #32, and this gold and black helmet carries the horns of my team.</p>
+    <ul class="stats" aria-label="At a glance">
+      <li><b>12</b><span>seasons</span></li>
+      <li><b>#32</b><span>number</span></li>
+      <li><b>2014</b><span>first snap</span></li>
+    </ul>
+    <div class="clip">
+      <div class="thumb" role="img" aria-label="Game day clip (yours), muted loop"></div>
+      <p><strong>Bogotá Bowl · Oct 2024</strong>Carneros DC hosted the USA All-Stars at Parque El Carmelo. Short clip, muted, plays on hover.</p>
+    </div>
+    <div class="actions">
+      <a class="btn" href="#instagram">Follow @carneros_dc</a>
+      <a class="btn ghost" href="#close">Hide story</a>
+    </div>
+  </article>
+
+  <nav class="dock" aria-label="Collection navigation">
+    <span class="mono">EXPLORE / 03 OBJECTS</span>
+    <button class="chip" aria-current="true">01 Football helmet</button>
+    <button class="chip">02 Off-road helmet</button>
+    <button class="chip">03 Air Jordan 1</button>
+    <button class="chip">Back to sofa</button>
+  </nav>
+</main>
+</body>
+</html>

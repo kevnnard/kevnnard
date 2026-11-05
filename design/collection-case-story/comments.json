@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "comments": [
+    {
+      "id": "sf1eylbz",
+      "file": "01-side-story-card.html",
+      "selector": "body > main > nav",
+      "excerpt": "EXPLORE / 03 OBJECTS The collection Choose another case, or return to the sofa view. 01 Football helmet Carneros DC · #32 02 Off-road helmet Fox V1 F-A18 paint 03 Air Jordan 1 Black and sail",
+      "comment": "esto me gusaria fuera mas compacto ya que siabrimos el lateras deberiia ser menos invasivo para nfocar la info del itm que estamos viendo",
+      "createdAt": "2026-11-05T21:13:12.192Z",
+      "status": "resolved",
+      "sentAt": "2026-11-05T21:13:12.222Z",
+      "resolvedAt": "2026-11-05T21:16:30.617Z"
+    }
+  ]
+}

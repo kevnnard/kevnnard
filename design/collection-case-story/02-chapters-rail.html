@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Case story · chapters in the rail</title>
+<style>
+  :root {
+    --bg: #09090b; --surface: #18181b; --panel: #27272a; --fg: #fafafa;
+    --muted: #a1a1aa; --ring: #d4d4d8; --signal: #10b981;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; width: 1440px; height: 900px; overflow: hidden; background: var(--bg); color: var(--fg); font: 14px/20px var(--sans); }
+  .scene { position: absolute; inset: 0 0 330px; background: radial-gradient(50% 60% at 50% 55%, rgba(16,185,129,0.08), transparent 70%), linear-gradient(180deg, #18181b, #09090b); }
+  .case { position: absolute; left: 570px; top: 60px; width: 300px; height: 470px; border: 1px solid rgba(212,212,216,0.2); border-radius: 4px; }
+  .light { position: absolute; left: 50%; top: 8px; width: 36px; height: 6px; margin-left: -18px; border-radius: 3px; background: var(--ring); box-shadow: 0 0 40px 16px rgba(250,250,250,0.12); }
+  .helmet { position: absolute; left: 40px; top: 140px; width: 220px; animation: turn 20s linear infinite; }
+  @keyframes turn { 0%,100% { transform: scaleX(1); } 25%,75% { transform: scaleX(0.35); } 50% { transform: scaleX(-1); } }
+
+  .rail { position: absolute; left: 24px; right: 24px; bottom: 20px; padding: 20px 24px; border: 1px solid var(--panel); border-radius: 12px; background: rgba(9,9,11,0.9); }
+  .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--panel); }
+  .mono { font: 12px/16px var(--mono); color: var(--signal); letter-spacing: 0.06em; }
+  .head h1 { margin: 4px 0 0; font-size: 24px; line-height: 30px; font-weight: 600; }
+  .head p { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+  .cases { display: flex; gap: 8px; }
+  .case-pill { min-height: 40px; padding: 8px 14px; border: 1px solid var(--panel); border-radius: 6px; background: var(--panel); color: var(--fg); font: inherit; }
+  .case-pill[aria-current="true"] { border-color: var(--ring); border-left: 3px solid var(--signal); }
+  .body { display: grid; grid-template-columns: 220px 1fr 360px; gap: 24px; padding-top: 16px; }
+  .chapters { display: grid; gap: 8px; align-content: start; }
+  .chapter { min-height: 52px; padding: 8px 12px; border: 1px solid var(--panel); border-radius: 8px; background: var(--surface); color: var(--fg); text-align: left; font: inherit; }
+  .chapter small { display: block; color: var(--muted); font-size: 12px; }
+  .chapter[aria-selected="true"] { border-color: var(--ring); background: var(--panel); border-left: 3px solid var(--signal); }
+  .panel h2 { margin: 0 0 6px; font-size: 18px; line-height: 24px; font-weight: 600; }
+  .panel p { margin: 0 0 12px; color: var(--fg); }
+  .timeline { display: flex; align-items: center; gap: 0; margin-top: 16px; padding: 0; list-style: none; }
+  .timeline li { flex: 1; position: relative; padding-top: 18px; color: var(--muted); font-size: 12px; }
+  .timeline li::before { content: ""; position: absolute; left: 0; right: 0; top: 6px; height: 1px; background: var(--panel); }
+  .timeline li::after { content: ""; position: absolute; left: 0; top: 2px; width: 9px; height: 9px; border-radius: 50%; background: var(--panel); border: 1px solid var(--ring); }
+  .timeline li.on::after { background: var(--signal); border-color: var(--signal); }
+  .timeline b { display: block; color: var(--fg); font: 12px/16px var(--mono); }
+  .frame { position: relative; height: 200px; border: 1px dashed rgba(212,212,216,0.3); border-radius: 8px; background: repeating-linear-gradient(135deg, #18181b 0 12px, rgba(39,39,42,0.5) 12px 24px); }
+  .frame .label { position: absolute; left: 12px; bottom: 44px; color: var(--muted); font: 12px/16px var(--mono); }
+  .controls { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-top: 1px solid var(--panel); background: rgba(9,9,11,0.8); border-radius: 0 0 8px 8px; }
+  .icon-btn { width: 32px; height: 32px; border: 1px solid var(--ring); border-radius: 6px; background: var(--panel); color: var(--fg); font: 12px var(--mono); }
+  .dots { display: flex; gap: 6px; margin-left: auto; }
+  .dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--panel); }
+  .dots span.on { background: var(--fg); }
+  button:focus-visible, a:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { .helmet { animation: none; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="scene" aria-hidden="true">
+    <div class="case">
+      <div class="light"></div>
+      <svg class="helmet" viewBox="0 0 220 180" fill="none" stroke="#a1a1aa" stroke-width="3">
+        <path d="M30 120 C20 60 70 18 130 22 C182 26 205 70 196 112 L178 132 L120 138 L104 160 L60 158 Z"/>
+        <path d="M150 70 C120 60 100 80 110 104 C118 120 140 116 142 100" stroke="#10b981"/>
+        <path d="M178 96 L214 96 M180 116 L212 128 M196 96 L200 150"/>
+      </svg>
+    </div>
+  </div>
+
+  <section class="rail" aria-labelledby="case-title">
+    <div class="head">
+      <div>
+        <span class="mono">CASE 01 / 03 · FOOTBALL HELMET</span>
+        <h1 id="case-title">Carneros DC · #32</h1>
+        <p>Bogotá, Colombia · free safety, strong safety and cornerback</p>
+      </div>
+      <nav class="cases" aria-label="Display cases">
+        <button class="case-pill" aria-current="true">01 Helmet</button>
+        <button class="case-pill">02 Off-road</button>
+        <button class="case-pill">03 Jordan 1</button>
+        <button class="case-pill">Back to sofa</button>
+      </nav>
+    </div>
+    <div class="body">
+      <div class="chapters" role="tablist" aria-label="Story chapters">
+        <button class="chapter" role="tab" aria-selected="true">The team<small>Carneros DC, Bogotá</small></button>
+        <button class="chapter" role="tab" aria-selected="false">My position<small>Safety and corner</small></button>
+        <button class="chapter" role="tab" aria-selected="false">12 years<small>Since 2014</small></button>
+      </div>
+      <div class="panel" role="tabpanel" aria-label="The team">
+        <h2>Rams from Bogotá</h2>
+        <p>Carneros means rams, which is why this helmet wears gold and black horns. Carneros DC is my American football team in Bogotá; I have worn its #32 for twelve seasons.</p>
+        <p>In October 2024 we hosted the USA All-Stars at the Bogotá Bowl, at Parque El Carmelo.</p>
+        <ol class="timeline" aria-label="Twelve seasons">
+          <li class="on"><b>2014</b>First season</li>
+          <li class="on"><b>#32</b>My number</li>
+          <li class="on"><b>2024</b>Bogotá Bowl</li>
+          <li class="on"><b>2026</b>Season 12</li>
+        </ol>
+      </div>
+      <figure class="frame" aria-label="Game day clip, muted loop">
+        <span class="label">Short clip · game day (yours)</span>
+        <figcaption class="controls">
+          <button class="icon-btn" aria-label="Pause clip">II</button>
+          <button class="icon-btn" aria-label="Previous photo">‹</button>
+          <button class="icon-btn" aria-label="Next photo">›</button>
+          <span class="dots" aria-hidden="true"><span class="on"></span><span></span><span></span></span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+</main>
+</body>
+</html>

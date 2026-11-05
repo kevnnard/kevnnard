@@ -1,0 +1,10 @@
+{
+  "title": "Collection case story",
+  "brief": "A short personal story beside each inspected display case in /world: for the football helmet, the owner's local team Carneros DC (Bogotá, Colombia), #32, safety and cornerback for 12 years, with room for their own photos or a short muted clip.",
+  "feature": "odd/tasks/collection-display-models.md",
+  "artboards": [
+    { "file": "01-side-story-card.html", "title": "Side story card", "tradeoff": "Everything at a glance next to the turning model; covers part of the room view", "width": 1440, "height": 900 },
+    { "file": "02-chapters-rail.html", "title": "Chapters in the rail", "tradeoff": "Richest story in chapters with a timeline and media player; takes the lower third and needs clicks", "width": 1440, "height": 900 },
+    { "file": "03-cinematic-number.html", "title": "Cinematic number", "tradeoff": "Strongest personality with a giant #32 and big type; least dense and leans on a scrim for contrast", "width": 1440, "height": 900 }
+  ]
+}

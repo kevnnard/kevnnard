@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "chosen": "01-side-story-card.html",
+  "handoffs": {
+    "01-side-story-card.html": {
+      "status": "implemented",
+      "queued": true,
+      "sentAt": "2026-11-05T21:21:24.801Z",
+      "startedAt": "2026-11-05T21:22:25.257Z",
+      "implementedAt": "2026-11-05T21:25:19.143Z",
+      "feature": "odd/tasks/collection-display-models.md",
+      "note": "Revised card (#32, position diagram, on the field, timeline) and compact rail shipped; tests and build green. Media hidden until the owner's files arrive; browser screenshot not captured.",
+      "previewUrl": "http://127.0.0.1:4321/world"
+    }
+  }
+}

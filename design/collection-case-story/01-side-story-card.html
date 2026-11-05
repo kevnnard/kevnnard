@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Case story · side card</title>
+<style>
+  :root {
+    --bg: #09090b; --surface: #18181b; --panel: #27272a; --fg: #fafafa;
+    --muted: #a1a1aa; --ring: #d4d4d8; --signal: #10b981;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; width: 1440px; height: 900px; overflow: hidden; background: var(--bg); color: var(--fg); font: 14px/20px var(--sans); }
+  .scene { position: absolute; inset: 0; background:
+      radial-gradient(60% 55% at 38% 46%, rgba(16,185,129,0.08), transparent 70%),
+      linear-gradient(180deg, #18181b 0%, #09090b 70%); }
+  .case { position: absolute; left: 380px; top: 150px; width: 300px; height: 470px; border: 1px solid rgba(212,212,216,0.2); border-radius: 4px; }
+  .case::after { content: ""; position: absolute; left: -40px; right: -40px; bottom: -190px; height: 190px; background: #18181b; border-top: 1px solid #27272a; }
+  .light { position: absolute; left: 50%; top: 8px; width: 36px; height: 6px; margin-left: -18px; border-radius: 3px; background: var(--ring); box-shadow: 0 0 40px 16px rgba(250,250,250,0.12); }
+  .helmet { position: absolute; left: 40px; top: 120px; width: 220px; animation: turn 20s linear infinite; transform-origin: 50% 50%; }
+  @keyframes turn { 0%,100% { transform: scaleX(1); } 25%,75% { transform: scaleX(0.35); } 50% { transform: scaleX(-1); } }
+  .scene-tag { position: absolute; left: 380px; top: 118px; font: 12px/16px var(--mono); color: var(--muted); }
+
+  /* Story card */
+  .story { position: absolute; top: 32px; right: 32px; width: 500px; max-height: 790px; overflow: hidden; padding: 20px; border: 1px solid var(--panel); border-radius: 12px; background: rgba(9,9,11,0.9); }
+  .kicker { margin: 0; font: 12px/16px var(--mono); color: var(--signal); letter-spacing: 0.08em; }
+  .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-top: 6px; }
+  .head h1 { margin: 0; font-size: 28px; line-height: 34px; font-weight: 600; }
+  .head p { margin: 2px 0 0; color: var(--muted); }
+  .number { font-size: 72px; line-height: 64px; font-weight: 700; letter-spacing: -2px; color: transparent; -webkit-text-stroke: 2px var(--signal); }
+
+  .media { display: grid; grid-template-columns: 1.6fr 1fr; gap: 8px; height: 168px; margin: 16px 0; }
+  .shot { position: relative; display: flex; flex-direction: column; justify-content: flex-end; padding: 10px; border: 1px dashed rgba(212,212,216,0.3); border-radius: 8px; background: repeating-linear-gradient(135deg, #18181b 0 12px, rgba(39,39,42,0.5) 12px 24px); }
+  .shot b { font-size: 12px; line-height: 16px; font-weight: 600; }
+  .shot span { color: var(--muted); font: 12px/16px var(--mono); }
+  .shot .play { position: absolute; left: 50%; top: 40%; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%; border: 1px solid var(--ring); background: rgba(9,9,11,0.5); }
+  .shot .play::after { content: ""; position: absolute; left: 17px; top: 13px; border: 9px solid transparent; border-left: 14px solid var(--fg); }
+  .shot .more { position: absolute; top: 8px; right: 8px; padding: 2px 8px; border-radius: 6px; background: rgba(9,9,11,0.8); color: var(--fg); font: 12px/16px var(--mono); }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .block { padding: 12px; border: 1px solid var(--panel); border-radius: 8px; background: rgba(39,39,42,0.5); }
+  .block h2 { margin: 0 0 8px; font: 12px/16px var(--mono); color: var(--muted); letter-spacing: 0.06em; }
+  .field { display: block; width: 100%; height: 96px; }
+  .roles { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0 0; padding: 0; list-style: none; }
+  .roles li { padding: 2px 8px; border: 1px solid var(--signal); border-radius: 6px; font-size: 12px; line-height: 16px; }
+  .years { display: grid; gap: 10px; }
+  .years b { display: block; font-size: 32px; line-height: 34px; font-weight: 600; }
+  .years span { color: var(--muted); font-size: 12px; line-height: 16px; }
+  .years .since b { font-size: 20px; line-height: 26px; }
+
+  .timeline { display: flex; margin: 16px 0 12px; padding: 0; list-style: none; }
+  .timeline li { position: relative; flex: 1; padding-top: 16px; color: var(--muted); font-size: 12px; line-height: 16px; }
+  .timeline li::before { content: ""; position: absolute; left: 0; right: 0; top: 5px; height: 1px; background: var(--panel); }
+  .timeline li::after { content: ""; position: absolute; left: 0; top: 1px; width: 9px; height: 9px; border-radius: 50%; background: var(--signal); }
+  .timeline time { display: block; color: var(--fg); font: 12px/16px var(--mono); }
+  .lede { margin: 0 0 12px; }
+  .links { display: flex; gap: 8px; }
+  .btn { display: inline-flex; align-items: center; min-height: 40px; padding: 8px 16px; border: 1px solid var(--ring); border-radius: 6px; background: var(--panel); color: var(--fg); text-decoration: none; }
+  .btn.ghost { border-color: var(--panel); background: transparent; }
+  .btn:hover { background: rgba(250,250,250,0.1); }
+  a:focus-visible, button:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; }
+
+  /* Compact rail while the story card is open: one slim row, out of the way. */
+  .rail { position: absolute; left: 32px; bottom: 20px; display: flex; align-items: center; gap: 8px; padding: 6px; border: 1px solid var(--panel); border-radius: 12px; background: rgba(9,9,11,0.9); }
+  .rail-label { padding: 0 8px 0 10px; font: 12px/16px var(--mono); color: var(--muted); white-space: nowrap; }
+  .tabs { display: flex; gap: 6px; }
+  .tab { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 8px 12px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--muted); font: inherit; white-space: nowrap; }
+  .tab:hover { background: var(--panel); color: var(--fg); }
+  .tab[aria-selected="true"] { border-color: var(--ring); border-left: 3px solid var(--signal); background: var(--panel); color: var(--fg); }
+  .back { min-height: 40px; padding: 8px 12px; border: 1px solid var(--panel); border-radius: 6px; background: transparent; color: var(--fg); font: inherit; white-space: nowrap; }
+  .back:hover { background: var(--panel); }
+  .mono { font: 12px/16px var(--mono); color: var(--signal); }
+  @media (prefers-reduced-motion: reduce) { .helmet { animation: none; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="scene" aria-hidden="true">
+    <span class="scene-tag">LIVE SCENE · model lifts and turns</span>
+    <div class="case">
+      <div class="light"></div>
+      <svg class="helmet" viewBox="0 0 220 180" fill="none" stroke="#a1a1aa" stroke-width="3">
+        <path d="M30 120 C20 60 70 18 130 22 C182 26 205 70 196 112 L178 132 L120 138 L104 160 L60 158 Z"/>
+        <path d="M150 70 C120 60 100 80 110 104 C118 120 140 116 142 100" stroke="#10b981"/>
+        <path d="M178 96 L214 96 M180 116 L212 128 M196 96 L200 150"/>
+      </svg>
+    </div>
+  </div>
+
+  <article class="story" aria-labelledby="story-title">
+    <p class="kicker">CASE 01 · FOOTBALL HELMET</p>
+    <div class="head">
+      <div>
+        <h1 id="story-title">Carneros DC</h1>
+        <p>Bogotá, Colombia · Defensive back</p>
+      </div>
+      <span class="number" aria-label="Number 32">#32</span>
+    </div>
+
+    <div class="media" aria-label="Photos and video from the field">
+      <figure class="shot" style="margin:0">
+        <span class="more">+ more</span>
+        <b>Game day photo</b>
+        <span>@kevnnard on Instagram</span>
+      </figure>
+      <figure class="shot" style="margin:0">
+        <span class="play" aria-hidden="true"></span>
+        <b>Playing clip</b>
+        <span>via @moonsunwitch_</span>
+      </figure>
+    </div>
+
+    <div class="grid">
+      <section class="block" aria-labelledby="pos-title">
+        <h2 id="pos-title">MY POSITION</h2>
+        <svg class="field" viewBox="0 0 220 96" role="img" aria-label="Defensive secondary: two safeties deep, a cornerback on each side">
+          <rect x="1" y="1" width="218" height="94" rx="6" fill="none" stroke="#27272a"/>
+          <line x1="1" y1="78" x2="219" y2="78" stroke="#a1a1aa" stroke-dasharray="4 4"/>
+          <text x="6" y="91" fill="#a1a1aa" font-family="ui-monospace, monospace" font-size="9">LINE OF SCRIMMAGE</text>
+          <circle cx="78" cy="22" r="7" fill="#10b981"/><text x="88" y="25" fill="#fafafa" font-family="ui-sans-serif, system-ui" font-size="10">FS</text>
+          <circle cx="140" cy="40" r="7" fill="#10b981"/><text x="150" y="43" fill="#fafafa" font-family="ui-sans-serif, system-ui" font-size="10">SS</text>
+          <circle cx="22" cy="62" r="7" fill="#10b981"/><text x="32" y="65" fill="#fafafa" font-family="ui-sans-serif, system-ui" font-size="10">CB</text>
+          <circle cx="198" cy="62" r="7" fill="none" stroke="#10b981" stroke-width="2"/><text x="170" y="65" fill="#a1a1aa" font-family="ui-sans-serif, system-ui" font-size="10">CB</text>
+        </svg>
+        <ul class="roles" aria-label="Positions played">
+          <li>Free safety</li><li>Strong safety</li><li>Cornerback</li>
+        </ul>
+      </section>
+      <section class="block years" aria-labelledby="years-title">
+        <h2 id="years-title">ON THE FIELD</h2>
+        <div><b>12</b><span>seasons playing American football</span></div>
+        <div class="since"><b>Jan 2022</b><span>joined Carneros DC</span></div>
+      </section>
+    </div>
+
+    <ol class="timeline" aria-label="My football story">
+      <li><time datetime="2014">2014</time>First season</li>
+      <li><time datetime="2022-01">JAN 2022</time>Joined Carneros DC</li>
+      <li><time datetime="2024-10-26">OCT 2024</time>Bogotá Bowl vs USA All-Stars</li>
+      <li><time datetime="2026">2026</time>Season 12</li>
+    </ol>
+
+    <p class="lede">Carneros means rams, so this helmet wears gold and black horns. Twelve years in, I line up deep at free or strong safety, or press at cornerback, always as #32.</p>
+    <div class="links">
+      <a class="btn" href="#instagram">@carneros_dc on Instagram</a>
+      <a class="btn ghost" href="#close">Hide story</a>
+    </div>
+  </article>
+
+  <nav class="rail" aria-label="Collection navigation">
+    <span class="rail-label">03 OBJECTS</span>
+    <div class="tabs" role="tablist" aria-label="Display cases">
+      <button class="tab" role="tab" aria-selected="true"><span class="mono">01</span>Football helmet</button>
+      <button class="tab" role="tab" aria-selected="false"><span class="mono">02</span>Off-road helmet</button>
+      <button class="tab" role="tab" aria-selected="false"><span class="mono">03</span>Air Jordan 1</button>
+    </div>
+    <button class="back" type="button">← Back to room</button>
+  </nav>
+</main>
+</body>
+</html>

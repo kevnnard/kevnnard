@@ -1,6 +1,6 @@
 # Design system — kevnnard
 
-Synced read-only from project sources on 2026-10-27. Every entry names its source. Values that come from framework defaults (Tailwind v4 / shadcn) and are not declared in the repository are labeled as such.
+Synced read-only from project sources on 2026-11-05 (re-sync of 2026-10-27: `src/styles/globals.css` was compared token by token and every value is unchanged; `src/components/ui` and `components.json` have no commits since). Every entry names its source. Values that come from framework defaults (Tailwind v4 / shadcn) and are not declared in the repository are labeled as such.
 
 Sources read:
 
@@ -66,6 +66,10 @@ The badge `success` variant (`src/components/ui/badge.tsx`) uses Tailwind `emera
 | `--color-darker` | `#121212` | Declared, usage not audited |
 | `--color-ligth` | `#f8f8f8` | Name spelled `ligth` in source |
 | `--color-mindnight` | `#4b4b4b` | Name spelled `mindnight` in source |
+
+### Mapped without values (`@theme inline`, `src/styles/globals.css`)
+
+`--color-chart-1` … `--color-chart-5` and the `--color-sidebar-*` group map to `--chart-*` and `--sidebar-*`, which neither `:root` nor `.dark` declares. They resolve to nothing, so artboards never use them.
 
 ### Opacity steps found in sources
 
