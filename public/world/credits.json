@@ -111,16 +111,16 @@
       }
     },
     {
-      "id": "sketchfab-pieter-ferreira-off-road-helmet",
-      "pack": "Off road helmet (Sketchfab)",
-      "author": "Pieter Ferreira",
-      "authorUrl": "https://sketchfab.com/Badboy17Aiden",
+      "id": "sketchfab-senoaji-fox-x-supreme-helmet",
+      "pack": "Fox X Supreme Helmet (Sketchfab)",
+      "author": "Muhammad Seno Aji (senoaji)",
+      "authorUrl": "https://sketchfab.com/senoaji",
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-      "source": "https://sketchfab.com/3d-models/off-road-helmet-c9d968e024b749a7a9d0e257277a2d5c",
+      "source": "https://sketchfab.com/3d-models/fox-x-supreme-helmet-ac680d32d02b4a9cb769d29f4f545609",
       "licenseEvidence": {
-        "url": "https://sketchfab.com/3d-models/off-road-helmet-c9d968e024b749a7a9d0e257277a2d5c",
-        "quote": "Sketchfab download (2k GLB), asset extras: \"author\": \"Pieter Ferreira (https://sketchfab.com/Badboy17Aiden)\", \"license\": \"CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)\", \"source\": \"https://sketchfab.com/3d-models/off-road-helmet-c9d968e024b749a7a9d0e257277a2d5c\", \"title\": \"off road helmet\"; Creative Commons Attribution 4.0"
+        "url": "https://sketchfab.com/3d-models/fox-x-supreme-helmet-ac680d32d02b4a9cb769d29f4f545609",
+        "quote": "Sketchfab model page \"Fox X Supreme Helmet\" by senoaji (ac680d32d02b4a9cb769d29f4f545609), downloaded by the owner as an OBJ archive: License: CC Attribution, Creative Commons Attribution 4.0 (recorded at download, collection-display-models L44; the archive itself carries no license file)."
       }
     },
     {
@@ -775,26 +775,26 @@
     },
     {
       "file": "models/display-offroad-helmet.glb",
-      "asset": "Off road helmet",
-      "pack": "sketchfab-pieter-ferreira-off-road-helmet",
-      "author": "Pieter Ferreira",
+      "asset": "Fox X Supreme Helmet (a Fox V1-style motocross helmet)",
+      "pack": "sketchfab-senoaji-fox-x-supreme-helmet",
+      "author": "Muhammad Seno Aji (senoaji)",
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-      "source": "https://sketchfab.com/3d-models/off-road-helmet-c9d968e024b749a7a9d0e257277a2d5c",
-      "bytes": 265304,
-      "sha256": "d06e0f04f25a994d27e8ae71e23bbcc5947398be6bf979e0204d995e762fc52a",
-      "triangles": 3386,
-      "changes": "Split into its connected parts with the source UVs, tangents and normal map kept; the shell, peak and peak screws repainted in the source UV atlas with a red, black and gray graphic recreated from a photo of a Fox V1 F-A18 (front only: the sides, back and crown are approximated, and a plain outlined badge stands in for the Fox head logo); the peak's overhang stretched forward so its tip clears the chin, its rear mount unchanged; liner and goggle texels kept; satin, non-metallic paint without the source transmission; optimized with glTF-Transform (meshopt, quantized, 1024 px WebP) by scripts/prepare-display-offroad.mjs. Not the owner's exact Fox V1.",
+      "source": "https://sketchfab.com/3d-models/fox-x-supreme-helmet-ac680d32d02b4a9cb769d29f4f545609",
+      "bytes": 230704,
+      "sha256": "d750a93690d33bcc6d89a013165e34152cb1873154e1730ae95e16960834a793",
+      "triangles": 3572,
+      "changes": "OBJ imported in Blender; goggles removed (lens, frame, foam, clips and strap); the liner and the vent meshes re-materialed as plain dark materials; the Supreme shell texture replaced by a 2048 px projection bake of five Fox Racing V1 Sayak (2018, matte red) product photos (Motocard), each projected through an orthographic camera fitted to the helmet's silhouette, with occlusion, facing and edge weights, studio highlights clamped and unseen texels filled red or black; the Fox marks in the photos are kept by the owner's choice; satin, non-metallic paint; centred, chin forward and scaled to 0.30 m; optimized with glTF-Transform (meshopt, 2048 px WebP) by scripts/prepare-display-offroad-fox.mjs and scripts/prepare-display-offroad-fox.py. It stands for the owner's own helmet model; the mesh is senoaji's, not Fox's V1 shell, so it is not the owner's exact helmet. Fox, V1 and Sayak belong to Fox Racing; no affiliation.",
       "sourceFiles": [
         {
-          "url": "https://sketchfab.com/3d-models/off-road-helmet-c9d968e024b749a7a9d0e257277a2d5c",
-          "bytes": 6546284,
-          "sha256": "72662d520218577c66c6ec5e4679b502200c65789a0e453a5e50cf7f8952c1f6"
+          "url": "https://sketchfab.com/3d-models/fox-x-supreme-helmet-ac680d32d02b4a9cb769d29f4f545609",
+          "bytes": 681923,
+          "sha256": "fa74e45ffc828a418163ba9c8ac3dc0ee1ca77a791c0ebffe1731107c4bd2935"
         }
       ],
       "graphicReference": {
-        "url": "https://www.ebay.com/itm/157680317522",
-        "note": "Marketplace photo of the front of a Fox V1 F-A18 in red, black and gray, used only as a visual reference for the recreated paint; the photo is not shipped and is not covered by this license. Fox, V1 and F-A18 belong to their owners; no affiliation."
+        "url": "https://www.motocard.com/en/helmets/fox-v1_sayak_2018_matte_red_003.aspx",
+        "note": "Five third-party product photos of the Fox V1 Sayak (2018, matte red) from Motocard (left three-quarter, front, right side, back and top; sha256 pinned in scripts/prepare-display-offroad-fox.mjs). Their pixels are baked into the texture of the shipped GLB; the photos themselves are not shipped, and they are not covered by this license, which applies to senoaji's mesh. Fox, V1 and the Fox marks belong to Fox Racing; no affiliation."
       }
     },
     {

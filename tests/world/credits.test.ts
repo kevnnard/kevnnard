@@ -163,6 +163,15 @@ describe("display case meshes (collection-display-models T2)", () => {
     assert.match(gallery, /display-jordan-1\.glb/);
     assert.doesNotMatch(script, /"id": "football-helmet"/);
     assert.doesNotMatch(script, /poly-pizza-football-helmet|8Htf9hrbXkE/);
+    // T15: the off-road helmet is senoaji's; Pieter Ferreira's mesh is retired.
+    assert.doesNotMatch(
+      script,
+      /Ferreira|Badboy17Aiden|off-road-helmet-c9d968/,
+    );
+    assert.doesNotMatch(
+      JSON.stringify(data),
+      /Ferreira|Badboy17Aiden|off-road-helmet-c9d968/,
+    );
   });
 
   const SOURCES = {
@@ -175,6 +184,16 @@ describe("display case meshes (collection-display-models T2)", () => {
       url: "https://sketchfab.com/3d-models/buffalo-bills-helmet-fd471344bf9c4900b8cc0f59fedb8093",
       sha256:
         "064297188d088fdcdcbdd2081ab367b48268e82abc281aab1f06918b08a0bccc",
+    },
+    "models/display-offroad-helmet.glb": {
+      pack: "sketchfab-senoaji-fox-x-supreme-helmet",
+      author: "Muhammad Seno Aji (senoaji)",
+      license: "CC-BY-4.0",
+      source:
+        "https://sketchfab.com/3d-models/fox-x-supreme-helmet-ac680d32d02b4a9cb769d29f4f545609",
+      url: "https://sketchfab.com/3d-models/fox-x-supreme-helmet-ac680d32d02b4a9cb769d29f4f545609",
+      sha256:
+        "fa74e45ffc828a418163ba9c8ac3dc0ee1ca77a791c0ebffe1731107c4bd2935",
     },
     "models/display-jordan-1.glb": {
       pack: "sketchfab-makoto-air-jordan-1",

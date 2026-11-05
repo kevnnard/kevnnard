@@ -736,7 +736,9 @@ def write_credits(credits):
     # The gallery's CC BY models are independently sourced and optimized.
     # Preserve their credited provenance whenever base-world assets regenerate.
     # The football helmet is Exodusks' SpeedFlex (collection-display-models T7),
-    # derived by scripts/prepare-display-football.mjs.
+    # derived by scripts/prepare-display-football.mjs; the off-road helmet is
+    # senoaji's Fox X Supreme helmet (T15), derived by
+    # scripts/prepare-display-offroad-fox.mjs.
     path = OUTPUT / "credits.json"
     if path.exists():
         previous = json.loads(path.read_text(encoding="utf-8"))

@@ -1,12 +1,12 @@
 // Glass display cases: a row of three museum pedestals behind the living-room
 // sofa, between its backrest and the front wall. Each dark matte plinth with a
 // brass reveal carries a five-sided glass case lit by a warm micro-spot under
-// its lid. Each case holds a mesh (collection-display-models T2, T4, T7):
+// its lid. Each case holds a mesh (collection-display-models T2, T7, T15):
 // Exodusks' Riddell SpeedFlex repainted with the owner's gold and black
 // Rams-style horn livery (scripts/prepare-display-football.mjs and .py),
-// Pieter Ferreira's off-road helmet
-// painted with a recreated Fox V1 F-A18 graphic
-// (scripts/prepare-display-offroad.mjs), and makoto's Air Jordan 1 High pair
+// senoaji's Fox X Supreme helmet textured with a projection bake of Fox V1
+// Sayak product photos (scripts/prepare-display-offroad-fox.mjs and .py),
+// and makoto's Air Jordan 1 High pair
 // with its own black and sail textures. They are recognizable stand-ins, not
 // the owner's exact helmets or shoes. Brand names and marks belong to their
 // owners; no affiliation. Night only, like
@@ -191,11 +191,11 @@ export const DISPLAY_ITEMS: Record<DisplayItemId, DisplayItem> = {
   "moto-helmet": {
     model: {
       url: "/world/models/display-offroad-helmet.glb",
-      // Chin guard on the source +x.
+      // Chin bar on the derived +x.
       frontYaw: HALF_PI,
       // Painted in its own UV atlas; no runtime tint.
     },
-    note: "Credited off-road helmet mesh painted with a recreated Fox V1 F-A18 graphic in red, black and gray; not the owner's exact Fox V1, and the sides and back are approximated.",
+    note: "senoaji's \"Fox X Supreme Helmet\" (Sketchfab, CC BY 4.0) without its goggles, textured for this site with a projection bake of five Fox V1 Sayak (2018, red) product photos, Fox marks included by the owner's choice; the mesh is not Fox's V1 shell, so it is not the owner's exact helmet. Fox and V1 belong to Fox Racing; no affiliation.",
   },
   "jordan-1": {
     model: {

@@ -39,6 +39,15 @@ import { MAIN_ROOM, partBounds } from "../../src/lib/world/setup.ts";
 import { SOFA_LAMP, SOFA_LAMPS } from "../../src/lib/world/sofa-lamps.ts";
 import { PUBLIC } from "./glb.ts";
 
+/** sha256 of the five Sayak product photos projected onto the off-road helmet. */
+const SAYAK_PHOTOS = [
+  "83c7477a20a75f8ab0cf162e54e1b1b851aa9974bbf4f618007fea7b160f3a38",
+  "744345bb25868c8d06cb7468296674e97bf8aee65157ad0cc4aef4a69e971249",
+  "b434d9cf1171d8ea83e73e72d7797696e3812582665544f6f8408aaa8e58700c",
+  "6f55f68aa97f548aa0767f274e0616d62c4448788a11e92f9e0f9cdf3af402db",
+  "f8e7ca60740b2fec9b53d41de4f6ae626fc61e1c09966aae0b79ed5c971ea530",
+];
+
 type V3 = [number, number, number];
 type GlbNode = {
   name?: string;
@@ -280,25 +289,27 @@ describe("display case items", () => {
     );
   });
 
-  it("shows an off-road helmet in the middle case, never a street helmet", () => {
+  it("shows senoaji's Fox X Supreme helmet in the middle case, baked from Sayak photos (T15)", () => {
     const item = DISPLAY_ITEMS["moto-helmet"];
     assert.equal(item.model.url, "/world/models/display-offroad-helmet.glb");
-    assert.match(item.note, /recreated Fox V1 F-A18/);
-    assert.match(item.note, /not the owner's exact Fox V1/);
+    // Textured, not tinted: the runtime keeps the shipped materials.
+    assert.equal(item.model.tint, undefined);
+    assert.match(item.note, /senoaji's "Fox X Supreme Helmet"/);
+    assert.match(item.note, /CC BY 4\.0/);
+    assert.match(item.note, /Fox V1 Sayak/);
+    assert.match(item.note, /not the owner's exact helmet/i);
+    assert.doesNotMatch(item.note, /recreated Fox V1 F-A18|Pieter Ferreira/);
     assert.ok(!DISPLAY_MODEL_FILES.some((url) => /street/.test(url)));
   });
 
-  it("paints the F-A18 graphic into the off-road helmet's own UV atlas", () => {
-    // Textured, not tinted: the runtime keeps the shipped materials.
-    assert.equal(DISPLAY_ITEMS["moto-helmet"].model.tint, undefined);
+  it("ships the off-road helmet as one baked shell without the goggles (T15)", () => {
     type Ref = { index: number };
     const json = glbJson("models/display-offroad-helmet.glb") as GlbJson & {
-      extensionsUsed?: string[];
+      accessors: { count: number }[];
       images: { mimeType: string }[];
       materials: {
         name: string;
         alphaMode?: string;
-        normalTexture?: Ref;
         pbrMetallicRoughness: {
           baseColorTexture?: Ref;
           roughnessFactor?: number;
@@ -306,142 +317,126 @@ describe("display case items", () => {
         };
       }[];
       meshes: {
-        primitives: { attributes: Record<string, number>; material: number }[];
+        primitives: {
+          attributes: Record<string, number>;
+          material: number;
+          indices: number;
+        }[];
       }[];
     };
-    const parts = new Map(
-      json.nodes
-        .filter((node) => node.mesh !== undefined)
-        .map((node) => {
-          const primitive = json.meshes[node.mesh ?? 0].primitives[0];
-          return [node.name, primitive] as const;
-        }),
+    const nodes = json.nodes.filter((node) => node.mesh !== undefined);
+    assert.deepEqual(
+      nodes.map((node) => node.name),
+      ["shell"],
     );
-    assert.deepEqual([...parts.keys()].sort(), [
-      "goggle-frame",
-      "goggle-lens",
-      "goggle-strap",
+    const primitives = json.meshes[nodes[0].mesh ?? 0].primitives;
+    const materials = primitives.map((p) => json.materials[p.material]);
+    assert.deepEqual(materials.map((m) => m.name).sort(), [
       "liner",
-      "mouth-vent",
-      "shell",
-      "visor",
-      "visor-screws",
+      "sayak-paint",
+      "vent-mesh",
     ]);
-    for (const [name, primitive] of parts)
-      for (const attribute of ["TEXCOORD_0", "NORMAL", "TANGENT"])
-        assert.ok(attribute in primitive.attributes, `${name} ${attribute}`);
-    const material = (name: string) => {
-      const primitive = parts.get(name);
-      assert.ok(primitive, name);
-      return json.materials[primitive.material];
-    };
-    const paint = material("shell");
-    assert.equal(paint.name, "fa18-paint");
-    assert.equal(material("visor"), paint);
-    const { baseColorTexture, roughnessFactor, metallicFactor } =
-      paint.pbrMetallicRoughness;
-    assert.ok(baseColorTexture, "painted base color");
-    assert.ok(paint.normalTexture, "source normal map kept");
-    assert.equal(metallicFactor, 0);
-    // Satin paint, well short of the old gloss tint.
-    assert.ok((roughnessFactor ?? 1) >= 0.35 && (roughnessFactor ?? 1) <= 0.6);
-    for (const name of [
-      "liner",
-      "goggle-frame",
-      "goggle-strap",
-      "goggle-lens",
-    ]) {
-      const kept = material(name);
-      assert.notEqual(kept, paint, `${name} is not repainted`);
-      assert.deepEqual(
-        kept.pbrMetallicRoughness.baseColorTexture,
-        baseColorTexture,
-        `${name} keeps its source texels in the same atlas`,
-      );
-      assert.deepEqual(kept.normalTexture, paint.normalTexture);
-    }
-    assert.equal(material("goggle-lens").alphaMode, "BLEND");
+    assert.ok(!json.materials.some((m) => /goggle/.test(m.name)), "no goggles");
+    const paint = materials.find((m) => m.name === "sayak-paint");
+    assert.ok(paint?.pbrMetallicRoughness.baseColorTexture, "baked texture");
+    assert.ok(
+      "TEXCOORD_0" in primitives[materials.indexOf(paint)].attributes,
+      "UVs",
+    );
+    assert.equal(paint.pbrMetallicRoughness.metallicFactor, 0);
+    const roughness = paint.pbrMetallicRoughness.roughnessFactor ?? 1;
+    assert.ok(roughness >= 0.35 && roughness <= 0.6, "satin paint");
+    for (const m of materials) assert.notEqual(m.alphaMode, "BLEND", m.name);
     assert.deepEqual(
       json.images.map((image) => image.mimeType),
-      ["image/webp", "image/webp"],
+      ["image/webp"],
     );
-    assert.ok(
-      !json.extensionsUsed?.includes("KHR_materials_transmission"),
-      "no transmission pass",
+    const triangles = primitives.reduce(
+      (sum, p) => sum + json.accessors[p.indices].count / 3,
+      0,
     );
+    assert.ok(triangles > 3_000 && triangles < 10_000, `${triangles}`);
   });
 
-  it("projects the off-road helmet's peak past the chin, still mounted at the back", () => {
-    // Source units, +x front: the source peak stopped 0.13 short of the chin.
-    const file = "models/display-offroad-helmet.glb";
-    const visor = boxOf(glbCorners(file, "visor"));
-    const shell = boxOf(glbCorners(file, "shell"));
-    const screws = boxOf(glbCorners(file, "visor-screws"));
-    const overhang = visor.max[0] - shell.max[0];
-    assert.ok(overhang >= 2.5 && overhang <= 4, `peak overhang ${overhang}`);
-    // The rear stays where it was, on the shell and over its screws.
-    assert.ok(
-      Math.abs(visor.min[0] - 0.69) < 0.05,
-      `peak rear ${visor.min[0]}`,
-    );
-    assert.ok(
-      Math.abs(visor.min[1] - 172.48) < 0.05,
-      `peak base ${visor.min[1]}`,
-    );
-    assert.ok(visor.min[0] < screws.min[0] && screws.max[0] < 9);
-  });
-
-  it("derives the off-road helmet with a pinned, reproducible script", () => {
+  it("derives the off-road helmet with a pinned, reproducible script (T15)", () => {
     const script = readFileSync(
-      new URL("../../scripts/prepare-display-offroad.mjs", import.meta.url),
+      new URL("../../scripts/prepare-display-offroad-fox.mjs", import.meta.url),
       "utf8",
     );
-    assert.match(
-      script,
-      /72662d520218577c66c6ec5e4679b502200c65789a0e453a5e50cf7f8952c1f6/,
-    );
+    // The source archive and the five projected photos are pinned.
+    for (const hash of [
+      "fa74e45ffc828a418163ba9c8ac3dc0ee1ca77a791c0ebffe1731107c4bd2935",
+      ...SAYAK_PHOTOS,
+    ])
+      assert.match(script, new RegExp(hash));
     assert.match(script, /public\/world\/models\/display-offroad-helmet\.glb/);
+    assert.match(script, /scripts\/prepare-display-offroad-fox\.py/);
     assert.match(script, /"4\.5\.1"/);
+    assert.ok(
+      existsSync(
+        new URL(
+          "../../scripts/prepare-display-offroad-fox.py",
+          import.meta.url,
+        ),
+      ),
+      "Blender half",
+    );
+    assert.ok(
+      !existsSync(
+        new URL("../../scripts/prepare-display-offroad.mjs", import.meta.url),
+      ),
+      "the retired F-A18 painter is gone",
+    );
   });
 
-  it("credits Pieter Ferreira's off-road helmet under CC BY 4.0, from Sketchfab", () => {
+  it("credits senoaji's helmet under CC BY 4.0 and names the baked photos (T15)", () => {
     const page =
-      "https://sketchfab.com/3d-models/off-road-helmet-c9d968e024b749a7a9d0e257277a2d5c";
+      "https://sketchfab.com/3d-models/fox-x-supreme-helmet-ac680d32d02b4a9cb769d29f4f545609";
     const credits: Credits = JSON.parse(
       readFileSync(new URL("credits.json", PUBLIC), "utf8"),
     );
     assert.deepEqual(creditProblems(credits), []);
-    const entry: (CreditEntry & { changes?: string }) | undefined =
-      credits.assets.find(
-        (asset) => asset.file === "models/display-offroad-helmet.glb",
-      );
+    const entry:
+      | (CreditEntry & {
+          changes?: string;
+          graphicReference?: { url: string; note: string };
+        })
+      | undefined = credits.assets.find(
+      (asset) => asset.file === "models/display-offroad-helmet.glb",
+    );
     assert.ok(entry, "credited");
-    assert.equal(entry.author, "Pieter Ferreira");
+    assert.equal(entry.author, "Muhammad Seno Aji (senoaji)");
     assert.equal(entry.license, "CC-BY-4.0");
     assert.equal(entry.source, page);
-    assert.match(entry.changes ?? "", /not the owner's exact Fox V1/i);
-    assert.match(entry.changes ?? "", /F-A18/);
-    assert.match(entry.changes ?? "", /approximat/);
-    // The photo guided the paint; it is neither shipped nor licensed.
-    const reference = (
-      entry as { graphicReference?: { url: string; note: string } }
-    ).graphicReference;
-    assert.equal(reference?.url, "https://www.ebay.com/itm/157680317522");
-    assert.match(reference?.note ?? "", /front/);
-    assert.match(reference?.note ?? "", /not shipped/);
+    assert.match(entry.changes ?? "", /goggles removed/);
+    assert.match(entry.changes ?? "", /five .*Sayak.* product photos/);
+    assert.match(entry.changes ?? "", /owner's choice/);
+    assert.match(entry.changes ?? "", /no affiliation/);
+    assert.equal(
+      entry.graphicReference?.url,
+      "https://www.motocard.com/en/helmets/fox-v1_sayak_2018_matte_red_003.aspx",
+    );
+    assert.match(entry.graphicReference?.note ?? "", /baked into the texture/);
+    assert.match(
+      entry.graphicReference?.note ?? "",
+      /not covered by this license/,
+    );
     assert.deepEqual(
       entry.sourceFiles.map((file) => [file.url, file.bytes, file.sha256]),
       [
         [
           page,
-          6546284,
-          "72662d520218577c66c6ec5e4679b502200c65789a0e453a5e50cf7f8952c1f6",
+          681923,
+          "fa74e45ffc828a418163ba9c8ac3dc0ee1ca77a791c0ebffe1731107c4bd2935",
         ],
       ],
     );
     const pack = credits.packs.find((item) => item.id === entry.pack);
-    assert.equal(pack?.authorUrl, "https://sketchfab.com/Badboy17Aiden");
-    assert.match(pack?.licenseEvidence.quote ?? "", /CC-BY-4.0/);
+    assert.equal(pack?.authorUrl, "https://sketchfab.com/senoaji");
+    assert.ok(
+      !credits.packs.some((item) => /pieter-ferreira/.test(item.id)),
+      "the old off-road pack is gone",
+    );
   });
 
   it("shows Exodusks' repainted SpeedFlex, honestly labelled, with no runtime tint (T7)", () => {
@@ -734,8 +729,8 @@ describe("display case items", () => {
   });
 
   it("turns each mesh's front toward the room before the case yaw", () => {
-    // Facemask (football), chin guard (off-road) and toes (Jordan) sit on
-    // the built +x, source +x and source +z.
+    // Facemask (football), chin bar (off-road) and toes (Jordan) sit on the
+    // built +x, the built +x and source +z.
     const front = (id: DisplayItemId, axis: 0 | 2) => {
       const [x, , z] = turn(
         axis === 0 ? [1, 0, 0] : [0, 0, 1],

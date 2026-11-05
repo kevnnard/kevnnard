@@ -20,9 +20,9 @@ const collection: Record<
   },
   "moto-helmet": {
     title: "Fox V1",
-    subtitle: "Motocross-inspired stand-in",
+    subtitle: "F-A18 Sayak, red",
     detail:
-      "A credited off-road helmet in Fox-inspired red and black; not an exact Fox V1 replica.",
+      "senoaji's Fox X Supreme Helmet (CC BY 4.0) wearing photos of my Fox V1 Sayak; close, not the exact V1 shell.",
   },
   "jordan-1": {
     title: "Air Jordan 1",
