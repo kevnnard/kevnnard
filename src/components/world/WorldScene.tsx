@@ -70,7 +70,10 @@ import {
   flowerLayout,
   flowerMesh,
 } from "@/lib/world/flowers.ts";
-import { galleryCaseFocus } from "@/lib/world/gallery-camera.ts";
+import {
+  galleryCaseFocus,
+  galleryStoryShift,
+} from "@/lib/world/gallery-camera.ts";
 import { clearOfGarden } from "@/lib/world/garden.ts";
 import {
   ISLAND,
@@ -157,6 +160,8 @@ interface WorldSceneProps {
   speakers?: SpeakerControl;
   /** The selected gallery case; null restores the adapted home framing. */
   galleryCase?: DisplayItemId | null;
+  /** Its story card is open: frame the model left of it (T12). */
+  galleryStory?: boolean;
   onInspectCase?: (id: DisplayItemId) => void;
 }
 
@@ -258,6 +263,7 @@ function SceneCanvas({
   portrait,
   speakers,
   galleryCase,
+  galleryStory = false,
   onInspectCase,
   tracker,
   onOutdoor,
@@ -299,6 +305,7 @@ function SceneCanvas({
       <WorldLighting hours={hours} />
       <GuidedCamera
         galleryCase={galleryCase}
+        galleryStory={galleryStory}
         reducedMotion={reducedMotion}
         home={home}
         focus={focus || closeUp !== "terminal"}
@@ -474,6 +481,7 @@ function TexturedHouse({
         hours={hours}
         onPrepared={prepared.display}
         focused={galleryCase}
+        reducedMotion={reducedMotion}
         onInspect={onInspectCase}
       />
       <Suspense fallback={null}>
@@ -667,6 +675,7 @@ function GuidedCamera({
   focus,
   closeUp = "terminal",
   galleryCase = null,
+  galleryStory = false,
   onArrive,
 }: {
   reducedMotion: boolean;
@@ -674,6 +683,7 @@ function GuidedCamera({
   focus: boolean;
   closeUp?: "terminal" | "portrait" | "speakers";
   galleryCase?: DisplayItemId | null;
+  galleryStory?: boolean;
   onArrive?: () => void;
 }) {
   const controls = useRef<CameraControls>(null);
@@ -686,6 +696,7 @@ function GuidedCamera({
   );
   useEffect(() => () => lens.release(), [lens]);
   const aspect = useThree((state) => state.size.width / state.size.height);
+  const viewportWidth = useThree((state) => state.size.width);
   // The portrait's fit needs the viewport's pixels; other poses only refit
   // on aspect changes, as before.
   const portraitFit = useThree((state) =>
@@ -748,7 +759,12 @@ function GuidedCamera({
       const [width, height] = portraitFit.split("x").map(Number);
       const speaker =
         closeUp === "speakers" && focus ? speakerFocus(aspect) : null;
-      const gallery = galleryCase ? galleryCaseFocus(galleryCase) : null;
+      const gallery = galleryCase
+        ? galleryCaseFocus(
+            galleryCase,
+            galleryStory ? galleryStoryShift(viewportWidth, aspect) : 0,
+          )
+        : null;
       lens.focus(gallery?.fov ?? speaker?.fov ?? GUIDE.fov);
       const { position, target } =
         gallery ??
@@ -775,6 +791,8 @@ function GuidedCamera({
     reducedMotion,
     focus,
     galleryCase,
+    galleryStory,
+    viewportWidth,
     portraitFit,
     closeUp,
     lens,

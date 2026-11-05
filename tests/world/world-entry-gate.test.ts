@@ -41,7 +41,7 @@ describe("world entry gate", () => {
     assert.match(app, /inert=\{!entered\}/);
     assert.match(
       app,
-      /inert=\{!entered \|\| focus \|\| portrait \|\| speakers\}/,
+      /inert=\{\s*!entered \|\| focus \|\| portrait \|\| speakers \|\| galleryCase !== null\s*\}/,
     );
     assert.match(app, /element\.inert = !entered/);
     assert.match(app, /!entered && "world-entry-pending"/);

@@ -1,21 +1,25 @@
 // Glass display cases: a row of three museum pedestals behind the living-room
 // sofa, between its backrest and the front wall. Each dark matte plinth with a
 // brass reveal carries a five-sided glass case lit by a warm micro-spot under
-// its lid. Each case holds a mesh (collection-display-models T2, T4, T5): an
-// original SpeedFlex-inspired football helmet built in code and painted with
-// the owner's gold and black horn livery (src/lib/world/football-helmet-asset.ts,
-// scripts/prepare-display-football.mjs), Pieter Ferreira's off-road helmet
+// its lid. Each case holds a mesh (collection-display-models T2, T4, T7):
+// Exodusks' Riddell SpeedFlex repainted with the owner's gold and black
+// Rams-style horn livery (scripts/prepare-display-football.mjs and .py),
+// Pieter Ferreira's off-road helmet
 // painted with a recreated Fox V1 F-A18 graphic
 // (scripts/prepare-display-offroad.mjs), and makoto's Air Jordan 1 High pair
 // with its own black and sail textures. They are recognizable stand-ins, not
 // the owner's exact helmets or shoes. Brand names and marks belong to their
 // owners; no affiliation. Night only, like
-// the other night lights; each case toggles its spot on click with the shared
-// lamp switch click. Pure numbers; DisplayCases.tsx renders them.
+// the other night lights, each case is lit like a museum case (T14): a key
+// spot from the front of the lid aimed at the item, a weak warm uplight and
+// an LED line on the riser's front edge, and case-local reflections on the
+// item; each case toggles them on click with the shared lamp switch click.
+// Pure numbers; DisplayCases.tsx renders them.
 
 import type { Vec3 } from "./house.ts";
 import { nightLightsOn } from "./lights.ts";
 import { LIVING_MODELS, modelBounds } from "./living.ts";
+import { environmentIntensity } from "./palette.ts";
 
 const sofaModel = LIVING_MODELS.find((model) => model.kind === "sofa");
 if (!sofaModel) throw new Error("the display cases need the living-room sofa");
@@ -43,11 +47,38 @@ export const DISPLAY_CASE = {
   puck: { radius: 0.022, height: 0.004 },
   /** Warm museum white. */
   lightColor: "#ffe6c2",
-  /** Soft, controlled spill: the item and the plinth top, not the room. */
-  pointIntensity: 0.6,
-  pointDistance: 0.9,
+  /**
+   * Key spot (T14), 0.26 m from the item centre: ~23 lx there, 1.7x the old
+   * lid point's 14, and ~43 at the item's top, under that point's hot 47.
+   */
+  spotIntensity: 1.6,
+  /**
+   * Half-angle: the item's radius needs 0.57 rad; the soft edge needs more,
+   * and the cone already reaches past the glass on the plinth top.
+   */
+  spotAngle: 0.8,
+  /** Soft edge: the item's rim still gets about a third of the centre. */
+  spotPenumbra: 0.8,
+  /** Range past the plinth top, so its window barely dims the item. */
+  spotDistance: 0.7,
+  /** Spot head: this far under the lid and behind the front glass. */
+  spotDrop: 0.025,
+  spotInset: 0.035,
+  /** Warm fill from the riser's front edge: ~11% of the key at the centre. */
+  upIntensity: 0.12,
+  upDistance: 0.45,
+  /** Uplight this far in front of the riser face, at its mid-height. */
+  upInset: 0.02,
   lightDecay: 2,
   puckEmissive: 0.8,
+  /** LED line on the riser's front edge and its glow at full level. */
+  strip: { height: 0.004, depth: 0.004 },
+  stripEmissive: 1.2,
+  /**
+   * Reflection strength on a lit case's item at night: the scene's
+   * environment is nearly off then (0.01), which leaves metals black.
+   */
+  envBoost: 0.5,
   /** Output by day: none, the cases only light at night. */
   dayLevel: 0,
   /** On until clicked off: a lit gallery at night. */
@@ -151,11 +182,11 @@ export const DISPLAY_ITEMS: Record<DisplayItemId, DisplayItem> = {
   "football-helmet": {
     model: {
       url: "/world/models/display-football-helmet.glb",
-      // Facemask on the built +x.
+      // Facemask on the derived +x.
       frontYaw: HALF_PI,
       // Painted in its own UV atlas; no runtime tint.
     },
-    note: "Original SpeedFlex-inspired helmet built for this site, with a separate tinted black eye shield, a black open-eye facemask and the owner's gold and black horn livery redrawn from their photos; not an exact Riddell SpeedFlex replica and not the owner's exact Schutt, and without its eagle decal.",
+    note: "Exodusks' Riddell SpeedFlex (Sketchfab, CC BY 4.0) repainted for this site in the owner's colors: a metallic gold shell with wide black Rams-style horns, a small #32 on the back, a black facemask and a separate smoked black eye shield; not the owner's exact helmet, and no NFL or team logo.",
   },
   "moto-helmet": {
     model: {
@@ -206,6 +237,53 @@ export function displayModelFit(box: { min: Vec3; max: Vec3 }): {
 }
 
 /**
+ * Turntable while a case is inspected (collection-display-models T8): one
+ * steady turn per `period` seconds about the case axis; once inspection ends,
+ * the mesh eases back to the front at `settle` per second.
+ */
+export const DISPLAY_TURN = { period: 20, settle: 3 } as const;
+
+const FULL_TURN = 2 * Math.PI;
+
+/**
+ * The next yaw after `dt` seconds, in [0, 2pi): advancing while `turning`,
+ * otherwise settling on the nearer front (0 or a full turn) and snapping to
+ * exactly 0 once within a milliradian, so the frame loop can stop.
+ */
+export function displayTurnStep(
+  yaw: number,
+  dt: number,
+  turning: boolean,
+): number {
+  if (turning)
+    return (yaw + (FULL_TURN * dt) / DISPLAY_TURN.period) % FULL_TURN;
+  const front = yaw > Math.PI ? FULL_TURN : 0;
+  const next = front + (yaw - front) * Math.exp(-DISPLAY_TURN.settle * dt);
+  return Math.abs(next - front) < 1e-3 ? 0 : next;
+}
+
+/**
+ * Lift while a case is inspected (T9): the mesh rises `height` metres off the
+ * riser, easing at `rate` per second, and settles back down afterwards.
+ */
+export const DISPLAY_LIFT = { height: 0.05, rate: 4 } as const;
+
+/**
+ * The next lift after `dt` seconds, easing toward `height` while `lifted`
+ * and toward 0 otherwise, snapping onto the rest height within half a
+ * millimetre so the frame loop can stop.
+ */
+export function displayLiftStep(
+  lift: number,
+  dt: number,
+  lifted: boolean,
+): number {
+  const target = lifted ? DISPLAY_LIFT.height : 0;
+  const next = target + (lift - target) * Math.exp(-DISPLAY_LIFT.rate * dt);
+  return Math.abs(next - target) < 5e-4 ? target : next;
+}
+
+/**
  * Whether a shipped mesh casts a shadow, from its material: a see-through
  * part (the football helmet's tinted eye shield) would cast a solid shadow,
  * so it does not. Opaque parts and blended parts with no factor alpha (the
@@ -228,7 +306,7 @@ export function displayCasePoint(item: DisplayCasePlacement, y: number): Vec3 {
 export const ITEM_FLOOR_Y =
   DISPLAY_CASE.plinth.height + DISPLAY_CASE.riser.height;
 
-/** Light centre above the floor: just under the lid housing, in the glass. */
+/** Lid fixture's puck above the floor: just under the housing, in the glass. */
 export const DISPLAY_CASE_LIGHT_Y =
   DISPLAY_CASE.plinth.height +
   DISPLAY_CASE.glass.height -
@@ -236,13 +314,58 @@ export const DISPLAY_CASE_LIGHT_Y =
   DISPLAY_CASE.housing.height -
   0.01;
 
-/** World position of a case's light. */
+/** World position of a case's lid fixture. */
 export function displayCaseLightPosition(item: DisplayCasePlacement): Vec3 {
   return displayCasePoint(item, DISPLAY_CASE_LIGHT_Y);
 }
 
 /**
- * 0-1 output of one case's spot: full at night (the NightLights gate,
+ * Case-local point the key spot aims at: the item centre, halfway between
+ * its rest on the riser and its inspection lift.
+ */
+export const DISPLAY_CASE_AIM: Vec3 = [
+  0,
+  ITEM_FLOOR_Y + DISPLAY_CASE.itemFit.height / 2 + DISPLAY_LIFT.height / 2,
+  0,
+];
+
+/**
+ * Case-local key spot: under the lid, behind the front glass (front is -z,
+ * toward the room and the inspection camera), so it lights the item's face.
+ */
+export const DISPLAY_CASE_SPOT_POSITION: Vec3 = [
+  0,
+  DISPLAY_CASE.plinth.height +
+    DISPLAY_CASE.glass.height -
+    DISPLAY_CASE.glass.thickness -
+    DISPLAY_CASE.spotDrop,
+  -(
+    DISPLAY_CASE.glass.depth / 2 -
+    DISPLAY_CASE.glass.thickness -
+    DISPLAY_CASE.spotInset
+  ),
+];
+
+/** Case-local fill uplight: in front of the riser, below the item. */
+export const DISPLAY_CASE_UPLIGHT_POSITION: Vec3 = [
+  0,
+  DISPLAY_CASE.plinth.height + DISPLAY_CASE.riser.height / 2,
+  -(DISPLAY_CASE.riser.depth / 2 + DISPLAY_CASE.upInset),
+];
+
+/**
+ * Reflection strength for a case's item: the scene's own by day, so nothing
+ * changes; at night a lit case keeps `level * envBoost` of it, never below
+ * the scene's.
+ */
+export function displayCaseEnvIntensity(level: number, hours: number): number {
+  const scene = environmentIntensity(hours);
+  if (!nightLightsOn(hours)) return scene;
+  return Math.min(1, Math.max(scene, level * DISPLAY_CASE.envBoost));
+}
+
+/**
+ * 0-1 output of one case's lights: full at night (the NightLights gate,
  * 18:00-05:59), off by day (`dayLevel`), and zero when switched off or
  * `power` is off.
  */

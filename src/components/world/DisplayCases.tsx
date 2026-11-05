@@ -1,11 +1,21 @@
-import { useLoader, useThree } from "@react-three/fiber";
+import { useFrame, useLoader, useThree } from "@react-three/fiber";
 import { MeshoptDecoder } from "meshoptimizer/decoder";
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  type ReactNode,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Box3,
   Group,
+  type Material,
   type Mesh,
   MeshStandardMaterial,
+  Object3D,
   type Vector3Tuple,
 } from "three";
 import {
@@ -14,17 +24,23 @@ import {
 } from "three/examples/jsm/loaders/GLTFLoader.js";
 import {
   DISPLAY_CASE,
-  DISPLAY_CASE_LIGHT_Y,
+  DISPLAY_CASE_AIM,
+  DISPLAY_CASE_SPOT_POSITION,
+  DISPLAY_CASE_UPLIGHT_POSITION,
   DISPLAY_CASES,
   DISPLAY_ITEMS,
+  DISPLAY_LIFT,
   DISPLAY_MODEL_FILES,
   type DisplayCasePlacement,
   type DisplayItemId,
   type DisplayModel,
+  displayCaseEnvIntensity,
   displayCaseLevel,
   displayCaseStoredEnabled,
+  displayLiftStep,
   displayMeshCastsShadow,
   displayModelFit,
+  displayTurnStep,
   ITEM_FINISHES,
   ITEM_FLOOR_Y,
 } from "@/lib/world/display-cases.ts";
@@ -42,12 +58,36 @@ function storedEnabled(key: string): boolean {
 const loaderOptions = (loader: GLTFLoader) =>
   loader.setMeshoptDecoder(MeshoptDecoder);
 
+/** A standard material of our own for this case, or the shared one. */
+function ownMaterial(
+  material: Material,
+  owned: MeshStandardMaterial[],
+): Material {
+  if (!(material as MeshStandardMaterial).isMeshStandardMaterial)
+    return material;
+  const own = material.clone() as MeshStandardMaterial;
+  owned.push(own);
+  return own;
+}
+
 /**
  * A shipped mesh turned to face the room, scaled uniformly and grounded from
- * its own bounds. The scene is cloned per case; only the tint materials are
- * ours to dispose, the loader's geometry and textures stay cached.
+ * its own bounds. The scene is cloned per case, and so are its standard
+ * materials (T14), so this case's reflections leave the loader's shared ones
+ * alone; those clones and the tint materials are ours to dispose, the
+ * loader's geometry and textures stay cached.
  */
-function DisplayMesh({ gltf, model }: { gltf: GLTF; model: DisplayModel }) {
+function DisplayMesh({
+  gltf,
+  model,
+  level,
+  hours,
+}: {
+  gltf: GLTF;
+  model: DisplayModel;
+  level: number;
+  hours: number;
+}) {
   const owned = useMemo(() => {
     const materials: MeshStandardMaterial[] = [];
     const turned = new Group();
@@ -60,7 +100,12 @@ function DisplayMesh({ gltf, model }: { gltf: GLTF; model: DisplayModel }) {
         .flat()
         .every((material) => displayMeshCastsShadow(material));
       const tint = model.tint?.[mesh.name];
-      if (!tint) return;
+      if (!tint) {
+        mesh.material = Array.isArray(mesh.material)
+          ? mesh.material.map((material) => ownMaterial(material, materials))
+          : ownMaterial(mesh.material, materials);
+        return;
+      }
       const material = new MeshStandardMaterial({
         color: tint.color,
         ...ITEM_FINISHES[tint.finish],
@@ -83,6 +128,21 @@ function DisplayMesh({ gltf, model }: { gltf: GLTF; model: DisplayModel }) {
     },
     [owned],
   );
+  // Case-local reflections (T14): the scene's environment, as strong as the
+  // scene's by day and kept up at night while the case is lit, where the
+  // scene's alone leaves the metals black. Synced each drawn frame, so the
+  // environment's late arrival is picked up too.
+  const { scene } = useThree();
+  const envIntensity = displayCaseEnvIntensity(level, hours);
+  useFrame(() => {
+    for (const material of owned.materials) {
+      if (material.envMap !== scene.environment) {
+        material.envMap = scene.environment;
+        material.needsUpdate = true;
+      }
+      material.envMapIntensity = envIntensity;
+    }
+  });
   return (
     <group position={owned.fit.offset as Vector3Tuple} scale={owned.fit.scale}>
       <primitive object={owned.turned} />
@@ -91,10 +151,63 @@ function DisplayMesh({ gltf, model }: { gltf: GLTF; model: DisplayModel }) {
 }
 
 /**
- * The licensed case meshes, behind their own Suspense: counted as one
- * preparation milestone once all have committed.
+ * The inspected case's presentation (T8, T9): its mesh rises off the riser
+ * and turns about the case axis, then settles down and back to the front.
+ * Under reduced motion it neither turns nor eases: the lift jumps. Asks for
+ * frames only while moving, like the chair's sway under the demand loop.
  */
-function DisplayModels({ onPrepared }: { onPrepared: () => void }) {
+function Turntable({
+  lifted,
+  reducedMotion,
+  children,
+}: {
+  lifted: boolean;
+  reducedMotion: boolean;
+  children: ReactNode;
+}) {
+  const group = useRef<Group>(null);
+  const yaw = useRef(0);
+  const lift = useRef(0);
+  const turning = lifted && !reducedMotion;
+  const { invalidate } = useThree();
+  useEffect(() => {
+    invalidate();
+  }, [lifted, invalidate]);
+  useFrame((frame, delta) => {
+    const node = group.current;
+    const rest = lifted ? DISPLAY_LIFT.height : 0;
+    if (!node || (!turning && yaw.current === 0 && lift.current === rest))
+      return;
+    // Clamp a long hidden-tab gap so nothing jumps.
+    const dt = Math.min(delta, 0.1);
+    yaw.current = displayTurnStep(yaw.current, dt, turning);
+    lift.current = reducedMotion
+      ? rest
+      : displayLiftStep(lift.current, dt, lifted);
+    node.rotation.y = yaw.current;
+    node.position.y = lift.current;
+    frame.invalidate();
+  });
+  return <group ref={group}>{children}</group>;
+}
+
+/**
+ * The licensed case meshes, behind their own Suspense: counted as one
+ * preparation milestone once all have committed. The inspected one turns.
+ */
+function DisplayModels({
+  onPrepared,
+  focused,
+  reducedMotion,
+  levels,
+  hours,
+}: {
+  onPrepared: () => void;
+  focused: DisplayItemId | null;
+  reducedMotion: boolean;
+  levels: Record<DisplayItemId, number>;
+  hours: number;
+}) {
   const gltfs = useLoader(
     GLTFLoader,
     DISPLAY_MODEL_FILES as string[],
@@ -116,7 +229,17 @@ function DisplayModels({ onPrepared }: { onPrepared: () => void }) {
             position={[item.base[0], item.base[1] + ITEM_FLOOR_Y, item.base[2]]}
             rotation={[0, item.itemYaw, 0]}
           >
-            <DisplayMesh gltf={gltf} model={shown.model} />
+            <Turntable
+              lifted={focused === item.id}
+              reducedMotion={reducedMotion}
+            >
+              <DisplayMesh
+                gltf={gltf}
+                model={shown.model}
+                level={levels[item.id]}
+                hours={hours}
+              />
+            </Turntable>
           </group>
         );
       })}
@@ -125,41 +248,40 @@ function DisplayModels({ onPrepared }: { onPrepared: () => void }) {
 }
 
 /**
- * Plinth, brass reveal, five-sided glass and lid spot; the licensed meshes
+ * Plinth, brass reveal, five-sided glass, lid fixture and the museum lights
+ * (T14): a key spot from the front of the lid aimed at the item, a weak warm
+ * uplight and an LED line on the riser's front edge. The licensed meshes
  * inside come from DisplayModels.
  */
 function DisplayCase({
   item,
-  power,
-  hours,
+  level,
   focused,
+  onToggle,
   onInspect,
 }: {
   item: DisplayCasePlacement;
-  power: boolean;
-  hours: number;
+  level: number;
   focused: boolean;
+  onToggle: (item: DisplayCasePlacement) => void;
   onInspect?: (id: DisplayItemId) => void;
 }) {
   const { invalidate } = useThree();
-  const [enabled, setEnabled] = useState(() => storedEnabled(item.storageKey));
+  // The spot's aim: a child of the case, so its world matrix stays current.
+  const [spotTarget] = useState(() => new Object3D());
+  const toggle = useCallback(() => onToggle(item), [onToggle, item]);
 
-  const toggle = useCallback(() => {
-    setEnabled((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem(item.storageKey, String(next));
-      } catch {
-        // Storage might be blocked
-      }
-      return next;
-    });
-    playLampSwitch();
-  }, [item.storageKey]);
-
-  const { plinth, plinthKick, rim, glass, riser, housing, puck, colors } =
-    DISPLAY_CASE;
-  const level = displayCaseLevel(enabled, hours, power);
+  const {
+    plinth,
+    plinthKick,
+    rim,
+    glass,
+    riser,
+    housing,
+    puck,
+    strip,
+    colors,
+  } = DISPLAY_CASE;
   const isLit = level > 0;
   const top = plinth.height;
   const lidY = top + glass.height - glass.thickness / 2;
@@ -300,13 +422,43 @@ function DisplayCase({
         </mesh>
       ))}
 
+      {/* LED line along the riser's front edge */}
+      <mesh
+        position={[
+          0,
+          top + riser.height - strip.height / 2,
+          -riser.depth / 2 - strip.depth / 2,
+        ]}
+      >
+        <boxGeometry args={[riser.width, strip.height, strip.depth]} />
+        <meshStandardMaterial
+          color={isLit ? colors.puckOn : colors.puckOff}
+          emissive={isLit ? DISPLAY_CASE.lightColor : "#000000"}
+          emissiveIntensity={DISPLAY_CASE.stripEmissive * level}
+          roughness={0.4}
+        />
+      </mesh>
+
       {/* Always mounted, zero intensity when off: a changing light count
-          recompiles every material's shader and stalls the render. */}
-      <pointLight
-        position={[0, DISPLAY_CASE_LIGHT_Y, 0]}
+          recompiles every material's shader and stalls the render. No
+          shadows: one more shadow map per case is not worth it. */}
+      <primitive object={spotTarget} position={DISPLAY_CASE_AIM} />
+      <spotLight
+        position={DISPLAY_CASE_SPOT_POSITION}
+        target={spotTarget}
         color={DISPLAY_CASE.lightColor}
-        intensity={DISPLAY_CASE.pointIntensity * level}
-        distance={DISPLAY_CASE.pointDistance}
+        intensity={DISPLAY_CASE.spotIntensity * level}
+        angle={DISPLAY_CASE.spotAngle}
+        penumbra={DISPLAY_CASE.spotPenumbra}
+        distance={DISPLAY_CASE.spotDistance}
+        decay={DISPLAY_CASE.lightDecay}
+        castShadow={false}
+      />
+      <pointLight
+        position={DISPLAY_CASE_UPLIGHT_POSITION}
+        color={DISPLAY_CASE.lightColor}
+        intensity={DISPLAY_CASE.upIntensity * level}
+        distance={DISPLAY_CASE.upDistance}
         decay={DISPLAY_CASE.lightDecay}
       />
     </group>
@@ -315,8 +467,9 @@ function DisplayCase({
 
 /**
  * The three glass display cases behind the sofa. A click from the main view
- * enters inspection; clicking the focused case toggles its night-only spot
- * with the original soft switch sound. Cases and lights mount at once; the meshes
+ * enters inspection; clicking the focused case toggles its night-only lights
+ * with the original soft switch sound. The switches live here, so a case and
+ * its model share one level. Cases and lights mount at once; the meshes
  * suspend on their own and report `onPrepared` once committed.
  */
 export default function DisplayCases({
@@ -324,28 +477,63 @@ export default function DisplayCases({
   hours = 12,
   onPrepared,
   focused = null,
+  reducedMotion = false,
   onInspect,
 }: {
   power?: boolean;
   hours?: number;
   onPrepared: () => void;
   focused?: DisplayItemId | null;
+  reducedMotion?: boolean;
   onInspect?: (id: DisplayItemId) => void;
 }) {
+  const [enabled, setEnabled] = useState(
+    () =>
+      Object.fromEntries(
+        DISPLAY_CASES.map((item) => [item.id, storedEnabled(item.storageKey)]),
+      ) as Record<DisplayItemId, boolean>,
+  );
+
+  const toggle = useCallback((item: DisplayCasePlacement) => {
+    setEnabled((prev) => {
+      const next = !prev[item.id];
+      try {
+        localStorage.setItem(item.storageKey, String(next));
+      } catch {
+        // Storage might be blocked
+      }
+      return { ...prev, [item.id]: next };
+    });
+    playLampSwitch();
+  }, []);
+
+  const levels = Object.fromEntries(
+    DISPLAY_CASES.map((item) => [
+      item.id,
+      displayCaseLevel(enabled[item.id], hours, power),
+    ]),
+  ) as Record<DisplayItemId, number>;
+
   return (
     <group name="display-cases">
       {DISPLAY_CASES.map((item) => (
         <DisplayCase
           key={item.id}
           item={item}
-          power={power}
-          hours={hours}
+          level={levels[item.id]}
           focused={focused === item.id}
+          onToggle={toggle}
           onInspect={onInspect}
         />
       ))}
       <Suspense fallback={null}>
-        <DisplayModels onPrepared={onPrepared} />
+        <DisplayModels
+          onPrepared={onPrepared}
+          focused={focused}
+          reducedMotion={reducedMotion}
+          levels={levels}
+          hours={hours}
+        />
       </Suspense>
     </group>
   );

@@ -122,6 +122,19 @@
         "url": "https://sketchfab.com/3d-models/off-road-helmet-c9d968e024b749a7a9d0e257277a2d5c",
         "quote": "Sketchfab download (2k GLB), asset extras: \"author\": \"Pieter Ferreira (https://sketchfab.com/Badboy17Aiden)\", \"license\": \"CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)\", \"source\": \"https://sketchfab.com/3d-models/off-road-helmet-c9d968e024b749a7a9d0e257277a2d5c\", \"title\": \"off road helmet\"; Creative Commons Attribution 4.0"
       }
+    },
+    {
+      "id": "sketchfab-exodusks-buffalo-bills-helmet",
+      "pack": "Buffalo Bills Helmet (Sketchfab)",
+      "author": "Exodusks",
+      "authorUrl": "https://sketchfab.com/IwontUseThisAccountLOL",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "source": "https://sketchfab.com/3d-models/buffalo-bills-helmet-fd471344bf9c4900b8cc0f59fedb8093",
+      "licenseEvidence": {
+        "url": "https://sketchfab.com/3d-models/buffalo-bills-helmet-fd471344bf9c4900b8cc0f59fedb8093",
+        "quote": "Sketchfab download (GLB), asset extras: \"author\": \"Exodusks (https://sketchfab.com/IwontUseThisAccountLOL)\", \"license\": \"CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)\", \"source\": \"https://sketchfab.com/3d-models/buffalo-bills-helmet-fd471344bf9c4900b8cc0f59fedb8093\", \"title\": \"Buffalo Bills Helmet\"; Creative Commons Attribution 4.0"
+      }
     }
   ],
   "assets": [
@@ -783,6 +796,30 @@
         "url": "https://www.ebay.com/itm/157680317522",
         "note": "Marketplace photo of the front of a Fox V1 F-A18 in red, black and gray, used only as a visual reference for the recreated paint; the photo is not shipped and is not covered by this license. Fox, V1 and F-A18 belong to their owners; no affiliation."
       }
+    },
+    {
+      "file": "models/display-football-helmet.glb",
+      "asset": "Buffalo Bills Helmet (a Riddell SpeedFlex recreation)",
+      "pack": "sketchfab-exodusks-buffalo-bills-helmet",
+      "author": "Exodusks",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "source": "https://sketchfab.com/3d-models/buffalo-bills-helmet-fd471344bf9c4900b8cc0f59fedb8093",
+      "bytes": 785536,
+      "sha256": "0fdfe6ef0402e3d49e7034c194487169fb339d359a3b6bc0f8fe0fcd8c3e1a05",
+      "triangles": 125362,
+      "changes": "Bills decals removed; shell repainted with a gold and black Rams-style horn livery (a wide black horn a side, pointed at the forehead, around the ear hole) and a small block #32 low on the back, projected in a new (azimuth, elevation) UV atlas; facemask, bumpers, clips and chin strap painted black; a smoked black eye shield added between the cage's top bars; interior padding decimated; parts merged into shell, facemask, padding, trim, hardware and eye-shield, centred, turned facemask-forward and scaled to 0.30 m; optimized with glTF-Transform (meshopt, 2048 px WebP) by scripts/prepare-display-football.mjs and scripts/prepare-display-football.py. Not the owner's exact helmet; no NFL or team logo is shipped.",
+      "sourceFiles": [
+        {
+          "url": "https://sketchfab.com/3d-models/buffalo-bills-helmet-fd471344bf9c4900b8cc0f59fedb8093",
+          "bytes": 25996688,
+          "sha256": "064297188d088fdcdcbdd2081ab367b48268e82abc281aab1f06918b08a0bccc"
+        }
+      ],
+      "graphicReference": {
+        "url": "https://commons.wikimedia.org/wiki/File:LA_RAMS_Helmet.jpg",
+        "note": "Photo of a Los Angeles Rams helmet used only as a visual reference for the horn's path; the photo is not shipped and is not covered by this license. Riddell, SpeedFlex, the Rams and the Bills belong to their owners; no affiliation."
+      }
     }
   ],
   "original": [
@@ -845,20 +882,6 @@
       "author": "Kevnnard",
       "license": "Original work (repository license)",
       "source": "src/lib/world/shelf.ts"
-    },
-    {
-      "id": "football-helmet",
-      "asset": "Football helmet: an original SpeedFlex-inspired model built in code (shell with a flex forehead panel and its seam, through vents, front and rear bumpers and shell thickness; a padded liner; a black curved open-eye facemask with black clips and hardware; a separate tinted black eye shield), painted in a UV atlas with the owner's gold and black Rams-style curled horn livery, #32 and 18 disc, redrawn from the owner's photos of their own Schutt helmet (the photos are not shipped); modelled from Riddell's official SpeedFlex varsity product photos, not Riddell's CAD and not an exact Riddell SpeedFlex replica; Riddell, SpeedFlex and Schutt belong to their owners, no affiliation",
-      "author": "Kevnnard",
-      "license": "Original work (repository license)",
-      "source": "src/lib/world/football-helmet-asset.ts",
-      "references": [
-        "https://www.riddell.com/riddell/en/Open-Catalogue/Helmets/Varsity/SPEEDFLEX/p/FB_HELMET_SPDFX"
-      ],
-      "file": "models/display-football-helmet.glb",
-      "generator": "scripts/prepare-display-football.mjs",
-      "bytes": 658616,
-      "sha256": "6bcbf6fe305792039a89c70fc3bf0a89966b65d55678b7d6a0c8273bbb7126e1"
     },
     {
       "id": "portrait-page",

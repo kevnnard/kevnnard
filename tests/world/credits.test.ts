@@ -119,46 +119,63 @@ describe("credits.json (S4: every author is credited, even CC0)", () => {
 });
 
 describe("display case meshes (collection-display-models T2)", () => {
-  it("credits the SpeedFlex-inspired football helmet as original work (T5)", () => {
+  it("credits Exodusks' SpeedFlex football helmet under CC BY 4.0, repainted (T7)", () => {
     const data = credits();
     const file = "models/display-football-helmet.glb";
     assert.equal(
-      data.assets.find((asset) => asset.file === file),
+      originalFiles(data).find((item) => item.file === file),
       undefined,
-      "no downloaded mesh behind it",
+      "no longer original work",
     );
     assert.ok(
       !data.packs.some((pack) => pack.id === "poly-pizza-football-helmet"),
       "the generic Poly Pizza helmet is gone",
     );
-    const entry = originalFiles(data).find((item) => item.file === file);
-    assert.ok(entry, "credited as original work");
-    assert.equal(entry.id, "football-helmet");
-    assert.equal(entry.license, ORIGINAL_LICENSE);
-    assert.equal(entry.source, "src/lib/world/football-helmet-asset.ts");
-    assert.ok(existsSync(new URL(`../../${entry.source}`, import.meta.url)));
-    assert.deepEqual(entry.references, [
-      "https://www.riddell.com/riddell/en/Open-Catalogue/Helmets/Varsity/SPEEDFLEX/p/FB_HELMET_SPDFX",
-    ]);
-    assert.match(entry.asset, /SpeedFlex-inspired/);
-    assert.match(entry.asset, /not an exact Riddell/i);
-    assert.match(entry.asset, /owner's photos/);
-    assert.match(entry.asset, /no affiliation/);
-    // Regenerating base-world credits keeps the original record and never
-    // brings the downloaded helmet's CC BY credit back.
+    const entry = data.assets.find((asset) => asset.file === file);
+    assert.ok(entry, "credited as a downloaded mesh");
+    assert.match(entry.asset, /Riddell SpeedFlex/);
+    assert.match(entry.changes, /Bills decals removed/);
+    assert.match(entry.changes, /Rams-style horn/);
+    assert.match(entry.changes, /no NFL or team logo/);
+    assert.equal(
+      entry.graphicReference?.url,
+      "https://commons.wikimedia.org/wiki/File:LA_RAMS_Helmet.jpg",
+    );
+    assert.match(entry.graphicReference?.note ?? "", /not shipped/);
+    const pack = data.packs.find((item) => item.id === entry.pack);
+    assert.equal(
+      pack?.authorUrl,
+      "https://sketchfab.com/IwontUseThisAccountLOL",
+    );
+    assert.match(
+      pack?.licenseEvidence.quote ?? "",
+      /"title": "Buffalo Bills Helmet"/,
+    );
+    // Regenerating base-world credits keeps this CC BY credit, like the other
+    // gallery meshes, and no original-work record for the file comes back.
     const script = readFileSync(
       new URL("../../scripts/prepare-world.py", import.meta.url),
       "utf8",
     );
     const gallery = script.match(/gallery_files = \{([^}]*)\}/)?.[1] ?? "";
     assert.match(gallery, /display-offroad-helmet\.glb/);
+    assert.match(gallery, /display-football-helmet\.glb/);
     assert.match(gallery, /display-jordan-1\.glb/);
-    assert.doesNotMatch(gallery, /display-football-helmet/);
-    assert.match(script, /"id": "football-helmet"/);
+    assert.doesNotMatch(script, /"id": "football-helmet"/);
     assert.doesNotMatch(script, /poly-pizza-football-helmet|8Htf9hrbXkE/);
   });
 
   const SOURCES = {
+    "models/display-football-helmet.glb": {
+      pack: "sketchfab-exodusks-buffalo-bills-helmet",
+      author: "Exodusks",
+      license: "CC-BY-4.0",
+      source:
+        "https://sketchfab.com/3d-models/buffalo-bills-helmet-fd471344bf9c4900b8cc0f59fedb8093",
+      url: "https://sketchfab.com/3d-models/buffalo-bills-helmet-fd471344bf9c4900b8cc0f59fedb8093",
+      sha256:
+        "064297188d088fdcdcbdd2081ab367b48268e82abc281aab1f06918b08a0bccc",
+    },
     "models/display-jordan-1.glb": {
       pack: "sketchfab-makoto-air-jordan-1",
       author: "makoto",

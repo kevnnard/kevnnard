@@ -8,30 +8,33 @@ import {
 } from "../../src/lib/world/credits.ts";
 import {
   DISPLAY_CASE,
+  DISPLAY_CASE_AIM,
   DISPLAY_CASE_LIGHT_Y,
+  DISPLAY_CASE_SPOT_POSITION,
+  DISPLAY_CASE_UPLIGHT_POSITION,
   DISPLAY_CASES,
   DISPLAY_ITEMS,
+  DISPLAY_LIFT,
   DISPLAY_MODEL_FILES,
+  DISPLAY_TURN,
   type DisplayItemId,
+  displayCaseEnvIntensity,
   displayCaseLevel,
   displayCaseLightPosition,
   displayCaseStoredEnabled,
+  displayLiftStep,
   displayMeshCastsShadow,
   displayModelFit,
+  displayTurnStep,
   ITEM_FLOOR_Y,
 } from "../../src/lib/world/display-cases.ts";
-import {
-  buildFootballHelmet,
-  HELMET_PARTS,
-  LIVERY,
-  liveryAt,
-} from "../../src/lib/world/football-helmet-asset.ts";
 import { HOUSE, WALLS } from "../../src/lib/world/house.ts";
 import {
   LIVING_MODELS,
   livingMeshes,
   modelBounds,
 } from "../../src/lib/world/living.ts";
+import { environmentIntensity } from "../../src/lib/world/palette.ts";
 import { MAIN_ROOM, partBounds } from "../../src/lib/world/setup.ts";
 import { SOFA_LAMP, SOFA_LAMPS } from "../../src/lib/world/sofa-lamps.ts";
 import { PUBLIC } from "./glb.ts";
@@ -441,16 +444,47 @@ describe("display case items", () => {
     assert.match(pack?.licenseEvidence.quote ?? "", /CC-BY-4.0/);
   });
 
-  it("shows an original SpeedFlex-inspired helmet, honestly labelled, with no runtime tint", () => {
+  it("shows Exodusks' repainted SpeedFlex, honestly labelled, with no runtime tint (T7)", () => {
     const item = DISPLAY_ITEMS["football-helmet"];
     assert.equal(item.model.url, "/world/models/display-football-helmet.glb");
     // Painted in its own UV atlas, like the off-road helmet and the Jordans.
     assert.equal(item.model.tint, undefined);
     assert.equal(DISPLAY_ITEMS["jordan-1"].model.tint, undefined);
-    assert.match(item.note, /SpeedFlex-inspired/);
-    assert.match(item.note, /not an exact Riddell/i);
-    assert.match(item.note, /not the owner's exact/i);
-    assert.doesNotMatch(item.note, /Generic football helmet/);
+    assert.match(item.note, /Exodusks' Riddell SpeedFlex/);
+    assert.match(item.note, /CC BY 4\.0/);
+    assert.match(item.note, /Rams-style horns/);
+    assert.match(item.note, /not the owner's exact helmet/i);
+    assert.match(item.note, /no NFL or team logo/);
+    assert.doesNotMatch(item.note, /built for this site/);
+  });
+
+  it("derives the football helmet with a pinned, reproducible script (T7)", () => {
+    const script = readFileSync(
+      new URL("../../scripts/prepare-display-football.mjs", import.meta.url),
+      "utf8",
+    );
+    assert.match(
+      script,
+      /064297188d088fdcdcbdd2081ab367b48268e82abc281aab1f06918b08a0bccc/,
+    );
+    assert.match(script, /public\/world\/models\/display-football-helmet\.glb/);
+    assert.match(script, /scripts\/prepare-display-football\.py/);
+    assert.match(script, /"4\.5\.1"/);
+    assert.ok(
+      existsSync(
+        new URL("../../scripts/prepare-display-football.py", import.meta.url),
+      ),
+      "Blender half",
+    );
+    assert.ok(
+      !existsSync(
+        new URL(
+          "../../src/lib/world/football-helmet-asset.ts",
+          import.meta.url,
+        ),
+      ),
+      "the retired builder is gone",
+    );
   });
 
   type HelmetGlb = GlbJson & {
@@ -484,6 +518,17 @@ describe("display case items", () => {
   };
   const helmetGlb = () =>
     glbJson("models/display-football-helmet.glb") as HelmetGlb;
+  /** Canvas size of a WebP held in a RIFF buffer. */
+  const webpSize = (webp: Buffer): [number, number] => {
+    const chunk = webp.toString("latin1", 12, 16);
+    if (chunk === "VP8X")
+      return [webp.readUIntLE(24, 3) + 1, webp.readUIntLE(27, 3) + 1];
+    if (chunk === "VP8L") {
+      const bits = webp.readUInt32LE(21);
+      return [(bits & 0x3fff) + 1, ((bits >> 14) & 0x3fff) + 1];
+    }
+    return [webp.readUInt16LE(26) & 0x3fff, webp.readUInt16LE(28) & 0x3fff];
+  };
   const helmetParts = (json: HelmetGlb) =>
     new Map(
       json.nodes
@@ -494,31 +539,30 @@ describe("display case items", () => {
         ]),
     );
 
-  it("ships the football helmet as named SpeedFlex-style parts", () => {
+  it("ships the football helmet as six named parts within a web budget (T7)", () => {
     const json = helmetGlb();
     const parts = helmetParts(json);
-    assert.deepEqual([...parts.keys()].sort(), [...HELMET_PARTS].sort());
-    for (const name of [
-      "shell",
-      "shell-edge",
-      "flex-panel",
-      "padding",
-      "facemask",
-      "facemask-clips",
+    assert.deepEqual([...parts.keys()].sort(), [
       "eye-shield",
-    ])
-      assert.ok(parts.has(name), name);
-    // Modelled topology, not a primitive sphere and a few boxes.
+      "facemask",
+      "hardware",
+      "padding",
+      "shell",
+      "trim",
+    ]);
     const triangles = (name: string) => {
       const primitive = parts.get(name);
       assert.ok(primitive, name);
       return json.accessors[primitive.indices].count / 3;
     };
-    assert.ok(triangles("shell") > 20_000, `shell ${triangles("shell")}`);
-    assert.ok(triangles("facemask") > 5_000, "curved facemask bars");
-    assert.ok(triangles("padding") > 2_000, "padded liner");
-    // The shell has a thickness: the edge part rims its openings.
-    assert.ok(triangles("shell-edge") > 2_000, "shell edge and lip");
+    // The source's modelled shell and cage, with the padding decimated.
+    assert.ok(triangles("shell") > 4_000, `shell ${triangles("shell")}`);
+    assert.ok(triangles("facemask") > 1_000, "modelled facemask bars");
+    const total = [...parts.keys()].reduce(
+      (sum, name) => sum + triangles(name),
+      0,
+    );
+    assert.ok(total < 150_000, `total ${total} triangles`);
   });
 
   it("maps a gold and black horn livery through the shell's UV atlas", () => {
@@ -530,18 +574,11 @@ describe("display case items", () => {
       return json.materials[primitive.material];
     };
     const livery = material("shell");
-    assert.equal(material("flex-panel"), livery, "panel shares the livery");
     const pbr = livery.pbrMetallicRoughness;
     assert.ok(pbr.baseColorTexture, "livery atlas");
-    assert.ok(pbr.metallicRoughnessTexture, "satin gold, matte horns");
-    for (const name of ["shell", "flex-panel"]) {
-      const primitive = parts.get(name);
-      assert.ok(primitive && "TEXCOORD_0" in primitive.attributes, name);
-    }
-    // Quantized into 0..1, so no texture transform is needed.
-    const shellUv =
-      json.accessors[parts.get("shell")?.attributes.TEXCOORD_0 ?? -1];
-    assert.ok(shellUv.normalized, "normalized UVs");
+    assert.ok(pbr.metallicRoughnessTexture, "metallic gold, satin horns");
+    const shell = parts.get("shell");
+    assert.ok(shell && "TEXCOORD_0" in shell.attributes, "shell UVs");
     // The atlas is an embedded 2:1 WebP, wrapped around the whole shell.
     const glb = readFileSync(
       new URL("models/display-football-helmet.glb", PUBLIC),
@@ -559,7 +596,10 @@ describe("display case items", () => {
       binStart + (view.byteOffset ?? 0) + view.byteLength,
     );
     assert.equal(webp.toString("latin1", 8, 12), "WEBP");
-    for (const name of ["facemask", "padding", "eye-shield"])
+    const [width, height] = webpSize(webp);
+    assert.equal(width, 2 * height, `atlas ${width}x${height}`);
+    assert.ok(width >= 1024, `atlas ${width}x${height}`);
+    for (const name of ["facemask", "padding", "trim", "eye-shield"])
       assert.equal(
         material(name).pbrMetallicRoughness.baseColorTexture,
         undefined,
@@ -595,7 +635,9 @@ describe("display case items", () => {
     const cageBox = boxOf(glbCorners(file, "facemask"));
     assert.ok(shieldBox.max[0] < cageBox.max[0], "behind the cage");
     assert.ok(shieldBox.max[0] > shellBox.max[0], "in front of the brow");
-    assert.ok(cageBox.max[0] > shellBox.max[0] + 0.04, "cage stands off");
+    // The SpeedFlex's jaw reaches forward almost to the cage (T7), so the
+    // cage stands about 2 cm proud of the shell rather than 4.
+    assert.ok(cageBox.max[0] > shellBox.max[0] + 0.015, "cage stands off");
   });
 
   it("casts no solid shadow from the tinted eye shield, and keeps every other shadow", () => {
@@ -636,147 +678,26 @@ describe("display case items", () => {
     );
   });
 
-  it("leaves the visor window open: no facemask bar crosses the eye shield", () => {
-    const { parts } = buildFootballHelmet("preview");
-    const part = (name: string) => {
-      const found = parts.find((p) => p.name === name);
-      assert.ok(found, name);
-      return found;
+  it("polishes the black facemask and the smoked visor (T6, T7)", () => {
+    const json = helmetGlb();
+    const parts = helmetParts(json);
+    const pbr = (name: string) => {
+      const primitive = parts.get(name);
+      assert.ok(primitive, name);
+      return json.materials[primitive.material].pbrMetallicRoughness;
     };
-    const points = (name: string) => {
-      const { positions } = part(name);
-      return Array.from({ length: positions.length / 3 }, (_, i) => [
-        positions[i * 3],
-        positions[i * 3 + 1],
-        positions[i * 3 + 2],
-      ]) as V3[];
-    };
-    const shield = boxOf(points("eye-shield"));
-    // A full eye window, top bar to eye bar, not a strip under the brow.
+    const cage = pbr("facemask");
     assert.ok(
-      shield.max[1] - shield.min[1] >= 0.045,
-      `window height ${shield.max[1] - shield.min[1]}`,
+      (cage.roughnessFactor ?? 1) <= 0.3,
+      `cage ${cage.roughnessFactor}`,
     );
-    assert.ok(shield.max[2] - shield.min[2] >= 0.15, "window width");
-    // Inside the window, clear of the top and eye bars that frame it, nothing
-    // of the cage stands in front of the shield.
-    const halfZ = (shield.max[2] - shield.min[2]) / 2;
-    const blocking = points("facemask").filter(
-      ([x, y, z]) =>
-        x > shield.min[0] &&
-        y > shield.min[1] + 0.012 &&
-        y < shield.max[1] - 0.012 &&
-        Math.abs(z) < halfZ * 0.75,
+    assert.equal(cage.metallicFactor ?? 1, 0, "powder-coated, not bare metal");
+    const shield = pbr("eye-shield");
+    assert.ok((shield.roughnessFactor ?? 1) <= 0.03, "glossy visor");
+    assert.ok(
+      (shield.baseColorFactor?.[3] ?? 0) >= 0.85,
+      "smoked, still see-through",
     );
-    assert.equal(blocking.length, 0, "no vertical bars across the visor");
-    // A single front sheet, not a closed slab that sorts against itself.
-    const { positions, normals } = part("eye-shield");
-    let outward = 0;
-    for (let i = 0; i < normals.length; i += 3)
-      if (normals[i] * positions[i] + normals[i + 2] * positions[i + 2] > 0)
-        outward++;
-    assert.equal(outward, normals.length / 3, "one outward sheet");
-  });
-
-  it("builds the helmet from a deterministic, side-effect-free original builder", () => {
-    const a = buildFootballHelmet("preview");
-    const b = buildFootballHelmet("preview");
-    assert.deepEqual(
-      a.parts.map((part) => part.name),
-      [...HELMET_PARTS],
-    );
-    for (const [i, part] of a.parts.entries()) {
-      assert.deepEqual(part.positions, b.parts[i].positions, part.name);
-      assert.equal(part.normals.length, part.positions.length, part.name);
-      for (const index of part.indices)
-        assert.ok(index < part.positions.length / 3, part.name);
-      if (part.uvs)
-        for (const value of part.uvs)
-          assert.ok(value >= 0 && value <= 1, `${part.name} uv ${value}`);
-    }
-    assert.deepEqual(a.atlas.data, b.atlas.data, "same atlas bytes");
-    // The shell's UVs wrap the whole atlas: back seam to back seam, crown down.
-    const shell = a.parts.find((part) => part.name === "shell");
-    assert.ok(shell?.uvs, "shell UVs");
-    const u = shell.uvs.filter((_, i) => i % 2 === 0);
-    const v = shell.uvs.filter((_, i) => i % 2 === 1);
-    assert.ok(Math.min(...u) < 0.01 && Math.max(...u) > 0.99, "wraps around");
-    assert.ok(Math.min(...v) < 0.01 && Math.max(...v) > 0.7, "crown to jaw");
-    const panel = a.parts.find((part) => part.name === "flex-panel");
-    assert.ok(panel?.uvs && panel.uvs.length > 0, "panel UVs");
-    assert.equal(a.atlas.width, 2 * a.atlas.height, "2:1 wrap atlas");
-  });
-
-  it("paints black Rams-style horns on gold, mirrored on both sides", () => {
-    const deg = Math.PI / 180;
-    let horn = 0;
-    let side = 0;
-    for (let az = 30; az <= 150; az += 5)
-      for (let el = -40; el <= 50; el += 5) {
-        const right = liveryAt(az * deg, el * deg);
-        assert.equal(liveryAt(-az * deg, el * deg), right, `${az} ${el}`);
-        side++;
-        if (right === "horn") horn++;
-      }
-    const share = horn / side;
-    assert.ok(share > 0.2 && share < 0.6, `horn share ${share}`);
-    // One continuous curled horn a side: brow, temple arch, behind and under
-    // the ear, then an inner curl in front of the ear, kept on the shell, with
-    // a gold channel inside the spiral.
-    for (const [az, el] of [
-      [10, 24],
-      [30, 35],
-      [50, 42],
-      [82, 36],
-      [108, 18],
-      [128, -6],
-      [114, -42],
-      [90, -45],
-      [71, -31],
-      [73, -19],
-      [84, -9],
-    ])
-      assert.equal(liveryAt(az * deg, el * deg), "horn", `horn at ${az} ${el}`);
-    for (const [az, el] of [
-      [80, 15],
-      [100, -20],
-      [80, -22],
-    ])
-      assert.equal(liveryAt(az * deg, el * deg), "gold", `gold at ${az} ${el}`);
-    // A single 8-connected region on the right side: no chop, no temple gap.
-    const cells = new Set<string>();
-    for (let az = 0; az <= 180; az++)
-      for (let el = -70; el <= 89; el++)
-        if (liveryAt(az * deg, el * deg) === "horn") cells.add(`${az},${el}`);
-    const [first] = cells;
-    assert.ok(first, "horn cells");
-    const seen = new Set([first]);
-    const queue = [first];
-    while (queue.length) {
-      const [az, el] = (queue.pop() ?? "").split(",").map(Number);
-      for (let da = -1; da <= 1; da++)
-        for (let de = -1; de <= 1; de++) {
-          const key = `${az + da},${el + de}`;
-          if (cells.has(key) && !seen.has(key)) {
-            seen.add(key);
-            queue.push(key);
-          }
-        }
-    }
-    assert.equal(seen.size, cells.size, "one continuous horn");
-    // Metallic gold under satin black.
-    assert.ok(LIVERY.gold.metalness >= 0.4 && LIVERY.gold.roughness <= 0.35);
-    assert.ok(Math.max(...LIVERY.horn.color) <= 20, "jet black horns");
-    // Gold crown and forehead panel; the back carries the owner's #32.
-    assert.equal(liveryAt(0, 85 * deg), "gold");
-    assert.equal(liveryAt(0, 38 * deg), "gold");
-    assert.equal(liveryAt(Math.PI, 70 * deg), "gold");
-    const back: string[] = [];
-    for (let az = 166; az <= 194; az += 2)
-      for (let el = -10; el <= 16; el += 2)
-        back.push(liveryAt(az * deg, el * deg));
-    assert.ok(back.includes("number"), "#32 on the back");
-    assert.ok(back.includes("gold"), "on gold");
   });
 
   it("fits each shipped mesh uniformly, grounded, inside the glass and under the spot", () => {
@@ -838,12 +759,23 @@ describe("display case switch and light", () => {
     for (const key of keys) assert.ok(key.startsWith("world:display-case-"));
   });
 
-  it("stays soft and controlled", () => {
-    assert.ok(DISPLAY_CASE.pointIntensity >= 0.5);
-    assert.ok(DISPLAY_CASE.pointIntensity <= 0.8);
-    assert.ok(DISPLAY_CASE.pointDistance <= 1.2);
+  it("stays soft and controlled: a key spot and a weaker fill (T14)", () => {
+    // T14 replaced the lid point light (pointIntensity/pointDistance) with a
+    // key spot and a fill uplight; both stay small and short-ranged.
+    assert.ok(
+      DISPLAY_CASE.spotIntensity >= 1 && DISPLAY_CASE.spotIntensity <= 2.5,
+    );
+    assert.ok(DISPLAY_CASE.spotDistance <= 1.2);
+    assert.ok(
+      DISPLAY_CASE.spotPenumbra >= 0.6 && DISPLAY_CASE.spotPenumbra <= 1,
+    );
+    assert.ok(DISPLAY_CASE.spotAngle < Math.PI / 3, "a cone, not a flood");
+    assert.ok(DISPLAY_CASE.upIntensity < DISPLAY_CASE.spotIntensity / 4);
+    assert.ok(DISPLAY_CASE.upDistance <= 0.6);
     assert.ok(DISPLAY_CASE.puckEmissive <= 0.8);
+    assert.ok(DISPLAY_CASE.stripEmissive <= 1.5);
     assert.equal(DISPLAY_CASE.lightDecay, 2);
+    assert.equal("pointIntensity" in DISPLAY_CASE, false, "lid point retired");
   });
 
   it("is full at night once switched on, completely off by day", () => {
@@ -857,5 +789,246 @@ describe("display case switch and light", () => {
     assert.equal(displayCaseLevel(false, 21), 0);
     assert.equal(displayCaseLevel(true, 21, false), 0);
     assert.equal(displayCaseLevel(false, 12, false), 0);
+  });
+});
+
+describe("display case museum lighting (collection-display-models T14)", () => {
+  const { glass, plinth, riser, itemFit } = DISPLAY_CASE;
+  const lidUnder = plinth.height + glass.height - glass.thickness;
+  const innerHalf = Math.min(glass.width, glass.depth) / 2 - glass.thickness;
+  const sub = (a: readonly number[], b: readonly number[]) =>
+    [0, 1, 2].map((i) => a[i] - b[i]) as V3;
+  const len = (v: V3) => Math.hypot(...v);
+  const smoothstep = (lo: number, hi: number, x: number) => {
+    const t = Math.min(1, Math.max(0, (x - lo) / (hi - lo)));
+    return t * t * (3 - 2 * t);
+  };
+  /** three.js punctual falloff: inverse square, windowed by `distance`. */
+  const falloff = (d: number, distance: number) =>
+    Math.max(0, 1 - (d / distance) ** 4) ** 2 / (d * d);
+  /** Illuminance of the key spot at a case-local point, as three.js shades it. */
+  const keyAt = (point: V3) => {
+    const toPoint = sub(point, DISPLAY_CASE_SPOT_POSITION);
+    const axis = sub(DISPLAY_CASE_AIM, DISPLAY_CASE_SPOT_POSITION);
+    const cos =
+      toPoint.reduce((sum, v, i) => sum + v * axis[i], 0) /
+      (len(toPoint) * len(axis));
+    const { spotAngle, spotPenumbra } = DISPLAY_CASE;
+    const cone = smoothstep(
+      Math.cos(spotAngle),
+      Math.cos(spotAngle * (1 - spotPenumbra)),
+      cos,
+    );
+    return (
+      DISPLAY_CASE.spotIntensity *
+      cone *
+      falloff(len(toPoint), DISPLAY_CASE.spotDistance)
+    );
+  };
+  const fillAt = (point: V3) =>
+    DISPLAY_CASE.upIntensity *
+    falloff(
+      len(sub(point, DISPLAY_CASE_UPLIGHT_POSITION)),
+      DISPLAY_CASE.upDistance,
+    );
+  const restCentre = ITEM_FLOOR_Y + itemFit.height / 2;
+
+  it("aims at the item centre, between its rest and its lifted height", () => {
+    const [x, y, z] = DISPLAY_CASE_AIM;
+    assert.equal(x, 0);
+    assert.equal(z, 0);
+    assert.ok(y >= restCentre && y <= restCentre + DISPLAY_LIFT.height, `${y}`);
+  });
+
+  it("hangs the key spot inside the glass, near the lid, at the front", () => {
+    const [x, y, z] = DISPLAY_CASE_SPOT_POSITION;
+    assert.equal(x, 0);
+    assert.ok(y < lidUnder && lidUnder - y <= 0.04, `near the lid: ${y}`);
+    // Front is toward the room and the inspection camera: -z.
+    assert.ok(z < 0 && -z < innerHalf, `inside the front glass: ${z}`);
+    assert.ok(-z >= innerHalf / 2, "in the front half");
+    const liftedTop = ITEM_FLOOR_Y + itemFit.height + DISPLAY_LIFT.height;
+    assert.ok(y > liftedTop + 0.04, "clear of the lifted item");
+    // A museum angle: 25-50 degrees off the vertical, down onto the item.
+    const [, dy, dz] = sub(DISPLAY_CASE_AIM, DISPLAY_CASE_SPOT_POSITION);
+    const tilt = Math.atan2(dz, -dy);
+    assert.ok(tilt > (25 * Math.PI) / 180 && tilt < (50 * Math.PI) / 180);
+  });
+
+  it("spreads its soft cone over the whole item", () => {
+    const reach = len(sub(DISPLAY_CASE_AIM, DISPLAY_CASE_SPOT_POSITION));
+    assert.ok(DISPLAY_CASE.spotAngle > Math.atan(itemFit.radius / reach));
+    assert.ok(DISPLAY_CASE.spotDistance > reach * 2, "no hard range cut");
+    // The item's edge still gets a useful share, not a hot centre only.
+    const edge: V3 = [itemFit.radius, DISPLAY_CASE_AIM[1], 0];
+    assert.ok(keyAt(edge) > 0.25 * keyAt([...DISPLAY_CASE_AIM] as V3));
+  });
+
+  it("puts the uplight below the item, inside the glass, in front of the riser", () => {
+    const [x, y, z] = DISPLAY_CASE_UPLIGHT_POSITION;
+    assert.equal(x, 0);
+    assert.ok(y > plinth.height && y < ITEM_FLOOR_Y, `below the item: ${y}`);
+    assert.ok(z < -riser.depth / 2, "in front of the riser");
+    assert.ok(-z < innerHalf, "inside the glass");
+  });
+
+  it("keeps the fill clearly weaker than the key at the item centre", () => {
+    for (const y of [restCentre, restCentre + DISPLAY_LIFT.height]) {
+      const centre: V3 = [0, y, 0];
+      const key = keyAt(centre);
+      const fill = fillAt(centre);
+      assert.ok(fill > 0, "the fill reaches the item");
+      assert.ok(fill < key / 4, `fill ${fill} vs key ${key}`);
+    }
+  });
+
+  it("lights nothing when off or by day", () => {
+    for (const [enabled, h, power] of [
+      [false, 21, true],
+      [true, 21, false],
+      [true, 12, true],
+    ] as const) {
+      const level = displayCaseLevel(enabled, h, power);
+      assert.equal(DISPLAY_CASE.spotIntensity * level, 0);
+      assert.equal(DISPLAY_CASE.upIntensity * level, 0);
+      assert.equal(DISPLAY_CASE.stripEmissive * level, 0);
+    }
+  });
+
+  it("keeps item reflections from the scene by day and boosts them in a lit case at night", () => {
+    for (const h of [6, 9, 12, 15, 17.5])
+      for (const level of [0, 0.5, 1])
+        assert.equal(
+          displayCaseEnvIntensity(level, h),
+          environmentIntensity(h),
+          `unchanged at ${h}h, level ${level}`,
+        );
+    for (const h of [21, 0, 3]) {
+      assert.equal(displayCaseEnvIntensity(0, h), environmentIntensity(h));
+      assert.ok(DISPLAY_CASE.envBoost > environmentIntensity(h));
+      assert.equal(displayCaseEnvIntensity(1, h), DISPLAY_CASE.envBoost);
+    }
+    for (const h of [0, 6, 12, 18, 21])
+      for (const level of [0, 1])
+        assert.ok(displayCaseEnvIntensity(level, h) <= 1);
+  });
+
+  it("wires the key spot, fill, strip and case-local reflections", () => {
+    const cases = readFileSync(
+      new URL("../../src/components/world/DisplayCases.tsx", import.meta.url),
+      "utf8",
+    );
+    assert.match(cases, /<spotLight[\s\S]*?target=\{/);
+    assert.match(cases, /intensity=\{DISPLAY_CASE\.spotIntensity \* level\}/);
+    assert.match(cases, /intensity=\{DISPLAY_CASE\.upIntensity \* level\}/);
+    assert.match(cases, /DISPLAY_CASE\.stripEmissive \* level/);
+    assert.doesNotMatch(cases, /pointIntensity/);
+    assert.doesNotMatch(cases, /<spotLight[^>]*castShadow(?!=\{false\})/);
+    // Reflections on the case's own cloned materials, from the level.
+    assert.match(cases, /\.envMap = scene\.environment/);
+    assert.match(cases, /displayCaseEnvIntensity\(level, hours\)/);
+    assert.match(cases, /material\.clone\(\)/);
+    // The switch lives in DisplayCases, shared by the case and its model.
+    assert.match(cases, /localStorage\.setItem\(item\.storageKey/);
+    assert.match(cases, /playLampSwitch\(\)/);
+    assert.match(cases, /levels\[item\.id\]/);
+  });
+});
+
+describe("display case turntable (collection-display-models T8)", () => {
+  const TURN = 2 * Math.PI;
+
+  it("turns an inspected model one full, steady turn per period", () => {
+    assert.equal(DISPLAY_TURN.period, 20);
+    let yaw = 0;
+    const dt = 1 / 60;
+    for (let i = 0; i < DISPLAY_TURN.period * 60; i++)
+      yaw = displayTurnStep(yaw, dt, true);
+    assert.ok(
+      Math.abs(yaw) < 1e-6 || Math.abs(yaw - TURN) < 1e-6,
+      `yaw ${yaw}`,
+    );
+    // Steady: the same step at any angle, and it stays within one turn.
+    const step = displayTurnStep(1, 0.5, true) - 1;
+    assert.ok(Math.abs(step - (TURN * 0.5) / DISPLAY_TURN.period) < 1e-12);
+    assert.ok(displayTurnStep(6.2, 0.5, true) < TURN);
+  });
+
+  it("eases back to the front, the shorter way, once inspection ends", () => {
+    let yaw = 1.2;
+    let previous = Number.POSITIVE_INFINITY;
+    for (let i = 0; i < 180; i++) {
+      yaw = displayTurnStep(yaw, 1 / 60, false);
+      assert.ok(yaw >= 0 && yaw <= previous, `monotone ${yaw}`);
+      previous = yaw;
+    }
+    assert.ok(yaw < 0.05, `near the front after 3 s: ${yaw}`);
+    // Past half a turn it finishes the turn rather than winding back.
+    assert.ok(displayTurnStep(5.9, 0.1, false) > 5.9);
+    // Close enough snaps exactly to the front, so the frame loop can stop.
+    assert.equal(displayTurnStep(0.0005, 1 / 60, false), 0);
+    assert.equal(displayTurnStep(TURN - 0.0005, 1 / 60, false), 0);
+    assert.equal(displayTurnStep(0, 1 / 60, false), 0);
+  });
+
+  it("turns only the inspected model, and never under reduced motion", () => {
+    const cases = readFileSync(
+      new URL("../../src/components/world/DisplayCases.tsx", import.meta.url),
+      "utf8",
+    );
+    assert.match(cases, /displayTurnStep\(/);
+    assert.match(cases, /lifted=\{focused === item\.id\}/);
+    assert.match(cases, /const turning = lifted && !reducedMotion;/);
+    const scene = readFileSync(
+      new URL("../../src/components/world/WorldScene.tsx", import.meta.url),
+      "utf8",
+    );
+    assert.match(scene, /<DisplayCases[\s\S]*?reducedMotion=\{reducedMotion\}/);
+  });
+});
+
+describe("display case lift (collection-display-models T9)", () => {
+  it("lifts the inspected model 5 cm, still clear of the case light", () => {
+    assert.equal(DISPLAY_LIFT.height, 0.05);
+    const top =
+      ITEM_FLOOR_Y + DISPLAY_CASE.itemFit.height + DISPLAY_LIFT.height;
+    assert.ok(
+      top < DISPLAY_CASE_LIGHT_Y - DISPLAY_CASE.puck.height - 0.04,
+      `lifted top ${top} vs light ${DISPLAY_CASE_LIGHT_Y}`,
+    );
+  });
+
+  it("rises smoothly on inspection and settles back down after", () => {
+    let lift = 0;
+    let previous = -1;
+    for (let i = 0; i < 120; i++) {
+      lift = displayLiftStep(lift, 1 / 60, true);
+      assert.ok(
+        lift >= previous && lift <= DISPLAY_LIFT.height,
+        `rising ${lift}`,
+      );
+      previous = lift;
+    }
+    assert.ok(DISPLAY_LIFT.height - lift < 0.002, `up after 2 s: ${lift}`);
+    // Snaps exactly onto either rest height, so the frame loop can stop.
+    assert.equal(
+      displayLiftStep(DISPLAY_LIFT.height - 1e-5, 1 / 60, true),
+      DISPLAY_LIFT.height,
+    );
+    assert.equal(displayLiftStep(1e-5, 1 / 60, false), 0);
+    let down = DISPLAY_LIFT.height;
+    for (let i = 0; i < 120; i++) down = displayLiftStep(down, 1 / 60, false);
+    assert.equal(down, 0);
+  });
+
+  it("lifts only the inspected model, and jumps without easing under reduced motion", () => {
+    const cases = readFileSync(
+      new URL("../../src/components/world/DisplayCases.tsx", import.meta.url),
+      "utf8",
+    );
+    assert.match(cases, /displayLiftStep\(/);
+    assert.match(cases, /lifted=\{focused === item\.id\}/);
+    assert.match(cases, /const rest = lifted \? DISPLAY_LIFT\.height : 0;/);
+    assert.match(cases, /reducedMotion\s*\?\s*rest\s*:\s*displayLiftStep/);
   });
 });

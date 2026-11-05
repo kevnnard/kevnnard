@@ -14,9 +14,9 @@ const collection: Record<
 > = {
   "football-helmet": {
     title: "Football helmet",
-    subtitle: "Original SpeedFlex-inspired model",
+    subtitle: "Carneros DC · #32",
     detail:
-      "Built for this site with a tinted black eye shield, a black open-eye facemask and the owner's gold and black horns; inspired by the Riddell SpeedFlex, not an exact replica.",
+      "Exodusks' Riddell SpeedFlex (CC BY 4.0), repainted in my team's gold and black horns with a smoked black eye shield; not my exact helmet.",
   },
   "moto-helmet": {
     title: "Fox V1",
@@ -32,14 +32,21 @@ const collection: Record<
   },
 };
 
+/**
+ * The collection rail under an inspected case. Beside a story card
+ * (collection-display-models T11) it folds into one compact row, so the
+ * card and the turning model keep the attention.
+ */
 export default function CollectionRail({
   focused,
   onInspect,
   onReturn,
+  compact = false,
 }: {
   focused: DisplayItemId;
   onInspect: (id: DisplayItemId) => void;
   onReturn: () => void;
+  compact?: boolean;
 }) {
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
   const active = focused;
@@ -67,7 +74,46 @@ export default function CollectionRail({
     onInspect(VIEW_CASES[next].id);
     tabs.current[next]?.focus();
   };
-  return (
+  const tab = (item: (typeof VIEW_CASES)[number], index: number) => ({
+    ref: (element: HTMLButtonElement | null) => {
+      tabs.current[index] = element;
+    },
+    id: `collection-tab-${item.id}`,
+    type: "button" as const,
+    role: "tab",
+    "aria-selected": active === item.id,
+    tabIndex: active === item.id ? 0 : -1,
+    onClick: () => onInspect(item.id),
+    onKeyDown: (event: React.KeyboardEvent<HTMLButtonElement>) =>
+      onKey(event, index),
+  });
+  return compact ? (
+    <nav
+      className="collection-rail collection-rail-compact"
+      aria-label="Collection navigation"
+    >
+      <span className="collection-rail-mono collection-rail-count">
+        03 OBJECTS
+      </span>
+      <div
+        className="collection-rail-pills"
+        role="tablist"
+        aria-label="Display cases"
+      >
+        {VIEW_CASES.map((item, index) => (
+          <button key={item.id} {...tab(item, index)}>
+            <span className="collection-rail-mono collection-rail-index">
+              {String(index + 1).padStart(2, "0")}
+            </span>
+            {collection[item.id].title}
+          </button>
+        ))}
+      </div>
+      <button type="button" className="collection-rail-back" onClick={onReturn}>
+        ← Back to room
+      </button>
+    </nav>
+  ) : (
     <section className="collection-rail" aria-label="Collection navigation">
       <div className="collection-rail-intro">
         <span className="collection-rail-mono">EXPLORE / 03 OBJECTS</span>

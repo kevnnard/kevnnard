@@ -21,6 +21,7 @@ import {
 } from "@/lib/room/controller-style.ts";
 import { cn } from "@/lib/utils";
 import { AmbientSound } from "@/lib/world/ambient-sound.ts";
+import { CASE_STORIES } from "@/lib/world/case-stories.ts";
 import type { DisplayItemId } from "@/lib/world/display-cases.ts";
 import {
   DEFAULT_LIGHTS,
@@ -65,6 +66,7 @@ import {
   saveLightPreferences,
   saveMusicPreferences,
 } from "@/lib/world/world-preferences.ts";
+import CaseStory from "./CaseStory";
 import CollectionRail from "./CollectionRail";
 import WorldEntryLoader from "./WorldEntryLoader";
 import "./world-entry-gate.css";
@@ -216,6 +218,16 @@ export default function WorldApp() {
   const menuButton = useRef<HTMLElement>(null);
   const [home, setHome] = useState(0);
   const [galleryCase, setGalleryCase] = useState<DisplayItemId | null>(null);
+  // The inspected case's story card (T10); null when it has none.
+  const caseStory = galleryCase ? CASE_STORIES[galleryCase] : null;
+  // Hidden only for the case it was hidden on, so it opens again on every
+  // other case; while open the camera frames left of it (T12).
+  const [hiddenStory, setHiddenStory] = useState<DisplayItemId | null>(null);
+  const storyOpen = hiddenStory === null || hiddenStory !== galleryCase;
+  const setStoryOpen = useCallback(
+    (open: boolean) => setHiddenStory(open ? null : galleryCase),
+    [galleryCase],
+  );
   const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const narrow = useMediaQuery("(max-width: 767px)");
   // Same shared clock and controller styles as /room, imported read-only.
@@ -763,6 +775,7 @@ export default function WorldApp() {
               portrait={portraitControl}
               speakers={speakerControl}
               galleryCase={galleryCase}
+              galleryStory={caseStory !== null && storyOpen}
               onInspectCase={
                 ready && entered && !focus && !portrait && !speakers
                   ? setGalleryCase
@@ -782,8 +795,10 @@ export default function WorldApp() {
       </SceneErrorBoundary>
 
       <header
-        inert={!entered || focus || portrait || speakers}
-        className={`pointer-events-none absolute inset-x-0 top-0 flex flex-wrap items-center justify-between gap-3 p-4${!entered || focus || portrait || speakers ? " invisible" : ""}`}
+        inert={
+          !entered || focus || portrait || speakers || galleryCase !== null
+        }
+        className={`pointer-events-none absolute inset-x-0 top-0 flex flex-wrap items-center justify-between gap-3 p-4${!entered || focus || portrait || speakers || galleryCase !== null ? " invisible" : ""}`}
       >
         <a
           href="/"
@@ -807,8 +822,24 @@ export default function WorldApp() {
           focused={galleryCase}
           onInspect={setGalleryCase}
           onReturn={() => setGalleryCase(null)}
+          compact={caseStory !== null}
         />
       )}
+      {ready &&
+        entered &&
+        galleryCase &&
+        !focus &&
+        !portrait &&
+        !speakers &&
+        caseStory && (
+          <CaseStory
+            key={galleryCase}
+            story={caseStory}
+            open={storyOpen}
+            onOpenChange={setStoryOpen}
+            reducedMotion={reducedMotion}
+          />
+        )}
 
       {/* Direct children of the world container: ScenePanel measures its
           parent to sit above the clock (L61). */}

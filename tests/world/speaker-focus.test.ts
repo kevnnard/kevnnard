@@ -445,7 +445,7 @@ describe("speaker wiring (T2)", () => {
   it("hides the world controls the way the other close-ups do", () => {
     assert.match(
       app,
-      /inert=\{!entered \|\| focus \|\| portrait \|\| speakers\}/,
+      /inert=\{\s*!entered \|\| focus \|\| portrait \|\| speakers \|\| galleryCase !== null\s*\}/,
     );
     assert.match(app, /speakers && "world-terminal-focus"/);
   });
