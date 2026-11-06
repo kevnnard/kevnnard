@@ -822,7 +822,7 @@ export default function WorldApp() {
           focused={galleryCase}
           onInspect={setGalleryCase}
           onReturn={() => setGalleryCase(null)}
-          compact={caseStory !== null}
+          compact
         />
       )}
       {ready &&

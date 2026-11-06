@@ -15,6 +15,7 @@ S8. "como se ve y no tiene las texturas reales del v1 la edicion que te di mira 
 S9. "dale"
 S10. "ya te habia dicho que textura que refrrencia no hya duda de eso"
 S11. "creo que la visera esta muy ataras sacrla un poco pra que se vea bien"
+S28. "bien ya quedo perfecto listo mantengamos el men de abajo como el compacto del helmet para todos los items dejemopps el compacto appra los 3 items de las urnas si ?"
 S27. "ahora si nmucho mejor acalro ese es que va ir a mi pagina dale" (approves the photo-projection bake of the Fox X Supreme for the site).
 S26. "aun no se parece nada el casco acasi epro no y eso que teiones la de referencia"; choices: goggles "Sacarlas", final round "Sí, ronda final", then method "Proyectar y dejar los logos" (project the Sayak product photos onto the shell and bake them; keep the Fox marks, it is the owner's helmet).
 S25. "nose por qeu no puedes osea si se ve mejora oeri no esta queedando bien por te pedio que buacarass fotos de todas las perpepetivas para armar el uv perfecto con este modelo"
@@ -33,6 +34,7 @@ S13. Helmet improvements chosen by the user: "Dorado más metálico", "Cachos en
 
 ## Tasks
 T5 [S12] DONE — Refined SpeedFlex-inspired football helmet with continuous NFL Rams-style curled black horn spiral on the gold UV atlas, dark glossy black visor (`eye-shield`), black clips, and open-eye SF-2BD-SW facemask window with no vertical bars crossing the visor; route gentle-ai-worker + parent Biome/tests/build; no commit before visual review.
+T16 [S28] DONE — The collection rail is the compact one-row bar for all three cases, with or without a story card; route inline; commit on the feature branch.
 T15 [S22-S27] DONE — Off-road helmet: find a better licensed Fox V1-style motocross model than Pieter Ferreira's, review it in Blender over MCP, repaint it with the F-A18 red/black/gray graphic, and bring it to the site reproducibly like T7; route inline; no commit until asked.
 T14 [S21] DONE — Museum night lighting per case: an angled top spot aimed at the item instead of the lid point light, a soft uplight and an emissive LED line from the riser, and case-local environment reflections for the item while its light is on (the scene environment is nearly off at night, which leaves metals black); unchanged by day; route gentle-ai-worker (user request) + parent checks; no commit.
 T13 [S20] DONE — Media kept inside a compact 160 px slot above the position (no overflow over the story), the owner's photo added beside the clip with per-item focus, and the T12 camera slide actually applied (it was cancelled by a shadowed `width`); route inline; no commit.

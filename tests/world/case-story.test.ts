@@ -158,9 +158,11 @@ describe("case story card (collection-display-models T10)", () => {
     assert.doesNotMatch(rail, /Original SpeedFlex-inspired model/);
   });
 
-  it("folds the collection rail into one compact row beside a story (T11)", () => {
+  it("shows the collection rail as one compact row for every case (T11, T16)", () => {
     const app = source("src/components/world/WorldApp.tsx");
-    assert.match(app, /<CollectionRail[\s\S]*?compact=\{caseStory !== null\}/);
+    const railTag = app.match(/<CollectionRail[\s\S]*?\/>/)?.[0] ?? "";
+    assert.match(railTag, /\bcompact\b/);
+    assert.doesNotMatch(railTag, /compact=\{/, "compact for all three cases");
     const rail = source("src/components/world/CollectionRail.tsx");
     assert.match(rail, /compact \? \(/);
     assert.match(rail, /03 OBJECTS/);
