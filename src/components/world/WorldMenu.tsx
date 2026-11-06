@@ -30,7 +30,10 @@ const TAB_ICONS: Record<GuideSection["id"], string> = {
   controls: "⌨",
   terminal: "▣",
   video: "▷",
+  tv: "▭",
   lofi: "♫",
+  collection: "◇",
+  cherry: "❀",
   credits: "✦",
 };
 

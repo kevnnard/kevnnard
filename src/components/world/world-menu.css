@@ -50,8 +50,12 @@
   outline: 2px solid #d4d4d8;
   outline-offset: 2px;
 }
+/* Name and Close on the first row, the nine tabs on their own row below
+   (guide-menu-new T1): they fit the 62rem guide; on narrower windows the
+   row scrolls, as it always did. */
 .world-guide-bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
@@ -70,6 +74,8 @@
 }
 .world-guide-tabs {
   display: flex;
+  order: 3;
+  flex-basis: 100%;
   gap: 0.25rem;
   overflow-x: auto;
   scrollbar-width: thin;
@@ -91,6 +97,15 @@
   white-space: nowrap;
   cursor: pointer;
 }
+.world-guide-tabs button {
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+}
+.world-guide-tabs button > span {
+  flex: none;
+  width: 1em;
+  text-align: center;
+}
 .world-guide-tabs button:hover,
 .world-guide-close:hover,
 .world-guide-actions button:hover {
@@ -109,7 +124,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   min-height: 0;
-  height: min(34rem, calc(100dvh - 8rem));
+  height: min(34rem, calc(100dvh - 11rem));
   overflow: hidden;
   border: 1px solid #27272a;
   border-radius: 8px;
@@ -288,13 +303,6 @@
   }
   .world-guide-frame {
     max-height: calc(100dvh - 1rem);
-  }
-  .world-guide-bar {
-    flex-wrap: wrap;
-  }
-  .world-guide-tabs {
-    order: 3;
-    flex-basis: 100%;
   }
   .world-guide-sheet {
     grid-template-columns: 1fr;

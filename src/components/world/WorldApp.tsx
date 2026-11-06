@@ -22,10 +22,14 @@ import {
 import { cn } from "@/lib/utils";
 import { AmbientSound } from "@/lib/world/ambient-sound.ts";
 import { CASE_STORIES } from "@/lib/world/case-stories.ts";
-import { CHERRY_STORY } from "@/lib/world/cherry.ts";
+import { CHERRY_STORY, cherryMeeting } from "@/lib/world/cherry.ts";
 import { DESK_PRODUCTS } from "@/lib/world/desk-products.ts";
 import { DESK_STORIES } from "@/lib/world/desk-stories.ts";
-import { type InspectItemId, isDeskItemId } from "@/lib/world/display-cases.ts";
+import {
+  GALLERY_ORDER,
+  type InspectItemId,
+  isDeskItemId,
+} from "@/lib/world/display-cases.ts";
 import {
   DEFAULT_LIGHTS,
   type LightId,
@@ -805,6 +809,29 @@ export default function WorldApp() {
     [galleryCase, ready, entered, focus, portrait, speakers, tv],
   );
 
+  // The guide's Meet Cherry (guide-menu-new T1): out of her hours it moves
+  // the shared clock (the time card's own setHours) to the morning, then
+  // inspects her once she has faded in; a close-up started meanwhile wins.
+  const setClockHours = clock.setHours;
+  const meeting = cherryMeeting(clock.hours, reducedMotion);
+  const [meetWait, setMeetWait] = useState<number | null>(null);
+  const meetCherry = useCallback(() => {
+    if (meeting.hours !== null) setClockHours(meeting.hours);
+    setMeetWait(meeting.waitMs);
+  }, [meeting.hours, meeting.waitMs, setClockHours]);
+  useEffect(() => {
+    if (meetWait === null) return;
+    if (focus || portrait || speakers || tv) {
+      setMeetWait(null);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setMeetWait(null);
+      setGalleryCase("cherry");
+    }, meetWait);
+    return () => clearTimeout(timer);
+  }, [meetWait, focus, portrait, speakers, tv]);
+
   // The guide's buttons (world-game-menu T1): the same callbacks the menu
   // always ran; the close-ups wait for the world to be ready, as before.
   const menuActions = useMemo<GuideActions>(
@@ -830,6 +857,14 @@ export default function WorldApp() {
           run: toggleAmbient,
           pressed: ambientEnabled,
         },
+        tv: { label: "Watch TV", run: enterTv },
+        // As a click on the first case or the keyboard does.
+        collection: {
+          label: "Open collection",
+          run: () => setGalleryCase(GALLERY_ORDER[0]),
+        },
+        desk: { label: "See the desk", run: () => setGalleryCase("keyboard") },
+        cherry: { label: meeting.label, run: meetCherry },
       }),
     }),
     [
@@ -841,6 +876,9 @@ export default function WorldApp() {
       enterSpeakers,
       toggleAmbient,
       ambientEnabled,
+      enterTv,
+      meeting.label,
+      meetCherry,
     ],
   );
 

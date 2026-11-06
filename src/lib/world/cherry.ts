@@ -46,6 +46,33 @@ export function isCherryHour(hours: number): boolean {
 /** Seconds to fade fully in or out. */
 export const CHERRY_FADE = 1;
 
+/** The hour the guide's Meet Cherry sets when she is not out (morning). */
+export const CHERRY_MEET_HOUR = 8;
+
+/** What the guide's Meet Cherry does at `hours` (guide-menu-new T1). */
+export interface CherryMeeting {
+  label: string;
+  /** The world-clock hour to set first; null when she is already out. */
+  hours: number | null;
+  /** How long to wait for her fade-in before inspecting her. */
+  waitMs: number;
+}
+
+/**
+ * In her hours, inspect her now; otherwise move the world clock to the
+ * morning and inspect her once she has faded in (`instant`: reduced
+ * motion, which cuts the fade). The label says the time will change.
+ */
+export function cherryMeeting(hours: number, instant: boolean): CherryMeeting {
+  if (isCherryHour(hours))
+    return { label: "Meet Cherry", hours: null, waitMs: 0 };
+  return {
+    label: "Meet Cherry · morning",
+    hours: CHERRY_MEET_HOUR,
+    waitMs: instant ? 0 : CHERRY_FADE * 1000,
+  };
+}
+
 /** Ground she needs around her centre: half her length and a little more. */
 export const CHERRY_REACH = 0.26;
 

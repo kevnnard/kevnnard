@@ -150,6 +150,50 @@ const DRAWINGS: Record<GuideSectionId, ReactNode> = {
       <rect x="170" y="286" width="80" height="8" rx="4" fill={LINE} />
     </>
   ),
+  tv: (
+    <>
+      <rect
+        x="60"
+        y="44"
+        width="300"
+        height="180"
+        rx="8"
+        fill={INK}
+        stroke={SOFT}
+      />
+      {[0, 1, 2, 3, 4, 5, 6].map((index) => (
+        <rect
+          key={index}
+          x={80 + index * 38}
+          y="60"
+          width="28"
+          height="18"
+          rx="4"
+          fill={index === 0 ? ACCENT : PANEL}
+        />
+      ))}
+      <rect x="80" y="90" width="260" height="62" rx="4" fill={PANEL} />
+      <path d="M96 110h84m-84 14h56" stroke={SOFT} strokeWidth="4" />
+      <rect x="96" y="134" width="46" height="10" rx="3" fill={ACCENT} />
+      <path d="m290 108 22 13-22 13Z" fill={ACCENT} />
+      {[0, 1, 2, 3, 4].map((index) => (
+        <rect
+          key={index}
+          x={80 + index * 54}
+          y="164"
+          width="44"
+          height="44"
+          rx="4"
+          fill={index === 1 ? LINE : PANEL}
+          stroke={index === 1 ? ACCENT : LINE}
+          strokeWidth={index === 1 ? 2 : 1}
+        />
+      ))}
+      <path d="M180 224v28m60-28v28" stroke={MUTED} strokeWidth="4" />
+      <rect x="70" y="252" width="280" height="30" rx="4" fill={PANEL} />
+      <path d="M70 266h280" stroke={LINE} strokeWidth="2" />
+    </>
+  ),
   lofi: (
     <>
       <rect x="60" y="210" width="300" height="12" rx="3" fill={MUTED} />
@@ -188,6 +232,77 @@ const DRAWINGS: Record<GuideSectionId, ReactNode> = {
         fill={ACCENT}
         stroke={ACCENT}
       />
+    </>
+  ),
+  collection: (
+    <>
+      <rect x="42" y="58" width="150" height="10" rx="2" fill={MUTED} />
+      <path d="M52 50q70-16 130 0" stroke={SOFT} strokeWidth="3" />
+      <path d="M52 40q70-14 130 0" stroke={ACCENT} strokeWidth="3" />
+      <path d="M60 68v14m114-14v14" stroke={MUTED} strokeWidth="3" />
+      <g transform="translate(0 -26)">
+        <rect
+          x="236"
+          y="40"
+          width="110"
+          height="150"
+          rx="4"
+          fill={PANEL}
+          stroke={SOFT}
+        />
+        <path d="M236 172h110" stroke={LINE} strokeWidth="4" />
+        <path
+          d="M258 150c0-40 18-62 42-62 22 0 34 18 34 40v22Z"
+          fill={INK}
+          stroke={MUTED}
+        />
+        <path d="M300 120h30" stroke={ACCENT} strokeWidth="4" />
+        <rect x="224" y="190" width="134" height="12" rx="2" fill={LINE} />
+      </g>
+      <rect x="40" y="244" width="340" height="10" rx="2" fill={MUTED} />
+      <rect
+        x="70"
+        y="212"
+        width="170"
+        height="26"
+        rx="4"
+        fill={INK}
+        stroke={SOFT}
+      />
+      <path
+        d="M80 220h150M80 230h150M110 220v18m30-18v18m30-18v18m30-18v18"
+        stroke={LINE}
+        strokeWidth="2"
+      />
+      <path d="M282 206h40v34q-20 8-40 0Z" fill={PANEL} stroke={SOFT} />
+      <path d="M322 214q14 4 0 18" stroke={SOFT} strokeWidth="3" />
+      <path d="M294 196q-6-8 0-14m14 14q-6-8 0-14" stroke={ACCENT} />
+    </>
+  ),
+  cherry: (
+    <>
+      {ground}
+      <circle cx="330" cy="72" r="26" fill={PANEL} stroke={ACCENT} />
+      <path
+        d="M330 30v-12m0 108v-12m42-42h12m-108 0h12m66-30 8-8m-76 76 8-8m60 0 8 8m-76-76 8 8"
+        stroke={ACCENT}
+        strokeWidth="2"
+      />
+      <g fill={LINE} stroke={MUTED} strokeLinejoin="round">
+        <path d="M200 206h9l2 30-4 34h-8l3-34Z" />
+        <path d="M278 206h8v64h-8Z" />
+      </g>
+      <g fill={INK} stroke={SOFT} strokeWidth="2" strokeLinejoin="round">
+        <path d="M184 182l-16-28 7-3 16 28Z" />
+        <path d="M172 196q2-20 28-22h58q26 0 30 22-4 18-24 18h-66q-24 0-26-18Z" />
+        <path d="M184 206h10l4 32-4 32h-9l3-32Z" />
+        <path d="M264 208h10v62h-10Z" />
+        <path d="M266 190l16-44q6-10 18-8l24 12q6 6-2 9l-22 2-14 34Z" />
+        <path d="M284 142l2-32 14 28Z" />
+        <path d="M296 140l10-28 4 32Z" />
+      </g>
+      <circle cx="302" cy="148" r="2.5" fill={ACCENT} />
+      <path d="M280 198q-4 10 2 16" stroke={MUTED} strokeWidth="3" />
     </>
   ),
   credits: (

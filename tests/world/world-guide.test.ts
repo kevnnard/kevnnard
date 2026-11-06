@@ -4,6 +4,13 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  CHERRY_FADE,
+  CHERRY_MEET_HOUR,
+  CHERRY_STORY,
+  cherryMeeting,
+  isCherryHour,
+} from "../../src/lib/world/cherry.ts";
+import {
   type ConsoleTargets,
   consoleKeydown,
 } from "../../src/lib/world/speaker-console.ts";
@@ -11,6 +18,12 @@ import {
   CONTACT_LINKS,
   terminalKey,
 } from "../../src/lib/world/terminal-content.ts";
+import {
+  initialTvHome,
+  tvHomeAction,
+  tvMove,
+  tvRegionId,
+} from "../../src/lib/world/tv-screen.ts";
 import {
   GUIDE_SECTIONS,
   type GuideSectionId,
@@ -47,10 +60,36 @@ const terminalAction = (key: string, active: "home" | "a" = "home") =>
   );
 
 describe("world game guide sections", () => {
-  it("has the requested tabs in order: Home, Controls, Terminal, Video, Lo-fi, Credits", () => {
+  it("has the requested tabs in order, grouped by place, Credits last", () => {
+    // The desk (terminal, video), the living room (TV, lo-fi), the
+    // collection, the yard (Cherry), then Credits (guide-menu-new T1).
     assert.deepEqual(
       GUIDE_SECTIONS.map((entry) => entry.id),
-      ["home", "controls", "terminal", "video", "lofi", "credits"],
+      [
+        "home",
+        "controls",
+        "terminal",
+        "video",
+        "tv",
+        "lofi",
+        "collection",
+        "cherry",
+        "credits",
+      ],
+    );
+    assert.deepEqual(
+      GUIDE_SECTIONS.map((entry) => entry.tab),
+      [
+        "Kevnnard Home",
+        "Controls",
+        "Terminal",
+        "Video",
+        "TV",
+        "Kevnnard Lo-fi",
+        "Collection",
+        "Cherry",
+        "Credits",
+      ],
     );
     assert.equal(section("home").title, "Kevnnard Home");
     assert.equal(section("lofi").tab, "Kevnnard Lo-fi");
@@ -83,8 +122,15 @@ describe("world game guide sections", () => {
       "speakers",
       "ambient",
       "recenter",
+      "tv",
+      "collection",
+      "desk",
+      "cherry",
     ])
       assert.ok(actions.includes(id as (typeof actions)[number]), id);
+    assert.deepEqual(section("tv").actions, ["tv"]);
+    assert.deepEqual(section("collection").actions, ["collection", "desk"]);
+    assert.deepEqual(section("cherry").actions, ["cherry"]);
     assert.deepEqual(section("terminal").actions, ["terminal"]);
     assert.deepEqual(section("video").actions, ["video"]);
     assert.deepEqual(section("lofi").actions, ["music", "speakers", "ambient"]);
@@ -139,5 +185,80 @@ describe("documented keys match the current source", () => {
 
   it("video: the player's own controls, Esc returns", () => {
     assert.deepEqual(keysOf("video"), ["Esc"]);
+  });
+});
+
+describe("the TV, the collection and Cherry (guide-menu-new T1)", () => {
+  it("tv: arrows move the remote, Enter selects, Esc closes the player then leaves", () => {
+    assert.deepEqual(keysOf("tv"), ["Arrows", "Enter", "Esc"]);
+    const home = initialTvHome();
+    for (const key of ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"])
+      assert.ok(tvMove(home, key), key);
+    assert.equal(tvMove(home, "Enter"), null, "only the arrows move");
+    // Enter presses the remote's region, as TvHome.tsx does.
+    const next = tvMove(home, "ArrowRight");
+    assert.ok(next);
+    const picked = tvHomeAction(next, tvRegionId(next.pos));
+    assert.notDeepEqual(picked.state.hero, home.hero, "Enter selects");
+    const playing = tvHomeAction(home, "secondary").state;
+    assert.ok(playing.player, "a trailer plays");
+    const closed = tvHomeAction(playing, "escape");
+    assert.equal(closed.state.player, null, "Esc closes the player first");
+    assert.equal(closed.effect, null);
+    assert.equal(tvHomeAction(closed.state, "escape").effect, "exit");
+    const text = section("tv").paragraphs.join(" ");
+    for (const word of ["Kevnnard TV", "YouTube", "Twitch", "Trailers"])
+      assert.ok(text.includes(word), word);
+  });
+
+  it("collection: the cases, katanas and shelf, then the desk's keyboard and coffee cup", () => {
+    const text = section("collection").paragraphs.join(" ");
+    for (const word of [
+      "case",
+      "katanas",
+      "collection shelf",
+      "keyboard",
+      "coffee cup",
+    ])
+      assert.ok(text.includes(word), word);
+    // The rail's own keys (CollectionRail.tsx) and the gallery's Esc.
+    assert.deepEqual(keysOf("collection"), ["←", "→", "Esc"]);
+  });
+
+  it("cherry: one short line, only what her card already says", () => {
+    const entry = section("cherry");
+    assert.equal(entry.tab, "Cherry");
+    const text = entry.paragraphs.join(" ");
+    assert.match(text, /Miniature Pinscher/);
+    assert.match(text, /nineteen years/);
+    assert.match(text, /front yard/);
+    assert.match(text, /morning/);
+    assert.ok(CHERRY_STORY.stats.some((stat) => stat.value === "19+ years"));
+    assert.ok(entry.paragraphs.length <= 2, "short");
+    assert.deepEqual(keysOf("cherry"), ["Esc"]);
+  });
+
+  it("meet cherry: inspects her in her hours, else moves the clock to 08:00 and waits for her fade", () => {
+    assert.equal(CHERRY_MEET_HOUR, 8);
+    assert.ok(isCherryHour(CHERRY_MEET_HOUR));
+    assert.deepEqual(cherryMeeting(9.5, false), {
+      label: "Meet Cherry",
+      hours: null,
+      waitMs: 0,
+    });
+    for (const hours of [0, 5.99, 12, 18.25, 23.9])
+      assert.deepEqual(
+        cherryMeeting(hours, false),
+        {
+          label: "Meet Cherry · morning",
+          hours: CHERRY_MEET_HOUR,
+          waitMs: CHERRY_FADE * 1000,
+        },
+        String(hours),
+      );
+    // Reduced motion cuts her fade, so nothing to wait for.
+    assert.equal(cherryMeeting(20, true).waitMs, 0);
+    assert.equal(cherryMeeting(20, true).hours, CHERRY_MEET_HOUR);
+    assert.equal(cherryMeeting(Number.NaN, false).hours, CHERRY_MEET_HOUR);
   });
 });

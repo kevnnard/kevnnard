@@ -1,7 +1,8 @@
 // The world's game-style guide (world-game-menu T1, S2/S3/S5), from
 // design/world-game-menu/01-game-guide.html. Every key listed here is the
-// current binding in speaker-console.ts, terminal-content.ts or the camera
-// (WorldScene's CameraControls); the guide documents them and adds none.
+// current binding in speaker-console.ts, terminal-content.ts, tv-screen.ts
+// (TvHome's remote), CollectionRail or the camera (WorldScene's
+// CameraControls); the guide documents them and adds none.
 // tests/world/world-guide.test.ts checks each against its source.
 
 import { CONTACT_LINKS, type TerminalLink } from "./terminal-content.ts";
@@ -11,7 +12,10 @@ export type GuideSectionId =
   | "controls"
   | "terminal"
   | "video"
+  | "tv"
   | "lofi"
+  | "collection"
+  | "cherry"
   | "credits";
 
 /** The world's existing actions; WorldApp maps each to its callback. */
@@ -21,7 +25,11 @@ export type GuideActionId =
   | "music"
   | "speakers"
   | "ambient"
-  | "recenter";
+  | "recenter"
+  | "tv"
+  | "collection"
+  | "desk"
+  | "cherry";
 
 export interface GuideKey {
   /** Key caps or gestures, each shown in its own <kbd>. */
@@ -133,6 +141,25 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     links: [],
   },
   {
+    id: "tv",
+    tab: "TV",
+    eyebrow: "The living room",
+    title: "Kevnnard TV",
+    illustration:
+      "Illustration of the living-room TV showing the app dock, a featured title and a row of covers",
+    paragraphs: [
+      "Select the living-room TV, or Watch TV, to move in close. Kevnnard TV has apps for movies and series, games, my videos, YouTube channels, Twitch live, anime and the lo-fi radio.",
+      "Pick a title to see it featured; pick it again to open its collection or play it. Trailers and YouTube channels play in YouTube's official player, Twitch streams in Twitch's.",
+    ],
+    keys: [
+      { keys: ["Arrows"], action: "Move between the apps and rows." },
+      { keys: ["Enter"], action: "Select a title; again, open or play it." },
+      { keys: ["Esc"], action: "Close the player, then leave the TV." },
+    ],
+    actions: ["tv"],
+    links: [],
+  },
+  {
     id: "lofi",
     tab: "Kevnnard Lo-fi",
     eyebrow: "gentle-stream",
@@ -153,6 +180,39 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
       { keys: ["Esc"], action: "Leave speaker focus; the music keeps going." },
     ],
     actions: ["music", "speakers", "ambient"],
+    links: [],
+  },
+  {
+    id: "collection",
+    tab: "Collection",
+    eyebrow: "Things I keep",
+    title: "The collection",
+    illustration:
+      "Illustration of a display case with a helmet, the katanas on their wall shelf, and the keyboard and coffee cup on the desk",
+    paragraphs: [
+      "Select a display case, the katanas on the wall shelf or the collection shelf, or Open collection, to move in close. The cases and the katanas carry their stories, and the rail below steps through the collection in the room's order.",
+      "On the desk, the keyboard and the coffee cup open their own cards. See the desk starts at the keyboard.",
+    ],
+    keys: [
+      { keys: ["←", "→"], action: "Step through the collection on the rail." },
+      { keys: ["Esc"], action: "Back to the room." },
+    ],
+    actions: ["collection", "desk"],
+    links: [],
+  },
+  {
+    id: "cherry",
+    tab: "Cherry",
+    eyebrow: "In the front yard",
+    title: "Cherry",
+    illustration:
+      "Illustration of a small Miniature Pinscher standing on the front lawn under the morning sun",
+    paragraphs: [
+      "Cherry is my Miniature Pinscher, with me for more than nineteen years. She visits the front yard in the mornings; select her for her card.",
+      "Outside her hours, Meet Cherry moves the world clock to 08:00 first.",
+    ],
+    keys: [{ keys: ["Esc"], action: "Back to the room." }],
+    actions: ["cherry"],
     links: [],
   },
   {
