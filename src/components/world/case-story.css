@@ -294,3 +294,82 @@
     grid-template-columns: 1fr;
   }
 }
+/* Card motion (card-motion T1), for every side card root: the story, its
+   Show story fold, the wall story card, the coffee and keyboard cards.
+   In, the clock and scene panel's return fade (world-entry-gate.css,
+   world-entry-hud-in: 1100ms ease-out, opacity only, no offset, scale or
+   blur); out, its reverse a little faster. Timings: card-motion.ts. */
+:is(
+  .case-story,
+  .case-story-reopen,
+  .katana-story,
+  .katana-story-reopen
+)[data-state="entering"] {
+  animation: card-motion-in 1100ms ease-out both;
+}
+:is(
+  .case-story,
+  .case-story-reopen,
+  .katana-story,
+  .katana-story-reopen
+)[data-state="leaving"] {
+  pointer-events: none;
+  animation: card-motion-out 800ms ease-in both;
+}
+/* The sections follow one another, finishing with the card. */
+:is(.case-story, .katana-story)[data-state="entering"] > * {
+  animation: card-motion-section 800ms ease-out both;
+}
+:is(.case-story, .katana-story)[data-state="entering"] > :nth-child(2) {
+  animation-delay: 60ms;
+}
+:is(.case-story, .katana-story)[data-state="entering"] > :nth-child(3) {
+  animation-delay: 120ms;
+}
+:is(.case-story, .katana-story)[data-state="entering"] > :nth-child(4) {
+  animation-delay: 180ms;
+}
+:is(.case-story, .katana-story)[data-state="entering"] > :nth-child(5) {
+  animation-delay: 240ms;
+}
+:is(.case-story, .katana-story)[data-state="entering"] > :nth-child(n + 6) {
+  animation-delay: 300ms;
+}
+@keyframes card-motion-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes card-motion-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes card-motion-section {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* useCardPresence switches at once; nothing animates. */
+@media (prefers-reduced-motion: reduce) {
+  :is(
+    .case-story,
+    .case-story-reopen,
+    .katana-story,
+    .katana-story-reopen
+  )[data-state],
+  :is(.case-story, .katana-story)[data-state] > * {
+    animation: none;
+  }
+}

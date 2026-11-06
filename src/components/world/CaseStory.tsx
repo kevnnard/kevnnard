@@ -1,3 +1,5 @@
+import { type AnimationEvent, useState } from "react";
+import type { CardState } from "@/lib/world/card-motion.ts";
 import type {
   CaseStoryPlayer,
   CaseStory as Story,
@@ -5,6 +7,13 @@ import type {
 } from "@/lib/world/case-stories.ts";
 import "./case-story.css";
 import "./katana-story.css";
+import { useCardPresence } from "./useCardPresence";
+
+/** One root's motion: its data-state and its animation's end. */
+type Motion = {
+  state: CardState;
+  onMotionEnd: (event: AnimationEvent) => void;
+};
 
 /** Where each position lines up in the secondary diagram (220 x 96). */
 const SPOTS: Record<string, readonly [number, number][]> = {
@@ -59,23 +68,34 @@ function WallStoryCard({
   story,
   open,
   onOpenChange,
+  motion,
 }: {
   story: WallStory;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  motion: Motion;
 }) {
   if (!open)
     return (
       <button
         type="button"
         className="katana-story-reopen"
+        data-state={motion.state}
+        inert={motion.state === "leaving"}
+        onAnimationEnd={motion.onMotionEnd}
         onClick={() => onOpenChange(true)}
       >
         Show story
       </button>
     );
   return (
-    <article className="katana-story" aria-labelledby="case-story-title">
+    <article
+      className="katana-story"
+      aria-labelledby="case-story-title"
+      data-state={motion.state}
+      inert={motion.state === "leaving"}
+      onAnimationEnd={motion.onMotionEnd}
+    >
       <p className="katana-story-kicker">{story.kicker}</p>
       <h2 id="case-story-title">{story.title}</h2>
       <div
@@ -110,37 +130,37 @@ function WallStoryCard({
   );
 }
 
-/**
- * The side story card beside an inspected display case (collection-display-
- * models T10, T11; design/collection-case-story/01-side-story-card): the
- * team and number up top, the owner's photos or clip when shipped, the
- * position and seasons side by side, a dated timeline, the story and the
- * team link. "Hide story" folds it to a small button so the turning model
- * has the room; WorldApp opens it again on every case. Paragraph stories
- * (the katanas, the Jordans, the Fox helmet) take the lo-fi WallStoryCard
- * instead.
- */
-export default function CaseStory({
+/** One fold of the story card: the whole card, or its Show story button. */
+function StoryFold({
   story,
   reducedMotion,
   open,
   onOpenChange,
+  motion,
 }: {
   story: Story | WallStory;
   reducedMotion: boolean;
-  /** Owned by WorldApp: the camera frames left of the card while open. */
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  motion: Motion;
 }) {
   if ("paragraphs" in story)
     return (
-      <WallStoryCard story={story} open={open} onOpenChange={onOpenChange} />
+      <WallStoryCard
+        story={story}
+        open={open}
+        onOpenChange={onOpenChange}
+        motion={motion}
+      />
     );
   if (!open)
     return (
       <button
         type="button"
         className="case-story-reopen"
+        data-state={motion.state}
+        inert={motion.state === "leaving"}
+        onAnimationEnd={motion.onMotionEnd}
         onClick={() => onOpenChange(true)}
       >
         Show story
@@ -148,7 +168,13 @@ export default function CaseStory({
     );
   const { player } = story;
   return (
-    <article className="case-story" aria-labelledby="case-story-title">
+    <article
+      className="case-story"
+      aria-labelledby="case-story-title"
+      data-state={motion.state}
+      inert={motion.state === "leaving"}
+      onAnimationEnd={motion.onMotionEnd}
+    >
       <p className="case-story-kicker">{story.kicker}</p>
       <div className="case-story-head">
         <div>
@@ -255,4 +281,53 @@ export default function CaseStory({
       </div>
     </article>
   );
+}
+
+/**
+ * The side story card beside an inspected display case (collection-display-
+ * models T10, T11; design/collection-case-story/01-side-story-card): the
+ * team and number up top, the owner's photos or clip when shipped, the
+ * position and seasons side by side, a dated timeline, the story and the
+ * team link. "Hide story" folds it to a small button so the turning model
+ * has the room; WorldApp opens it again on every case. Paragraph stories
+ * (the katanas, the Jordans, the Fox helmet) take the lo-fi WallStoryCard
+ * instead. The fold cross-fades like the card itself (card-motion T1);
+ * while the card leaves, its fold holds as it was.
+ */
+export default function CaseStory({
+  story,
+  reducedMotion,
+  open: wanted,
+  onOpenChange,
+  state,
+  onMotionEnd,
+}: {
+  story: Story | WallStory;
+  reducedMotion: boolean;
+  /** Owned by WorldApp: the camera frames left of the card while open. */
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  /** The whole card's presence, from WorldApp's useCardPresence. */
+  state: CardState;
+  onMotionEnd: (event: AnimationEvent) => void;
+}) {
+  const [open, setOpen] = useState(wanted);
+  if (state !== "leaving" && open !== wanted) setOpen(wanted);
+  const folds = useCardPresence(open ? "story" : "fold", open, reducedMotion);
+  return folds.map((fold) => (
+    <StoryFold
+      key={fold.key}
+      story={story}
+      reducedMotion={reducedMotion}
+      open={fold.value}
+      onOpenChange={onOpenChange}
+      motion={{
+        state: state === "leaving" ? "leaving" : fold.state,
+        onMotionEnd: (event) => {
+          fold.onMotionEnd(event);
+          onMotionEnd(event);
+        },
+      }}
+    />
+  ));
 }

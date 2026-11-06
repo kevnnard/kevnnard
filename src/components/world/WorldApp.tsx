@@ -90,6 +90,7 @@ import type { SpeakerControl } from "./SpeakerZone";
 import TerminalMonitor, { TERMINAL_CONTENT } from "./TerminalMonitor";
 import TvHome from "./TvHome";
 import type { TvControl } from "./TvScreen";
+import { useCardPresence } from "./useCardPresence";
 import WorldMenu, { type GuideActions } from "./WorldMenu";
 
 // Loaded only after WebGL is confirmed, so three.js never ships to clients that can't use it.
@@ -866,6 +867,26 @@ export default function WorldApp() {
     ],
   );
 
+  // The side cards stay mounted through their exit (card-motion T1): each
+  // fades in and out like the clock and the scene panel, and a switch
+  // (mug -> keyboard, case -> case) cross-fades the old card with the new.
+  const cardsShown = ready && entered && !focus && !portrait && !speakers;
+  const caseCards = useCardPresence(
+    cardsShown && galleryCase && caseStory ? galleryCase : null,
+    caseStory,
+    reducedMotion,
+  );
+  const productCards = useCardPresence(
+    cardsShown && deskProduct ? "keyboard" : null,
+    deskProduct,
+    reducedMotion,
+  );
+  const coffeeCards = useCardPresence(
+    cardsShown && deskStory ? "coffee" : null,
+    deskStory,
+    reducedMotion,
+  );
+
   if (!webgl) {
     return (
       <Fallback title="Your browser can't display the 3D world">
@@ -982,36 +1003,36 @@ export default function WorldApp() {
             compact
           />
         )}
-      {ready &&
-        entered &&
-        galleryCase &&
-        !focus &&
-        !portrait &&
-        !speakers &&
-        caseStory && (
-          <CaseStory
-            key={galleryCase}
-            story={caseStory}
-            open={storyOpen}
-            onOpenChange={setStoryOpen}
-            reducedMotion={reducedMotion}
-          />
-        )}
+      {caseCards.map((card) => (
+        <CaseStory
+          key={card.key}
+          story={card.value}
+          open={storyOpen}
+          onOpenChange={setStoryOpen}
+          reducedMotion={reducedMotion}
+          state={card.state}
+          onMotionEnd={card.onMotionEnd}
+        />
+      ))}
       {/* The desk isn't the collection: no rail, the card leads back. */}
-      {ready && entered && !focus && !portrait && !speakers && deskProduct && (
+      {productCards.map((card) => (
         <ProductCard
-          key={galleryCase}
-          product={deskProduct}
+          key={card.key}
+          product={card.value}
           onReturn={() => setGalleryCase(null)}
+          state={card.state}
+          onMotionEnd={card.onMotionEnd}
         />
-      )}
-      {ready && entered && !focus && !portrait && !speakers && deskStory && (
+      ))}
+      {coffeeCards.map((card) => (
         <CoffeeCard
-          key={galleryCase}
-          story={deskStory}
+          key={card.key}
+          story={card.value}
           onClose={() => setGalleryCase(null)}
+          state={card.state}
+          onMotionEnd={card.onMotionEnd}
         />
-      )}
+      ))}
 
       {/* Direct children of the world container: ScenePanel measures its
           parent to sit above the clock (L61). */}

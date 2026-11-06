@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { type AnimationEvent, useEffect, useRef } from "react";
+import type { CardState } from "@/lib/world/card-motion.ts";
 import type { DeskProduct } from "@/lib/world/desk-products.ts";
 import "./case-story.css";
 import "./product-card.css";
@@ -42,14 +43,21 @@ function SoftWave() {
  * product photo: the 3D model is the visual. The desk is not part of the
  * collection, so there is no rail: "Back to room" leaves, and takes focus
  * as the card opens. The shop link opens in a new tab; until the owner
- * gives it, a disabled "Link coming soon" stands in.
+ * gives it, a disabled "Link coming soon" stands in. It fades in and out
+ * like the scene panel (card-motion T1); leaving, it is inert, so it lets
+ * go of focus.
  */
 export default function ProductCard({
   product,
   onReturn,
+  state,
+  onMotionEnd,
 }: {
   product: DeskProduct;
   onReturn: () => void;
+  /** The card's presence, from WorldApp's useCardPresence. */
+  state: CardState;
+  onMotionEnd: (event: AnimationEvent) => void;
 }) {
   const back = useRef<HTMLButtonElement>(null);
   // Keyboard focus lands on the card as it opens, so Tab reaches the link.
@@ -59,6 +67,9 @@ export default function ProductCard({
     <article
       className="case-story product-card"
       aria-labelledby="product-card-title"
+      data-state={state}
+      inert={state === "leaving"}
+      onAnimationEnd={onMotionEnd}
     >
       <p className="case-story-kicker">{product.kicker}</p>
       <div className="case-story-head">

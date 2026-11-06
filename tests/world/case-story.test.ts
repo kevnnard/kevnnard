@@ -153,9 +153,14 @@ describe("case story card (collection-display-models T10)", () => {
 
   it("shows beside the inspected case with the rail, and can be hidden", () => {
     const app = source("src/components/world/WorldApp.tsx");
+    // Kept mounted through its exit (card-motion T1).
     assert.match(
       app,
-      /ready &&\s*entered &&\s*galleryCase &&\s*!focus &&\s*!portrait &&\s*!speakers &&\s*caseStory &&/,
+      /const cardsShown =\s*ready && entered && !focus && !portrait && !speakers;/,
+    );
+    assert.match(
+      app,
+      /useCardPresence\(\s*cardsShown && galleryCase && caseStory \? galleryCase : null,/,
     );
     assert.match(
       app,
@@ -164,7 +169,7 @@ describe("case story card (collection-display-models T10)", () => {
     );
     assert.match(
       app,
-      /<CaseStory[\s\S]*?key=\{galleryCase\}[\s\S]*?story=\{caseStory\}/,
+      /<CaseStory[\s\S]*?key=\{card\.key\}[\s\S]*?story=\{card\.value\}/,
     );
     const card = source("src/components/world/CaseStory.tsx");
     assert.match(card, /aria-labelledby="case-story-title"/);

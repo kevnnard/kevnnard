@@ -1,4 +1,12 @@
-import { type KeyboardEvent, useEffect, useId, useRef, useState } from "react";
+import {
+  type AnimationEvent,
+  type KeyboardEvent,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
+import type { CardState } from "@/lib/world/card-motion.ts";
 import type { DeskStory } from "@/lib/world/desk-stories.ts";
 import "./case-story.css";
 import "./coffee-card.css";
@@ -86,13 +94,20 @@ function Bean() {
  * as chips with a line about the mug (T3), and the friend's shop with its
  * Maps link. The desk is not part of the collection, so there
  * is no rail: "Back to room" leaves, and takes focus as the card opens.
+ * It fades in and out like the scene panel (card-motion T1); leaving, it
+ * is inert, so it lets go of focus.
  */
 export default function CoffeeCard({
   story,
   onClose,
+  state,
+  onMotionEnd,
 }: {
   story: DeskStory;
   onClose: () => void;
+  /** The card's presence, from WorldApp's useCardPresence. */
+  state: CardState;
+  onMotionEnd: (event: AnimationEvent) => void;
 }) {
   const back = useRef<HTMLButtonElement>(null);
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -132,6 +147,9 @@ export default function CoffeeCard({
     <article
       className="case-story coffee-card"
       aria-labelledby="coffee-card-title"
+      data-state={state}
+      inert={state === "leaving"}
+      onAnimationEnd={onMotionEnd}
     >
       <p className="case-story-kicker">{story.kicker}</p>
       <div className="case-story-head">
