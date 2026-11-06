@@ -156,7 +156,7 @@ describe("T12 NuPhy-style wireless low-profile 75% keyboard (S24)", () => {
       assert.equal(row[row.length - 1].units, 1);
   });
 
-  it("colour-blocks the caps with coral Esc, teal Enter and a yellow space", () => {
+  it("colour-blocks the black V2's caps: mint Esc, coral Enter, yellow space", () => {
     const caps = item("keyboard").filter((part) => part.material === "keycap");
     const esc = caps[0];
     const right = Math.min(...caps.map((p) => p.center[2]));
@@ -167,11 +167,16 @@ describe("T12 NuPhy-style wireless low-profile 75% keyboard (S24)", () => {
     assert.equal(space.color, SETUP_COLORS.keySpace);
     assert.ok(space.size[2] > 6 * 0.019 - 0.01, "6.25u space");
     const h = (hex: string) => hue(hex).h * 360;
-    assert.ok(h(SETUP_COLORS.keyEsc) < 20 || h(SETUP_COLORS.keyEsc) > 340);
-    assert.ok(h(SETUP_COLORS.keyEnter) > 160 && h(SETUP_COLORS.keyEnter) < 200);
+    assert.ok(h(SETUP_COLORS.keyEsc) > 140 && h(SETUP_COLORS.keyEsc) < 180);
+    assert.ok(h(SETUP_COLORS.keyEnter) < 20 || h(SETUP_COLORS.keyEnter) > 340);
     assert.ok(h(SETUP_COLORS.keySpace) > 40 && h(SETUP_COLORS.keySpace) < 60);
     const tones = new Set(caps.map((p) => p.color));
     assert.ok(tones.size >= 5, "letters, modifiers and three accents");
+    // Black colourway: a black case, near-black letters under grey mods.
+    const l = (hex: string) => hue(hex).l;
+    assert.ok(l(SETUP_COLORS.case) < 0.15, "black case");
+    assert.ok(l(SETUP_COLORS.keyAlpha) < l(SETUP_COLORS.keyMod));
+    assert.ok(l(SETUP_COLORS.keyMod) < 0.4);
   });
 
   it("is low profile, compact, rounded and has no cable", () => {

@@ -26,7 +26,10 @@ import {
   Vector3,
 } from "three";
 import { BrunoChair } from "@/components/world/BrunoProps";
+import CoffeeHitbox from "@/components/world/CoffeeHitbox";
+import CoffeeMug from "@/components/world/CoffeeMug";
 import { mergeParts } from "@/components/world/House";
+import { keyboardLegends } from "@/components/world/KeyboardLegends";
 import MonitorScreen, {
   type MonitorTerminal,
 } from "@/components/world/MonitorScreen";
@@ -437,7 +440,10 @@ export default function Setup({
     mug.position.set(...SETUP_PROPS.mug.center);
     mug.castShadow = true;
     mug.receiveShadow = true;
-    setup.add(swivel, lit, leds.mesh, pane, mug);
+    const legends = keyboardLegends(invalidate);
+    owned.materials.push(legends.material);
+    owned.textures.push(legends.texture);
+    setup.add(swivel, lit, leds.mesh, pane, mug, legends.mesh);
     return {
       group: setup,
       glow: screens,
@@ -446,7 +452,7 @@ export default function Setup({
       leds,
       steam,
     };
-  }, [maps]);
+  }, [maps, invalidate]);
 
   const base = setupGlow(hours) * glowPower(power, hours);
   const side = sideLight(lights ?? DEFAULT_LIGHTS, hours, power);
@@ -513,6 +519,12 @@ export default function Setup({
       />
       {speakers && <SpeakerZone occluders={group} control={speakers} />}
       {desk && <DeskHit id="keyboard" occluders={group} control={desk} />}
+      {desk && <CoffeeHitbox occluders={group} control={desk} />}
+      <CoffeeMug
+        root={group}
+        turning={desk?.focused === "coffee"}
+        reducedMotion={reducedMotion}
+      />
       <Suspense fallback={null}>
         <CoffeeSteam
           material={steam}

@@ -11,6 +11,24 @@ Click the keyboard on the desk. The camera moves to a still shot of it and a sid
 | Lo-fi card look | `katana-story.css` | `ProductCard.tsx` uses the katana card's panel and footprint, plus a small `product-card.css` |
 | Click gate | the monitor's `canEnterMonitor` and an occluder raycast | `DeskHit` in `Setup.tsx` |
 
+## The keyboard itself
+
+The desk board is the owner's NuPhy Air75 V2 (black), rebuilt from the official listing. Spec: `odd/tasks/keyboard-faithful.md` (T1).
+
+| Piece | Where |
+| --- | --- |
+| 84 caps: rows, widths, colour roles, legends, sources | `src/lib/world/keyboard-layout.ts` |
+| Case, plate, caps and the two side light bars | `keyboard()` in `src/lib/world/setup.ts` |
+| Legend atlas, 2048x768, 128 px a unit, about 20 KB | `public/world/keyboard/keyboard-legends.webp` |
+| Atlas generator (needs `rsvg-convert` and `magick`) | `node scripts/prepare-keyboard-legends.mjs` |
+| Legend decal: one quad per printed cap, one draw | `src/components/world/KeyboardLegends.ts` |
+
+- The atlas is the board seen from above: each cap's legend sits in its own cell at the cap's place, so the UVs are the cap's cell.
+- The atlas is prebaked, not drawn on a runtime canvas, so every machine gets the same font and the tests can check its size.
+- It lives in `public/world/keyboard/`, because `public/world/textures/` is only for credited third-party maps.
+- The F-row's media icons are left out, because they are unreadable at scene scale.
+- Budget: about 9.5k triangles (84 caps, case, plate and legends).
+
 ## Data
 
 `src/lib/world/desk-products.ts` holds the typed `DESK_PRODUCTS.keyboard` entry. It has the kicker, title, the owner's one line, specs, and `link: { label, url, affiliate }`.

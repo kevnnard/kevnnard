@@ -1,7 +1,7 @@
 // Original procedural gaming setup (T4d, S8), the main room's centerpiece,
 // finished in T12 (S24-S25): a copper-toned wooden desk top on a black
-// frame with a cable tray, a giant black mat under a NuPhy-style wireless
-// low-profile 75% keyboard and a curved mouse on the right, a curved
+// frame with a cable tray, a giant black mat under the owner's NuPhy Air75
+// V2 (keyboard-faithful T1) and a curved mouse on the right, a curved
 // ultrawide and a portrait monitor on their own clamp arms, a white light bar
 // on the ultrawide, and a coffee mug on a wooden coaster to the right. A
 // wall shelf above carries the speakers, two gamer lamps (lights.ts) and two
@@ -13,6 +13,12 @@
 // material (T4g, S11), plus glow (screens and RGB) and glass.
 
 import { HOUSE, type Part, type Rect, type Vec3, WALLS } from "./house.ts";
+import {
+  BOARD_UNITS,
+  KEY_ROWS,
+  type KeyRole,
+  keyCaps,
+} from "./keyboard-layout.ts";
 import type { NormalPattern } from "./normals.ts";
 import { worldLight } from "./palette.ts";
 import type { Surface } from "./textures.ts";
@@ -24,14 +30,14 @@ export const SETUP_COLORS = {
   tray: "#3a3940",
   cable: "#4a4852",
   bezel: "#26252b",
-  /** Aluminium keyboard case. */
-  case: "#aeb3bb",
+  /** The Air75 V2's black aluminium frame (keyboard-layout.ts sources). */
+  case: "#1d1d21",
   keys: "#f3eee8",
-  keyAlpha: "#eceae6",
-  keyMod: "#c3c8d0",
-  keyEsc: "#ff6f5e",
-  keyEnter: "#2fb5a6",
-  keySpace: "#f2c84b",
+  keyAlpha: "#2a2b2f",
+  keyMod: "#4b4d53",
+  keyEsc: "#6cc7a9",
+  keyEnter: "#e5603f",
+  keySpace: "#e8b43b",
   /** Giant black mouse pad. */
   mat: "#18171b",
   matEdge: "#2c2b31",
@@ -124,45 +130,9 @@ const MAT_TOP = DESK.height + MAT_D.height;
 
 /** Key pitch: one unit (19.05 mm on the real board). */
 const KEY_UNIT = 0.019;
-type KeyRole = "alpha" | "mod" | "esc" | "enter" | "space";
-const keys = (units: number, role: KeyRole, count = 1) =>
-  Array.from({ length: count }, () => ({ units, role }));
-/**
- * A low-profile 75% layout like the NuPhy Air75 V2: 84 keys in six rows of
- * 16 units, the last column for navigation, arrows tucked bottom right.
- */
-export const KEY_ROWS: readonly (readonly {
-  units: number;
-  role: KeyRole;
-}[])[] = [
-  [...keys(1, "esc"), ...keys(1, "mod", 15)],
-  [...keys(1, "alpha", 13), ...keys(2, "mod"), ...keys(1, "mod")],
-  [
-    ...keys(1.5, "mod"),
-    ...keys(1, "alpha", 12),
-    ...keys(1.5, "alpha"),
-    ...keys(1, "mod"),
-  ],
-  [
-    ...keys(1.75, "mod"),
-    ...keys(1, "alpha", 11),
-    ...keys(2.25, "enter"),
-    ...keys(1, "mod"),
-  ],
-  [
-    ...keys(2.25, "mod"),
-    ...keys(1, "alpha", 10),
-    ...keys(1.75, "mod"),
-    ...keys(1, "alpha"),
-    ...keys(1, "mod"),
-  ],
-  [
-    ...keys(1.25, "mod", 3),
-    ...keys(6.25, "space"),
-    ...keys(1, "mod", 3),
-    ...keys(1, "alpha", 3),
-  ],
-];
+
+export { KEY_ROWS };
+
 const KEY_COLORS: Record<KeyRole, string> = {
   alpha: SETUP_COLORS.keyAlpha,
   mod: SETUP_COLORS.keyMod,
@@ -171,7 +141,7 @@ const KEY_COLORS: Record<KeyRole, string> = {
   space: SETUP_COLORS.keySpace,
 };
 
-/** NuPhy-style wireless keyboard: aluminium case, low caps, no cable. */
+/** NuPhy Air75 V2: 316 x 133 mm aluminium frame, low caps, no cable. */
 export const KEYBOARD = {
   center: w(0.53, MAT_TOP + 0.0105, MID),
   /** Depth, height (case and caps), width. */
@@ -924,10 +894,20 @@ function lightbar(solid: SetupPart[]) {
     );
 }
 
+/** Gap between neighbouring caps. */
+const CAP_GAP = 0.002;
+/** Board edges: row 0 (Esc) at the back, the left end toward +z. */
+const keyGrid = () => ({
+  back: KEYBOARD.center[0] - (KEY_ROWS.length * KEY_UNIT) / 2,
+  left: KEYBOARD.center[2] + (BOARD_UNITS * KEY_UNIT) / 2,
+});
+
 /**
- * NuPhy-style wireless low-profile 75% keyboard (S24): a rounded aluminium
- * case, 84 individual low caps colour-blocked with coral Esc, teal Enter and
- * a yellow space bar, two slender side light bars and no cable.
+ * The owner's NuPhy Air75 V2 (keyboard-faithful T1): a black aluminium frame
+ * on a dark plate, the 84 caps of keyboard-layout.ts (near-black letters,
+ * grey mods, mint Esc, coral Enter, yellow space) and the two short RGB
+ * bars at the back of the frame's sides; no cable. Legends are a separate
+ * decal (keyboardLegendQuads).
  */
 function keyboard(solid: SetupPart[], glow: SetupPart[]) {
   const C = SETUP_COLORS;
@@ -947,42 +927,66 @@ function keyboard(solid: SetupPart[], glow: SetupPart[]) {
       0.002,
       [cx, base + CASE_H - 0.0005, cz],
       [depth - 0.012, 0.002, width - 0.012],
-      C.frame,
+      "#111114",
       undefined,
       0.9,
     ),
   );
   const capH = KEYBOARD.size[1] - CASE_H;
-  const left = cz + (16 * KEY_UNIT) / 2;
-  const back = cx - (KEY_ROWS.length * KEY_UNIT) / 2;
-  for (const [r, row] of KEY_ROWS.entries()) {
-    let units = 0;
-    for (const key of row) {
-      const z = left - (units + key.units / 2) * KEY_UNIT;
-      units += key.units;
-      solid.push({
-        ...rounded(
-          "keycap",
-          0.0025,
-          [back + (r + 0.5) * KEY_UNIT, base + CASE_H + capH / 2, z],
-          [KEY_UNIT - 0.0025, capH, key.units * KEY_UNIT - 0.0025],
-          KEY_COLORS[key.role],
-        ),
-        segments: 1,
-      });
-    }
-  }
+  const { back, left } = keyGrid();
+  for (const cap of keyCaps())
+    solid.push({
+      ...rounded(
+        "keycap",
+        0.0025,
+        [
+          back + (cap.row + 0.5) * KEY_UNIT,
+          base + CASE_H + capH / 2,
+          left - (cap.x + cap.units / 2) * KEY_UNIT,
+        ],
+        [KEY_UNIT - CAP_GAP, capH, cap.units * KEY_UNIT - CAP_GAP],
+        KEY_COLORS[cap.role],
+      ),
+      segments: 1,
+    });
+  // The V2's side bars sit by the Esc row: caps lock left, battery right.
   for (const side of [-1, 1])
     glow.push({
       ...part(
         "satin",
         "box",
-        [cx, base + CASE_H / 2, cz + side * (width / 2 + 0.0015)],
-        [depth - 0.04, 0.004, 0.003],
+        [back + 0.012, base + CASE_H - 0.003, cz + side * (width / 2 + 0.0015)],
+        [0.03, 0.003, 0.003],
         "#ffffff",
       ),
       channel: "setup",
     });
+}
+
+/**
+ * The keyboard legends' decal: one quad just above each printed cap, over
+ * its whole pitch cell, sampling that cap's cell of the legend atlas
+ * (keyboard-layout.ts LEGEND_ATLAS). Triangles face up.
+ */
+export function keyboardLegendQuads() {
+  const positions: number[] = [];
+  const uvs: number[] = [];
+  const indices: number[] = [];
+  const { back, left } = keyGrid();
+  const y = KEYBOARD.center[1] + KEYBOARD.size[1] / 2 + 0.0003;
+  for (const cap of keyCaps()) {
+    if (!cap.legend) continue;
+    const x0 = back + cap.row * KEY_UNIT;
+    const x1 = x0 + KEY_UNIT;
+    const z0 = left - cap.x * KEY_UNIT;
+    const z1 = z0 - cap.units * KEY_UNIT;
+    const { u0, u1, v0, v1 } = cap.cell;
+    const n = positions.length / 3;
+    positions.push(x0, y, z0, x1, y, z0, x1, y, z1, x0, y, z1);
+    uvs.push(u0, v1, u0, v0, u1, v0, u1, v1);
+    indices.push(n, n + 1, n + 2, n, n + 2, n + 3);
+  }
+  return { positions, uvs, indices };
 }
 
 /** Height of the mouse shell's top, from -0.5 to 0.5 across its length. */
