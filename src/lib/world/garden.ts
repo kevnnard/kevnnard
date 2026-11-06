@@ -1,8 +1,9 @@
 // Front garden entrance (T7, S19, S20): wall lanterns beside the front door,
 // at the garage door and on the back wall that light up with the night
 // lights gate, a stone stepping path from the porch step into the garden,
-// a decorative mailbox and a sign whose text is one string, GARDEN_SIGN.text. Pure numbers; Garden.tsx builds the meshes.
-// Nothing here is interactive: no form, no network.
+// a decorative mailbox and the garden sign, whose face follows one typed
+// status, GARDEN_SIGN.status (garden-sign T2: garden-sign.ts draws it).
+// Pure numbers; Garden.tsx builds the meshes. No form, no network.
 
 import { HOUSE, type Part, type Vec3, WALLS } from "./house.ts";
 import { onPad, PAD } from "./island.ts";
@@ -11,21 +12,22 @@ import { nightLightsOn } from "./lights.ts";
 import { seededRandom } from "./random.ts";
 import type { SetupMaterial } from "./setup.ts";
 
+/** Whether the owner takes new work: the sign's headline and lantern. */
+export type SignStatus = "open" | "busy";
+
 /**
- * The garden sign. Edit `text` to change what it says (for example
- * "OPEN TO WORK" or "BACK SOON"); it wraps and shrinks to fit the board.
+ * The garden sign. Flip `status` to "busy" when not taking new projects:
+ * the board then reads BACK SOON, the lantern turns amber and the card
+ * says so (garden-sign.ts holds the copy).
  */
 export const GARDEN_SIGN: {
-  text: string;
-  /** Longer text is cut with an ellipsis. */
-  maxChars: number;
+  status: SignStatus;
   /** Board paint behind the letters, ink and the inner rule (sRGB hex). */
   board: string;
   ink: string;
   accent: string;
 } = {
-  text: "OPEN TO WORK",
-  maxChars: 60,
+  status: "open",
   board: "#fff4e3",
   ink: "#2b211c",
   accent: "#b9675a",
@@ -665,9 +667,100 @@ export const SIGN_PANEL = {
 } as const;
 
 /**
+ * The status lantern on its bracket from the right post (garden-sign T2),
+ * local to the sign: an iron arm, a small cage with a brass finial under
+ * it, the glass (a separate, emissive mesh) and its soft night light at the
+ * glass. It stays inside the sign's footprint radius.
+ */
+export const SIGN_LANTERN = {
+  bracket: {
+    center: [0.386, 0.36, 0] as Vec3,
+    size: [0.088, 0.016, 0.018] as Vec3,
+  },
+  body: {
+    center: [0.405, 0.27, 0] as Vec3,
+    size: [0.085, 0.144, 0.085] as Vec3,
+  },
+  glass: {
+    center: [0.405, 0.27, 0] as Vec3,
+    size: [0.064, 0.108, 0.064] as Vec3,
+  },
+  light: { intensity: 0.6, distance: 1.6, decay: 2 },
+} as const;
+
+/** The lantern's iron cage and brass finial, hung from the bracket. */
+function signLanternParts(): GardenPart[] {
+  const C = GARDEN_COLORS;
+  const { bracket, body, glass } = SIGN_LANTERN;
+  const [x, y, z] = body.center;
+  const half = body.size[1] / 2;
+  const rail = 0.014;
+  const corner = (glass.size[0] + 0.008) / 2;
+  const parts: GardenPart[] = [
+    piece(
+      "lantern-bracket",
+      "iron",
+      "rounded",
+      bracket.center,
+      bracket.size,
+      C.iron,
+      {
+        radius: 0.004,
+      },
+    ),
+    piece(
+      "lantern-frame",
+      "iron",
+      "rounded",
+      [x, y + half - rail / 2, z],
+      [body.size[0], rail, body.size[2]],
+      C.iron,
+      {
+        radius: 0.004,
+      },
+    ),
+    piece(
+      "lantern-frame",
+      "iron",
+      "rounded",
+      [x, y - half + rail / 2, z],
+      [body.size[0], rail, body.size[2]],
+      C.iron,
+      {
+        radius: 0.004,
+      },
+    ),
+    piece(
+      "lantern-finial",
+      "brass",
+      "round",
+      [x, y + half + 0.006, z],
+      [0.018, 0.012, 0.018],
+      C.brass,
+    ),
+  ];
+  for (const dx of [-corner, corner])
+    for (const dz of [-corner, corner])
+      parts.push(
+        piece(
+          "lantern-frame",
+          "iron",
+          "rounded",
+          [x + dx, y, z + dz],
+          [0.008, body.size[1] - 2 * rail, 0.008],
+          C.iron,
+          {
+            radius: 0.002,
+          },
+        ),
+      );
+  return parts;
+}
+
+/**
  * Garden sign, base at the origin and facing +z: two planted posts, a board
- * with a raised frame and brass screws, and a small cap on top. The text
- * panel (a canvas texture) is a separate plane.
+ * with a raised frame and brass screws, a small cap on top and the status
+ * lantern on its bracket. The face (a canvas texture) is a separate plane.
  */
 export function signParts(): GardenPart[] {
   const C = GARDEN_COLORS;
@@ -766,6 +859,7 @@ export function signParts(): GardenPart[] {
           },
         ),
       );
+  parts.push(...signLanternParts());
   return parts;
 }
 
@@ -825,95 +919,4 @@ export function clearOfGarden<
         f.radius + reach + GAP,
     );
   });
-}
-
-/* ------------------------------------------------------------------ */
-/* Sign text                                                           */
-/* ------------------------------------------------------------------ */
-
-/** Canvas pixels: the texture, and the box the text must fit inside. */
-export const SIGN_TEXT_BOX = {
-  canvas: [1024, 464] as const,
-  width: 900,
-  height: 360,
-  maxLines: 3,
-  maxSize: 160,
-  minSize: 48,
-  step: 4,
-  lineHeight: 1.1,
-} as const;
-
-/** Single spaces, trimmed, cut to `GARDEN_SIGN.maxChars` with an ellipsis. */
-export function normalizeSignText(text: string): string {
-  const clean = text.replace(/\s+/g, " ").trim();
-  const chars = Array.from(clean);
-  if (chars.length <= GARDEN_SIGN.maxChars) return clean;
-  return `${chars
-    .slice(0, GARDEN_SIGN.maxChars - 1)
-    .join("")
-    .trimEnd()}…`;
-}
-
-export type MeasureText = (line: string, fontSize: number) => number;
-
-/** Greedy word wrap at `size`; words wider than the box break by character. */
-function wrap(words: string[], size: number, measure: MeasureText): string[] {
-  const { width } = SIGN_TEXT_BOX;
-  const lines: string[] = [];
-  let line = "";
-  const pushWord = (word: string) => {
-    const joined = line ? `${line} ${word}` : word;
-    if (measure(joined, size) <= width) {
-      line = joined;
-      return;
-    }
-    if (line) lines.push(line);
-    line = "";
-    if (measure(word, size) <= width) {
-      line = word;
-      return;
-    }
-    let chunk = "";
-    for (const char of Array.from(word)) {
-      if (chunk && measure(chunk + char, size) > width) {
-        lines.push(chunk);
-        chunk = "";
-      }
-      chunk += char;
-    }
-    line = chunk;
-  };
-  for (const word of words) pushWord(word);
-  if (line) lines.push(line);
-  return lines;
-}
-
-export interface SignLayout {
-  lines: string[];
-  /** Canvas pixels. */
-  fontSize: number;
-}
-
-/**
- * The largest font size whose wrapped lines fit the text box; at the
- * smallest size, extra lines are dropped and the last ends in an ellipsis.
- * `measure` is the canvas `measureText` width at a font size.
- */
-export function fitSignText(text: string, measure: MeasureText): SignLayout {
-  const { maxSize, minSize, step, maxLines, height, lineHeight, width } =
-    SIGN_TEXT_BOX;
-  const clean = normalizeSignText(text);
-  if (!clean) return { lines: [], fontSize: maxSize };
-  const words = clean.split(" ");
-  for (let size = maxSize; size >= minSize; size -= step) {
-    const lines = wrap(words, size, measure);
-    if (lines.length <= maxLines && lines.length * size * lineHeight <= height)
-      return { lines, fontSize: size };
-  }
-  const lines = wrap(words, minSize, measure).slice(0, maxLines);
-  let last = lines[lines.length - 1];
-  while (last && measure(`${last}…`, minSize) > width)
-    last = Array.from(last).slice(0, -1).join("");
-  lines[lines.length - 1] = `${last}…`;
-  return { lines, fontSize: minSize };
 }

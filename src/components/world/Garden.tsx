@@ -4,7 +4,6 @@ import {
   BoxGeometry,
   BufferAttribute,
   BufferGeometry,
-  CanvasTexture,
   Color,
   type Group,
   type Material,
@@ -12,23 +11,20 @@ import {
   MeshBasicMaterial,
   MeshStandardMaterial,
   Object3D,
-  PlaneGeometry,
   SphereGeometry,
   SpotLight,
-  SRGBColorSpace,
   type Texture,
 } from "three";
+import GardenSign from "@/components/world/GardenSign";
 import { mergeParts } from "@/components/world/House";
-import { setupMaterial } from "@/components/world/Setup";
+import { type DeskControl, setupMaterial } from "@/components/world/Setup";
 import type { SurfaceMaps } from "@/components/world/surfaces";
 import { cutaway } from "@/lib/world/cutaway.ts";
 import {
-  fitSignText,
   GARDEN_COLORS,
   GARDEN_MATERIALS,
   GARDEN_PROPS,
   GARDEN_ROUND_SEGMENTS,
-  GARDEN_SIGN,
   type GardenMaterialId,
   type GardenPart,
   type GardenProp,
@@ -43,8 +39,6 @@ import {
   mailboxParts,
   PATH_STONES,
   pathMesh,
-  SIGN_PANEL,
-  SIGN_TEXT_BOX,
   STONE,
   signParts,
 } from "@/lib/world/garden.ts";
@@ -54,8 +48,6 @@ type Owned = { materials: Material[]; textures: Texture[] };
 
 /** A lantern's wall fades from here on: the lantern hides with it. */
 const LANTERN_HIDE = 0.5;
-const SIGN_FONT = (size: number) =>
-  `700 ${size}px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
 
 /** One merged, shadowed mesh per material under `parent`. */
 function addSolids(
@@ -132,44 +124,6 @@ function stoneGeometry() {
   return geometry;
 }
 
-/**
- * The sign's text on its painted board: GARDEN_SIGN.text measured with the
- * canvas, wrapped and shrunk to fit (fitSignText), dark ink on cream inside a
- * thin coral rule. System fonts only.
- */
-function signTexture(): CanvasTexture {
-  const [width, height] = SIGN_TEXT_BOX.canvas;
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const context = canvas.getContext("2d");
-  if (context) {
-    context.fillStyle = GARDEN_SIGN.board;
-    context.fillRect(0, 0, width, height);
-    context.strokeStyle = GARDEN_SIGN.accent;
-    context.lineWidth = 8;
-    context.strokeRect(20, 20, width - 40, height - 40);
-    const measure = (line: string, size: number) => {
-      context.font = SIGN_FONT(size);
-      return context.measureText(line).width;
-    };
-    const { lines, fontSize } = fitSignText(GARDEN_SIGN.text, measure);
-    context.font = SIGN_FONT(fontSize);
-    context.fillStyle = GARDEN_SIGN.ink;
-    context.textAlign = "center";
-    context.textBaseline = "middle";
-    const step = fontSize * SIGN_TEXT_BOX.lineHeight;
-    const top = height / 2 - ((lines.length - 1) * step) / 2;
-    lines.forEach((line, i) => {
-      context.fillText(line, width / 2, top + i * step);
-    });
-  }
-  const texture = new CanvasTexture(canvas);
-  texture.colorSpace = SRGBColorSpace;
-  texture.anisotropy = 4;
-  return texture;
-}
-
 interface Lantern {
   light: SpotLight;
   glass: MeshStandardMaterial;
@@ -179,8 +133,9 @@ interface Lantern {
 /**
  * Front garden entrance (T7, S19, S20): four bronze wall lanterns (two beside
  * the front door, one at the garage door, one on the back wall), a beveled
- * stepping-stone path from the porch step, a decorative mailbox and a garden
- * sign reading GARDEN_SIGN.text. The lanterns are non-shadow spots with a
+ * stepping-stone path from the porch step, a decorative mailbox and the
+ * garden sign (its face, flip tiles, status lantern and click in
+ * GardenSign, garden-sign T2). The lanterns are non-shadow spots with a
  * finite range, aimed out of their wall and down, on from 18:00 through
  * 05:59 (the night lights gate) unless the scene panel's master `power` is
  * off; they stay mounted at intensity 0 otherwise so the light count never
@@ -191,11 +146,16 @@ export default function Garden({
   hours,
   maps,
   power = true,
+  reducedMotion = false,
+  desk,
 }: {
   hours: number;
   maps?: SurfaceMaps;
   /** The scene panel's master switch (night only). */
   power?: boolean;
+  reducedMotion?: boolean;
+  /** The inspect control: the sign opens its close-up through it. */
+  desk?: DeskControl;
 }) {
   const { invalidate } = useThree();
   const { group, lanternGroups, lanterns, owned } = useMemo(() => {
@@ -219,24 +179,9 @@ export default function Garden({
 
     const mailbox = propGroup("garden-mailbox", GARDEN_PROPS.mailbox);
     addSolids(mailbox, mailboxParts(), material, "mailbox");
+    // The sign's wood and lantern cage; GardenSign draws its face and glow.
     const sign = propGroup("garden-sign", GARDEN_PROPS.sign);
     addSolids(sign, signParts(), material, "sign");
-    const text = signTexture();
-    const face = new MeshStandardMaterial({
-      map: text,
-      roughness: 0.8,
-      metalness: 0,
-    });
-    owned.textures.push(text);
-    owned.materials.push(face);
-    const panel = new Mesh(
-      new PlaneGeometry(SIGN_PANEL.width, SIGN_PANEL.height),
-      face,
-    );
-    panel.name = "garden-sign-text";
-    panel.position.set(...SIGN_PANEL.center);
-    panel.receiveShadow = true;
-    sign.add(panel);
     group.add(mailbox, sign);
 
     // One group per wall, so each lantern follows its own wall's cutaway.
@@ -340,5 +285,16 @@ export default function Garden({
     [group, owned],
   );
 
-  return <primitive object={group} />;
+  return (
+    <>
+      <primitive object={group} />
+      <GardenSign
+        hours={hours}
+        power={power}
+        reducedMotion={reducedMotion}
+        focused={desk?.focused === "sign"}
+        onInspect={desk?.onInspect}
+      />
+    </>
+  );
 }

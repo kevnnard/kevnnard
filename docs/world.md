@@ -460,18 +460,20 @@ garden sign. Nothing is interactive.
 
 | Piece | File |
 | --- | --- |
-| Gate reuse, fixtures, parts, path, clearing, sign text fitting | `src/lib/world/garden.ts` |
-| Meshes, lantern lights, sign canvas texture | `src/components/world/Garden.tsx` |
-| Tests | `tests/world/garden.test.ts` |
+| Gate reuse, fixtures, parts, path, clearing, sign status | `src/lib/world/garden.ts` |
+| Sign copy, rotating line, lantern, profile | `src/lib/world/garden-sign.ts` |
+| Meshes, lantern lights | `src/components/world/Garden.tsx` |
+| Sign face, flip tile, status lantern, click | `src/components/world/GardenSign.tsx` |
+| Tests | `tests/world/garden.test.ts`, `tests/world/garden-sign.test.ts` |
 
-### Change the sign text
+### Change the sign
 
-Edit one string, `GARDEN_SIGN.text` in `src/lib/world/garden.ts` (default
-`"OPEN TO WORK"`). The sign measures it with the canvas, wraps by word and
-shrinks it (160 to 48 px on a 1024x464 texture, at most three lines);
-spaces collapse, words too wide break by character, and text over
-`GARDEN_SIGN.maxChars` (60) ends with an ellipsis. Ink `#2b211c` on cream
-`#fff4e3` (contrast over 7:1), system fonts only.
+The sign is the wooden board of garden-sign T2 (see
+`docs/world-garden-sign.md`). Flip one value, `GARDEN_SIGN.status` in
+`src/lib/world/garden.ts`: `"open"` paints OPEN TO WORK with a green
+lantern, `"busy"` paints BACK SOON with an amber one. The rotating line's
+messages are `SIGN_MESSAGES` in `src/lib/world/garden-sign.ts`. Ink
+`#2b211c` on cream `#fff4e3` (contrast over 7:1), system fonts only.
 
 ### Layout, materials and light
 

@@ -1,0 +1,179 @@
+/* The garden sign's compact card (garden-sign T2, design/garden-sign/
+   01-wooden-board.html): the case-story card family (case-story.css
+   supplies the panel, kicker, actions, focus rings, the card motion and the
+   footprint the camera frames around). The kicker carries the status on
+   the right, a monogram beside the name, the availability pill (emerald dot
+   open, pinging, hollow muted dot busy), the core stack chips and the
+   links in two columns, LinkedIn filled. Tokens: design/system.md. */
+
+.case-story.sign-card {
+  /* No collection rail below it, so it may run a little taller. */
+  max-height: calc(100% - 64px);
+}
+
+.sign-card-kicker {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.sign-card[data-status="busy"] .sign-card-status {
+  color: hsl(var(--muted-foreground));
+}
+
+.sign-card-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+.sign-card-avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 50%;
+  background: hsl(var(--secondary) / 0.5);
+  font:
+    600 16px / 20px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+}
+.case-story.sign-card h2 {
+  font-size: 24px;
+  line-height: 30px;
+}
+
+.sign-card-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 4px 10px;
+  border: 1px solid rgb(16 185 129 / 0.4);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+}
+.sign-card-pill::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+}
+.sign-card[data-status="busy"] .sign-card-pill {
+  border-color: hsl(var(--border));
+}
+.sign-card[data-status="busy"] .sign-card-pill::before {
+  box-sizing: border-box;
+  border: 2px solid hsl(var(--muted-foreground));
+  background: transparent;
+}
+
+.sign-card-summary {
+  margin: 12px 0;
+  color: hsl(var(--muted-foreground));
+}
+.sign-card-city {
+  margin: 0 0 12px;
+}
+
+.sign-card-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sign-card-chips li {
+  padding: 2px 8px;
+  border: 1px solid rgb(16 185 129 / 0.4);
+  border-radius: var(--radius-md);
+  background: hsl(var(--background));
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.sign-card-links {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 12px 0 8px;
+}
+.sign-card-links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-md);
+  color: hsl(var(--foreground));
+  font-weight: 500;
+  text-decoration: none;
+}
+.sign-card-links a:hover {
+  background: hsl(var(--accent));
+}
+.sign-card-links a:first-child {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+.sign-card-links a:first-child:hover {
+  background: hsl(var(--primary) / 0.9);
+}
+
+.sign-card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.sign-card-actions button {
+  justify-content: center;
+}
+.case-story-actions .sign-card-portfolio {
+  border-color: hsl(var(--ring));
+  background: hsl(var(--secondary));
+}
+
+@media (max-width: 700px) {
+  .case-story.sign-card {
+    max-height: 45vh;
+  }
+  .sign-card-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+  }
+  .case-story.sign-card h2 {
+    font-size: 20px;
+    line-height: 26px;
+  }
+  .sign-card-links,
+  .sign-card-actions {
+    grid-template-columns: 1fr;
+  }
+}
+/* Open: the dot pings softly, like the homepage's Available badge. */
+.sign-card[data-status="open"] .sign-card-pill::before {
+  animation: sign-card-ping 2s ease-out infinite;
+}
+@keyframes sign-card-ping {
+  from {
+    box-shadow: 0 0 0 0 rgb(16 185 129 / 0.5);
+  }
+  to {
+    box-shadow: 0 0 0 6px rgb(16 185 129 / 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sign-card[data-status] .sign-card-pill::before {
+    animation: none;
+  }
+}

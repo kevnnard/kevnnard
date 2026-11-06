@@ -12,10 +12,8 @@ import {
 import { flowerLayout } from "../../src/lib/world/flowers.ts";
 import {
   clearOfGarden,
-  fitSignText,
   GARDEN_FOOTPRINTS,
   GARDEN_PROPS,
-  GARDEN_SIGN,
   gardenParts,
   groundY,
   LANTERN_FIXTURES,
@@ -25,10 +23,8 @@ import {
   lanternLevel,
   lanternParts,
   mailboxParts,
-  normalizeSignText,
   PATH_STONES,
   pathMesh,
-  SIGN_TEXT_BOX,
   STONE,
   signParts,
   stoneOutline,
@@ -476,59 +472,5 @@ describe("garden props", () => {
     const parts = gardenParts();
     const materials = new Set(parts.map((p) => p.material));
     assert.ok(materials.size <= 6, [...materials].join());
-  });
-});
-
-describe("garden sign text (one string to edit)", () => {
-  // A monospace stand-in for canvas measureText: 0.6 em per character.
-  const measure = (line: string, size: number) => line.length * size * 0.6;
-
-  it("defaults to OPEN TO WORK, in high contrast", () => {
-    assert.equal(GARDEN_SIGN.text, "OPEN TO WORK");
-    const luminance = (hex: string) => {
-      const [r, g, b] = [1, 3, 5]
-        .map((i) => Number.parseInt(hex.slice(i, i + 2), 16) / 255)
-        .map((c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
-      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-    };
-    const [hi, lo] = [luminance(GARDEN_SIGN.board), luminance(GARDEN_SIGN.ink)];
-    assert.ok((hi + 0.05) / (lo + 0.05) >= 7, "AAA contrast");
-  });
-
-  it("fits the default text big, on at most two lines", () => {
-    const layout = fitSignText(GARDEN_SIGN.text, measure);
-    assert.ok(layout.lines.length >= 1 && layout.lines.length <= 2);
-    assert.equal(layout.lines.join(" "), "OPEN TO WORK");
-    assert.ok(layout.fontSize >= 90, `${layout.fontSize}px`);
-    for (const line of layout.lines)
-      assert.ok(measure(line, layout.fontSize) <= SIGN_TEXT_BOX.width);
-  });
-
-  it("wraps and shrinks longer text inside the box", () => {
-    const text = "Available for freelance and full time roles";
-    const layout = fitSignText(text, measure);
-    assert.ok(layout.lines.length <= SIGN_TEXT_BOX.maxLines);
-    assert.ok(layout.fontSize >= SIGN_TEXT_BOX.minSize);
-    assert.ok(
-      layout.lines.length * layout.fontSize * SIGN_TEXT_BOX.lineHeight <=
-        SIGN_TEXT_BOX.height + EPS,
-    );
-    for (const line of layout.lines)
-      assert.ok(measure(line, layout.fontSize) <= SIGN_TEXT_BOX.width);
-    assert.equal(layout.lines.join(" "), text);
-  });
-
-  it("clamps overlong text and breaks words that never fit", () => {
-    const long = "x".repeat(400);
-    assert.ok(
-      Array.from(normalizeSignText(long)).length <= GARDEN_SIGN.maxChars,
-    );
-    assert.ok(normalizeSignText(long).endsWith("…"));
-    assert.equal(normalizeSignText("  open \n to   work "), "open to work");
-    const layout = fitSignText(long, measure);
-    assert.ok(layout.lines.length <= SIGN_TEXT_BOX.maxLines);
-    for (const line of layout.lines)
-      assert.ok(measure(line, layout.fontSize) <= SIGN_TEXT_BOX.width);
-    assert.deepEqual(fitSignText("   ", measure).lines, []);
   });
 });

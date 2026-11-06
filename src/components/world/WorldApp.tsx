@@ -30,6 +30,8 @@ import {
   type InspectItemId,
   isDeskItemId,
 } from "@/lib/world/display-cases.ts";
+import { GARDEN_SIGN } from "@/lib/world/garden.ts";
+import { SIGN_PROFILE } from "@/lib/world/garden-sign.ts";
 import {
   DEFAULT_LIGHTS,
   type LightId,
@@ -91,6 +93,7 @@ import "./world-entry-gate.css";
 import type { MonitorTerminal } from "./MonitorScreen";
 import type { PortraitControl } from "./PortraitScreen";
 import { ScenePanel } from "./ScenePanel";
+import SignCard from "./SignCard";
 import SpeakerBar from "./SpeakerBar";
 import type { SpeakerControl } from "./SpeakerZone";
 import TerminalMonitor, { TERMINAL_CONTENT } from "./TerminalMonitor";
@@ -932,6 +935,12 @@ export default function WorldApp() {
     CHERRY_STORY,
     reducedMotion,
   );
+  // The garden sign's compact card (garden-sign T2), opened from the yard.
+  const signCards = useCardPresence(
+    cardsShown && galleryCase === "sign" ? "sign" : null,
+    SIGN_PROFILE,
+    reducedMotion,
+  );
 
   if (!webgl) {
     return (
@@ -990,6 +999,7 @@ export default function WorldApp() {
               galleryCase={galleryCase}
               galleryStory={
                 galleryCase === "cherry" ||
+                galleryCase === "sign" ||
                 deskProduct !== null ||
                 deskStory !== null ||
                 (caseStory !== null && storyOpen)
@@ -1085,6 +1095,17 @@ export default function WorldApp() {
           key={card.key}
           story={card.value}
           onClose={() => setGalleryCase(null)}
+          state={card.state}
+          onMotionEnd={card.onMotionEnd}
+        />
+      ))}
+      {signCards.map((card) => (
+        <SignCard
+          key={card.key}
+          profile={card.value}
+          status={GARDEN_SIGN.status}
+          onClose={() => setGalleryCase(null)}
+          onPortfolio={enter}
           state={card.state}
           onMotionEnd={card.onMotionEnd}
         />

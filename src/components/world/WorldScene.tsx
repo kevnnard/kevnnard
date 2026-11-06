@@ -122,6 +122,12 @@ import {
 } from "@/lib/world/palette.ts";
 import { portraitFocus } from "@/lib/world/portrait.ts";
 import { seededRandom } from "@/lib/world/random.ts";
+import {
+  signLeaveAt,
+  signShotAt,
+  signShotProgress,
+  signShotShift,
+} from "@/lib/world/sign-shot.ts";
 import { lensKeeper, speakerFocus } from "@/lib/world/speaker.ts";
 import { tvCameraFocus } from "@/lib/world/tv-focus.ts";
 import { normalizeWheel, wheelDolly } from "@/lib/world/wheel.ts";
@@ -357,7 +363,12 @@ function SceneCanvas({
         fallback={
           <>
             <House reducedMotion={reducedMotion} />
-            <Garden hours={hours} power={power} />
+            <Garden
+              hours={hours}
+              power={power}
+              reducedMotion={reducedMotion}
+              desk={desk}
+            />
             <Setup
               hours={hours}
               reducedMotion={reducedMotion}
@@ -518,7 +529,13 @@ function TexturedHouse({
   return (
     <>
       <House reducedMotion={reducedMotion} maps={maps} />
-      <Garden hours={hours} maps={maps} power={power} />
+      <Garden
+        hours={hours}
+        maps={maps}
+        power={power}
+        reducedMotion={reducedMotion}
+        desk={desk}
+      />
       <Setup
         hours={hours}
         maps={maps}
@@ -741,8 +758,8 @@ interface CinematicShot {
 
 /**
  * The desk things approached by an eased dolly with an arc and a narrowing
- * lens, played in and out: the coffee mug (coffee-card T1) and the keyboard
- * (keyboard-card T2). Cherry's (dog-rig T3) depends on the day's spot, so
+ * lens, played in and out: the coffee mug (coffee-card T1), the keyboard
+ * (keyboard-card T2) and the garden sign (garden-sign T2). Cherry's (dog-rig T3) depends on the day's spot, so
  * GuidedCamera builds it with cherryShot.
  */
 const CINEMATIC_SHOTS: Partial<Record<InspectItemId, CinematicShot>> = {
@@ -757,6 +774,12 @@ const CINEMATIC_SHOTS: Partial<Record<InspectItemId, CinematicShot>> = {
     leaveAt: keyboardLeaveAt,
     progress: keyboardShotProgress,
     shift: keyboardShotShift,
+  },
+  sign: {
+    shotAt: signShotAt,
+    leaveAt: signLeaveAt,
+    progress: signShotProgress,
+    shift: signShotShift,
   },
 };
 

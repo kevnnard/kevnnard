@@ -1,0 +1,28 @@
+{
+  "title": "Garden sign",
+  "brief": "Redesign of the /world front-garden sign. Each artboard shows (a) the sign in the garden with availability (Open to work / Busy), the owner's role and its rotating messages, by day and night, and (b) the click close-up: the sign on the left and a side card in the accepted case-story card family with profile, availability, core stack and contact actions. Content comes only from the site copy; missing items (email, home city) are marked to fill. Toggles: availability, day/night, pause, next; URL hash presets such as #night,busy.",
+  "feature": "odd/tasks/garden-sign.md",
+  "artboards": [
+    {
+      "file": "01-wooden-board.html",
+      "title": "Wooden board, upgraded",
+      "tradeoff": "Belongs to the cottage garden and reads as hand-made (painted plank, lantern green when open, amber when busy, flip-tile line); the face holds only one rotating line besides status and role, so stack and links wait for the click.",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "02-neon-ticker.html",
+      "title": "Neon sign with LED ticker",
+      "tradeoff": "Strongest night presence, readable from across the island, and the ticker carries every message in one 25 s loop; by day the tubes wash out, a moving line is harder to read, and it needs emissive glow/bloom in the 3D scene.",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "03-eink-kiosk.html",
+      "title": "Standing e-ink kiosk",
+      "tradeoff": "Most legible by day and night, and it shares the card's type, pill and labels, so sign and card read as one UI; it is the least garden-like object (a screen on a post in a cottage garden).",
+      "width": 1440,
+      "height": 900
+    }
+  ]
+}

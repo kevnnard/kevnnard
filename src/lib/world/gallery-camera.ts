@@ -14,6 +14,7 @@ import {
 import { KATANA_CENTRE, KATANA_EYE_OFFSET } from "./katana-shelf.ts";
 import { KEYBOARD_VIEW } from "./keyboard-shot.ts";
 import { SHELF_VIEW } from "./shelf.ts";
+import { SIGN_VIEW } from "./sign-shot.ts";
 
 /** Eye height above the model's centre: level with it, just over the middle. */
 const EYE_LIFT = 0.05;
@@ -63,12 +64,13 @@ function galleryView(id: GalleryItemId): {
 }
 
 /**
- * Any inspected thing's view: a gallery item's, a desk thing's, or
- * Cherry's at her first spot (the scene frames her at the day's spot
- * through cherry-shot.ts).
+ * Any inspected thing's view: a gallery item's, a desk thing's, the
+ * garden sign's, or Cherry's at her first spot (the scene frames her at
+ * the day's spot through cherry-shot.ts).
  */
 function inspectView(id: InspectItemId): ReturnType<typeof galleryView> {
   if (id === "coffee") return COFFEE_VIEW;
+  if (id === "sign") return SIGN_VIEW;
   if (id === "cherry") return cherryView(CHERRY_SPOTS[0]);
   return isDeskItemId(id) ? KEYBOARD_VIEW : galleryView(id);
 }

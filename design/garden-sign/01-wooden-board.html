@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Garden sign · 01 Wooden board, upgraded</title>
+<style>
+  /* UI tokens: design/system.md. Scene materials (wood, paint, lantern, grass,
+     stones, sky) come from src/lib/world/garden.ts (GARDEN_SIGN, GARDEN_COLORS)
+     and src/lib/world/palette.ts (PALETTE, PASTEL_SKY); they never style UI. */
+  :root {
+    --bg: #09090b; --surface: #18181b; --panel: #27272a; --fg: #fafafa;
+    --muted: #a1a1aa; --ring: #d4d4d8; --signal: #10b981;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    /* scene */
+    --sky: #fff2e6; --grass: #9ccf7c; --pad: #efdcc0; --stone: #cfc6ba;
+    --post: #c98d62; --board: #eabd8e; --paint: #fff4e3; --ink: #2b211c; --rule: #b9675a;
+    --iron: #3d3532; --brass: #d9a95b; --lamp: #ffc27a; --mailbox: #8fbfae; --flag: #e08b78;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; width: 1440px; height: 900px; overflow: hidden; background: var(--bg); color: var(--fg); font: 14px/20px var(--sans); }
+  a:focus-visible, button:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; }
+
+  header { position: absolute; left: 0; right: 0; top: 0; height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 0 32px; border-bottom: 1px solid var(--panel); }
+  .kicker { margin: 0; font: 12px/16px var(--mono); color: var(--signal); letter-spacing: 0.08em; }
+  h1 { margin: 2px 0 0; font-size: 20px; line-height: 28px; font-weight: 600; }
+  .tradeoff { margin: 0; max-width: 520px; color: var(--muted); font-size: 12px; line-height: 16px; }
+  .controls { display: flex; gap: 12px; }
+  .seg { display: flex; gap: 4px; padding: 4px; border: 1px solid var(--panel); border-radius: 8px; }
+  .seg button, .tool { min-height: 32px; padding: 6px 12px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--muted); font: 500 12px/16px var(--sans); cursor: pointer; }
+  .seg button:hover, .tool:hover { background: var(--panel); color: var(--fg); }
+  .seg button[aria-pressed="true"] { border-color: rgba(16,185,129,0.4); background: var(--panel); color: var(--fg); }
+  .tool { border-color: var(--panel); }
+
+  main { position: absolute; left: 32px; right: 32px; top: 92px; bottom: 24px; display: grid; grid-template-columns: 560px 1fr; gap: 24px; }
+  section > h2, .label { display: flex; justify-content: space-between; margin: 0 0 8px; font: 12px/16px var(--mono); color: var(--muted); letter-spacing: 0.08em; }
+  section > h2 b, .label b { color: var(--fg); font-weight: 500; }
+
+  .scene { position: relative; overflow: hidden; border: 1px solid var(--panel); border-radius: 12px; background: var(--sky); }
+  .garden-view { height: 520px; }
+  .garden { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .night-veil { position: absolute; inset: 0; background: rgba(9,9,11,0.8); opacity: 0; }
+  body[data-time="night"] .night-veil { opacity: 1; }
+  .moon { opacity: 0; }
+  body[data-time="night"] .moon { opacity: 0.8; }
+  .tag { position: absolute; left: 12px; top: 12px; padding: 4px 8px; border: 1px solid var(--panel); border-radius: 6px; background: var(--bg); color: var(--fg); font: 12px/16px var(--mono); }
+  .hint { position: absolute; left: 330px; top: 30px; display: flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid var(--panel); border-radius: 6px; background: var(--bg); color: var(--fg); font: 12px/16px var(--sans); }
+  .hint::before { content: ""; width: 8px; height: 8px; border: 2px solid var(--signal); border-radius: 50%; }
+
+  /* ---------- The sign ---------- */
+  .sign { position: absolute; width: 400px; height: 430px; }
+  .garden-view .sign { left: 80px; top: 72px; }
+  .post { position: absolute; bottom: 0; width: 22px; height: 340px; border-radius: 4px; background: var(--post); }
+  .post.l { left: 46px; } .post.r { right: 46px; }
+  .cap { position: absolute; left: 22px; right: 22px; top: 14px; height: 18px; border-radius: 4px; background: var(--rule); }
+  .board { position: absolute; left: 0; right: 0; top: 30px; height: 236px; border-top: 14px solid var(--post); border-bottom: 14px solid var(--post); border-radius: 6px; background: var(--board); }
+  body[data-time="night"] .board { filter: brightness(0.9); }
+  .screw { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: var(--brass); }
+  .screw.a { left: 8px; top: 8px; } .screw.b { right: 8px; top: 8px; } .screw.c { left: 8px; bottom: 8px; } .screw.d { right: 8px; bottom: 8px; }
+  .face { position: absolute; inset: 14px 22px; display: flex; flex-direction: column; justify-content: center; gap: 8px; padding: 12px 16px; border: 2px solid var(--rule); border-radius: 4px; background: var(--paint); color: var(--ink); text-align: center; }
+  .face .status { margin: 0; font-size: 36px; line-height: 44px; white-space: nowrap; font-weight: 800; letter-spacing: 0.04em; }
+  .face .who { margin: 0; font-size: 14px; line-height: 20px; font-weight: 600; }
+  .face .who span { color: var(--rule); }
+  .tiles { position: relative; height: 40px; overflow: hidden; border-radius: 4px; background: var(--ink); perspective: 300px; }
+  .tiles::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(9,9,11,0.8); }
+  .tile-text { display: block; color: var(--paint); font: 600 16px/40px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; transform-origin: 50% 50%; transition: transform 150ms ease-in, opacity 150ms ease-in; }
+  .tile-text.out { transform: rotateX(90deg); opacity: 0; }
+
+  /* Lantern on a bracket from the right post */
+  .bracket { position: absolute; right: 12px; top: 280px; width: 46px; height: 6px; border-radius: 3px; background: var(--iron); }
+  .lantern { position: absolute; right: 0; top: 290px; width: 34px; height: 52px; padding: 6px 5px; border-radius: 6px 6px 4px 4px; background: var(--iron); }
+  .lantern::before { content: ""; position: absolute; left: 12px; top: -6px; width: 10px; height: 6px; border-radius: 3px 3px 0 0; background: var(--brass); }
+  .glass { display: block; width: 100%; height: 100%; border-radius: 3px; background: var(--signal); box-shadow: 0 0 16px 4px rgba(16,185,129,0.4); }
+  body[data-time="night"] .glass { box-shadow: 0 0 40px 18px rgba(16,185,129,0.4); }
+  body[data-status="busy"] .glass { background: var(--lamp); box-shadow: 0 0 16px 4px rgba(255,194,122,0.4); }
+  body[data-status="busy"][data-time="night"] .glass { box-shadow: 0 0 40px 18px rgba(255,194,122,0.4); }
+  .pool { position: absolute; left: 30px; right: 30px; bottom: -18px; height: 60px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,194,122,0.4), transparent); opacity: 0; }
+  body[data-time="night"] .pool { opacity: 1; }
+
+  /* ---------- Message frames ---------- */
+  .frames-wrap { margin-top: 16px; }
+  .frames { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .frames li { padding: 8px; border: 1px solid var(--panel); border-radius: 8px; background: rgba(39,39,42,0.5); }
+  .frames li[aria-current="true"] { border-color: var(--signal); }
+  .mini { display: grid; place-items: center; height: 56px; border: 2px solid var(--rule); border-radius: 4px; background: var(--paint); }
+  .mini span { display: block; width: calc(100% - 12px); padding: 4px; border-radius: 3px; background: var(--ink); color: var(--paint); font: 600 10px/14px var(--mono); text-align: center; text-transform: uppercase; }
+  .frames b { display: block; margin-top: 8px; font: 12px/16px var(--mono); color: var(--muted); }
+  .frames p { margin: 0; font-size: 12px; line-height: 16px; }
+  .fill { color: var(--muted); }
+  .frames-note { margin: 8px 0 0; color: var(--muted); font-size: 12px; line-height: 16px; }
+
+  /* ---------- Close-up ---------- */
+  .closeup { height: 752px; background: linear-gradient(180deg, var(--sky) 0%, var(--sky) 62%, var(--grass) 62%); }
+  .closeup .sign { left: 8px; top: 170px; transform: scale(0.84); transform-origin: 0 0; }
+  .card { position: absolute; top: 16px; right: 16px; bottom: 16px; width: 400px; overflow: hidden; padding: 20px; border: 1px solid var(--panel); border-radius: 12px; background: rgba(9,9,11,0.9); }
+  .card .kicker { display: flex; justify-content: space-between; }
+  body[data-status="busy"] .card .kicker span:last-child { color: var(--muted); }
+  .profile { display: flex; gap: 12px; align-items: center; margin-top: 12px; }
+  .avatar { flex: none; display: grid; place-items: center; width: 52px; height: 52px; border: 1px solid var(--panel); border-radius: 50%; background: var(--surface); font: 600 16px/20px var(--mono); }
+  .card h2 { margin: 0; font-size: 24px; line-height: 30px; font-weight: 600; }
+  .card .sub { margin: 0; color: var(--muted); }
+  .pill { display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; padding: 4px 10px; border: 1px solid rgba(16,185,129,0.4); border-radius: 6px; font-size: 12px; line-height: 16px; font-weight: 500; }
+  .pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--signal); }
+  body[data-status="busy"] .pill { border-color: var(--panel); }
+  body[data-status="busy"] .pill::before { background: transparent; border: 2px solid var(--muted); }
+  .lede { margin: 12px 0; color: var(--muted); }
+  .facts { display: grid; gap: 8px; margin: 0 0 12px; }
+  .block { padding: 10px 12px; border: 1px solid var(--panel); border-radius: 8px; background: rgba(39,39,42,0.5); }
+  .block h3 { margin: 0 0 6px; font: 12px/16px var(--mono); color: var(--muted); letter-spacing: 0.06em; font-weight: 400; }
+  .block ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+  .block li small { display: block; color: var(--muted); font-size: 12px; line-height: 16px; }
+  .todo { display: inline-block; padding: 0 6px; border: 1px dashed var(--muted); border-radius: 4px; color: var(--muted); font: 12px/18px var(--mono); }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chips span { padding: 2px 8px; border: 1px solid var(--panel); border-radius: 6px; background: var(--surface); font-size: 12px; line-height: 16px; }
+  .chips span.core { border-color: rgba(16,185,129,0.4); }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 36px; padding: 8px 12px; border: 1px solid var(--panel); border-radius: 6px; background: transparent; color: var(--fg); font: 500 14px/20px var(--sans); text-decoration: none; }
+  .btn:hover { background: var(--panel); }
+  .btn.primary { border-color: var(--fg); background: var(--fg); color: #18181b; }
+  .btn.primary:hover { background: rgba(250,250,250,0.9); }
+  .btn.missing { border-style: dashed; border-color: var(--muted); color: var(--muted); cursor: not-allowed; }
+  .back { margin-top: 8px; width: 100%; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tile-text { transition: none; }
+  }
+</style>
+</head>
+<body data-status="open" data-time="day">
+<header>
+  <div>
+    <p class="kicker">GARDEN SIGN · DIRECTION 01</p>
+    <h1>Wooden board, upgraded</h1>
+  </div>
+  <p class="tradeoff">Tradeoff: belongs to the cottage garden and reads as hand-made; the painted face holds only one short line besides the status, so stack and links wait for the click.</p>
+  <div class="controls">
+    <div class="seg" role="group" aria-label="Availability">
+      <button type="button" data-set="status:open" aria-pressed="true">Open to work</button>
+      <button type="button" data-set="status:busy" aria-pressed="false">Busy</button>
+    </div>
+    <div class="seg" role="group" aria-label="Time of day">
+      <button type="button" data-set="time:day" aria-pressed="true">Day</button>
+      <button type="button" data-set="time:night" aria-pressed="false">Night</button>
+    </div>
+    <button class="tool" type="button" id="play" aria-pressed="false">Pause messages</button>
+    <button class="tool" type="button" id="next">Next message</button>
+  </div>
+</header>
+
+<main>
+  <section aria-labelledby="a-title">
+    <h2 id="a-title"><b>A · IN THE GARDEN</b><span>front garden, right of the stone path</span></h2>
+    <div class="scene garden-view">
+      <svg class="garden" viewBox="0 0 560 520" aria-hidden="true">
+        <circle class="moon" cx="470" cy="70" r="18" fill="#fafafa"/>
+        <ellipse cx="60" cy="350" rx="140" ry="90" fill="#9ccf7c" opacity="0.5"/>
+        <ellipse cx="300" cy="360" rx="180" ry="70" fill="#9ccf7c" opacity="0.4"/>
+        <ellipse cx="520" cy="340" rx="120" ry="100" fill="#9ccf7c" opacity="0.5"/>
+        <rect x="0" y="380" width="560" height="140" fill="#9ccf7c"/>
+        <ellipse cx="470" cy="420" rx="46" ry="12" fill="#cfc6ba"/>
+        <ellipse cx="430" cy="458" rx="54" ry="14" fill="#efdcc0"/>
+        <ellipse cx="490" cy="500" rx="62" ry="16" fill="#cfc6ba"/>
+        <ellipse cx="40" cy="430" rx="70" ry="34" fill="#18181b" opacity="0.2"/>
+        <ellipse cx="40" cy="420" rx="66" ry="30" fill="#9ccf7c"/>
+        <rect x="532" y="300" width="8" height="90" rx="3" fill="#c98d62"/>
+        <rect x="514" y="270" width="44" height="34" rx="8" fill="#8fbfae"/>
+        <rect x="552" y="262" width="4" height="22" fill="#e08b78"/>
+      </svg>
+      <div class="night-veil" aria-hidden="true"></div>
+      <span class="tag">DAY · 13:00</span>
+
+      <div class="sign" role="img" aria-label="Wooden garden sign. Open to work. Kevin Londoño, Software Engineer. A flip-tile line rotates messages. A lantern on the right post glows green while open.">
+        <span class="post l"></span><span class="post r"></span>
+        <span class="cap"></span>
+        <div class="board">
+          <span class="screw a"></span><span class="screw b"></span><span class="screw c"></span><span class="screw d"></span>
+          <div class="face">
+            <p class="status" data-status-text>OPEN TO WORK</p>
+            <p class="who">Kevin Londoño <span>·</span> Software Engineer</p>
+            <div class="tiles"><span class="tile-text" data-msg>TypeScript full-stack</span></div>
+          </div>
+        </div>
+        <span class="bracket"></span>
+        <span class="lantern"><span class="glass"></span></span>
+        <span class="pool"></span>
+      </div>
+      <span class="hint">Click the sign</span>
+    </div>
+
+    <div class="frames-wrap">
+      <h2 class="label"><b>ROTATING MESSAGES · FLIP-TILE, 3 S EACH</b><span>4 frames</span></h2>
+      <ol class="frames" aria-label="Messages the flip-tile line rotates through">
+        <li aria-current="true"><div class="mini" aria-hidden="true"><span>TypeScript full-stack</span></div><b>01 · ROLE</b><p>About me</p></li>
+        <li><div class="mini" aria-hidden="true"><span>Building Three Labs</span></div><b>02 · BUILDING</b><p>Current role</p></li>
+        <li><div class="mini" aria-hidden="true"><span>React · NestJS</span></div><b>03 · STACK</b><p>Skills, core</p></li>
+        <li><div class="mini" aria-hidden="true"><span>Based in · to fill</span></div><b>04 · BASED IN</b><p class="fill">Owner to fill</p></li>
+      </ol>
+      <p class="frames-note">Busy swaps the painted line to BACK SOON and the lantern to warm amber; the tiles keep rotating.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="b-title">
+    <h2 id="b-title"><b>B · CLICK CLOSE-UP</b><span>camera eases to the sign · card slides in</span></h2>
+    <div class="scene closeup">
+      <div class="night-veil" aria-hidden="true"></div>
+      <div class="sign" aria-hidden="true">
+        <span class="post l"></span><span class="post r"></span>
+        <span class="cap"></span>
+        <div class="board">
+          <span class="screw a"></span><span class="screw b"></span><span class="screw c"></span><span class="screw d"></span>
+          <div class="face">
+            <p class="status" data-status-text>OPEN TO WORK</p>
+            <p class="who">Kevin Londoño <span>·</span> Software Engineer</p>
+            <div class="tiles"><span class="tile-text" data-msg>TypeScript full-stack</span></div>
+          </div>
+        </div>
+        <span class="bracket"></span>
+        <span class="lantern"><span class="glass"></span></span>
+        <span class="pool"></span>
+      </div>
+
+      <article class="card" aria-labelledby="card-name">
+        <p class="kicker"><span>GARDEN SIGN</span><span data-kicker>OPEN TO WORK</span></p>
+        <div class="profile">
+          <span class="avatar" aria-hidden="true">KL</span>
+          <div>
+            <h2 id="card-name">Kevin Londoño</h2>
+            <p class="sub">KEVNNARD · Software Engineer</p>
+          </div>
+        </div>
+        <span class="pill" data-pill>Available for Projects</span>
+        <p class="lede">Software Engineer specialized in TypeScript full-stack, with six years shipping production software across web, mobile, and cloud.</p>
+        <div class="facts">
+          <div class="block">
+            <h3>NOW</h3>
+            <ul>
+              <li>Lead Software Engineer &amp; Founder<small>Three Labs S.A.S. · Remote</small></li>
+              <li>Software Engineer &amp; Founder<small>Kevnnard Labs · Remote</small></li>
+            </ul>
+          </div>
+          <div class="block">
+            <h3>BASED IN</h3>
+            <span class="todo">to fill</span>
+          </div>
+          <div class="block">
+            <h3>CORE STACK</h3>
+            <div class="chips">
+              <span class="core">TypeScript</span><span class="core">React</span><span class="core">Next.js</span><span class="core">React Native</span><span class="core">Node.js</span><span class="core">NestJS</span><span class="core">PostgreSQL</span><span class="core">Supabase</span><span class="core">AWS</span>
+            </div>
+          </div>
+        </div>
+        <div class="actions">
+          <a class="btn primary" href="#linkedin">LinkedIn</a>
+          <a class="btn" href="#github">GitHub</a>
+          <a class="btn" href="#cv-en">CV English</a>
+          <a class="btn" href="#cv-es">CV Español</a>
+          <span class="btn missing" aria-disabled="true">Email · to fill</span>
+          <button class="btn" type="button">Back to garden</button>
+        </div>
+      </article>
+    </div>
+  </section>
+</main>
+
+<script>
+  const MESSAGES = ["TypeScript full-stack", "Building Three Labs", "React · NestJS", "Based in · to fill"];
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const body = document.body;
+  let index = 0, timer = null;
+
+  function show(i) {
+    index = (i + MESSAGES.length) % MESSAGES.length;
+    document.querySelectorAll("[data-msg]").forEach((el) => {
+      if (reduce) { el.textContent = MESSAGES[index]; return; }
+      el.classList.add("out");
+      setTimeout(() => { el.textContent = MESSAGES[index]; el.classList.remove("out"); }, 150);
+    });
+    document.querySelectorAll(".frames li").forEach((li, n) => li.setAttribute("aria-current", String(n === index)));
+  }
+  function play(on) {
+    clearInterval(timer); timer = null;
+    if (on) timer = setInterval(() => show(index + 1), 3000);
+    const btn = document.getElementById("play");
+    btn.textContent = on ? "Pause messages" : "Play messages";
+    btn.setAttribute("aria-pressed", String(!on));
+  }
+  function applyState() {
+    const busy = body.dataset.status === "busy";
+    document.querySelectorAll("[data-status-text]").forEach((el) => { el.textContent = busy ? "BACK SOON" : "OPEN TO WORK"; });
+    document.querySelector("[data-kicker]").textContent = busy ? "BUSY" : "OPEN TO WORK";
+    document.querySelector("[data-pill]").textContent = busy ? "Busy · not taking new projects" : "Available for Projects";
+    document.querySelector(".tag").textContent = body.dataset.time === "night" ? "NIGHT · 23:00 · lanterns on" : "DAY · 13:00";
+  }
+  document.querySelectorAll("[data-set]").forEach((btn) => btn.addEventListener("click", () => {
+    const [key, value] = btn.dataset.set.split(":");
+    body.dataset[key] = value;
+    document.querySelectorAll(`[data-set^="${key}:"]`).forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+    applyState();
+  }));
+  document.getElementById("next").addEventListener("click", () => show(index + 1));
+  document.getElementById("play").addEventListener("click", () => play(timer === null));
+  // Preview states from the URL, e.g. #night,busy
+  location.hash.slice(1).split(",").forEach((v) => {
+    const btn = document.querySelector(`[data-set$=":${v}"]`);
+    if (btn) btn.click();
+  });
+  play(!reduce);
+</script>
+</body>
+</html>
