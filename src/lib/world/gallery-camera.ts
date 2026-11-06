@@ -10,7 +10,7 @@ import {
   isDeskItemId,
 } from "./display-cases.ts";
 import { KATANA_CENTRE, KATANA_EYE_OFFSET } from "./katana-shelf.ts";
-import { KEYBOARD } from "./setup.ts";
+import { KEYBOARD_VIEW } from "./keyboard-shot.ts";
 import { SHELF_VIEW } from "./shelf.ts";
 
 /** Eye height above the model's centre: level with it, just over the middle. */
@@ -33,17 +33,11 @@ export const STORY_CARD = {
 } as const;
 
 /**
- * The desk keyboard (keyboard-card T1): a still product shot from the
- * chair's side, 0.61 m out and about 49 degrees down at the board on its
- * mat, wide enough for the whole board left of the card at 16:10. The
- * ultrawide's bottom edge stays over the frame; the eye sits over the seat,
- * in front of the backrest.
+ * The desk keyboard (keyboard-card T1): the end pose of its cinematic
+ * product shot (keyboard-shot.ts, T2), a low 3/4 view from the typist's
+ * front-left, 0.7 m out and 27 degrees down, beside the chair.
  */
-export const KEYBOARD_VIEW = {
-  centre: KEYBOARD.center,
-  offset: [0.4, 0.46, 0] as Vec3,
-  fov: GUIDE.fov,
-} as const;
+export { KEYBOARD_VIEW };
 
 /** The inspected model's centre, the eye's offset from it and the lens. */
 function galleryView(id: GalleryItemId): {

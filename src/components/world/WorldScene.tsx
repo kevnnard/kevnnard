@@ -95,6 +95,12 @@ import {
   undersideMesh,
 } from "@/lib/world/island.ts";
 import {
+  keyboardLeaveAt,
+  keyboardShotAt,
+  keyboardShotProgress,
+  keyboardShotShift,
+} from "@/lib/world/keyboard-shot.ts";
+import {
   islandLayout,
   KIND_SPECS,
   type NatureKind,
@@ -707,6 +713,34 @@ const { ACTION } = CameraControlsImpl;
 
 type Pose = { position: Vector3Tuple; target: Vector3Tuple };
 
+/** A desk thing's cinematic move: its path in and out, timing and slide. */
+interface CinematicShot {
+  shotAt: (t: number, from: ShotPose, shift: number) => ShotPose;
+  leaveAt: (t: number, to: ShotPose, shift: number) => ShotPose;
+  progress: (elapsed: number, reduced: boolean, leaving?: boolean) => number;
+  shift: (width: number, aspect: number) => number;
+}
+
+/**
+ * The desk things approached by an eased dolly with an arc and a narrowing
+ * lens, played in and out: the coffee mug (coffee-card T1) and the keyboard
+ * (keyboard-card T2).
+ */
+const CINEMATIC_SHOTS: Partial<Record<InspectItemId, CinematicShot>> = {
+  coffee: {
+    shotAt: coffeeShotAt,
+    leaveAt: coffeeLeaveAt,
+    progress: coffeeShotProgress,
+    shift: coffeeShotShift,
+  },
+  keyboard: {
+    shotAt: keyboardShotAt,
+    leaveAt: keyboardLeaveAt,
+    progress: keyboardShotProgress,
+    shift: keyboardShotShift,
+  },
+};
+
 /**
  * Three-quarter home framing, 360° orbit around the house and close zoom; no
  * panning. With `focus` (T16) it saves the pose it had once, moves to the
@@ -762,7 +796,8 @@ function GuidedCamera({
   const focused = useRef(focus);
   const saved = useRef<Pose | null>(null);
   const lastGallery = useRef<InspectItemId | null>(null);
-  const coffeeFrom = useRef<ShotPose | null>(null);
+  // The room pose a cinematic desk shot leaves from and returns to.
+  const shotFrom = useRef<ShotPose | null>(null);
   const epoch = useRef(0);
   const lastHome = useRef(home);
   const arriveAt = closeUp === "tv" ? onTvArrive : onArrive;
@@ -804,30 +839,47 @@ function GuidedCamera({
     first.current = false;
     const recentered = lastHome.current !== home;
     lastHome.current = home;
-    // The coffee close-up is a cinematic move (coffee-card T1): an eased
-    // dolly with an arc and a narrowing lens, played in and out.
-    const wasCoffee = lastGallery.current === "coffee";
+    // The coffee and keyboard close-ups are cinematic moves (coffee-card
+    // T1, keyboard-card T2): an eased dolly with an arc and a narrowing
+    // lens, played in and out.
+    const shot = galleryCase ? CINEMATIC_SHOTS[galleryCase] : undefined;
+    const left = lastGallery.current
+      ? CINEMATIC_SHOTS[lastGallery.current]
+      : undefined;
     const cinematic =
-      animate && galleryCase === "coffee" && lastGallery.current !== "coffee";
+      animate && shot !== undefined && lastGallery.current !== galleryCase;
     lastGallery.current = galleryCase ?? null;
-    const coffeeShift = galleryStory
-      ? coffeeShotShift(viewportWidth, aspect)
-      : 0;
+    const shotShift = (item: CinematicShot) =>
+      galleryStory ? item.shift(viewportWidth, aspect) : 0;
     if (focus || galleryCase) {
       // Saved once per visit: resizing re-frames the close-up only.
       saved.current ??= {
         position: current.getPosition(new Vector3()).toArray(),
         target: current.getTarget(new Vector3()).toArray(),
       };
-      if (galleryCase === "coffee" && !focus) {
-        coffeeFrom.current ??= {
+      if (shot && !focus) {
+        shotFrom.current ??= {
           eye: saved.current.position as ShotPose["eye"],
           target: saved.current.target as ShotPose["target"],
           fov: camera.fov,
         };
-        const from = coffeeFrom.current;
+        // From the room on arrival; from wherever the camera is when it
+        // goes from one desk shot straight to another.
+        const from: ShotPose =
+          cinematic && left
+            ? {
+                eye: current
+                  .getPosition(new Vector3())
+                  .toArray() as ShotPose["eye"],
+                target: current
+                  .getTarget(new Vector3())
+                  .toArray() as ShotPose["target"],
+                fov: camera.fov,
+              }
+            : shotFrom.current;
+        const shift = shotShift(shot);
         const place = (t: number) => {
-          const pose = coffeeShotAt(t, from, coffeeShift);
+          const pose = shot.shotAt(t, from, shift);
           lens.focus(pose.fov);
           current.setLookAt(...pose.eye, ...pose.target, false);
           invalidate();
@@ -839,7 +891,7 @@ function GuidedCamera({
         }
         const start = performance.now();
         let frame = requestAnimationFrame(function step(now) {
-          const t = coffeeShotProgress((now - start) / 1000, false);
+          const t = shot.progress((now - start) / 1000, false);
           place(t);
           if (t < 1) frame = requestAnimationFrame(step);
           else if (epoch.current === run) arrive.current?.();
@@ -870,13 +922,14 @@ function GuidedCamera({
     }
     const back = recentered ? null : saved.current;
     saved.current = null;
-    const to = coffeeFrom.current;
-    coffeeFrom.current = null;
-    if (wasCoffee && animate && back && to) {
+    const to = shotFrom.current;
+    shotFrom.current = null;
+    if (left && animate && back && to) {
+      const shift = shotShift(left);
       const start = performance.now();
       let frame = requestAnimationFrame(function step(now) {
-        const t = coffeeShotProgress((now - start) / 1000, false, true);
-        const pose = coffeeLeaveAt(t, to, coffeeShift);
+        const t = left.progress((now - start) / 1000, false, true);
+        const pose = left.leaveAt(t, to, shift);
         lens.focus(pose.fov);
         current.setLookAt(...pose.eye, ...pose.target, false);
         invalidate();

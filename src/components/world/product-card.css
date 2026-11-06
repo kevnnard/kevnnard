@@ -1,66 +1,195 @@
-/* The desk product card (keyboard-card T1): the katana card's lo-fi console
-   (katana-story.css supplies the panel, kicker, title and footprint), with
-   the owner's one line, a short specs list and the shop link as the one
-   emerald control. No rail below it, so it may run a little taller. */
-.katana-story.product-card {
+/* The desk product card (keyboard-card T1, T2): the football helmet's story
+   card (case-story.css supplies the panel, kicker, head, blocks, actions,
+   focus rings and the footprint the camera frames around), with the
+   keyboard's own parts: the keycap emblem, the stats strip, the switch with
+   its figures, feel and sound, the keycap chips and the owner's reason.
+   Tokens: design/system.md. */
+
+/* No collection rail below the desk's card, so it may run a little taller. */
+.case-story.product-card {
   max-height: calc(100% - 64px);
 }
-.product-card .product-card-line {
+.product-card-keycap {
+  flex: none;
+  width: 64px;
+  height: 64px;
+}
+.product-card-keycap path {
+  fill: none;
+  stroke: #10b981;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.product-card-keycap .legend {
+  stroke-width: 2.5;
+}
+
+/* The stats strip: three cells in a row, divided by hairlines. */
+.product-card-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 16px 0 0;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-lg);
+}
+.product-card-stats div {
+  padding: 10px 12px;
+}
+.product-card-stats div + div {
+  border-left: 1px solid hsl(var(--border));
+}
+.product-card-stats dt,
+.product-card-figures dt,
+.product-card-sound span,
+.product-card-why h3 {
+  color: hsl(var(--muted-foreground));
+  font:
+    12px / 16px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.product-card-stats dd {
+  margin: 2px 0 0;
+  font-weight: 600;
+}
+
+/* The switch: its name, four figures, how it feels and how it sounds. */
+.case-story-block.product-card-switch,
+.case-story-block.product-card-caps {
   margin-top: 8px;
-  color: var(--katana-soft);
 }
-.product-card-specs {
-  margin: 14px 0 0;
-  padding: 12px 0 0;
-  border-top: 1px solid var(--katana-line);
-  list-style: none;
-  color: var(--katana-soft);
-  font-size: 13px;
+.product-card-stats + .product-card-switch {
+  margin-top: 16px;
 }
-.product-card-specs li {
-  position: relative;
-  padding-left: 18px;
+.product-card-switch p {
+  margin: 0;
 }
-.product-card-specs li + li {
-  margin-top: 4px;
+.product-card-switch-name b {
+  font-weight: 600;
 }
-.product-card-specs li::before {
-  content: "›";
-  position: absolute;
-  left: 2px;
-  color: var(--katana-accent);
-}
-.product-card-actions {
+.product-card-figures {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
-  padding-top: 16px;
-  border-top: 1px solid var(--katana-line);
+  margin: 10px 0 0;
 }
-.product-card-actions .product-card-link {
+.product-card-figures dt {
+  font-size: 11px;
+}
+.product-card-figures dd {
+  margin: 2px 0 0;
+  font-weight: 600;
+}
+.product-card-switch .product-card-feel {
+  margin-top: 10px;
+  color: hsl(var(--muted-foreground));
+}
+.product-card-sound {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid hsl(var(--border));
+}
+.product-card-wave {
+  flex: none;
+  width: 72px;
+  height: 24px;
+}
+.product-card-wave path {
+  fill: none;
+  stroke: #10b981;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.product-card-sound span {
+  display: block;
+}
+
+/* The keycaps as chips, with a swatch for the coloured ones. */
+.product-card-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.product-card-chips li {
   display: inline-flex;
   align-items: center;
-  min-height: 40px;
-  padding: 8px 14px;
-  border: 1px solid rgb(16 185 129 / 0.6);
-  border-radius: 6px;
-  background: rgb(16 185 129 / 0.12);
-  color: var(--katana-fg);
-  font: inherit;
-  text-decoration: none;
-  touch-action: manipulation;
-  transition: background-color 150ms;
+  gap: 6px;
+  min-height: 28px;
+  padding: 4px 10px;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  line-height: 16px;
 }
-.product-card-actions a.product-card-link:hover {
-  background: rgb(16 185 129 / 0.24);
+.product-card-chips .swatch {
+  width: 10px;
+  height: 10px;
+  border: 1px solid hsl(var(--muted-foreground) / 0.6);
+  border-radius: 2px;
 }
-.product-card-actions button.product-card-link:disabled {
-  border-color: var(--katana-line);
-  background: rgb(9 9 11 / 0.2);
-  color: var(--katana-soft);
+
+/* The owner's reason, above the actions. */
+.product-card-why {
+  margin: 16px 0 12px;
+  padding: 12px;
+  border-left: 2px solid #10b981;
+  background: hsl(var(--secondary) / 0.5);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+}
+.product-card-why h3 {
+  margin: 0 0 4px;
+}
+.product-card-why p {
+  margin: 0;
+}
+.case-story-actions .product-card-soon:disabled {
+  color: hsl(var(--muted-foreground));
   cursor: not-allowed;
   opacity: 0.7;
 }
+
+@media (max-width: 1100px) {
+  .product-card-stats div {
+    padding: 8px 10px;
+  }
+  .product-card-stats dd {
+    font-size: 13px;
+  }
+  .product-card-figures {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 @media (max-width: 700px) {
-  .katana-story.product-card {
+  .case-story.product-card {
     max-height: 45vh;
+  }
+  .product-card-keycap {
+    width: 44px;
+    height: 44px;
+  }
+  .product-card-stats {
+    grid-template-columns: 1fr;
+  }
+  .product-card-stats div + div {
+    border-top: 1px solid hsl(var(--border));
+    border-left: 0;
+  }
+}
+/* The card has no motion of its own; keep any inherited transitions off. */
+@media (prefers-reduced-motion: reduce) {
+  .product-card a,
+  .product-card button {
+    transition: none;
   }
 }

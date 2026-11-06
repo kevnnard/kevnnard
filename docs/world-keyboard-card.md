@@ -1,14 +1,15 @@
 # Keyboard product card (/world)
 
-Click the keyboard on the desk. The camera moves to a still shot of it and a side card shows the owner's real keyboard, with a link to buy it on Amazon. Spec: `odd/tasks/keyboard-card.md` (T1, S1).
+Click the keyboard on the desk. The camera glides in to a product shot of it, like the coffee mug's, and a side card tells the owner's real keyboard: its switch, sound, keycaps and why he chose it, with a link to buy it on Amazon. Spec: `odd/tasks/keyboard-card.md` (T1/S1, T2/S2).
 
 ## What it reuses
 
 | Piece | Where | How the keyboard uses it |
 | --- | --- | --- |
-| Inspection camera | `src/lib/world/gallery-camera.ts` | `KEYBOARD_VIEW` joins `galleryView`, so `galleryCaseFocus` and `galleryStoryShift` frame it like a gallery item |
+| Inspection camera | `src/lib/world/gallery-camera.ts` | `KEYBOARD_VIEW` (the shot's end pose, from `keyboard-shot.ts`) joins `galleryView`, so `galleryCaseFocus` and `galleryStoryShift` frame it like a gallery item |
+| Cinematic move | `src/lib/world/coffee-shot.ts` | `keyboard-shot.ts` mirrors it; `WorldScene`'s `CINEMATIC_SHOTS` map plays either |
 | Inspection state | `WorldApp.tsx` `galleryCase` | Now an `InspectItemId` (`GalleryItemId \| DeskItemId`); Esc, the hidden HUD and the camera lock work as they already did |
-| Lo-fi card look | `katana-story.css` | `ProductCard.tsx` uses the katana card's panel and footprint, plus a small `product-card.css` |
+| Story card look | `case-story.css` | `ProductCard.tsx` uses the football helmet's / coffee's card panel, head, blocks, actions and footprint, plus `product-card.css` |
 | Click gate | the monitor's `canEnterMonitor` and an occluder raycast | `DeskHit` in `Setup.tsx` |
 
 ## The keyboard itself
@@ -31,27 +32,36 @@ The desk board is the owner's NuPhy Air75 V2 (black), rebuilt from the official 
 
 ## Data
 
-`src/lib/world/desk-products.ts` holds the typed `DESK_PRODUCTS.keyboard` entry. It has the kicker, title, the owner's one line, specs, and `link: { label, url, affiliate }`.
+`src/lib/world/desk-products.ts` holds the typed `DESK_PRODUCTS.keyboard` entry: kicker, title, subtitle, a three-cell stats strip, the switch (name, type, feel, sound, figures), the keycap chips (with swatches), the owner's "why" and `link: { label, url, affiliate }`.
 
+- **Sources:** the Amazon listing for the owner's SKU [B0CMX8SLF6](https://www.amazon.com/dp/B0CMX8SLF6) (read 2026-11-05): "Gateron Moss Switch", the switch table "Moss (Tactile, 60gf) Pre-travel 1.7±0.4 mm, Total travel 3.0±0.2 mm, Operating force 60±15 gf, POM stem, long-pole, factory lubed", 84 keys, Bluetooth 5.1 / 2.4G / USB-C, PBT keycaps. nuphy.com sits behind a bot check.
+- **Ours, not sourced:** the plain-words feel and sound lines (the listing's review summary only calls the sound "gentle") and the "Why I chose it" paragraph, which the owner allowed us to invent (keyboard-card L2).
 - While `url` is `null`, the card shows a disabled "Link coming soon" button.
 - When `affiliate` is `true`, `rel` also gets `sponsored`. The current link is a plain product link (`affiliate: false`).
-- The card has no product photo and makes no third-party requests. The 3D keyboard is the visual.
+- The card has no product photo and makes no third-party requests. The 3D keyboard is the visual; the keycap emblem and the keystroke trace are drawn SVG.
+
+## Card
+
+Top to bottom: kicker "DESK · KEYBOARD", title and subtitle with a keycap emblem, the stats strip (Layout, Profile, Connection), "Switches & sound" (Gateron Moss, four figures, feel, sound), "Keycaps" chips, "Why I chose it", then "View on Amazon" (new tab) and "Back to room" (focused on open). Breakpoints follow `case-story.css`: 500 px, 420 px under 1100 px, stacked above the board under 700 px. The card has no animation of its own.
 
 ## Camera
 
-`KEYBOARD_VIEW` is a fixed shot. Every target-relative offset below comes from `src/lib/world/gallery-camera.ts`.
+`keyboard-shot.ts` mirrors the coffee shot: `keyboardShotAt(t, from?, shift?)`, `keyboardLeaveAt` (the same path backwards), `keyboardShotProgress` (reduced motion jumps to the end, in and out) and `keyboardShotShift` (the card's slide).
 
 | Value | Number |
 | --- | --- |
-| Target | `KEYBOARD.center` (-0.58, 0.9665, -1.30) |
-| Eye offset | [0.40, 0.46, 0] |
-| Distance | 0.61 m |
-| Pitch | about 49° down |
-| Field of view | `GUIDE.fov` 35° |
+| Target | the board's cap tops (-0.58, 0.975, -1.30) |
+| Distance | 0.70 m |
+| Pitch | 27° down |
+| Azimuth | 45° from the chair side (+x) toward +z, a seated typist's front-left |
+| Lens | 35° to 30° during the move |
+| Move | 2.5 s in, 1.8 s out, cubic ease, a sideways bow of 10% of the travel (at most 0.3 m), the aim landing at 85% |
+| Eye offset | [0.441, 0.318, 0.441] |
 
-- **Eye position:** about (-0.18, 1.43, -1.30). That is over the seat and about 0.19 m in front of the chair pivot. It sits inside no desk part (checked against rotated bounds).
-- **What's in frame:** the whole 0.316 m board fits left of the 500 px card at 1440x900. The ultrawide's bottom edge stays above the frame.
-- **Shift with the card open:** screen right at the desk is world -z, so the board slides left of the card.
+- **Eye position:** about (-0.14, 1.29, -0.86). With the card open at 1440x900 it slides 0.11 m to (-0.06, 1.29, -0.94).
+- **Clearances (end pose, card open):** 0.14 m past the chair's whole box along z (the chair top is 1.38 m, above the eye), 0.76 m in front of the monitor, 0.34 m over the desk, inside no setup part. The default approach from behind the chair never enters a desk or chair part.
+- **What's in frame:** the whole board, turned to 3/4, fits left of the 500 px card at 1440x900.
+- **Going straight from the mug to the keyboard:** the move starts from the camera where it is, and leaving still returns to the room pose saved on arrival.
 
 ## Hitbox
 
@@ -86,9 +96,10 @@ The header is hidden while you inspect, so the card has its own "Back to room" b
 
 `tests/world/keyboard-card.test.ts` covers:
 
-- the data
+- the data, the switch facts, keycaps and the "why"
 - the desk-item guards
 - the framing and chair clearance
+- the cinematic shot: end pose, clearances, shift, eased arc and lens, reverse path, reduced motion
 - the shift
 - hitbox clearances
-- the wiring (`Setup`, both `Setup` branches in `WorldScene`, `WorldApp`, `ProductCard`)
+- the wiring (`Setup`, both `Setup` branches and `CINEMATIC_SHOTS` in `WorldScene`, `WorldApp`, `ProductCard`)
