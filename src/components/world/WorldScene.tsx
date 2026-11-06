@@ -480,7 +480,11 @@ function TexturedHouse({
         speakers={speakers}
         prepared={prepared}
       />
-      <Shelf maps={maps} />
+      <Shelf
+        maps={maps}
+        focused={galleryCase === "collection-shelf"}
+        onInspect={onInspectCase}
+      />
       <FloorLamp power={power} hours={hours} />
       <SofaLamps power={power} hours={hours} />
       <DisplayCases

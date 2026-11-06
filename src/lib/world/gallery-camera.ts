@@ -7,6 +7,7 @@ import {
   ITEM_FLOOR_Y,
 } from "./display-cases.ts";
 import { KATANA_CENTRE, KATANA_EYE_OFFSET } from "./katana-shelf.ts";
+import { SHELF_VIEW } from "./shelf.ts";
 
 /** Eye height above the model's centre: level with it, just over the middle. */
 const EYE_LIFT = 0.05;
@@ -27,18 +28,25 @@ export const STORY_CARD = {
   stackBelow: 700,
 } as const;
 
-/** The inspected model's centre and the eye's offset from it. */
-function galleryView(id: GalleryItemId): { centre: Vec3; offset: Vec3 } {
+/** The inspected model's centre, the eye's offset from it and the lens. */
+function galleryView(id: GalleryItemId): {
+  centre: Vec3;
+  offset: Vec3;
+  fov: number;
+} {
   // The katanas on the wall shelf (katana-wall-shelf T5): static, framed
   // from the room at their own level.
   if (id === "katana")
-    return { centre: KATANA_CENTRE, offset: KATANA_EYE_OFFSET };
+    return { centre: KATANA_CENTRE, offset: KATANA_EYE_OFFSET, fov: GUIDE.fov };
+  // The collection shelf (T15): static, the whole shelf from the room, with
+  // a wider lens so the eye stays clear of the sofa and the cases.
+  if (id === "collection-shelf") return SHELF_VIEW;
   const item = DISPLAY_CASES.find((caseItem) => caseItem.id === id);
   if (!item) throw new RangeError("Unknown display case");
   const [x, y, z] = item.base;
   const centre =
     y + ITEM_FLOOR_Y + DISPLAY_CASE.itemFit.height / 2 + DISPLAY_LIFT.height;
-  return { centre: [x, centre, z], offset: EYE_OFFSET };
+  return { centre: [x, centre, z], offset: EYE_OFFSET, fov: GUIDE.fov };
 }
 
 /**
@@ -55,7 +63,7 @@ export function galleryCaseFocus(
   target: Vec3;
   fov: number;
 } {
-  const { centre, offset } = galleryView(id);
+  const { centre, offset, fov } = galleryView(id);
   // Screen right: the level view direction turned a quarter toward -x.
   const [vx, , vz] = offset.map((v) => -v);
   const level = Math.hypot(vx, vz);
@@ -69,7 +77,7 @@ export function galleryCaseFocus(
       target[1] + offset[1],
       target[2] + offset[2],
     ],
-    fov: GUIDE.fov,
+    fov,
   };
 }
 
@@ -89,8 +97,8 @@ export function galleryStoryShift(
     width <= STORY_CARD.narrowBelow
       ? STORY_CARD.narrowWidth + STORY_CARD.narrowInset
       : STORY_CARD.width + STORY_CARD.inset;
-  const distance = Math.hypot(...galleryView(id).offset);
-  const halfWidth =
-    distance * Math.tan(((GUIDE.fov / 2) * Math.PI) / 180) * aspect;
+  const { offset, fov } = galleryView(id);
+  const distance = Math.hypot(...offset);
+  const halfWidth = distance * Math.tan(((fov / 2) * Math.PI) / 180) * aspect;
   return (card / width) * halfWidth;
 }

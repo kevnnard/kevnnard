@@ -1163,6 +1163,32 @@ export function shelfWorldBounds(part: Part) {
   };
 }
 
+/**
+ * Click target (katana-wall-shelf T15): the carcass's own box, from the
+ * floor plinth to the top board, and nothing past it. The football and the
+ * trophies on top stay out, so the wall lamp's shade above keeps its clicks;
+ * the box only covers what the carcass itself hides.
+ */
+export const SHELF_HITBOX: { center: Vec3; size: Vec3 } = {
+  center: [SHELF.base[0], SHELF.base[1] + SHELF.height / 2, SHELF.base[2]],
+  // Turned a quarter: the width runs along world z, the depth along x.
+  size: [SHELF.depth, SHELF.height, SHELF.width],
+};
+
+/**
+ * The inspection view (katana-wall-shelf T15): straight on from the room,
+ * level with the shelf and static. Aimed a little under the middle of the
+ * shelf and its top pieces (0.19 to 1.85 m), so the whole shelf sits above
+ * the compact rail; 2.66 m back (2.5 m off the front face) with a 45 degree
+ * lens, which keeps the eye in the free floor between the setup, the sofa
+ * and the football helmet's case.
+ */
+export const SHELF_VIEW = {
+  centre: [SHELF.base[0], SHELF.base[1] + 0.76, SHELF.base[2]] as Vec3,
+  offset: [2.66, 0, 0] as Vec3,
+  fov: 45,
+} as const;
+
 /** Triangles a part adds when merged (House.tsx mergeParts). */
 function partTriangles(part: Part): number {
   if (part.shape === "box") return 12;

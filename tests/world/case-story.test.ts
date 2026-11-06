@@ -11,7 +11,8 @@ describe("case story card (collection-display-models T10)", () => {
   it("tells the football helmet's Carneros DC story in the owner's words (T11)", () => {
     const story = CASE_STORIES["football-helmet"];
     assert.ok(story, "football helmet story");
-    assert.equal(story.kicker, "CASE 01 · FOOTBALL HELMET");
+    // Numbered by the rail's room order (katana-wall-shelf T14).
+    assert.equal(story.kicker, "CASE 04 · FOOTBALL HELMET");
     assert.equal(story.title, "Carneros DC");
     assert.equal(story.subtitle, "Bogotá, Colombia · Defensive back");
     assert.deepEqual(story.player, {
@@ -86,10 +87,45 @@ describe("case story card (collection-display-models T10)", () => {
     );
   });
 
-  it("invents no story for the cases the owner has not told yet", () => {
-    for (const item of DISPLAY_CASES)
-      if (item.id !== "football-helmet")
-        assert.equal(CASE_STORIES[item.id], null, item.id);
+  it("tells the Jordan 1 story in the owner's words, without an image (katana-wall-shelf T13)", () => {
+    const story = CASE_STORIES["jordan-1"];
+    assert.ok(story && "paragraphs" in story, "wall-style story");
+    assert.equal(story.kicker, "CASE 02 · AIR JORDAN 1");
+    assert.equal(story.title, "My first Jordans");
+    assert.deepEqual(story.paragraphs, [
+      "I grew up watching the brand and the player behind it: Michael Jordan, one of the greatest athletes sport has ever seen, simply exceptional at what he did.",
+      "The day I bought my first original pair of Jordans, that admiration turned into a passion. Jordan and Nike became my brand for everything: the clothes I wear, the shoes I walk in, the cleats I play in.",
+    ]);
+    assert.equal(story.image, undefined);
+  });
+
+  it("tells the Fox helmet story in the owner's words, without an image (katana-wall-shelf T13)", () => {
+    const story = CASE_STORIES["moto-helmet"];
+    assert.ok(story && "paragraphs" in story, "wall-style story");
+    assert.equal(story.kicker, "CASE 03 · OFF-ROAD HELMET");
+    assert.equal(story.title, "Fox V1 · F-A18");
+    assert.deepEqual(story.paragraphs, [
+      "Ever since I was a kid I wanted my first motorcycle to be a motocross bike, and I dreamed of racing. I never got the chance, but the love for it never left.",
+      "So my first helmet was this one, the Fox V1 Sayak. It lives here in my museum corner, where I will keep it for good: a reminder of that kid's dream.",
+    ]);
+    assert.equal(story.image, undefined);
+  });
+
+  it("draws a paragraphs-only card when a story has no image (katana-wall-shelf T13)", () => {
+    const card = source("src/components/world/CaseStory.tsx");
+    assert.match(card, /story\.image \? \(/);
+    assert.match(card, /katana-story-body-text/);
+    const css = source("src/components/world/katana-story.css");
+    assert.match(
+      css,
+      /\.katana-story-body\.katana-story-body-text \{[^}]*grid-template-columns: minmax\(0, 1fr\);/,
+    );
+    // Every case now has a story; only the collection shelf has none yet.
+    for (const item of DISPLAY_CASES) assert.ok(CASE_STORIES[item.id], item.id);
+  });
+
+  it("invents no story for the collection shelf, still being written (katana-wall-shelf T15)", () => {
+    assert.equal(CASE_STORIES["collection-shelf"], null);
   });
 
   it("ships only real media files, never placeholder slots", () => {
@@ -102,7 +138,7 @@ describe("case story card (collection-display-models T10)", () => {
         );
         assert.ok(media.alt.trim(), `${media.src} alt text`);
       }
-      if (story && "image" in story) {
+      if (story && "image" in story && story.image) {
         assert.match(story.image.src, /^\/world\/stories\//);
         assert.ok(
           existsSync(
@@ -175,7 +211,8 @@ describe("case story card (collection-display-models T10)", () => {
     assert.doesNotMatch(railTag, /compact=\{/, "compact for every item");
     const rail = source("src/components/world/CollectionRail.tsx");
     assert.match(rail, /compact \? \(/);
-    assert.match(rail, /04 OBJECTS/);
+    assert.match(rail, /05 OBJECTS/);
+    assert.doesNotMatch(rail, /04 OBJECTS/);
     assert.match(rail, /collection-rail-compact/);
     const css = source("src/components/world/collection-rail.css");
     assert.match(css, /\.collection-rail-compact \{/);

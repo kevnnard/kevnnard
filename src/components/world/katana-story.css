@@ -63,6 +63,11 @@
   padding-bottom: 16px;
   border-bottom: 1px solid var(--katana-line);
 }
+/* A story without a print (T13: the Jordans, the Fox helmet): the words take
+   the whole width. */
+.katana-story-body.katana-story-body-text {
+  grid-template-columns: minmax(0, 1fr);
+}
 .katana-story-print {
   position: relative;
   min-height: 120px;

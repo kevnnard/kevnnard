@@ -3,13 +3,21 @@ import { spawnSync } from "node:child_process";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
+import { CASE_STORIES } from "../../src/lib/world/case-stories.ts";
 import {
   type Credits,
   creditProblems,
   ORIGINAL_LICENSE,
   type OriginalCredit,
 } from "../../src/lib/world/credits.ts";
+import {
+  DISPLAY_CASE,
+  DISPLAY_CASES,
+  GALLERY_ORDER,
+} from "../../src/lib/world/display-cases.ts";
+import { FLOOR_LAMP, floorLampAim } from "../../src/lib/world/floor-lamp.ts";
 import { HOUSE, WALLS } from "../../src/lib/world/house.ts";
+import { KATANA_SHELF_HITBOX } from "../../src/lib/world/katana-shelf.ts";
 import {
   LIVING_MODELS,
   livingMeshes,
@@ -28,6 +36,7 @@ import {
   footballProfile,
   LABEL_ATLAS,
   SHELF,
+  SHELF_HITBOX,
   SHELF_ITEMS,
   SHELF_LABELS,
   SHELF_MATERIALS,
@@ -35,6 +44,8 @@ import {
   shelfParts,
   shelfWorldBounds,
 } from "../../src/lib/world/shelf.ts";
+import { SOFA_LAMP, SOFA_LAMPS } from "../../src/lib/world/sofa-lamps.ts";
+import { SPEAKER_BOXES } from "../../src/lib/world/speaker.ts";
 import { PUBLIC } from "./glb.ts";
 
 // S22: a white two-column display shelf left of the setup: the Nike football
@@ -448,5 +459,122 @@ describe("collection textures and budget", () => {
       original.find((item) => item.id === "shelf"),
       entry,
     );
+  });
+});
+
+describe("inspectable collection shelf (katana-wall-shelf T14, T15)", () => {
+  const src = (path: string) =>
+    readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
+  type Box = { min: number[]; max: number[] };
+  const box = ({
+    center,
+    size,
+  }: {
+    center: readonly number[];
+    size: readonly number[];
+  }): Box => ({
+    min: center.map((v, i) => v - size[i] / 2),
+    max: center.map((v, i) => v + size[i] / 2),
+  });
+  const gap = (a: Box, b: Box) =>
+    Math.max(
+      ...a.min.map((_, i) =>
+        Math.max(b.min[i] - a.max[i], a.min[i] - b.max[i]),
+      ),
+    );
+  const hit = box(SHELF_HITBOX);
+
+  it("puts the five objects in room order on the rail", () => {
+    assert.deepEqual(GALLERY_ORDER, [
+      "katana",
+      "jordan-1",
+      "moto-helmet",
+      "football-helmet",
+      "collection-shelf",
+    ]);
+    const rail = src("src/components/world/CollectionRail.tsx");
+    assert.match(rail, /GALLERY_ORDER\.map\(/);
+    assert.match(rail, /05 OBJECTS/);
+    assert.match(rail, /"collection-shelf": \{\s*title: "Collection shelf"/);
+  });
+
+  it("clicks only on the carcass: the board box, nothing above or in front", () => {
+    const [bx, by, bz] = SHELF.base;
+    assert.deepEqual(
+      hit.min.map((v) => v.toFixed(6)),
+      [bx - SHELF.depth / 2, by, bz - SHELF.width / 2].map((v) => v.toFixed(6)),
+    );
+    assert.deepEqual(
+      hit.max.map((v) => v.toFixed(6)),
+      [bx + SHELF.depth / 2, by + SHELF.height, bz + SHELF.width / 2].map((v) =>
+        v.toFixed(6),
+      ),
+    );
+  });
+
+  it("leaves the wall lamp, the setup, the speakers and the other objects their clicks", () => {
+    // The wall lamp's sphere hangs from its head along its aim.
+    const aim = floorLampAim();
+    const lamp = FLOOR_LAMP.head.map(
+      (v, i) => v + (aim[i] * FLOOR_LAMP.shade.length) / 2,
+    );
+    const nearest = lamp.map((v, i) =>
+      Math.min(Math.max(v, hit.min[i]), hit.max[i]),
+    );
+    const reach = Math.hypot(...nearest.map((v, i) => v - lamp[i]));
+    assert.ok(reach > FLOOR_LAMP.hitboxRadius + 0.05, `lamp ${reach}`);
+    // Every view looks down on the room, so a lamp above the box's top is
+    // never behind it.
+    assert.ok(hit.max[1] < lamp[1] - FLOOR_LAMP.hitboxRadius, "under the lamp");
+    assert.ok(
+      hit.max[2] > SETUP_ZONE.z1 && hit.min[2] > SETUP_ZONE.z1,
+      "past the setup",
+    );
+    for (const speaker of SPEAKER_BOXES)
+      assert.ok(gap(hit, speaker) > 0.1, "clear of the speakers");
+    assert.ok(gap(hit, box(KATANA_SHELF_HITBOX)) > 1, "clear of the katanas");
+    for (const item of DISPLAY_CASES) {
+      const { plinth } = DISPLAY_CASE;
+      const caseBox = {
+        min: [
+          item.base[0] - plinth.width / 2,
+          item.base[1],
+          item.base[2] - plinth.depth / 2,
+        ],
+        max: [
+          item.base[0] + plinth.width / 2,
+          item.base[1] + 2,
+          item.base[2] + plinth.depth / 2,
+        ],
+      };
+      assert.ok(gap(hit, caseBox) > 1, item.id);
+    }
+    for (const lampItem of SOFA_LAMPS) {
+      const r = SOFA_LAMP.hitbox.radius;
+      const [x, y, z] = lampItem.base;
+      const sofaLamp = {
+        min: [x - r, y, z - r],
+        max: [x + r, y + SOFA_LAMP.hitbox.height, z + r],
+      };
+      assert.ok(gap(hit, sofaLamp) > 1, "clear of the sofa lamps");
+    }
+  });
+
+  it("enters inspection from the room; clicking the inspected shelf does nothing", () => {
+    const shelf = src("src/components/world/Shelf.tsx");
+    assert.match(shelf, /name="collection-shelf-hitbox"/);
+    assert.match(
+      shelf,
+      /onClick=\{\(e\) => \{\s*if \(focused\) return;\s*e\.stopPropagation\(\);\s*onInspect\?\.\("collection-shelf"\);/,
+    );
+    assert.match(shelf, /position=\{SHELF_HITBOX\.center\}/);
+    assert.match(shelf, /<boxGeometry args=\{SHELF_HITBOX\.size\} \/>/);
+    const scene = src("src/components/world/WorldScene.tsx");
+    assert.match(
+      scene,
+      /<Shelf\s+maps=\{maps\}\s+focused=\{galleryCase === "collection-shelf"\}\s+onInspect=\{onInspectCase\}\s*\/>/,
+    );
+    // No story card yet: the owner is still writing it.
+    assert.equal(CASE_STORIES["collection-shelf"], null);
   });
 });

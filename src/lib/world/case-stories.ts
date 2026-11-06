@@ -3,7 +3,7 @@
 // Only what the owner told is written here; a case without a story shows
 // none. Media lists only files shipped under public/world/stories/, so the
 // card never shows a placeholder slot.
-import type { DisplayItemId } from "./display-cases.ts";
+import type { GalleryItemId } from "./display-cases.ts";
 
 export interface CaseStoryMedia {
   kind: "photo" | "clip";
@@ -39,23 +39,32 @@ export interface CaseStory {
 }
 
 /**
- * The short card beside the wall katana (katana-wall-shelf T5, T11), styled
- * like the lo-fi music console: a framed print and the owner's words. The
- * model's and the print's credits live in the menu's Credits only (S9).
+ * The short card styled like the lo-fi music console (katana-wall-shelf T5,
+ * T11, T13): the owner's words, beside a framed print when there is one
+ * (the katana's). The models' and the print's credits live in the menu's
+ * Credits only (S9).
  */
 export interface WallStory {
   kicker: string;
   title: string;
   paragraphs: readonly string[];
   /** A shipped file under /world/stories/, credited in credits.json. */
-  image: { src: string; alt: string };
+  image?: { src: string; alt: string };
 }
 
-export const CASE_STORIES: Record<DisplayItemId, CaseStory | null> & {
-  katana: WallStory;
+/**
+ * Every gallery item's story; null while the owner has not told it. Kickers
+ * carry the collection rail's numbers, in room order (T14).
+ */
+export const CASE_STORIES: Record<
+  GalleryItemId,
+  CaseStory | WallStory | null
+> & {
+  "football-helmet": CaseStory;
+  katana: WallStory & { image: { src: string; alt: string } };
 } = {
   "football-helmet": {
-    kicker: "CASE 01 · FOOTBALL HELMET",
+    kicker: "CASE 04 · FOOTBALL HELMET",
     title: "Carneros DC",
     subtitle: "Bogotá, Colombia · Defensive back",
     player: {
@@ -103,13 +112,29 @@ export const CASE_STORIES: Record<DisplayItemId, CaseStory | null> & {
       href: "https://www.instagram.com/carneros_dc/",
     },
   },
-  "moto-helmet": null,
-  "jordan-1": null,
+  // The owner's words (S11): the motocross dream behind their first helmet.
+  "moto-helmet": {
+    kicker: "CASE 03 · OFF-ROAD HELMET",
+    title: "Fox V1 · F-A18",
+    paragraphs: [
+      "Ever since I was a kid I wanted my first motorcycle to be a motocross bike, and I dreamed of racing. I never got the chance, but the love for it never left.",
+      "So my first helmet was this one, the Fox V1 Sayak. It lives here in my museum corner, where I will keep it for good: a reminder of that kid's dream.",
+    ],
+  },
+  // The owner's words (S11): Michael Jordan, and the brand ever since.
+  "jordan-1": {
+    kicker: "CASE 02 · AIR JORDAN 1",
+    title: "My first Jordans",
+    paragraphs: [
+      "I grew up watching the brand and the player behind it: Michael Jordan, one of the greatest athletes sport has ever seen, simply exceptional at what he did.",
+      "The day I bought my first original pair of Jordans, that admiration turned into a passion. Jordan and Nike became my brand for everything: the clothes I wear, the shoes I walk in, the cleats I play in.",
+    ],
+  },
   // Only the owner's words: their love of Japanese culture. The print is
   // Utagawa Kuniyoshi's public-domain Uesugi Kenshin (1843-1844, Wikimedia
   // Commons), 524 x 720 WebP.
   katana: {
-    kicker: "WALL · KATANA",
+    kicker: "WALL 01 · KATANA",
     title: "Blossom Katana",
     paragraphs: [
       "Japanese culture pulls me in, above all its feudal era: the age of the samurai, when honor, discipline and the blade shaped a whole way of living.",
@@ -120,4 +145,6 @@ export const CASE_STORIES: Record<DisplayItemId, CaseStory | null> & {
       alt: "Ukiyo-e print by Utagawa Kuniyoshi of the samurai lord Uesugi Kenshin, seated in blue lacquered armour and a white head cowl, a sword at his side",
     },
   },
+  // Still being written by the owner (T15): no card, not an empty one.
+  "collection-shelf": null,
 };

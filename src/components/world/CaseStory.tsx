@@ -48,11 +48,12 @@ function SecondaryDiagram({ player }: { player: CaseStoryPlayer }) {
 }
 
 /**
- * The wall katana's card (katana-wall-shelf T5, T11), in the lo-fi console's
- * look: translucent zinc, emerald kicker, monospace. A framed ukiyo-e print
- * beside the owner's words; its credit, like the model's, is in the menu.
- * Same place and width as the case card, so the camera frames the stand
- * left of it.
+ * The lo-fi console card (katana-wall-shelf T5, T11, T13): translucent zinc,
+ * emerald kicker, monospace. The owner's words, beside a framed print when
+ * the story has one (the katana's ukiyo-e; its credit, like the models', is
+ * in the menu), or across the whole card when it has none (the Jordans and
+ * the Fox helmet). Same place and width as the case card, so the camera
+ * frames the object left of it.
  */
 function WallStoryCard({
   story,
@@ -77,15 +78,23 @@ function WallStoryCard({
     <article className="katana-story" aria-labelledby="case-story-title">
       <p className="katana-story-kicker">{story.kicker}</p>
       <h2 id="case-story-title">{story.title}</h2>
-      <div className="katana-story-body">
-        <figure className="katana-story-print">
-          <img
-            src={story.image.src}
-            alt={story.image.alt}
-            loading="lazy"
-            decoding="async"
-          />
-        </figure>
+      <div
+        className={
+          story.image
+            ? "katana-story-body"
+            : "katana-story-body katana-story-body-text"
+        }
+      >
+        {story.image ? (
+          <figure className="katana-story-print">
+            <img
+              src={story.image.src}
+              alt={story.image.alt}
+              loading="lazy"
+              decoding="async"
+            />
+          </figure>
+        ) : null}
         <div className="katana-story-lede">
           {story.paragraphs.map((text) => (
             <p key={text}>{text}</p>
@@ -107,8 +116,9 @@ function WallStoryCard({
  * team and number up top, the owner's photos or clip when shipped, the
  * position and seasons side by side, a dated timeline, the story and the
  * team link. "Hide story" folds it to a small button so the turning model
- * has the room; WorldApp opens it again on every case. The wall katana's
- * story takes the lo-fi WallStoryCard instead.
+ * has the room; WorldApp opens it again on every case. Paragraph stories
+ * (the katanas, the Jordans, the Fox helmet) take the lo-fi WallStoryCard
+ * instead.
  */
 export default function CaseStory({
   story,

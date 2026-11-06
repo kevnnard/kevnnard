@@ -24,6 +24,7 @@ import {
   LABEL_ATLAS,
   type LabelKind,
   SHELF,
+  SHELF_HITBOX,
   SHELF_LABELS,
   SHELF_MATERIALS,
   SHELF_ROUND_SEGMENTS,
@@ -479,9 +480,19 @@ function labelGeometry(): BufferGeometry {
  * left of the setup, turned to face the room. One merged, shadowed mesh per
  * material, the football (lathe, leather skin and pebble normal) and one
  * label mesh from an original canvas atlas. Static: no animation, no lights.
- * With `maps` the oak takes the house's plank grain.
+ * With `maps` the oak takes the house's plank grain. With `onInspect`, a
+ * click from the room enters its inspection view (katana-wall-shelf T15);
+ * the inspected shelf takes no clicks, so they reach whatever lies behind.
  */
-export default function Shelf({ maps }: { maps?: SurfaceMaps }) {
+export default function Shelf({
+  maps,
+  focused = false,
+  onInspect,
+}: {
+  maps?: SurfaceMaps;
+  focused?: boolean;
+  onInspect?: (id: "collection-shelf") => void;
+}) {
   const { invalidate } = useThree();
   const { group, owned } = useMemo(() => {
     const owned: Owned = { materials: [], textures: [] };
@@ -583,5 +594,33 @@ export default function Shelf({ maps }: { maps?: SurfaceMaps }) {
     [group, owned],
   );
 
-  return <primitive object={group} />;
+  return (
+    <>
+      <primitive object={group} />
+      {onInspect && (
+        // Click target over the carcass only (SHELF_HITBOX)
+        <mesh
+          name="collection-shelf-hitbox"
+          position={SHELF_HITBOX.center}
+          onClick={(e) => {
+            if (focused) return;
+            e.stopPropagation();
+            onInspect?.("collection-shelf");
+          }}
+          onPointerOver={(e) => {
+            if (focused) return;
+            e.stopPropagation();
+            document.body.style.cursor = "pointer";
+          }}
+          onPointerOut={() => {
+            document.body.style.cursor = "";
+          }}
+          visible={false}
+        >
+          <boxGeometry args={SHELF_HITBOX.size} />
+          <meshBasicMaterial transparent opacity={0} />
+        </mesh>
+      )}
+    </>
+  );
 }

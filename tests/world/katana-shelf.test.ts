@@ -4,7 +4,10 @@ import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { CASE_STORIES } from "../../src/lib/world/case-stories.ts";
 import type { Credits } from "../../src/lib/world/credits.ts";
-import { DISPLAY_CASE } from "../../src/lib/world/display-cases.ts";
+import {
+  DISPLAY_CASE,
+  GALLERY_ORDER,
+} from "../../src/lib/world/display-cases.ts";
 import {
   galleryCaseFocus,
   galleryStoryShift,
@@ -333,7 +336,8 @@ describe("katana inspection and story (katana-wall-shelf T5)", () => {
     const story = CASE_STORIES.katana;
     assert.ok(story && "paragraphs" in story, "wall story");
     assert.equal(story.title, "Blossom Katana");
-    assert.equal(story.kicker, "WALL · KATANA");
+    // First in the rail's room order (katana-wall-shelf T14).
+    assert.equal(story.kicker, "WALL 01 · KATANA");
     assert.deepEqual(story.paragraphs, [
       "Japanese culture pulls me in, above all its feudal era: the age of the samurai, when honor, discipline and the blade shaped a whole way of living.",
       "Ghost of Tsushima is my favorite game. It captures that world like nothing else, from the wind sweeping the fields to the silence before a duel. These katanas are my nod to that love of the East, a small piece of it on my wall.",
@@ -425,9 +429,10 @@ describe("katana inspection and story (katana-wall-shelf T5)", () => {
     assert.match(css, new RegExp(`max-width: ${STORY_CARD.stackBelow}px`));
   });
 
-  it("lists the katana as the fourth object in the compact rail", () => {
+  it("lists the katana first in the compact rail, in room order (T14)", () => {
+    assert.equal(GALLERY_ORDER[0], "katana");
     const rail = source("src/components/world/CollectionRail.tsx");
-    assert.match(rail, /04 OBJECTS/);
+    assert.match(rail, /05 OBJECTS/);
     assert.match(rail, /katana: \{\s*title: "Blossom Katana"/);
   });
 });

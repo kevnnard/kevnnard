@@ -108,14 +108,28 @@ export const DISPLAY_CASE = {
 export type DisplayItemId = "football-helmet" | "moto-helmet" | "jordan-1";
 
 /**
- * Everything the gallery inspects: the three cases and the katanas on the
- * wall shelf (katana-wall-shelf T5, src/lib/world/katana-shelf.ts).
+ * Everything the gallery inspects: the three cases, the katanas on the
+ * wall shelf (katana-wall-shelf T5, src/lib/world/katana-shelf.ts) and the
+ * personal collection shelf (T15, src/lib/world/shelf.ts).
  */
-export type GalleryItemId = DisplayItemId | "katana";
+export type GalleryItemId = DisplayItemId | "katana" | "collection-shelf";
+
+/**
+ * The collection rail's order and numbering (katana-wall-shelf T14): the
+ * room's order, from the katanas on the window wall through the cases (as
+ * seen from the room, right to left in world x) to the collection shelf.
+ */
+export const GALLERY_ORDER: readonly GalleryItemId[] = [
+  "katana",
+  "jordan-1",
+  "moto-helmet",
+  "football-helmet",
+  "collection-shelf",
+];
 
 /** Whether an inspected item is one of the glass cases. */
 export function isDisplayCaseId(id: GalleryItemId): id is DisplayItemId {
-  return id !== "katana";
+  return id !== "katana" && id !== "collection-shelf";
 }
 
 export type ItemFinish =

@@ -1,44 +1,51 @@
 import { useEffect, useRef } from "react";
 import {
-  DISPLAY_CASES,
+  GALLERY_ORDER,
   type GalleryItemId,
 } from "@/lib/world/display-cases.ts";
 import "./collection-rail.css";
 
-// Looking toward +z reverses world-x on screen; the wall katana
-// (katana-wall-shelf T5) follows as the fourth object.
-const VIEW_CASES: readonly { id: GalleryItemId }[] = [
-  ...[...DISPLAY_CASES].reverse(),
-  { id: "katana" },
-];
+// Tabs in room order (GALLERY_ORDER, katana-wall-shelf T14): the katanas,
+// the three cases as seen from the room, then the collection shelf (T15).
 
 const collection: Record<
   GalleryItemId,
-  { title: string; subtitle: string; detail: string }
+  { title: string; subtitle: string; detail: string; place: string }
 > = {
   "football-helmet": {
     title: "Football helmet",
     subtitle: "Carneros DC · #32",
     detail:
       "Exodusks' Riddell SpeedFlex (CC BY 4.0), repainted in my team's gold and black horns with a smoked black eye shield; not my exact helmet.",
+    place: "RIGHT",
   },
   "moto-helmet": {
     title: "Fox V1",
     subtitle: "F-A18 Sayak, red",
     detail:
       "senoaji's Fox X Supreme Helmet (CC BY 4.0) wearing photos of my Fox V1 Sayak; close, not the exact V1 shell.",
+    place: "CENTER",
   },
   "jordan-1": {
     title: "Air Jordan 1",
     subtitle: "Black/sail stand-in",
     detail:
       "Credited Air Jordan 1 pair; black/sail is not the exact Black Toe.",
+    place: "LEFT",
   },
   katana: {
     title: "Blossom Katana",
     subtitle: "Wall · katana stand",
     detail:
       "Mitchell Bekke's Blossom Katana (CC BY 4.0) on a lacquered wall shelf.",
+    place: "WALL",
+  },
+  "collection-shelf": {
+    title: "Collection shelf",
+    subtitle: "My things · by the setup",
+    detail:
+      "My own shelf, rebuilt by hand: the football, cameras, awards, hardware boxes and books.",
+    place: "SHELF",
   },
 };
 
@@ -62,9 +69,7 @@ export default function CollectionRail({
   const active = focused;
   useEffect(() => {
     if (focused) {
-      tabs.current[
-        VIEW_CASES.findIndex((item) => item.id === focused)
-      ]?.focus();
+      tabs.current[GALLERY_ORDER.indexOf(focused)]?.focus();
     }
   }, [focused]);
   const onKey = (
@@ -79,21 +84,21 @@ export default function CollectionRail({
       event.key === "Home"
         ? 0
         : event.key === "End"
-          ? VIEW_CASES.length - 1
-          : (index + delta + VIEW_CASES.length) % VIEW_CASES.length;
-    onInspect(VIEW_CASES[next].id);
+          ? GALLERY_ORDER.length - 1
+          : (index + delta + GALLERY_ORDER.length) % GALLERY_ORDER.length;
+    onInspect(GALLERY_ORDER[next]);
     tabs.current[next]?.focus();
   };
-  const tab = (item: (typeof VIEW_CASES)[number], index: number) => ({
+  const tab = (id: GalleryItemId, index: number) => ({
     ref: (element: HTMLButtonElement | null) => {
       tabs.current[index] = element;
     },
-    id: `collection-tab-${item.id}`,
+    id: `collection-tab-${id}`,
     type: "button" as const,
     role: "tab",
-    "aria-selected": active === item.id,
-    tabIndex: active === item.id ? 0 : -1,
-    onClick: () => onInspect(item.id),
+    "aria-selected": active === id,
+    tabIndex: active === id ? 0 : -1,
+    onClick: () => onInspect(id),
     onKeyDown: (event: React.KeyboardEvent<HTMLButtonElement>) =>
       onKey(event, index),
   });
@@ -103,19 +108,19 @@ export default function CollectionRail({
       aria-label="Collection navigation"
     >
       <span className="collection-rail-mono collection-rail-count">
-        04 OBJECTS
+        05 OBJECTS
       </span>
       <div
         className="collection-rail-pills"
         role="tablist"
         aria-label="Collection objects"
       >
-        {VIEW_CASES.map((item, index) => (
-          <button key={item.id} {...tab(item, index)}>
+        {GALLERY_ORDER.map((id, index) => (
+          <button key={id} {...tab(id, index)}>
             <span className="collection-rail-mono collection-rail-index">
               {String(index + 1).padStart(2, "0")}
             </span>
-            {collection[item.id].title}
+            {collection[id].title}
           </button>
         ))}
       </div>
@@ -126,7 +131,7 @@ export default function CollectionRail({
   ) : (
     <section className="collection-rail" aria-label="Collection navigation">
       <div className="collection-rail-intro">
-        <span className="collection-rail-mono">EXPLORE / 04 OBJECTS</span>
+        <span className="collection-rail-mono">EXPLORE / 05 OBJECTS</span>
         <h2>The collection</h2>
         <p>Choose another object, or return to the sofa view.</p>
       </div>
@@ -135,27 +140,26 @@ export default function CollectionRail({
         role="tablist"
         aria-label="Collection objects"
       >
-        {VIEW_CASES.map((item, index) => (
+        {GALLERY_ORDER.map((id, index) => (
           <button
-            key={item.id}
+            key={id}
             ref={(element) => {
               tabs.current[index] = element;
             }}
-            id={`collection-tab-${item.id}`}
+            id={`collection-tab-${id}`}
             type="button"
             role="tab"
-            aria-selected={active === item.id}
+            aria-selected={active === id}
             aria-controls="collection-detail"
-            tabIndex={active === item.id ? 0 : -1}
-            onClick={() => onInspect(item.id)}
+            tabIndex={active === id ? 0 : -1}
+            onClick={() => onInspect(id)}
             onKeyDown={(event) => onKey(event, index)}
           >
             <span className="collection-rail-mono collection-rail-index">
-              {String(index + 1).padStart(2, "0")} /{" "}
-              {(["LEFT", "CENTER", "RIGHT", "WALL"] as const)[index]}
+              {String(index + 1).padStart(2, "0")} / {collection[id].place}
             </span>
-            <strong>{collection[item.id].title}</strong>
-            <small>{collection[item.id].subtitle}</small>
+            <strong>{collection[id].title}</strong>
+            <small>{collection[id].subtitle}</small>
           </button>
         ))}
       </div>
