@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { describe, it } from "node:test";
+import { fileURLToPath } from "node:url";
 import {
   type Credits,
   creditProblems,
@@ -472,5 +474,69 @@ describe("creditProblems", () => {
       ],
     });
     assert.equal(problems.length, 2, problems.join("\n"));
+  });
+});
+
+describe("credits rebuild (katana-wall-shelf T16)", () => {
+  it("keeps the gallery models, the story images and the ambient sounds on a full rebuild", () => {
+    // Runs only the pure merge function from scripts/prepare-world.py, read
+    // with ast: no download, no optimization, nothing written.
+    const script = fileURLToPath(
+      new URL("../../scripts/prepare-world.py", import.meta.url),
+    );
+    const previous = {
+      packs: [{ id: "gallery-pack" }, { id: "old-base" }],
+      assets: [
+        { file: "models/wall-katana.glb", pack: "gallery-pack" },
+        { file: "models/tree.glb", pack: "old-base" },
+      ],
+      ambient: [{ id: "owl-hoot", file: "/world/audio/ambient/owl-hoot.mp3" }],
+      images: [{ file: "stories/katana-ukiyoe.webp" }],
+    };
+    const rebuilt = {
+      packs: [{ id: "base" }],
+      assets: [{ file: "models/tree.glb", pack: "base" }],
+    };
+    const run = spawnSync(
+      "python3",
+      [
+        "-I",
+        "-c",
+        [
+          "import ast, json, sys",
+          "tree = ast.parse(open(sys.argv[1]).read())",
+          "node = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'kept_credits')",
+          "scope = {}",
+          "exec(compile(ast.Module(body=[node], type_ignores=[]), 'kept_credits', 'exec'), scope)",
+          "print(json.dumps(scope['kept_credits'](json.loads(sys.argv[2]), json.loads(sys.argv[3]))))",
+        ].join("\n"),
+        script,
+        JSON.stringify(rebuilt),
+        JSON.stringify(previous),
+      ],
+      { encoding: "utf8" },
+    );
+    assert.equal(run.status, 0, run.stderr);
+    const kept = JSON.parse(run.stdout);
+    assert.deepEqual(kept.ambient, previous.ambient);
+    assert.deepEqual(kept.images, previous.images);
+    assert.deepEqual(
+      kept.assets.map((asset: { file: string }) => asset.file),
+      ["models/tree.glb", "models/wall-katana.glb"],
+    );
+    assert.deepEqual(
+      kept.packs.map((pack: { id: string }) => pack.id),
+      ["base", "gallery-pack"],
+    );
+    // write_credits merges through it before writing.
+    const source = readFileSync(script, "utf8");
+    assert.match(
+      source,
+      /previous = json\.loads\(path\.read_text\(encoding="utf-8"\)\)\s*credits = kept_credits\(credits, previous\)/,
+    );
+    // The shipped file still lists both.
+    const data = credits() as unknown as Record<string, unknown[]>;
+    assert.ok(data.ambient?.length, "ambient");
+    assert.ok(data.images?.length, "images");
   });
 });

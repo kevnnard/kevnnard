@@ -732,32 +732,45 @@ def with_living(credits, packs, assets):
             "optimizedBytes": sum(a["bytes"] for a in owned)}
 
 
-def write_credits(credits):
+def kept_credits(credits, previous):
+    # Entries sourced outside this script, carried over from the previous
+    # credits.json whenever base-world assets regenerate. Pure: no I/O.
+    #
     # The gallery's CC BY models are independently sourced and optimized.
-    # Preserve their credited provenance whenever base-world assets regenerate.
     # The football helmet is Exodusks' SpeedFlex (collection-display-models T7),
     # derived by scripts/prepare-display-football.mjs; the off-road helmet is
     # senoaji's Fox X Supreme helmet (T15), derived by
     # scripts/prepare-display-offroad-fox.mjs; the wall katana is Mitchell
     # Bekke's Blossom Katana (katana-wall-shelf T3), derived by
     # scripts/prepare-wall-katana.mjs.
+    credits = dict(credits)
+    gallery_files = {"models/display-offroad-helmet.glb",
+                     "models/display-football-helmet.glb",
+                     "models/display-jordan-1.glb",
+                     "models/wall-katana.glb"}
+    gallery_assets = [asset for asset in previous.get("assets", [])
+                      if asset["file"] in gallery_files]
+    if gallery_assets:
+        gallery_packs = {asset["pack"] for asset in gallery_assets}
+        credits["assets"] = [asset for asset in credits["assets"]
+                             if asset["file"] not in gallery_files] + gallery_assets
+        credits["packs"] = [pack for pack in credits["packs"]
+                            if pack["id"] not in gallery_packs] + [
+                                pack for pack in previous["packs"]
+                                if pack["id"] in gallery_packs]
+    # The ambient sounds and the story images (katana-wall-shelf T11, T16)
+    # are credited by hand; nothing here rebuilds them, so keep them as they are.
+    for key in ("ambient", "images"):
+        if key not in credits and previous.get(key):
+            credits[key] = previous[key]
+    return credits
+
+
+def write_credits(credits):
     path = OUTPUT / "credits.json"
     if path.exists():
         previous = json.loads(path.read_text(encoding="utf-8"))
-        gallery_files = {"models/display-offroad-helmet.glb",
-                         "models/display-football-helmet.glb",
-                         "models/display-jordan-1.glb",
-                         "models/wall-katana.glb"}
-        gallery_assets = [asset for asset in previous.get("assets", [])
-                          if asset["file"] in gallery_files]
-        if gallery_assets:
-            gallery_packs = {asset["pack"] for asset in gallery_assets}
-            credits["assets"] = [asset for asset in credits["assets"]
-                                 if asset["file"] not in gallery_files] + gallery_assets
-            credits["packs"] = [pack for pack in credits["packs"]
-                                if pack["id"] not in gallery_packs] + [
-                                    pack for pack in previous["packs"]
-                                    if pack["id"] in gallery_packs]
+        credits = kept_credits(credits, previous)
     # A file built here as original work is never also credited as a download,
     # so a stale credits.json cannot bring a retired mesh or its pack back.
     original_files = {entry["file"] for entry in credits.get("original", [])
