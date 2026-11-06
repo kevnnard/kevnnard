@@ -79,23 +79,22 @@ export const KATANA_SHELF = {
   /** Slim picture light over the stand. */
   light: {
     /** Bar length along the wall and its radius. */
-    barLength: 0.42,
+    barLength: 0.72,
     barRadius: 0.014,
     /** Bar this far out from the wall and above the katanas' middle. */
     out: 0.22,
-    rise: 0.32,
+    rise: 0.4,
     armRadius: 0.004,
     color: "#ffe6c2",
     /**
-     * Lit like the cases (S6): a soft key of ~11 lx at the katanas' middle,
-     * 0.33 m away, under the cases' ~23 lx so the polished blade never
-     * burns; the cases' soft edge, a tight cone and a short range keep the
-     * wall around it dark.
+     * Two spots, one per half of the stand, each lit like a case's key
+     * (S6, S7): ~23 lx on its quarter point, 0.41 m away, with the cases'
+     * soft edge; together they light hilts, middle and tips within 1.6x.
      */
-    intensity: 1.2,
-    angle: 0.9,
+    intensity: 3.8,
+    angle: 1,
     penumbra: 0.8,
-    distance: 0.9,
+    distance: 1.1,
     decay: 2,
     /** The bar's glow, like the cases' lid puck. */
     emissive: 0.8,
@@ -139,7 +138,16 @@ export const KATANA_LIGHT_POSITION: Vec3 = [
   KATANA_SHELF.centreZ,
 ];
 
-export const KATANA_LIGHT_AIM: Vec3 = KATANA_CENTRE;
+/** The two spots on the bar, each over and aimed at its half's quarter point. */
+export const KATANA_SPOTS: { position: Vec3; aim: Vec3 }[] = [-1, 1].map(
+  (side) => {
+    const z = KATANA_SHELF.centreZ + (side * KATANA_MODEL.length) / 4;
+    return {
+      position: [KATANA_LIGHT_POSITION[0], KATANA_LIGHT_POSITION[1], z],
+      aim: [KATANA_CENTRE[0], KATANA_CENTRE[1], z],
+    };
+  },
+);
 
 /** Warm fill (S6), like the cases' uplight: in front of the board's edge, below the katanas. */
 export const KATANA_UPLIGHT_POSITION: Vec3 = [

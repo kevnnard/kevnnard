@@ -17,11 +17,11 @@ import {
 } from "@/lib/world/display-cases.ts";
 import { playLampSwitch } from "@/lib/world/floor-lamp.ts";
 import {
-  KATANA_LIGHT_AIM,
   KATANA_LIGHT_POSITION,
   KATANA_MODEL,
   KATANA_SHELF,
   KATANA_SHELF_HITBOX,
+  KATANA_SPOTS,
   KATANA_UPLIGHT_POSITION,
   katanaLightLevel,
   katanaModelFit,
@@ -142,8 +142,8 @@ export default function KatanaShelf({
   useEffect(() => {
     invalidate();
   }, [level, invalidate]);
-  // The spot's aim, in world space like the light.
-  const [spotTarget] = useState(() => new Object3D());
+  // Each spot's aim, in world space like the lights.
+  const [spotTargets] = useState(() => KATANA_SPOTS.map(() => new Object3D()));
 
   const { topY, thickness, depth, length, centreZ } = KATANA_SHELF;
   const x = SHELF_INTERIOR_X;
@@ -259,18 +259,22 @@ export default function KatanaShelf({
 
       {/* Always mounted, zero intensity when off: a changing light count
           recompiles every material's shader. No shadow map. */}
-      <primitive object={spotTarget} position={KATANA_LIGHT_AIM} />
-      <spotLight
-        position={KATANA_LIGHT_POSITION}
-        target={spotTarget}
-        color={light.color}
-        intensity={KATANA_SHELF.light.intensity * level}
-        angle={light.angle}
-        penumbra={light.penumbra}
-        distance={light.distance}
-        decay={light.decay}
-        castShadow={false}
-      />
+      {KATANA_SPOTS.map((spot, index) => (
+        <group key={spot.aim[2]}>
+          <primitive object={spotTargets[index]} position={spot.aim} />
+          <spotLight
+            position={spot.position}
+            target={spotTargets[index]}
+            color={light.color}
+            intensity={KATANA_SHELF.light.intensity * level}
+            angle={light.angle}
+            penumbra={light.penumbra}
+            distance={light.distance}
+            decay={light.decay}
+            castShadow={false}
+          />
+        </group>
+      ))}
       <pointLight
         position={KATANA_UPLIGHT_POSITION}
         color={light.color}

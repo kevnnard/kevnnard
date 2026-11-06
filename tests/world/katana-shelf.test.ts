@@ -9,14 +9,14 @@ import {
   galleryStoryShift,
   STORY_CARD,
 } from "../../src/lib/world/gallery-camera.ts";
-import { HOUSE, WALLS } from "../../src/lib/world/house.ts";
+import { HOUSE, type Vec3, WALLS } from "../../src/lib/world/house.ts";
 import {
   KATANA_CENTRE,
-  KATANA_LIGHT_AIM,
   KATANA_LIGHT_POSITION,
   KATANA_MODEL,
   KATANA_SHELF,
   KATANA_SHELF_HITBOX,
+  KATANA_SPOTS,
   KATANA_UPLIGHT_POSITION,
   katanaLightLevel,
   katanaModelFit,
@@ -211,25 +211,46 @@ describe("katana night light (katana-wall-shelf T4)", () => {
     assert.equal(katanaLightLevel(true, 21, false), 0);
   });
 
-  it("aims a soft warm spot from above the stand at the katanas' middle", () => {
-    assert.deepEqual(KATANA_LIGHT_AIM, KATANA_CENTRE);
+  it("lights the stand with two case-like spots, one per half (S6, S7)", () => {
     assert.ok(KATANA_LIGHT_POSITION[1] > KATANA_CENTRE[1]);
     assert.ok(KATANA_LIGHT_POSITION[0] < SHELF_INTERIOR_X);
-    // Like the cases' museum light (S6): a compact fixture close to the
-    // wall, a soft key under the cases' ~23 lx, a tight soft-edged cone
-    // that stays off the wall, a weak warm fill from the shelf's edge.
     const { light } = KATANA_SHELF;
     assert.ok(light.out <= 0.25, `arm ${light.out}`);
-    const [lx, ly, lz] = KATANA_LIGHT_POSITION;
-    const d2 =
-      (lx - KATANA_CENTRE[0]) ** 2 +
-      (ly - KATANA_CENTRE[1]) ** 2 +
-      (lz - KATANA_CENTRE[2]) ** 2;
-    const middle = light.intensity / d2;
-    assert.ok(middle >= 8 && middle <= 14, `middle ${middle} lx`);
-    assert.ok(light.angle <= 0.9, `cone ${light.angle}`);
+    assert.equal(KATANA_SPOTS.length, 2);
+    const quarter = KATANA_MODEL.length / 4;
+    const lux = (from: Vec3, to: Vec3) =>
+      light.intensity /
+      ((from[0] - to[0]) ** 2 +
+        (from[1] - to[1]) ** 2 +
+        (from[2] - to[2]) ** 2);
+    for (const [index, spot] of KATANA_SPOTS.entries()) {
+      const side = index === 0 ? -1 : 1;
+      assert.deepEqual(spot.aim, [
+        KATANA_CENTRE[0],
+        KATANA_CENTRE[1],
+        KATANA_CENTRE[2] + side * quarter,
+      ]);
+      assert.ok(spot.position[1] > spot.aim[1]);
+      // The cases' key: ~23 lx on the item it aims at.
+      const own = lux(spot.position, spot.aim);
+      assert.ok(own >= 20 && own <= 26, `spot ${index}: ${own} lx`);
+    }
+    // Even along the whole stand: hilts, middle and tips.
+    const along = [-2, -1, 0, 1, 2].map((step) => {
+      const point: Vec3 = [
+        KATANA_CENTRE[0],
+        KATANA_CENTRE[1],
+        KATANA_CENTRE[2] + (step * KATANA_MODEL.length) / 4,
+      ];
+      return KATANA_SPOTS.reduce(
+        (sum, spot) => sum + lux(spot.position, point),
+        0,
+      );
+    });
+    const ratio = Math.max(...along) / Math.min(...along);
+    assert.ok(ratio <= 2, `brightest/dimmest ${ratio}`);
     assert.equal(light.penumbra, DISPLAY_CASE.spotPenumbra);
-    assert.ok(light.distance <= 1, `range ${light.distance}`);
+    assert.ok(light.distance <= 1.2, `range ${light.distance}`);
     assert.ok(light.emissive <= DISPLAY_CASE.puckEmissive, "bar glow");
     assert.equal(light.upIntensity, DISPLAY_CASE.upIntensity);
     assert.equal(light.upDistance, DISPLAY_CASE.upDistance);
@@ -246,6 +267,7 @@ describe("katana night light (katana-wall-shelf T4)", () => {
       /intensity=\{KATANA_SHELF\.light\.intensity \* level\}/,
     );
     assert.doesNotMatch(shelf, /level > 0 &&\s*<spotLight/);
+    assert.match(shelf, /KATANA_SPOTS\.map\(/);
     assert.match(shelf, /displayCaseEnvIntensity\(level, hours\)/);
   });
 });
