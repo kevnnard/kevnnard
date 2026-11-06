@@ -664,7 +664,8 @@ describe("coffee close-up light (coffee-card T4)", () => {
   it("lights the cup at night like the cases' key, never above it", () => {
     const lux = coffeeLightLux(1);
     assert.ok(casesLux > 20 && casesLux < 25, `cases ${casesLux}`);
-    assert.ok(lux >= 17 && lux <= 21, `cup ${lux}`);
+    // Subtle (S5): a soft fill, about a third of the cases' key.
+    assert.ok(lux >= 5 && lux <= 9, `cup ${lux}`);
     assert.ok(lux < casesLux);
     assert.equal(coffeeLightLux(0), 0);
   });

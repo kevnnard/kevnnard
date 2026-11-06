@@ -15,8 +15,8 @@ import { SETUP_PROPS } from "./setup.ts";
 export const COFFEE_LIGHT = {
   /** The cases' warm museum white. */
   color: DISPLAY_CASE.lightColor,
-  /** Candela: ~19 lx on the cup's middle, under the cases' ~23. */
-  intensity: 17,
+  /** Candela: a subtle ~7 lx fill on the cup's middle (S5), a third of the cases' ~23. */
+  intensity: 6.5,
   /**
    * Half-angle: a ~0.16 m pool at the cup, so the soft core covers the cup
    * and the edge falls off over the coaster.
