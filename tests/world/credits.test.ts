@@ -15,6 +15,7 @@ import { DISPLAY_MODEL_FILES } from "../../src/lib/world/display-cases.ts";
 import { KATANA_MODEL } from "../../src/lib/world/katana-shelf.ts";
 import { MODEL_FILES, PROP_FILES } from "../../src/lib/world/models.ts";
 import { BRUNO_CHAIR, BRUNO_MAPS } from "../../src/lib/world/setup.ts";
+import { TV_COVERS } from "../../src/lib/world/tv-covers.ts";
 import {
   creditSections,
   type WorldCredits,
@@ -495,7 +496,10 @@ describe("credits rebuild (katana-wall-shelf T16)", () => {
       ],
       ambient: [{ id: "owl-hoot", file: "/world/audio/ambient/owl-hoot.mp3" }],
       images: [{ file: "stories/katana-ukiyoe.webp" }],
-      services: [{ id: "tmdb", files: "tv/covers/" }],
+      services: [
+        { id: "tmdb", files: "tv/covers/" },
+        { id: "igdb", files: "tv/covers/" },
+      ],
     };
     const rebuilt = {
       packs: [{ id: "base" }],
@@ -547,6 +551,14 @@ describe("credits rebuild (katana-wall-shelf T16)", () => {
   });
 });
 
+/** Distinct shipped cover files from one source, by its id field. */
+const shippedFrom = (field: "tmdbId" | "igdbId") =>
+  new Set(
+    Object.values(TV_COVERS)
+      .filter((cover) => field in cover)
+      .map((cover) => cover.src),
+  ).size;
+
 describe("TMDB attribution (tv-home-screen T4, S7)", () => {
   const NOTICE =
     "This product uses the TMDB API but is not endorsed or certified by TMDB.";
@@ -561,8 +573,8 @@ describe("TMDB attribution (tv-home-screen T4, S7)", () => {
     assert.equal(tmdb.files, "tv/covers/");
     assert.match(tmdb.rights, /rights holders/);
     assert.match(tmdb.rights, /non-commercial/);
-    const shipped = readdirSync(new URL("tv/covers/", PUBLIC)).length;
-    assert.equal(tmdb.count, shipped, "count matches the shipped posters");
+    assert.equal(tmdb.label, "Film posters");
+    assert.equal(tmdb.count, shippedFrom("tmdbId"), "the shipped posters");
   });
 
   it("shows the notice and the link in the menu's Credits", () => {
@@ -578,5 +590,47 @@ describe("TMDB attribution (tv-home-screen T4, S7)", () => {
     assert.match(dialog, /credits\.services\.map/);
     assert.match(dialog, /service\.notice/);
     assert.match(dialog, /href=\{service\.url\}/);
+  });
+});
+
+describe("IGDB attribution (tv-home-screen T5, S7)", () => {
+  it("credits IGDB for the game covers, next to TMDB", () => {
+    const services = (credits() as WorldCredits).services ?? [];
+    assert.deepEqual(
+      services.map((entry) => entry.id),
+      ["tmdb", "igdb"],
+    );
+    const igdb = services[1];
+    assert.equal(igdb.name, "IGDB");
+    assert.equal(igdb.label, "Game covers");
+    assert.equal(igdb.url, "https://www.igdb.com");
+    assert.match(igdb.notice, /IGDB/);
+    assert.match(igdb.usage, /game/i);
+    assert.match(igdb.usage, /no requests to IGDB/);
+    assert.match(igdb.rights, /publishers/);
+    assert.match(igdb.rights, /non-commercial/);
+    assert.equal(igdb.files, "tv/covers/");
+    assert.equal(igdb.script, "scripts/prepare-tv-covers.mjs");
+    assert.equal(igdb.count, shippedFrom("igdbId"), "the shipped covers");
+    // Every shipped file is credited to exactly one of them.
+    const shipped = readdirSync(new URL("tv/covers/", PUBLIC)).length;
+    assert.equal(services[0].count + igdb.count, shipped);
+  });
+
+  it("shows each service under its own heading in the menu's Credits", () => {
+    const sections = creditSections(credits() as WorldCredits);
+    assert.deepEqual(
+      sections.services.map((entry) => [entry.label, entry.name, entry.url]),
+      [
+        ["Film posters", "TMDB", "https://www.themoviedb.org"],
+        ["Game covers", "IGDB", "https://www.igdb.com"],
+      ],
+    );
+    const dialog = readFileSync(
+      new URL("../../src/components/world/CreditsDialog.tsx", import.meta.url),
+      "utf8",
+    );
+    assert.match(dialog, /\{service\.label\}/);
+    assert.doesNotMatch(dialog, />Film posters</, "no fixed heading");
   });
 });

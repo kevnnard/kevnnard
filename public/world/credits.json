@@ -1747,6 +1747,7 @@
   "services": [
     {
       "id": "tmdb",
+      "label": "Film posters",
       "name": "TMDB",
       "url": "https://www.themoviedb.org",
       "notice": "This product uses the TMDB API but is not endorsed or certified by TMDB.",
@@ -1754,6 +1755,18 @@
       "rights": "The posters belong to their studios and rights holders and are shown for personal, non-commercial reference.",
       "files": "tv/covers/",
       "count": 41,
+      "script": "scripts/prepare-tv-covers.mjs"
+    },
+    {
+      "id": "igdb",
+      "label": "Game covers",
+      "name": "IGDB",
+      "url": "https://www.igdb.com",
+      "notice": "Game data and cover images from IGDB.com.",
+      "usage": "Game and collection covers on the living-room TV, fetched once at build time; the site makes no requests to IGDB.",
+      "rights": "The covers belong to their publishers and rights holders and are shown for personal, non-commercial reference.",
+      "files": "tv/covers/",
+      "count": 11,
       "script": "scripts/prepare-tv-covers.mjs"
     }
   ]

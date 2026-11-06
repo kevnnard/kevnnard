@@ -1,8 +1,9 @@
-// Real film posters for the living-room TV (tv-home-screen T4, S7): every
-// film in the Movies app, and every collection, has a TMDB poster downloaded
-// once by scripts/prepare-tv-covers.mjs, shipped as a small WebP and listed
-// in the generated manifest. The keys live only in the gitignored .env; the
-// site never calls TMDB at runtime.
+// Real covers for the living-room TV (tv-home-screen T4, T5, S7): every film
+// in the Movies app has a TMDB poster and every game in the Games app an IGDB
+// cover, as do their collections; scripts/prepare-tv-covers.mjs downloads
+// them once, ships them as small WebP files and lists them in the generated
+// manifest. The keys live only in the gitignored .env; the site never calls
+// TMDB or IGDB at runtime.
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync, statSync } from "node:fs";
@@ -11,6 +12,9 @@ import {
   COVER_MAX_BYTES,
   coverKey,
   TV_COVERS,
+  type TvCover,
+  type TvFilmCover,
+  type TvGameCover,
 } from "../../src/lib/world/tv-covers.ts";
 import { tvApp } from "../../src/lib/world/tv-library.ts";
 
@@ -49,10 +53,24 @@ const norm = (text: string) =>
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
 
-/** Every key the Movies app needs: each film, and each collection's cover. */
-function expected() {
+const film = (key: string): TvFilmCover => {
+  const cover = TV_COVERS[key];
+  assert.ok(cover && "tmdbId" in cover, `${key} is a TMDB poster`);
+  return cover;
+};
+const game = (key: string): TvGameCover => {
+  const cover = TV_COVERS[key];
+  assert.ok(cover && "igdbId" in cover, `${key} is an IGDB cover`);
+  return cover;
+};
+
+/** The God of War series entry shows the 2018 game (recorded in T5). */
+const SERIES_YEAR: Record<string, number> = { "god-of-war": 2018 };
+
+/** Every key an app needs: each entry, and each collection's cover. */
+function expected(app: "movies" | "games" = "movies") {
   const keys: { key: string; title: string; year: number }[] = [];
-  for (const title of tvApp("movies").titles) {
+  for (const title of tvApp(app).titles) {
     if (title.films) {
       const years = title.films.map((film) => film.year);
       keys.push({
@@ -63,8 +81,9 @@ function expected() {
       for (const film of title.films)
         keys.push({ key: coverKey(title.id, film), ...film });
     } else {
-      assert.ok(title.year, `${title.id} has a year`);
-      keys.push({ key: title.id, title: title.title, year: title.year });
+      const year = title.year ?? SERIES_YEAR[title.id];
+      assert.ok(year, `${title.id} has a year`);
+      keys.push({ key: title.id, title: title.title, year });
     }
   }
   return keys;
@@ -78,8 +97,7 @@ describe("TV covers (tv-home-screen T4, S7)", () => {
     assert.equal(keys.filter((k) => k.key.includes("/")).length, 36);
     assert.equal(keys.length, 44);
     for (const { key, title, year } of keys) {
-      const cover = TV_COVERS[key];
-      assert.ok(cover, `cover for ${key}`);
+      const cover = film(key);
       assert.equal(cover.year, year, `${key} year`);
       assert.ok(cover.title.length > 0, `${key} title`);
       assert.ok(Number.isInteger(cover.tmdbId) && cover.tmdbId > 0, key);
@@ -90,33 +108,62 @@ describe("TV covers (tv-home-screen T4, S7)", () => {
       else if (!cover.representative)
         assert.ok(norm(cover.title).endsWith(norm(title)), key);
     }
+  });
+
+  it("has a cover for every game and the Hitman collection in the Games app", () => {
+    const keys = expected("games");
+    // Ghost of Tsushima, San Andreas, God of War; the 8 Hitman games and
+    // the collection's cover.
+    assert.equal(keys.filter((k) => k.key.includes("/")).length, 8);
+    assert.equal(keys.length, 12);
+    for (const { key, title, year } of keys) {
+      const cover = game(key);
+      assert.equal(cover.year, year, `${key} year`);
+      assert.ok(Number.isInteger(cover.igdbId) && cover.igdbId > 0, key);
+      assert.match(cover.imageId, /^[a-z0-9]+$/, `${key} IGDB image id`);
+      if (!cover.representative)
+        assert.equal(norm(cover.title), norm(title), key);
+    }
+    // God of War (series): the 2018 game, recorded as its representative.
+    const gow = game("god-of-war");
+    assert.equal(gow.representative, "god-of-war-2018");
+    assert.equal(norm(gow.title), "god of war");
+    assert.equal(gow.src, "/world/tv/covers/god-of-war-2018.webp");
+    // Hitman: a fixed representative game's cover.
+    const hitman = game("hitman");
+    assert.ok(hitman.representative, "hitman records its representative");
+    const pick = game(`hitman/${hitman.representative}`);
+    assert.equal(hitman.src, pick.src);
+    assert.equal(hitman.igdbId, pick.igdbId);
+    assert.equal(hitman.year, 2000, "a collection takes its first game's");
+  });
+
+  it("lists no cover for channels or titles outside the library", () => {
     assert.deepEqual(
       Object.keys(TV_COVERS).sort(),
-      keys.map((k) => k.key).sort(),
-      "no covers for games, channels or titles outside the library",
+      [...expected("movies"), ...expected("games")].map((k) => k.key).sort(),
     );
   });
 
   it("uses TMDB's own collection posters, and a pinned film for the rest", () => {
-    assert.equal(TV_COVERS["harry-potter"].tmdbType, "collection");
-    assert.equal(TV_COVERS["pirates-of-the-caribbean"].tmdbType, "collection");
+    assert.equal(film("harry-potter").tmdbType, "collection");
+    assert.equal(film("pirates-of-the-caribbean").tmdbType, "collection");
     for (const id of [
       "quentin-tarantino",
       "jim-carrey",
       "american-football-films",
     ]) {
-      const cover = TV_COVERS[id];
+      const cover = film(id);
       assert.equal(cover.tmdbType, "movie", id);
       assert.ok(cover.representative, `${id} records its representative film`);
-      const film = TV_COVERS[`${id}/${cover.representative}`];
-      assert.ok(film, `${id} representative is one of its films`);
-      assert.equal(cover.src, film.src);
-      assert.equal(cover.tmdbId, film.tmdbId);
+      const pick = film(`${id}/${cover.representative}`);
+      assert.equal(cover.src, pick.src);
+      assert.equal(cover.tmdbId, pick.tmdbId);
     }
   });
 
   it("ships each poster as a small WebP whose size and hash match the manifest", () => {
-    for (const [key, cover] of Object.entries(TV_COVERS)) {
+    for (const [key, cover] of Object.entries<TvCover>(TV_COVERS)) {
       assert.match(cover.src, /^\/world\/tv\/covers\/[a-z0-9-]+\.webp$/, key);
       const bytes = readFileSync(new URL(`public${cover.src}`, ROOT));
       assert.ok(bytes.length <= COVER_MAX_BYTES, `${key}: ${bytes.length} B`);
@@ -169,7 +216,7 @@ describe("TV covers (tv-home-screen T4, S7)", () => {
     assert.deepEqual(uses, [
       'const bearer = process.env.TMDB_READ_ACCESS_TOKEN ?? "";',
       'const v3key = process.env.TMDB_API_KEY ?? "";',
-      "const secrets = [bearer, v3key].filter((value) => value.length >= 8);",
+      "[bearer, v3key, igdbClientId, igdbSecret, igdbToken].filter(",
       "if (bearer) init.headers.Authorization = `Bearer ${bearer}`;",
       'else url.searchParams.set("api_key", v3key);',
       "if (!bearer && !v3key)",
@@ -178,12 +225,48 @@ describe("TV covers (tv-home-screen T4, S7)", () => {
     assert.match(source, /function redact\(/);
   });
 
-  it("never calls TMDB from the site at runtime", () => {
+  it("reads the IGDB keys only from the environment and never logs them", () => {
+    const source = readFileSync(SCRIPT, "utf8");
+    assert.match(source, /process\.env\.IGDB_CLIENT_ID/);
+    assert.match(source, /process\.env\.IGDB_CLIENT_SECRET/);
+    // No Twitch-looking literal (client ids, secrets and tokens are 30
+    // lowercase letters and digits).
+    assert.doesNotMatch(source, /\b[a-z0-9]{30}\b/);
+    // The client id, the secret and the token are touched only to read them,
+    // send them and redact them.
+    const uses = source
+      .split("\n")
+      .filter((line) => /\b(igdbClientId|igdbSecret|igdbToken)\b/.test(line))
+      .map((line) => line.trim());
+    assert.deepEqual(uses, [
+      'const igdbClientId = process.env.IGDB_CLIENT_ID ?? "";',
+      'const igdbSecret = process.env.IGDB_CLIENT_SECRET ?? "";',
+      'let igdbToken = "";',
+      "[bearer, v3key, igdbClientId, igdbSecret, igdbToken].filter(",
+      "client_id: igdbClientId,",
+      "client_secret: igdbSecret,",
+      'igdbToken = String((await response.json()).access_token ?? "");',
+      'if (!igdbToken) throw new Error("Twitch token: no access_token");',
+      "if (!igdbToken) await twitchToken();",
+      '"Client-ID": igdbClientId,',
+      "Authorization: `Bearer ${igdbToken}`,",
+      "if (!igdbClientId || !igdbSecret)",
+    ]);
+    // The token is posted as a form body, never put in a URL.
+    assert.match(source, /https:\/\/id\.twitch\.tv\/oauth2\/token"/);
+    assert.match(source, /body: new URLSearchParams\(/);
+    // IGDB allows 4 requests per second.
+    assert.match(source, /IGDB_INTERVAL_MS = (2[5-9]\d|[3-9]\d\d)\b/);
+  });
+
+  it("never calls TMDB or IGDB from the site at runtime", () => {
     const manifest = readFileSync(
       new URL("src/lib/world/tv-covers.ts", ROOT),
       "utf8",
     );
     assert.doesNotMatch(manifest, /themoviedb\.org|tmdb\.org|fetch\(/);
+    assert.doesNotMatch(manifest, /igdb\.com|twitch\.tv/);
     assert.doesNotMatch(manifest, /TMDB_(API_KEY|READ_ACCESS_TOKEN)/);
+    assert.doesNotMatch(manifest, /IGDB_CLIENT_(ID|SECRET)/);
   });
 });

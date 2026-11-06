@@ -59,15 +59,18 @@ export interface ImageCredit {
 }
 
 /**
- * A data service whose files ship with the site (tv-home-screen T4): TMDB's
- * film posters on the living-room TV, fetched once at prepare time by
- * scripts/prepare-tv-covers.mjs. Nothing calls the service at runtime.
+ * A data service whose files ship with the site (tv-home-screen T4, T5):
+ * TMDB's film posters and IGDB's game covers on the living-room TV, fetched
+ * once at prepare time by scripts/prepare-tv-covers.mjs. Nothing calls the
+ * service at runtime.
  */
 export interface ServiceCredit {
   id: string;
+  /** The Credits heading it is listed under ("Film posters"). */
+  label: string;
   name: string;
   url: string;
-  /** The attribution the service requires, verbatim. */
+  /** The attribution the service requires or asks for, verbatim. */
   notice: string;
   /** What the site uses it for. */
   usage: string;
@@ -116,6 +119,8 @@ export interface ImageAcknowledgement {
 }
 
 export interface ServiceAcknowledgement {
+  id: string;
+  label: string;
   name: string;
   url: string;
   notice: string;
@@ -227,6 +232,8 @@ export function creditSections(credits: WorldCredits): CreditSections {
     source: entry.source,
   }));
   const services = (credits.services ?? []).map((entry) => ({
+    id: entry.id,
+    label: entry.label,
     name: entry.name,
     url: entry.url,
     notice: entry.notice,
