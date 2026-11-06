@@ -87,11 +87,11 @@ describe("katana wall shelf placement (katana-wall-shelf T4)", () => {
     assert.ok(pane.u0 - z1 >= 0.25, `window gap ${pane.u0 - z1}`);
   });
 
-  it("sits at eye height, under the wall top, the katanas' middle at ~1.6 m", () => {
+  it("sits a little under eye height, the katanas' middle at ~1.45 m (S4)", () => {
     const top = KATANA_SHELF.topY - floor;
-    assert.ok(top > 1.2 && top < 1.6, `board top ${top}`);
+    assert.ok(top > 1.1 && top < 1.25, `board top ${top}`);
     const middle = KATANA_CENTRE[1] - floor;
-    assert.ok(middle >= 1.5 && middle <= 1.7, `katana middle ${middle}`);
+    assert.ok(middle >= 1.35 && middle <= 1.5, `katana middle ${middle}`);
     assert.ok(wall);
     const lightTop = KATANA_LIGHT_POSITION[1] - floor;
     assert.ok(lightTop < wall.height, `light ${lightTop} under the wall top`);

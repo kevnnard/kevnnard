@@ -57,8 +57,8 @@ export const KATANA_SHELF = {
   wall: wall.id,
   /** Middle of the free stretch: back wall's inner face to the window. */
   centreZ: (wall.from + pane.u0) / 2,
-  /** Board top, world y: 1.33 m above the floor, so the katanas' middle is at eye height. */
-  topY: HOUSE.floorY + 1.33,
+  /** Board top, world y: 1.18 m above the floor, the katanas' middle a little under eye height (S4). */
+  topY: HOUSE.floorY + 1.18,
   length: 1.3,
   depth: 0.28,
   thickness: 0.04,
