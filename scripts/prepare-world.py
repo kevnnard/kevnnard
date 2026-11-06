@@ -759,8 +759,10 @@ def kept_credits(credits, previous):
                                 pack for pack in previous["packs"]
                                 if pack["id"] in gallery_packs]
     # The ambient sounds and the story images (katana-wall-shelf T11, T16)
-    # are credited by hand; nothing here rebuilds them, so keep them as they are.
-    for key in ("ambient", "images"):
+    # are credited by hand, and the TV's TMDB posters by
+    # scripts/prepare-tv-covers.mjs (tv-home-screen T4); nothing here rebuilds
+    # them, so keep them as they are.
+    for key in ("ambient", "images", "services"):
         if key not in credits and previous.get(key):
             credits[key] = previous[key]
     return credits

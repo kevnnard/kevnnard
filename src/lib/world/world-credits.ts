@@ -58,10 +58,32 @@ export interface ImageCredit {
   sourceFiles: SourceFile[];
 }
 
+/**
+ * A data service whose files ship with the site (tv-home-screen T4): TMDB's
+ * film posters on the living-room TV, fetched once at prepare time by
+ * scripts/prepare-tv-covers.mjs. Nothing calls the service at runtime.
+ */
+export interface ServiceCredit {
+  id: string;
+  name: string;
+  url: string;
+  /** The attribution the service requires, verbatim. */
+  notice: string;
+  /** What the site uses it for. */
+  usage: string;
+  /** Who owns the shipped files and on what terms they are shown. */
+  rights: string;
+  /** Shipped folder, relative to public/world/. */
+  files: string;
+  count: number;
+  script: string;
+}
+
 export interface WorldCredits extends Credits {
   music?: MusicCredit[];
   ambient?: AmbientCredit[];
   images?: ImageCredit[];
+  services?: ServiceCredit[];
 }
 
 export interface MusicAcknowledgement {
@@ -93,6 +115,14 @@ export interface ImageAcknowledgement {
   source: string;
 }
 
+export interface ServiceAcknowledgement {
+  name: string;
+  url: string;
+  notice: string;
+  usage: string;
+  rights: string;
+}
+
 export interface AssetAcknowledgement {
   id: string;
   pack: string;
@@ -110,6 +140,7 @@ export interface CreditSections {
   ambient: AmbientAcknowledgement[];
   assets: AssetAcknowledgement[];
   images: ImageAcknowledgement[];
+  services: ServiceAcknowledgement[];
 }
 
 /** Inspiration only for parts; the reused files are listed under assets. */
@@ -195,5 +226,12 @@ export function creditSections(credits: WorldCredits): CreditSections {
     license: entry.license,
     source: entry.source,
   }));
-  return { music, ambient, assets, images };
+  const services = (credits.services ?? []).map((entry) => ({
+    name: entry.name,
+    url: entry.url,
+    notice: entry.notice,
+    usage: entry.usage,
+    rights: entry.rights,
+  }));
+  return { music, ambient, assets, images, services };
 }

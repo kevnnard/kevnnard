@@ -48,8 +48,10 @@ function PackCredit({ pack }: { pack: AssetAcknowledgement }) {
 /**
  * The guide's Credits tab (S4): gentle-stream's music engine first, the CC0
  * ambient sounds, Bruno Simon's inspiration, every external asset pack from
- * /world/credits.json, then the public-domain images on the story cards. The site's own procedural work stays in that file and
- * is not listed here as a third-party credit.
+ * /world/credits.json, the public-domain images on the story cards, then the
+ * film posters' source (TMDB, with its required notice). The site's own
+ * procedural work stays in that file and is not listed here as a third-party
+ * credit.
  */
 export function CreditsList() {
   const [credits, setCredits] = useState<CreditSections | null>(null);
@@ -138,6 +140,22 @@ export function CreditsList() {
               </li>
             ))}
           </ul>
+        </section>
+      )}
+      {credits.services.length > 0 && (
+        <section aria-labelledby="world-credits-posters">
+          <h3 id="world-credits-posters">Film posters</h3>
+          {credits.services.map((service) => (
+            <div key={service.url} className="world-credits-feature">
+              <h4>
+                <External href={service.url}>{service.name}</External>
+              </h4>
+              <p>{service.notice}</p>
+              <p>
+                {service.usage} {service.rights}
+              </p>
+            </div>
+          ))}
         </section>
       )}
     </div>

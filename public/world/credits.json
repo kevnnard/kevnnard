@@ -1743,5 +1743,18 @@
         }
       ]
     }
+  ],
+  "services": [
+    {
+      "id": "tmdb",
+      "name": "TMDB",
+      "url": "https://www.themoviedb.org",
+      "notice": "This product uses the TMDB API but is not endorsed or certified by TMDB.",
+      "usage": "Film and collection posters on the living-room TV, fetched once at build time; the site makes no requests to TMDB.",
+      "rights": "The posters belong to their studios and rights holders and are shown for personal, non-commercial reference.",
+      "files": "tv/covers/",
+      "count": 41,
+      "script": "scripts/prepare-tv-covers.mjs"
+    }
   ]
 }

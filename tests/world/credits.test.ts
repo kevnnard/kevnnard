@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 import {
@@ -15,7 +15,10 @@ import { DISPLAY_MODEL_FILES } from "../../src/lib/world/display-cases.ts";
 import { KATANA_MODEL } from "../../src/lib/world/katana-shelf.ts";
 import { MODEL_FILES, PROP_FILES } from "../../src/lib/world/models.ts";
 import { BRUNO_CHAIR, BRUNO_MAPS } from "../../src/lib/world/setup.ts";
-import type { WorldCredits } from "../../src/lib/world/world-credits.ts";
+import {
+  creditSections,
+  type WorldCredits,
+} from "../../src/lib/world/world-credits.ts";
 import { PUBLIC, shippedModels } from "./glb.ts";
 
 const credits = (): Credits =>
@@ -492,6 +495,7 @@ describe("credits rebuild (katana-wall-shelf T16)", () => {
       ],
       ambient: [{ id: "owl-hoot", file: "/world/audio/ambient/owl-hoot.mp3" }],
       images: [{ file: "stories/katana-ukiyoe.webp" }],
+      services: [{ id: "tmdb", files: "tv/covers/" }],
     };
     const rebuilt = {
       packs: [{ id: "base" }],
@@ -520,6 +524,7 @@ describe("credits rebuild (katana-wall-shelf T16)", () => {
     const kept = JSON.parse(run.stdout);
     assert.deepEqual(kept.ambient, previous.ambient);
     assert.deepEqual(kept.images, previous.images);
+    assert.deepEqual(kept.services, previous.services);
     assert.deepEqual(
       kept.assets.map((asset: { file: string }) => asset.file),
       ["models/tree.glb", "models/wall-katana.glb"],
@@ -538,5 +543,40 @@ describe("credits rebuild (katana-wall-shelf T16)", () => {
     const data = credits() as unknown as Record<string, unknown[]>;
     assert.ok(data.ambient?.length, "ambient");
     assert.ok(data.images?.length, "images");
+    assert.ok(data.services?.length, "services");
+  });
+});
+
+describe("TMDB attribution (tv-home-screen T4, S7)", () => {
+  const NOTICE =
+    "This product uses the TMDB API but is not endorsed or certified by TMDB.";
+
+  it("credits TMDB with its exact notice, its site and the shipped posters", () => {
+    const services = (credits() as WorldCredits).services ?? [];
+    const tmdb = services.find((entry) => entry.id === "tmdb");
+    assert.ok(tmdb, "TMDB service credit");
+    assert.equal(tmdb.name, "TMDB");
+    assert.equal(tmdb.notice, NOTICE);
+    assert.equal(tmdb.url, "https://www.themoviedb.org");
+    assert.equal(tmdb.files, "tv/covers/");
+    assert.match(tmdb.rights, /rights holders/);
+    assert.match(tmdb.rights, /non-commercial/);
+    const shipped = readdirSync(new URL("tv/covers/", PUBLIC)).length;
+    assert.equal(tmdb.count, shipped, "count matches the shipped posters");
+  });
+
+  it("shows the notice and the link in the menu's Credits", () => {
+    const sections = creditSections(credits() as WorldCredits);
+    const tmdb = sections.services.find((entry) => entry.name === "TMDB");
+    assert.ok(tmdb);
+    assert.equal(tmdb.notice, NOTICE);
+    assert.equal(tmdb.url, "https://www.themoviedb.org");
+    const dialog = readFileSync(
+      new URL("../../src/components/world/CreditsDialog.tsx", import.meta.url),
+      "utf8",
+    );
+    assert.match(dialog, /credits\.services\.map/);
+    assert.match(dialog, /service\.notice/);
+    assert.match(dialog, /href=\{service\.url\}/);
   });
 });
