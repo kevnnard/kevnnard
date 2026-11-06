@@ -131,14 +131,14 @@ export const GALLERY_ORDER: readonly GalleryItemId[] = [
  * Desk things the inspection camera frames too (keyboard-card T1): not
  * part of the collection, so never on its rail.
  */
-export type DeskItemId = "keyboard";
+export type DeskItemId = "keyboard" | "coffee";
 
 /** Anything the inspection camera can frame: the gallery or the desk. */
 export type InspectItemId = GalleryItemId | DeskItemId;
 
 /** Whether an inspected item is one of the desk things. */
 export function isDeskItemId(id: InspectItemId): id is DeskItemId {
-  return id === "keyboard";
+  return id === "keyboard" || id === "coffee";
 }
 
 /** Whether an inspected item is one of the glass cases. */

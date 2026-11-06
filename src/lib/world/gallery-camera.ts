@@ -1,4 +1,5 @@
 import { GUIDE, type Vec3 } from "./camera.ts";
+import { COFFEE_VIEW } from "./coffee-shot.ts";
 import {
   DISPLAY_CASE,
   DISPLAY_CASES,
@@ -67,6 +68,7 @@ function galleryView(id: GalleryItemId): {
 
 /** Any inspected thing's view: a gallery item's, or the desk keyboard's. */
 function inspectView(id: InspectItemId): ReturnType<typeof galleryView> {
+  if (id === "coffee") return COFFEE_VIEW;
   return isDeskItemId(id) ? KEYBOARD_VIEW : galleryView(id);
 }
 

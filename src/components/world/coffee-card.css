@@ -1,0 +1,85 @@
+/* The desk coffee card (coffee-card T1): the katana card's lo-fi console
+   (katana-story.css supplies the panel, kicker, title and footprint), with
+   the owner's one line, the processes, the friend's shop and the Maps link
+   as the one emerald control. No rail below it, so it may run a little
+   taller. */
+.katana-story.coffee-card {
+  max-height: calc(100% - 64px);
+}
+.coffee-card .coffee-card-line {
+  margin-top: 8px;
+  color: var(--katana-soft);
+}
+.coffee-card-section {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--katana-line);
+}
+.coffee-card-section h3 {
+  margin: 0 0 6px;
+  color: var(--katana-accent);
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.coffee-card-processes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--katana-soft);
+  font-size: 13px;
+}
+.coffee-card-processes li {
+  position: relative;
+  padding-left: 18px;
+}
+.coffee-card-processes li + li {
+  margin-top: 4px;
+}
+.coffee-card-processes li::before {
+  content: "›";
+  position: absolute;
+  left: 2px;
+  color: var(--katana-accent);
+}
+.coffee-card :is(.coffee-card-processes, .coffee-card-place) strong {
+  color: var(--katana-fg);
+  font-weight: 600;
+}
+.coffee-card .coffee-card-place {
+  color: var(--katana-soft);
+  font-size: 13px;
+}
+.coffee-card-actions {
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--katana-line);
+}
+.coffee-card-actions .coffee-card-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid rgb(16 185 129 / 0.6);
+  border-radius: 6px;
+  background: rgb(16 185 129 / 0.12);
+  color: var(--katana-fg);
+  font: inherit;
+  text-decoration: none;
+  touch-action: manipulation;
+  transition: background-color 150ms;
+}
+.coffee-card-actions .coffee-card-link:hover {
+  background: rgb(16 185 129 / 0.24);
+}
+@media (max-width: 700px) {
+  .katana-story.coffee-card {
+    max-height: 45vh;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .coffee-card-actions .coffee-card-link {
+    transition: none;
+  }
+}

@@ -1,0 +1,13 @@
+# Coffee mug card
+Click the coffee mug on the desk in /world for a cinematic camera move onto the mug and a side card: the owner's favourite coffee is Chiroso, a few Chiroso varieties, and a recommendation of his friend's coffee shop in Bogotá, La Octava.
+
+## Specs
+S1. "uno   mas para la tasa del cafe ajja nad quiero mostrar qeue mi tasa favorita ess el chiroso y mostrar varias variedades de chiroro y recomendar caafe mi tireer estableciemnto de bogota la octava que es de un amigo para que vyan a tomar cafe alli entonces que la camara tome una enfoque bien cinemtografiico y mostra la carrd"
+
+## Tasks
+T1 [S1] IN PROGRESS (own worker, started while the keyboard worker finishes; own files first, shared wiring after the keyboard worker settles) — Clickable desk mug (setup.ts mug on the wooden coaster, coffee-steam.glb) -> cinematic camera move (slow dolly/arc to a low, close angle on the steaming mug) + side card in the lo-fi look: "Chiroso" as the favourite, the Chiroso varieties/processes the owner names, and La Octava (Bogotá) with the link/address the owner gives. No invented facts.
+
+## Log
+L3. Owner confirmed the keyboard ("si es perfecto es el teclado") and sent the coffee shop's Google Maps link: "Café Mi Tierra", Bogotá, place 0x8e3f990041f72565:0xf58a44f4848c28b5 at 4.6035678,-74.1123538 (S1's "mi tierra ... la octava" = Café Mi Tierra). No street address verified online; the card links the Maps place (tracking params dropped).
+L2. Owner: "pues ivestiga en la web ... busca los recursos en la web". Research: Chiroso (Caturra Chiroso) from Urrao, Antioquia, 1,800-2,200 m; processes washed (clean, bright citrus acidity, floral), honey (honeyed sweetness, rounder body), natural (red fruit, berries, winey) (coffeesapiens.org, perfectdailygrind.com, ambercolombia.com). No specialty café named "La Octava" in Bogotá found; candidates: "Restaurante y Cafetería La Octava", Carrera 8 # 20-33, Veracruz (direccion.com.co) and "La Octava" Peruvian restaurant, Calle 12A # 8-30, La Candelaria; laoctavacafe.com is a Mexican chain. Asked the owner which one. Keyboard (keyboard-card): NuPhy Air75 V2 per stylized-house L47/T12; Amazon https://www.amazon.com/dp/B0CMX8SLF6.
+L1. User request verbatim: S1. The desk already has a mug on a wooden coaster with a steam model (src/lib/world/setup.ts, models.ts coffeeSteam). Asked the owner for La Octava's address/Instagram/Maps link and which Chiroso varieties to show.

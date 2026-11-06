@@ -186,7 +186,7 @@ describe("story framing (collection-display-models T12)", () => {
     // Desk things' product cards are always open (keyboard-card T1).
     assert.match(
       app,
-      /galleryStory=\{\s*deskProduct !== null \|\| \(caseStory !== null && storyOpen\)\s*\}/,
+      /galleryStory=\{\s*deskProduct !== null \|\|\s*deskStory !== null \|\|\s*\(caseStory !== null && storyOpen\)\s*\}/,
     );
     assert.match(app, /open=\{storyOpen\}/);
     assert.match(app, /onOpenChange=\{setStoryOpen\}/);

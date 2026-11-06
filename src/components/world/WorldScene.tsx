@@ -67,6 +67,13 @@ import {
 } from "@/lib/world/camera.ts";
 import { cloudLayout, cloudShapes } from "@/lib/world/clouds.ts";
 import {
+  coffeeLeaveAt,
+  coffeeShotAt,
+  coffeeShotProgress,
+  coffeeShotShift,
+  type ShotPose,
+} from "@/lib/world/coffee-shot.ts";
+import {
   type GalleryItemId,
   type InspectItemId,
   isDisplayCaseId,
@@ -754,6 +761,8 @@ function GuidedCamera({
   const element = useThree((state) => state.gl.domElement);
   const focused = useRef(focus);
   const saved = useRef<Pose | null>(null);
+  const lastGallery = useRef<InspectItemId | null>(null);
+  const coffeeFrom = useRef<ShotPose | null>(null);
   const epoch = useRef(0);
   const lastHome = useRef(home);
   const arriveAt = closeUp === "tv" ? onTvArrive : onArrive;
@@ -795,12 +804,48 @@ function GuidedCamera({
     first.current = false;
     const recentered = lastHome.current !== home;
     lastHome.current = home;
+    // The coffee close-up is a cinematic move (coffee-card T1): an eased
+    // dolly with an arc and a narrowing lens, played in and out.
+    const wasCoffee = lastGallery.current === "coffee";
+    const cinematic =
+      animate && galleryCase === "coffee" && lastGallery.current !== "coffee";
+    lastGallery.current = galleryCase ?? null;
+    const coffeeShift = galleryStory
+      ? coffeeShotShift(viewportWidth, aspect)
+      : 0;
     if (focus || galleryCase) {
       // Saved once per visit: resizing re-frames the close-up only.
       saved.current ??= {
         position: current.getPosition(new Vector3()).toArray(),
         target: current.getTarget(new Vector3()).toArray(),
       };
+      if (galleryCase === "coffee" && !focus) {
+        coffeeFrom.current ??= {
+          eye: saved.current.position as ShotPose["eye"],
+          target: saved.current.target as ShotPose["target"],
+          fov: camera.fov,
+        };
+        const from = coffeeFrom.current;
+        const place = (t: number) => {
+          const pose = coffeeShotAt(t, from, coffeeShift);
+          lens.focus(pose.fov);
+          current.setLookAt(...pose.eye, ...pose.target, false);
+          invalidate();
+        };
+        if (!cinematic) {
+          place(1);
+          if (epoch.current === run) arrive.current?.();
+          return;
+        }
+        const start = performance.now();
+        let frame = requestAnimationFrame(function step(now) {
+          const t = coffeeShotProgress((now - start) / 1000, false);
+          place(t);
+          if (t < 1) frame = requestAnimationFrame(step);
+          else if (epoch.current === run) arrive.current?.();
+        });
+        return () => cancelAnimationFrame(frame);
+      }
       const [width, height] = portraitFit.split("x").map(Number);
       const speaker =
         closeUp === "speakers" && focus ? speakerFocus(aspect) : null;
@@ -823,9 +868,24 @@ function GuidedCamera({
       });
       return;
     }
-    lens.release();
     const back = recentered ? null : saved.current;
     saved.current = null;
+    const to = coffeeFrom.current;
+    coffeeFrom.current = null;
+    if (wasCoffee && animate && back && to) {
+      const start = performance.now();
+      let frame = requestAnimationFrame(function step(now) {
+        const t = coffeeShotProgress((now - start) / 1000, false, true);
+        const pose = coffeeLeaveAt(t, to, coffeeShift);
+        lens.focus(pose.fov);
+        current.setLookAt(...pose.eye, ...pose.target, false);
+        invalidate();
+        if (t < 1) frame = requestAnimationFrame(step);
+        else lens.release();
+      });
+      return () => cancelAnimationFrame(frame);
+    }
+    lens.release();
     if (back) {
       current.setLookAt(...back.position, ...back.target, animate);
       return;

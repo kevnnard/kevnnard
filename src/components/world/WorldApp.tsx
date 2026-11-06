@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { AmbientSound } from "@/lib/world/ambient-sound.ts";
 import { CASE_STORIES } from "@/lib/world/case-stories.ts";
 import { DESK_PRODUCTS } from "@/lib/world/desk-products.ts";
+import { DESK_STORIES } from "@/lib/world/desk-stories.ts";
 import { type InspectItemId, isDeskItemId } from "@/lib/world/display-cases.ts";
 import {
   DEFAULT_LIGHTS,
@@ -75,6 +76,7 @@ import {
   saveMusicPreferences,
 } from "@/lib/world/world-preferences.ts";
 import CaseStory from "./CaseStory";
+import CoffeeCard from "./CoffeeCard";
 import CollectionRail from "./CollectionRail";
 import ProductCard from "./ProductCard";
 import type { DeskControl } from "./Setup";
@@ -239,6 +241,7 @@ export default function WorldApp() {
   // The inspected desk thing's product card: always open, no rail.
   const deskProduct =
     galleryCase === "keyboard" ? DESK_PRODUCTS.keyboard : null;
+  const deskStory = galleryCase === "coffee" ? DESK_STORIES.coffee : null;
   // Hidden only for the case it was hidden on, so it opens again on every
   // other case; while open the camera frames left of it (T12).
   const [hiddenStory, setHiddenStory] = useState<InspectItemId | null>(null);
@@ -919,7 +922,9 @@ export default function WorldApp() {
               tv={tvControl}
               galleryCase={galleryCase}
               galleryStory={
-                deskProduct !== null || (caseStory !== null && storyOpen)
+                deskProduct !== null ||
+                deskStory !== null ||
+                (caseStory !== null && storyOpen)
               }
               onInspectCase={
                 ready && entered && !focus && !portrait && !speakers && !tv
@@ -998,6 +1003,13 @@ export default function WorldApp() {
           key={galleryCase}
           product={deskProduct}
           onReturn={() => setGalleryCase(null)}
+        />
+      )}
+      {ready && entered && !focus && !portrait && !speakers && deskStory && (
+        <CoffeeCard
+          key={galleryCase}
+          story={deskStory}
+          onClose={() => setGalleryCase(null)}
         />
       )}
 
