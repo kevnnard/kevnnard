@@ -4,12 +4,14 @@ A wall shelf on the wall to the right of the TV in /world holding Mitchell Bekke
 ## Specs
 S1. "uiero una repisa en la pared de la derecha del v para poner un modelo nuevo que seran unas katanas ya descargue el gbl esta en dowlosad perolo quiero bien preciosotambiewn si damos click preview paraver mejor esas katanas y en menu credits a este autort y darle el link para que vean sus demas artes pero al hacer preview djemeos una card como el de lofi la musica solo para decir que soyy amante a la cultura oriental principalmente la jhaponesa https://sketchfab.com/MitchellBekke"
 S2. "antes comitea y todo yy vamos con la nuecava tarea"
+S5. "y que la luz no quedeme el modelo mejorala sea mas smooth pepro que alumbre bien" (the light must not burn the model: smoother, but still lighting it well).
 S4. "si me gusta bajalo un poco del lugar un poco mas abajo" (likes it; lower the shelf a little).
 S3. "dale sirapido" / screenshot reply "esa": the wall is the one with the window (TV at its left corner, window to its right, sofa below), i.e. `main-right`; the shelf goes on its free stretch between the TV corner and the window.
 
 ## Tasks
 T1 [S2] DONE — Nothing left to commit: the working tree was clean (only the untracked scripts/__pycache__/ leftover); last commit 605b4fb.
 T2 [S1, S3] DONE — Map the scene: the TV, the wall to its right, the lo-fi music card, the Credits menu and the gallery inspection flow; route gentle-ai-explore.
+T7 [S5] DONE — Picture light moved out/up (0.5 m out from the wall, 0.45 m above the katanas' middle), 5 cd, angle 1.2, penumbra 0.6: ~15 lx at the middle, middle/end ratio 2.07 (was 4.3, a hot spot 0.33 m away); inline.
 T6 [S4] DONE — Shelf lowered 15 cm: board top 1.18 m above HOUSE.floorY (was 1.33); inline.
 T3 [S1] DONE — Derive a web GLB from the downloaded model reproducibly and credit Mitchell Bekke (CC BY 4.0) with his profile link in Credits.
 T4 [S1, S3] DONE — Build the wall shelf and place the katanas on it.

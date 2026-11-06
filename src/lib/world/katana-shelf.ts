@@ -82,16 +82,19 @@ export const KATANA_SHELF = {
     barLength: 0.42,
     barRadius: 0.014,
     /** Bar this far out from the wall and above the katanas' middle. */
-    out: 0.22,
-    rise: 0.32,
+    out: 0.5,
+    rise: 0.45,
     armRadius: 0.004,
     color: "#ffe6c2",
-    /** Soft: ~19 lx at the katanas' middle, 0.33 m away. */
-    intensity: 2,
-    /** Wide enough to reach the hilts and the tips, softly. */
-    angle: 1.1,
-    penumbra: 0.8,
-    distance: 1.4,
+    /**
+     * Smooth but bright (S5): ~15 lx at the katanas' middle, 0.57 m away,
+     * and about half that at the hilts and tips, with no hot spot.
+     */
+    intensity: 5,
+    /** Full output over the stand's middle, fading gently past the ends. */
+    angle: 1.2,
+    penumbra: 0.6,
+    distance: 2,
     decay: 2,
     emissive: 1.2,
     defaultEnabled: true,

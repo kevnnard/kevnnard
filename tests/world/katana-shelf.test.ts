@@ -213,7 +213,18 @@ describe("katana night light (katana-wall-shelf T4)", () => {
     assert.deepEqual(KATANA_LIGHT_AIM, KATANA_CENTRE);
     assert.ok(KATANA_LIGHT_POSITION[1] > KATANA_CENTRE[1]);
     assert.ok(KATANA_LIGHT_POSITION[0] < SHELF_INTERIOR_X);
-    assert.ok(KATANA_SHELF.light.intensity <= 3, "soft");
+    // Smooth but bright (S5): even along the whole stand, no hot spot.
+    const [lx, ly, lz] = KATANA_LIGHT_POSITION;
+    const lux = (dz: number) =>
+      KATANA_SHELF.light.intensity /
+      ((lx - KATANA_CENTRE[0]) ** 2 +
+        (ly - KATANA_CENTRE[1]) ** 2 +
+        (lz - KATANA_CENTRE[2] - dz) ** 2);
+    const middle = lux(0);
+    const end = lux(KATANA_MODEL.length / 2);
+    assert.ok(middle >= 12 && middle <= 20, `middle ${middle} lx`);
+    assert.ok(middle / end <= 2.2, `middle/end ${middle / end}`);
+    assert.ok(KATANA_SHELF.light.penumbra >= 0.5, "soft edge");
   });
 
   it("keeps its lights mounted at zero intensity when off", () => {
