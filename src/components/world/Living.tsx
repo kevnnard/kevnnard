@@ -32,12 +32,18 @@ import {
   livingMeshes,
   livingOcclusion,
   type ModelPlacement,
+  TV_PANEL,
 } from "@/lib/world/living.ts";
 import { boxUv, TEXTURES } from "@/lib/world/textures.ts";
+import type { TvControl } from "@/lib/world/tv-focus.ts";
 
 const URLS = LIVING_MODELS.map((model) => LIVING_FILES[model.kind]);
 const ROUND_SEGMENTS = 16;
 const UP = new Vector3(0, 1, 0);
+/** Pixels a press may move and still count as a click, not an orbit drag. */
+const CLICK_SLOP = 6;
+/** Depth of the TV's click target, in front of and behind the panel. */
+const TV_HIT_DEPTH = 0.08;
 
 const extendLoader = (loader: GLTFLoader) => {
   loader.setMeshoptDecoder(MeshoptDecoder);
@@ -206,6 +212,7 @@ export default function Living({
   maps,
   power = true,
   onPrepared,
+  tv,
 }: {
   hours: number;
   maps?: SurfaceMaps;
@@ -213,6 +220,8 @@ export default function Living({
   power?: boolean;
   /** Called once the loaded room has committed (world entry loader). */
   onPrepared?: () => void;
+  /** Clicking the TV opens its home screen (tv-home-screen T2). */
+  tv?: TvControl;
 }) {
   const { invalidate } = useThree();
   const gltfs = useLoader(GLTFLoader, URLS, extendLoader);
@@ -287,5 +296,34 @@ export default function Living({
   );
   useEffect(() => onPrepared?.(), [onPrepared]);
 
-  return <primitive object={group} />;
+  return (
+    <>
+      <primitive object={group} />
+      {/* Click target over the panel: from the room it moves the camera in
+          to the TV; an orbit drag that ends on it is not a click. */}
+      {tv?.onEnter && !tv.focused && (
+        <mesh
+          name="living-tv-hitbox"
+          position={TV_PANEL.center}
+          onClick={(e) => {
+            if (e.delta > CLICK_SLOP || !tv.onEnter) return;
+            e.stopPropagation();
+            tv.onEnter();
+            document.body.style.cursor = "";
+          }}
+          onPointerOver={(e) => {
+            e.stopPropagation();
+            document.body.style.cursor = "pointer";
+          }}
+          onPointerOut={() => {
+            document.body.style.cursor = "";
+          }}
+          visible={false}
+        >
+          <boxGeometry args={[TV_PANEL.width, TV_PANEL.height, TV_HIT_DEPTH]} />
+          <meshBasicMaterial transparent opacity={0} />
+        </mesh>
+      )}
+    </>
+  );
 }

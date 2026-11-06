@@ -1,0 +1,627 @@
+/* Kevnnard TV (tv-home-screen T2, artboard 01-tv-os-overlay). Tokens from
+   design/system.md only: zinc dark theme, emerald #10b981 as the one
+   accent, ring #d4d4d8, mono and sans fallbacks, 6/8/12px radius. The
+   screen scrolls inside itself; the rows scroll sideways when they do not
+   fit, so nothing overflows the page at any width. */
+
+/* While the TV holds the camera the world's header is hidden like in the
+   other close-ups (clock and lights panel: world-terminal-focus). */
+.world-tv-focus > header {
+  visibility: hidden;
+}
+/* From the click on the TV until Back to room, the scene takes no clicks:
+   no case, lamp or speaker starts another view during the camera's move. */
+.world-tv-focus > .world-entry-scene {
+  pointer-events: none;
+}
+
+.tv-home {
+  --tv-bg: #09090b;
+  --tv-surface: #18181b;
+  --tv-panel: #27272a;
+  --tv-fg: #fafafa;
+  --tv-muted: #a1a1aa;
+  --tv-soft: #d4d4d8;
+  --tv-signal: #10b981;
+  --tv-line: rgb(212 212 216 / 0.2);
+  --tv-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --tv-pad-x: clamp(16px, 3.4vw, 48px);
+  --tv-dock-h: 92px;
+  --tv-cover-w: 132px;
+  --tv-cover-h: 176px;
+  --tv-wide-w: 214px;
+  --tv-wide-h: 120px;
+  --tv-hero-art: 412px;
+  --tv-gap: 24px;
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tv-gap);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 28px var(--tv-pad-x) 20px;
+  background:
+    radial-gradient(70% 60% at 80% 0%, rgb(16 185 129 / 0.08), transparent 70%),
+    linear-gradient(180deg, #121212 0%, #09090b 60%);
+  color: var(--tv-fg);
+  font:
+    14px / 20px ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+  pointer-events: auto;
+  animation: tv-home-in 200ms ease-out;
+}
+@keyframes tv-home-in {
+  from {
+    opacity: 0;
+  }
+}
+.tv-home :is(button, kbd) {
+  font: inherit;
+  color: inherit;
+}
+.tv-home :focus {
+  outline: none;
+}
+/* Remote focus: a thick ring plus a lift, readable from the couch. */
+.tv-home :focus-visible {
+  outline: 3px solid var(--tv-soft);
+  outline-offset: 4px;
+}
+.tv-home ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tv-kbd {
+  display: inline-flex;
+  justify-content: center;
+  min-width: 20px;
+  padding: 1px 5px;
+  border: 1px solid var(--tv-line);
+  border-radius: 4px;
+  color: var(--tv-soft);
+  font: 12px / 16px var(--tv-mono);
+}
+
+/* Top bar */
+.tv-home-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  min-height: 40px;
+}
+.tv-home-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  font: 600 14px / 20px var(--tv-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.tv-home-brand i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--tv-signal);
+}
+.tv-home-brand span {
+  color: var(--tv-muted);
+  font-weight: 500;
+}
+.tv-home-status {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  min-width: 0;
+  color: var(--tv-muted);
+  font: 12px / 16px var(--tv-mono);
+}
+.tv-home-stream {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tv-home-status time {
+  color: var(--tv-fg);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.tv-home-back {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--tv-line);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+.tv-home-back:hover {
+  background: rgb(39 39 42 / 0.5);
+}
+
+/* App dock: seven equal apps across, scrolling sideways on phones. */
+.tv-home-dock {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 12px;
+}
+.tv-app {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  height: var(--tv-dock-h);
+  padding: 12px 14px;
+  border: 1px solid var(--tv-line);
+  border-radius: 12px;
+  background: rgb(39 39 42 / 0.5);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 150ms,
+    background-color 150ms;
+}
+.tv-app svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: var(--tv-soft);
+  stroke-width: 1.6;
+}
+.tv-app span {
+  min-width: 0;
+}
+.tv-app b {
+  display: block;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tv-app small {
+  display: block;
+  overflow: hidden;
+  color: var(--tv-muted);
+  font: 12px / 16px var(--tv-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tv-app:hover {
+  background: var(--tv-panel);
+}
+.tv-app[aria-current="true"] {
+  border-color: var(--tv-fg);
+  background: var(--tv-fg);
+  color: var(--tv-bg);
+}
+.tv-app[aria-current="true"] svg {
+  stroke: var(--tv-bg);
+}
+.tv-app[aria-current="true"] small {
+  color: var(--tv-panel);
+}
+
+/* Hero: the picked title */
+.tv-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, var(--tv-hero-art));
+  gap: 40px;
+}
+.tv-hero-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-width: 0;
+  padding-bottom: 8px;
+}
+.tv-kicker {
+  margin: 0;
+  color: var(--tv-signal);
+  font: 12px / 16px var(--tv-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.tv-hero-title {
+  margin: 8px 0 6px;
+  font-size: clamp(26px, 3vw, 40px);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+  overflow-wrap: anywhere;
+}
+.tv-meta {
+  margin: 0;
+  color: var(--tv-muted);
+  font: 12px / 16px var(--tv-mono);
+}
+.tv-note {
+  max-width: 640px;
+  margin: 12px 0 0;
+  color: var(--tv-soft);
+  font-size: 16px;
+  line-height: 24px;
+}
+.tv-note-label {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--tv-muted);
+  font: 12px / 16px var(--tv-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.tv-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+.tv-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 20px;
+  border: 1px solid var(--tv-line);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+.tv-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.tv-btn.is-primary {
+  border-color: var(--tv-signal);
+  background: var(--tv-signal);
+  color: var(--tv-bg);
+  font-weight: 600;
+}
+.tv-btn.is-primary .tv-kbd {
+  border-color: rgb(9 9 11 / 0.3);
+  color: var(--tv-bg);
+}
+.tv-hero-art {
+  position: relative;
+  align-self: end;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--tv-line);
+  border-radius: 12px;
+  background: var(--tv-surface);
+}
+.tv-hero-art video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: var(--tv-bg);
+}
+
+/* Rows */
+.tv-row-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin: 0 0 4px;
+}
+.tv-row-head h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+}
+.tv-row-head span {
+  color: var(--tv-muted);
+  font: 12px / 16px var(--tv-mono);
+}
+.tv-row-head .tv-tag {
+  padding: 1px 8px;
+  border: 1px solid var(--tv-line);
+  border-radius: 6px;
+  color: var(--tv-soft);
+}
+/* Room above and around for the focus lift and ring. */
+.tv-covers {
+  display: flex;
+  gap: 16px;
+  margin: 0 calc(-1 * var(--tv-pad-x));
+  padding: 10px var(--tv-pad-x) 8px;
+  overflow-x: auto;
+  scroll-padding-inline: var(--tv-pad-x);
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+}
+.tv-covers li {
+  flex: none;
+  scroll-snap-align: start;
+}
+.tv-cover {
+  position: relative;
+  display: block;
+  width: var(--tv-cover-w);
+  height: var(--tv-cover-h);
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--tv-line);
+  border-radius: 8px;
+  background: var(--tv-surface);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 150ms;
+}
+.tv-cover.is-wide {
+  width: var(--tv-wide-w);
+  height: var(--tv-wide-h);
+}
+.tv-cover[aria-current="true"] {
+  border-color: var(--tv-signal);
+}
+.tv-cover:focus-visible,
+.tv-app:focus-visible {
+  transform: translateY(-4px);
+}
+.tv-cover-title {
+  position: absolute;
+  right: 10px;
+  bottom: 26px;
+  left: 10px;
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 19px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+.tv-cover-line {
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  left: 10px;
+  overflow: hidden;
+  color: var(--tv-soft);
+  font: 12px / 16px var(--tv-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tv-fav {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--tv-signal);
+  color: var(--tv-bg);
+  font: 600 12px / 16px var(--tv-mono);
+}
+/* A collection: two card edges peeking behind the cover's top right. */
+.tv-stack {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 22px;
+  height: 16px;
+  border: 1px solid var(--tv-soft);
+  border-radius: 3px;
+  box-shadow:
+    -4px 4px 0 -1px var(--tv-bg),
+    -4px 4px 0 0 var(--tv-soft);
+}
+.tv-cover-back {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+  padding: 12px;
+  color: var(--tv-soft);
+  font-size: 32px;
+  line-height: 40px;
+}
+.tv-cover-back small {
+  color: var(--tv-muted);
+  font: 12px / 16px var(--tv-mono);
+}
+
+/* Drawn placeholder covers: token gradients and geometry, never poster art. */
+.tv-art {
+  position: absolute;
+  inset: 0;
+}
+.tv-art::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 40%, rgb(9 9 11 / 0.9) 100%);
+  content: "";
+}
+.tv-hero-art .tv-art::after {
+  background: linear-gradient(180deg, transparent 60%, rgb(9 9 11 / 0.6) 100%);
+}
+.tv-art-moon {
+  background:
+    radial-gradient(
+      circle at 70% 28%,
+      #10b981 0 14%,
+      rgb(16 185 129 / 0.2) 15% 22%,
+      transparent 23%
+    ),
+    repeating-linear-gradient(
+      100deg,
+      transparent 0 9px,
+      rgb(16 185 129 / 0.12) 9px 11px
+    )
+    bottom / 100% 45% no-repeat,
+    linear-gradient(180deg, #27272a, #09090b);
+}
+.tv-art-ring {
+  background:
+    repeating-radial-gradient(
+      circle at 50% 38%,
+      transparent 0 14px,
+      rgb(212 212 216 / 0.2) 14px 15px
+    ),
+    radial-gradient(circle at 50% 38%, #fafafa 0 6%, #09090b 7%);
+}
+.tv-art-dune {
+  background:
+    radial-gradient(120% 60% at 50% 100%, #4b4b4b 0 40%, transparent 41%),
+    radial-gradient(140% 70% at 30% 110%, #27272a 0 55%, transparent 56%),
+    radial-gradient(circle at 70% 25%, #d4d4d8 0 8%, transparent 9%),
+    linear-gradient(180deg, #18181b, #09090b);
+}
+.tv-art-grid {
+  background:
+    linear-gradient(rgb(16 185 129 / 0.2) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(90deg, rgb(16 185 129 / 0.2) 1px, transparent 1px) 0 0 /
+    24px 24px,
+    linear-gradient(160deg, #27272a, #09090b);
+}
+.tv-art-dots {
+  background:
+    radial-gradient(rgb(250 250 250 / 0.3) 2px, transparent 2.5px) 0 0 / 10px
+    10px,
+    linear-gradient(135deg, #4b4b4b, #09090b 70%);
+}
+.tv-art-diag {
+  background: repeating-linear-gradient(
+    135deg,
+    #18181b 0 14px,
+    #27272a 14px 28px
+  );
+}
+.tv-art-bars {
+  background: linear-gradient(
+    90deg,
+    #09090b 0 20%,
+    #27272a 20% 40%,
+    #4b4b4b 40% 60%,
+    #27272a 60% 80%,
+    #09090b 80%
+  );
+}
+.tv-art-split {
+  background: linear-gradient(115deg, #d4d4d8 0 30%, #09090b 30%);
+}
+.tv-art-horizon {
+  background:
+    radial-gradient(circle at 50% 55%, rgb(16 185 129 / 0.3), transparent 40%),
+    linear-gradient(180deg, #121212 0 55%, #27272a 55% 56%, #18181b 56%);
+}
+
+.tv-hints {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 24px;
+  margin-top: auto;
+  color: var(--tv-muted);
+  font: 12px / 16px var(--tv-mono);
+}
+.tv-hints span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Laptop heights (1440x900, 1280x800): tighter rows, same layout. */
+@media (max-height: 940px) {
+  .tv-home {
+    --tv-gap: 18px;
+    --tv-dock-h: 80px;
+    --tv-cover-w: 120px;
+    --tv-cover-h: 160px;
+    --tv-wide-w: 196px;
+    --tv-wide-h: 110px;
+    --tv-hero-art: 360px;
+    padding-top: 22px;
+  }
+}
+@media (max-height: 840px) {
+  .tv-home {
+    --tv-gap: 14px;
+    --tv-dock-h: 72px;
+    --tv-cover-w: 108px;
+    --tv-cover-h: 144px;
+    --tv-wide-w: 180px;
+    --tv-wide-h: 100px;
+    --tv-hero-art: 300px;
+    padding-top: 18px;
+    padding-bottom: 14px;
+  }
+  .tv-note {
+    font-size: 14px;
+    line-height: 20px;
+  }
+}
+@media (max-width: 1180px) {
+  .tv-app {
+    padding: 10px;
+  }
+}
+
+/* Phones: one column, the dock and rows scroll sideways, touch first. */
+@media (max-width: 767px) {
+  .tv-home {
+    --tv-gap: 16px;
+    --tv-dock-h: 76px;
+    --tv-cover-w: 112px;
+    --tv-cover-h: 150px;
+    --tv-wide-w: 180px;
+    --tv-wide-h: 100px;
+    padding-top: 16px;
+  }
+  .tv-home-stream {
+    display: none;
+  }
+  .tv-home-status {
+    gap: 12px;
+  }
+  .tv-home-dock {
+    display: flex;
+    margin: 0 calc(-1 * var(--tv-pad-x));
+    padding: 6px var(--tv-pad-x);
+    overflow-x: auto;
+  }
+  .tv-home-dock li {
+    flex: none;
+    width: 140px;
+  }
+  .tv-hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .tv-hero-art {
+    order: -1;
+    width: 100%;
+    max-height: 40vh;
+  }
+  .tv-hints {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tv-home {
+    animation: none;
+  }
+  .tv-app,
+  .tv-cover {
+    transition: none;
+  }
+  .tv-cover:focus-visible,
+  .tv-app:focus-visible {
+    transform: none;
+  }
+}

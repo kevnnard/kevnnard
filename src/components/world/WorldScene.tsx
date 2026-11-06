@@ -105,6 +105,7 @@ import {
 import { portraitFocus } from "@/lib/world/portrait.ts";
 import { seededRandom } from "@/lib/world/random.ts";
 import { lensKeeper, speakerFocus } from "@/lib/world/speaker.ts";
+import { type TvControl, tvCameraFocus } from "@/lib/world/tv-focus.ts";
 import { normalizeWheel, wheelDolly } from "@/lib/world/wheel.ts";
 import {
   bindWorldContextLoss,
@@ -162,6 +163,8 @@ interface WorldSceneProps {
   portrait?: PortraitControl;
   /** The speakers' music and close-up (world-speaker-music T2). */
   speakers?: SpeakerControl;
+  /** The living-room TV's close-up and home screen (tv-home-screen T2). */
+  tv?: TvControl;
   /**
    * The selected gallery item, a case or the wall katana; null restores the
    * adapted home framing.
@@ -269,6 +272,7 @@ function SceneCanvas({
   onMonitorArrive,
   portrait,
   speakers,
+  tv,
   galleryCase,
   galleryStory = false,
   onInspectCase,
@@ -288,13 +292,15 @@ function SceneCanvas({
     }),
     [tracker],
   );
-  // One close-up at a time (WorldApp): the terminal's, the portrait's or
-  // the speakers'.
+  // One close-up at a time (WorldApp): the terminal's, the portrait's,
+  // the speakers' or the TV's.
   const closeUp = portrait?.focused
     ? "portrait"
     : speakers?.focused
       ? "speakers"
-      : "terminal";
+      : tv?.focused
+        ? "tv"
+        : "terminal";
   return (
     <Canvas
       frameloop="demand"
@@ -318,6 +324,7 @@ function SceneCanvas({
         focus={focus || closeUp !== "terminal"}
         closeUp={closeUp}
         onArrive={focus && closeUp === "terminal" ? onMonitorArrive : undefined}
+        onTvArrive={tv?.onArrive}
       />
       <Island />
       {/* Flat materials until the texture maps arrive (T4e). */}
@@ -337,7 +344,7 @@ function SceneCanvas({
             />
             <Shelf />
             <Suspense fallback={null}>
-              <Living hours={hours} power={power} />
+              <Living hours={hours} power={power} tv={tv} />
             </Suspense>
           </>
         }
@@ -350,6 +357,7 @@ function SceneCanvas({
           terminal={terminal}
           portrait={portrait}
           speakers={speakers}
+          tv={tv}
           galleryCase={galleryCase}
           onInspectCase={onInspectCase}
           prepared={prepared}
@@ -447,6 +455,7 @@ function TexturedHouse({
   terminal,
   portrait,
   speakers,
+  tv,
   galleryCase,
   onInspectCase,
   prepared,
@@ -458,6 +467,7 @@ function TexturedHouse({
   terminal?: MonitorTerminal;
   portrait?: PortraitControl;
   speakers?: SpeakerControl;
+  tv?: TvControl;
   galleryCase?: GalleryItemId | null;
   onInspectCase?: (id: GalleryItemId) => void;
   prepared: Prepared;
@@ -508,6 +518,7 @@ function TexturedHouse({
           hours={hours}
           maps={maps}
           power={power}
+          tv={tv}
           onPrepared={prepared.living}
         />
       </Suspense>
@@ -687,6 +698,8 @@ type Pose = { position: Vector3Tuple; target: Vector3Tuple };
  * `closeUp` picks the pose: the terminal's, or the portrait's face-on one
  * fitted to the viewport (T18), refitted on resize, or the speakers' (T2),
  * whose narrow views widen the lens; the lens it had is restored on exit.
+ * The TV's (tv-home-screen T2) looks straight at its panel and reports its
+ * own arrival, which opens the home screen.
  */
 function GuidedCamera({
   reducedMotion,
@@ -696,14 +709,16 @@ function GuidedCamera({
   galleryCase = null,
   galleryStory = false,
   onArrive,
+  onTvArrive,
 }: {
   reducedMotion: boolean;
   home: number;
   focus: boolean;
-  closeUp?: "terminal" | "portrait" | "speakers";
+  closeUp?: "terminal" | "portrait" | "speakers" | "tv";
   galleryCase?: GalleryItemId | null;
   galleryStory?: boolean;
   onArrive?: () => void;
+  onTvArrive?: () => void;
 }) {
   const controls = useRef<CameraControls>(null);
   const camera = useThree((state) => state.camera) as PerspectiveCamera;
@@ -731,10 +746,11 @@ function GuidedCamera({
   const saved = useRef<Pose | null>(null);
   const epoch = useRef(0);
   const lastHome = useRef(home);
-  const arrive = useRef(onArrive);
+  const arriveAt = closeUp === "tv" ? onTvArrive : onArrive;
+  const arrive = useRef(arriveAt);
   useEffect(() => {
-    arrive.current = onArrive;
-  }, [onArrive]);
+    arrive.current = arriveAt;
+  }, [arriveAt]);
   // Unmounting cancels a pending arrival.
   useEffect(
     () => () => {
@@ -790,6 +806,7 @@ function GuidedCamera({
       const { position, target } =
         gallery ??
         speaker ??
+        (closeUp === "tv" ? tvCameraFocus(aspect) : null) ??
         (portraitFit ? portraitFocus({ width, height }) : monitorFocus(aspect));
       current.setLookAt(...position, ...target, animate).then(() => {
         if (epoch.current === run) arrive.current?.();

@@ -55,6 +55,7 @@ import {
   spanColumn,
   terminalLayout,
 } from "@/lib/world/terminal-layout.ts";
+import type { TvControl } from "@/lib/world/tv-focus.ts";
 import { presentWorldLoad } from "@/lib/world/world-load-presentation.ts";
 import type { WorldLoadState } from "@/lib/world/world-loading.ts";
 import {
@@ -76,6 +77,7 @@ import { ScenePanel } from "./ScenePanel";
 import SpeakerBar from "./SpeakerBar";
 import type { SpeakerControl } from "./SpeakerZone";
 import TerminalMonitor, { TERMINAL_CONTENT } from "./TerminalMonitor";
+import TvHome from "./TvHome";
 import WorldMenu, { type GuideActions } from "./WorldMenu";
 
 // Loaded only after WebGL is confirmed, so three.js never ships to clients that can't use it.
@@ -656,6 +658,49 @@ export default function WorldApp() {
     [music, speakers, ready, focus, portrait, enterSpeakers, playMusic],
   );
 
+  // The living-room TV (tv-home-screen T2): a click on it from the room
+  // moves the camera straight in to the panel, like the other close-ups,
+  // and once it arrives the full-screen home screen opens over the scene.
+  // The world controls hide (header, clock and lights panel); the screen
+  // covers everything else, so no other close-up starts while it is open.
+  // Esc or Back to room closes it and returns the camera and focus.
+  const [tv, setTv] = useState(false);
+  const [tvOpen, setTvOpen] = useState(false);
+  const returnTv = useRef(false);
+  const enterTv = useCallback(() => {
+    if (!focus && !portrait && !speakers) {
+      setGalleryCase(null);
+      setTv(true);
+    }
+  }, [focus, portrait, speakers]);
+  const arriveTv = useCallback(() => setTvOpen(true), []);
+  const leaveTv = useCallback(() => {
+    returnTv.current = true;
+    setTvOpen(false);
+    setTv(false);
+  }, []);
+  useEffect(() => {
+    if (!tv || tvOpen) return;
+    const timer = setTimeout(arriveTv, ARRIVAL_FALLBACK_MS);
+    return () => clearTimeout(timer);
+  }, [tv, tvOpen, arriveTv]);
+  useEffect(() => {
+    if (tv || !returnTv.current) return;
+    returnTv.current = false;
+    menuButton.current?.focus();
+  }, [tv]);
+  const tvControl = useMemo<TvControl>(
+    () => ({
+      focused: tv,
+      onEnter:
+        ready && entered && !focus && !portrait && !speakers
+          ? enterTv
+          : undefined,
+      onArrive: arriveTv,
+    }),
+    [tv, ready, entered, focus, portrait, speakers, enterTv, arriveTv],
+  );
+
   useEffect(() => {
     if (!galleryCase) return;
     const onEscape = (event: KeyboardEvent) => {
@@ -750,6 +795,8 @@ export default function WorldApp() {
         focus && "world-terminal-focus",
         portrait && "world-terminal-focus",
         speakers && "world-terminal-focus",
+        tv && "world-terminal-focus",
+        tv && "world-tv-focus",
         galleryCase && "world-gallery-focus",
       )}
     >
@@ -774,6 +821,7 @@ export default function WorldApp() {
               onMonitorArrive={arrive}
               portrait={portraitControl}
               speakers={speakerControl}
+              tv={tvControl}
               galleryCase={galleryCase}
               galleryStory={caseStory !== null && storyOpen}
               onInspectCase={
@@ -907,6 +955,14 @@ export default function WorldApp() {
           onNext={nextTrack}
           onVolume={setVolume}
           onRange={setRange}
+        />
+      )}
+      {tvOpen && (
+        <TvHome
+          hours={clock.hours}
+          song={song}
+          onToggleMusic={playMusic}
+          onClose={leaveTv}
         />
       )}
       {terminal && (
