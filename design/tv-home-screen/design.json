@@ -1,0 +1,10 @@
+{
+  "title": "TV home screen",
+  "brief": "The owner's own smart-TV home screen on the living-room TV in /world, shown after clicking the TV: apps Movies & Series, Games (Ghost of Tsushima featured as his favourite), My videos (Carneros DC #32 clip), Channels (official YouTube embed), Anime, Highlights (NFL / Jordan) and Lo-fi radio; covers drawn as stylized placeholders, sample rows labeled for replacement. Original identity, not a streaming-service copy.",
+  "feature": "odd/tasks/tv-home-screen.md",
+  "artboards": [
+    { "file": "01-tv-os-overlay.html", "title": "Full-screen TV OS", "tradeoff": "Most readable and remote-like (arrow-key focus ring, big hero with the note, app dock + cover rows); hides the room entirely, so it feels like leaving the 3D world", "width": 1440, "height": 900 },
+    { "file": "02-diegetic-panel.html", "title": "On the TV panel (diegetic)", "tradeoff": "Strongest immersion: the UI lives on the 16:9 panel inside the room with a small side caption; text is small (12px floor) and needs a precise camera framing on the panel", "width": 1440, "height": 900 },
+    { "file": "03-split-console.html", "title": "Split: TV playing + console card", "tradeoff": "Matches the katana/case story cards and keeps the TV playing (lo-fi visualizer); the card is the only browsing surface, so fewer covers fit (8 per app) and covers are small", "width": 1440, "height": 900 }
+  ]
+}

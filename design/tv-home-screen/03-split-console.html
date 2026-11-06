@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TV home screen · split console</title>
+<style>
+  /* Tokens from design/system.md only, in the lo-fi console look of
+     speaker-bar.css and katana-story.css: zinc #09090b at 30%, border
+     #d4d4d8 at 20%, emerald as the one accent, 4px blur, mono, 12px card
+     radius, 6px controls. The card keeps the katana/case card footprint. */
+  :root {
+    --bg: #09090b; --surface: #18181b; --panel: #27272a; --fg: #fafafa;
+    --muted: #a1a1aa; --soft: #d4d4d8; --signal: #10b981; --line: rgba(212,212,216,0.2);
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; width: 1440px; height: 900px; overflow: hidden; background: var(--bg); color: var(--fg); font: 14px/1.5 var(--mono); }
+  button { font: inherit; color: inherit; }
+  :is(button, a):focus-visible { outline: 3px solid rgba(212,212,216,0.5); outline-offset: 3px; }
+
+  /* Scene: the TV keeps playing behind the card */
+  .room { position: absolute; inset: 0; background:
+      radial-gradient(45% 45% at 32% 42%, rgba(16,185,129,0.1), transparent 70%),
+      linear-gradient(180deg, #18181b 0%, #121212 74%, #09090b 74%); }
+  .cabinet { position: absolute; left: 90px; top: 690px; width: 740px; height: 90px; border: 1px solid var(--panel); border-radius: 6px; background: #121212; }
+  .tv { position: absolute; left: 80px; top: 170px; width: 760px; height: 428px; border: 8px solid #121212; outline: 1px solid var(--panel); border-radius: 8px; overflow: hidden; box-sizing: content-box; background: #09090b; }
+  .stand { position: absolute; left: 350px; top: 614px; width: 200px; height: 10px; border-radius: 0 0 6px 6px; background: var(--panel); }
+  .scene-tag { position: absolute; left: 80px; top: 136px; color: var(--muted); font-size: 12px; }
+
+  /* Now playing on the panel */
+  .np { position: absolute; inset: 0; padding: 28px 32px; background: radial-gradient(70% 80% at 80% 20%, rgba(16,185,129,0.12), transparent 70%), linear-gradient(180deg, #121212, #09090b); }
+  .np-kicker { margin: 0; color: var(--signal); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .np h1 { margin: 8px 0 4px; font: 600 32px/40px var(--sans); }
+  .np p { margin: 0; color: var(--soft); font-size: 12px; }
+  .spectrum { position: absolute; left: 32px; right: 32px; bottom: 72px; display: flex; align-items: flex-end; gap: 4px; height: 150px; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+  .spectrum i { flex: 1; background: var(--signal); opacity: 0.8; transform-origin: bottom; animation: bar 1.6s ease-in-out infinite alternate; }
+  @keyframes bar { from { transform: scaleY(0.35); } to { transform: scaleY(1); } }
+  .np-bar { position: absolute; left: 32px; right: 32px; bottom: 28px; display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+
+  /* Console card */
+  .card { position: absolute; z-index: 15; top: 32px; right: 32px; width: 500px; max-height: calc(100% - 32px - 96px); overflow-y: auto; padding: 24px; border: 1px solid var(--line); border-radius: 12px; background: rgba(9,9,11,0.3); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+  .card p, .card h2, .card h3 { margin: 0; }
+  .kicker { color: var(--signal); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .status { font-size: 12px; white-space: nowrap; }
+  .dot { display: inline-block; width: 6px; height: 6px; margin-right: 8px; border-radius: 50%; background: var(--signal); vertical-align: middle; }
+  .card h2 { margin-top: 10px; font-size: 20px; font-weight: 600; line-height: 1.4; }
+
+  .apps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 12px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+  .app { min-height: 40px; padding: 6px 8px; border: 1px solid var(--line); border-left-width: 1px; border-radius: 6px; background: rgba(9,9,11,0.2); font-size: 12px; text-align: left; cursor: pointer; transition: background-color 150ms; }
+  .app:hover { background: rgba(39,39,42,0.5); }
+  .app[aria-selected="true"] { border-color: var(--soft); border-left: 3px solid var(--signal); background: rgba(39,39,42,0.5); }
+
+  .row-head { display: flex; justify-content: space-between; margin: 16px 0 8px; color: var(--soft); font-size: 12px; }
+  .row-head span { color: var(--muted); }
+  .covers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 0; padding: 0; list-style: none; }
+  .cover { position: relative; display: block; width: 100%; aspect-ratio: 4 / 5; padding: 0; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--surface); text-align: left; cursor: pointer; }
+  .cover[aria-pressed="true"] { border-color: var(--signal); outline: 1px solid var(--signal); }
+  .cover .t { position: absolute; left: 6px; right: 6px; bottom: 6px; font: 600 12px/16px var(--sans); }
+  .art { position: absolute; inset: 0; }
+  .cover .art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 35%, rgba(9,9,11,0.9) 100%); }
+  .m-moon { background: radial-gradient(circle at 72% 30%, #10b981 0 12%, rgba(16,185,129,0.2) 13% 20%, transparent 21%), repeating-linear-gradient(100deg, transparent 0 9px, rgba(16,185,129,0.12) 9px 11px) bottom / 100% 45% no-repeat, linear-gradient(180deg, #27272a, #09090b); }
+  .m-ring { background: repeating-radial-gradient(circle at 50% 38%, transparent 0 10px, rgba(212,212,216,0.2) 10px 11px), radial-gradient(circle at 50% 38%, #fafafa 0 6%, #09090b 7%); }
+  .m-dune { background: radial-gradient(120% 60% at 50% 100%, #4b4b4b 0 40%, transparent 41%), radial-gradient(circle at 70% 25%, #d4d4d8 0 8%, transparent 9%), linear-gradient(180deg, #18181b, #09090b); }
+  .m-grid { background: linear-gradient(rgba(16,185,129,0.2) 1px, transparent 1px) 0 0 / 16px 16px, linear-gradient(90deg, rgba(16,185,129,0.2) 1px, transparent 1px) 0 0 / 16px 16px, linear-gradient(160deg, #27272a, #09090b); }
+  .m-dots { background: radial-gradient(rgba(250,250,250,0.3) 1.5px, transparent 2px) 0 0 / 8px 8px, linear-gradient(135deg, #4b4b4b, #09090b 70%); }
+  .m-diag { background: repeating-linear-gradient(135deg, #18181b 0 10px, #27272a 10px 20px); }
+  .m-bars { background: linear-gradient(90deg, #09090b 0 20%, #27272a 20% 40%, #4b4b4b 40% 60%, #27272a 60% 80%, #09090b 80%); }
+  .m-split { background: linear-gradient(115deg, #d4d4d8 0 30%, #09090b 30%); }
+
+  .detail { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 14px; margin-top: 16px; padding: 12px 0 16px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .detail .mini { position: relative; height: 96px; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .detail h3 { font: 600 16px/1.4 var(--sans); }
+  .detail .meta { color: var(--muted); font-size: 12px; }
+  .detail .why { margin-top: 6px; color: var(--soft); font-size: 12px; }
+  .detail .why b { color: var(--fg); font-weight: 500; }
+
+  .actions { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 16px; }
+  .actions div { display: flex; gap: 8px; }
+  .btn { min-height: 40px; padding: 8px 14px; border: 1px solid var(--line); border-radius: 6px; background: rgba(9,9,11,0.2); cursor: pointer; transition: background-color 150ms; }
+  .btn:hover { background: rgba(39,39,42,0.5); }
+  .btn.play { border-color: transparent; background: var(--signal); color: var(--bg); font-weight: 600; }
+  .btn.play:hover { background: var(--fg); }
+  kbd { display: inline-flex; justify-content: center; min-width: 20px; padding: 1px 5px; border: 1px solid var(--line); border-radius: 4px; color: var(--soft); font: 12px var(--mono); }
+  .help { display: flex; justify-content: space-between; margin-top: 12px; color: var(--muted); font-size: 12px; }
+
+  @media (prefers-reduced-motion: reduce) { .spectrum i { animation: none; transform: scaleY(0.7); } .app, .btn { transition: none; } }
+</style>
+</head>
+<body>
+<div class="room" aria-hidden="true"><div class="cabinet"></div></div>
+<p class="scene-tag" aria-hidden="true">LIVE SCENE · camera framed on the TV, card on the right</p>
+<section class="tv" aria-label="TV, now playing">
+  <div class="np">
+    <p class="np-kicker">Now playing on the TV</p>
+    <h1>Lo-fi radio</h1>
+    <p>Five lo-fi loops · same stream as the speakers</p>
+    <div class="spectrum" aria-hidden="true">
+      <i style="height:40%;animation-delay:-.2s"></i><i style="height:70%;animation-delay:-.9s"></i><i style="height:55%;animation-delay:-.4s"></i><i style="height:90%;animation-delay:-1.1s"></i><i style="height:60%;animation-delay:-.6s"></i><i style="height:80%;animation-delay:-.1s"></i><i style="height:45%;animation-delay:-1.3s"></i><i style="height:75%;animation-delay:-.7s"></i><i style="height:50%;animation-delay:-.3s"></i><i style="height:85%;animation-delay:-1s"></i><i style="height:65%;animation-delay:-.5s"></i><i style="height:35%;animation-delay:-1.2s"></i><i style="height:70%;animation-delay:-.8s"></i><i style="height:95%;animation-delay:-.2s"></i><i style="height:55%;animation-delay:-1.4s"></i><i style="height:40%;animation-delay:-.6s"></i><i style="height:60%;animation-delay:-.9s"></i><i style="height:80%;animation-delay:-.3s"></i><i style="height:50%;animation-delay:-1.1s"></i><i style="height:70%;animation-delay:-.4s"></i><i style="height:45%;animation-delay:-.7s"></i><i style="height:85%;animation-delay:-1.3s"></i><i style="height:60%;animation-delay:-.1s"></i><i style="height:40%;animation-delay:-.5s"></i>
+    </div>
+    <div class="np-bar"><span>Track 2 / 5</span><span>Looping · speakers in sync</span></div>
+  </div>
+</section>
+<div class="stand" aria-hidden="true"></div>
+
+<main>
+  <article class="card" aria-labelledby="card-title">
+    <div class="head">
+      <p class="kicker">Living-room TV · home</p>
+      <p class="status"><span class="dot" aria-hidden="true"></span>Playing · lo-fi</p>
+    </div>
+    <h2 id="card-title">Movies &amp; Series</h2>
+
+    <div class="apps" role="tablist" aria-label="Apps">
+      <button class="app" role="tab" aria-selected="true" aria-controls="covers">Movies &amp; Series</button>
+      <button class="app" role="tab" aria-selected="false" tabindex="-1">Games</button>
+      <button class="app" role="tab" aria-selected="false" tabindex="-1">My videos</button>
+      <button class="app" role="tab" aria-selected="false" tabindex="-1">Channels</button>
+      <button class="app" role="tab" aria-selected="false" tabindex="-1">Anime</button>
+      <button class="app" role="tab" aria-selected="false" tabindex="-1">Highlights</button>
+      <button class="app" role="tab" aria-selected="false" tabindex="-1">Lo-fi radio</button>
+    </div>
+
+    <div class="row-head"><span>Sample picks · replace with yours</span><span>8 covers</span></div>
+    <ul class="covers" id="covers" role="tabpanel" aria-label="Movies and Series covers">
+      <li><button class="cover" type="button" aria-pressed="true" data-title="Interstellar" data-meta="Film · 2014 · Christopher Nolan"><span class="art m-ring"></span><span class="t">Interstellar</span></button></li>
+      <li><button class="cover" type="button" aria-pressed="false" data-title="Breaking Bad" data-meta="Series · 2008–2013 · 5 seasons"><span class="art m-grid"></span><span class="t">Breaking Bad</span></button></li>
+      <li><button class="cover" type="button" aria-pressed="false" data-title="Dune: Part Two" data-meta="Film · 2024 · Denis Villeneuve"><span class="art m-dune"></span><span class="t">Dune: Part Two</span></button></li>
+      <li><button class="cover" type="button" aria-pressed="false" data-title="The Last of Us" data-meta="Series · 2023– · HBO"><span class="art m-bars"></span><span class="t">The Last of Us</span></button></li>
+      <li><button class="cover" type="button" aria-pressed="false" data-title="Top Gun: Maverick" data-meta="Film · 2022 · Joseph Kosinski"><span class="art m-split"></span><span class="t">Top Gun: Maverick</span></button></li>
+      <li><button class="cover" type="button" aria-pressed="false" data-title="Spider-Man: Into the Spider-Verse" data-meta="Film · 2018 · animated"><span class="art m-dots"></span><span class="t">Into the Spider-Verse</span></button></li>
+      <li><button class="cover" type="button" aria-pressed="false" data-title="The Bear" data-meta="Series · 2022– · FX"><span class="art m-diag"></span><span class="t">The Bear</span></button></li>
+      <li><button class="cover" type="button" aria-pressed="false" data-title="Shōgun" data-meta="Series · 2024– · FX"><span class="art m-moon"></span><span class="t">Shōgun</span></button></li>
+    </ul>
+
+    <section class="detail" aria-live="polite" aria-label="Selected title">
+      <div class="mini" aria-hidden="true"><span class="art m-ring" id="mini-art"></span></div>
+      <div>
+        <h3 id="d-title">Interstellar</h3>
+        <p class="meta" id="d-meta">Film · 2014 · Christopher Nolan</p>
+        <p class="why"><b>Why I love it:</b> <span id="d-why">sample note to replace. One or two lines in your words, e.g. the scene or the score that stuck with you.</span></p>
+      </div>
+    </section>
+
+    <div class="actions">
+      <div>
+        <button class="btn play" type="button">Show on TV</button>
+        <button class="btn" type="button">Trailer · YouTube</button>
+      </div>
+      <button class="btn" type="button">← Back to room</button>
+    </div>
+    <p class="help"><span><kbd>←</kbd><kbd>→</kbd> apps</span><span><kbd>Tab</kbd> covers</span><span><kbd>Esc</kbd> back</span></p>
+  </article>
+</main>
+<script>
+  // Tabs: arrow keys move between apps (WAI-ARIA tabs pattern).
+  const tabs = [...document.querySelectorAll('[role="tab"]')];
+  tabs.forEach((t, i) => t.addEventListener("keydown", e => {
+    const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+    if (!d) return;
+    e.preventDefault();
+    const n = tabs[(i + d + tabs.length) % tabs.length];
+    tabs.forEach(x => { x.setAttribute("aria-selected", x === n); x.tabIndex = x === n ? 0 : -1; });
+    n.focus();
+  }));
+  // Covers: select one to show its note in the detail block.
+  const covers = [...document.querySelectorAll(".cover")];
+  covers.forEach(c => c.addEventListener("click", () => {
+    covers.forEach(x => x.setAttribute("aria-pressed", x === c));
+    document.getElementById("d-title").textContent = c.dataset.title;
+    document.getElementById("d-meta").textContent = c.dataset.meta;
+    document.getElementById("mini-art").className = c.querySelector(".art").className;
+  }));
+</script>
+</body>
+</html>

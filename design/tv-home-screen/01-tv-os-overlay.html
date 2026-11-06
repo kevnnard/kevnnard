@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TV home screen · full-screen TV OS</title>
+<style>
+  /* Tokens from design/system.md only: zinc dark theme, emerald #10b981 as
+     the one accent, ring #d4d4d8, mono/sans fallbacks, 6/8/12px radius. */
+  :root {
+    --bg: #09090b; --surface: #18181b; --panel: #27272a; --fg: #fafafa;
+    --muted: #a1a1aa; --soft: #d4d4d8; --signal: #10b981; --line: rgba(212,212,216,0.2);
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; width: 1440px; height: 900px; overflow: hidden; background: var(--bg); color: var(--fg); font: 14px/20px var(--sans); }
+  button { font: inherit; color: inherit; }
+  :focus { outline: none; }
+  /* Remote focus: a thick ring plus a lift, readable from the couch. */
+  .focusable:focus-visible { outline: 3px solid var(--soft); outline-offset: 4px; }
+
+  .screen { position: absolute; inset: 0; padding: 28px 48px; background:
+      radial-gradient(70% 60% at 80% 0%, rgba(16,185,129,0.08), transparent 70%),
+      linear-gradient(180deg, #121212 0%, #09090b 60%); }
+
+  .top { display: flex; align-items: center; justify-content: space-between; height: 40px; }
+  .brand { display: flex; align-items: center; gap: 12px; font: 600 14px/20px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; }
+  .brand i { width: 10px; height: 10px; border-radius: 50%; background: var(--signal); }
+  .brand span { color: var(--muted); font-weight: 500; }
+  .status { display: flex; align-items: center; gap: 24px; font: 12px/16px var(--mono); color: var(--muted); }
+  .status time { color: var(--fg); font-size: 14px; font-variant-numeric: tabular-nums; }
+  .back { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 6px; background: transparent; cursor: pointer; }
+  .back:hover { background: rgba(39,39,42,0.5); }
+  kbd { display: inline-flex; justify-content: center; min-width: 20px; padding: 1px 5px; border: 1px solid var(--line); border-radius: 4px; color: var(--soft); font: 12px/16px var(--mono); }
+
+  /* App dock */
+  .dock { display: flex; gap: 12px; margin: 24px 0 0; padding: 0; list-style: none; }
+  .app { display: flex; flex-direction: column; justify-content: space-between; width: 172px; height: 92px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: rgba(39,39,42,0.5); text-align: left; cursor: pointer; transition: transform 150ms, background-color 150ms; }
+  .app svg { width: 24px; height: 24px; stroke: var(--soft); fill: none; stroke-width: 1.6; }
+  .app b { font-weight: 600; }
+  .app small { display: block; color: var(--muted); font: 12px/16px var(--mono); }
+  .app[aria-current="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .app[aria-current="true"] svg { stroke: var(--bg); }
+  .app[aria-current="true"] small { color: var(--panel); }
+
+  /* Hero: the focused title */
+  .hero { display: grid; grid-template-columns: 1fr 412px; gap: 40px; height: 232px; margin-top: 24px; }
+  .hero-text { display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 8px; }
+  .kicker { margin: 0; font: 12px/16px var(--mono); color: var(--signal); letter-spacing: 0.1em; text-transform: uppercase; }
+  .hero h1 { margin: 8px 0 6px; font-size: 40px; line-height: 44px; font-weight: 600; letter-spacing: -0.5px; }
+  .meta { margin: 0; color: var(--muted); font: 12px/16px var(--mono); }
+  .note { margin: 12px 0 0; max-width: 640px; color: var(--soft); font-size: 16px; line-height: 24px; }
+  .note-label { display: block; margin-bottom: 4px; color: var(--muted); font: 12px/16px var(--mono); text-transform: uppercase; letter-spacing: 0.1em; }
+  .actions { display: flex; gap: 8px; margin-top: 16px; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 8px 20px; border: 1px solid var(--line); border-radius: 6px; background: transparent; cursor: pointer; }
+  .btn.primary { border-color: var(--signal); background: var(--signal); color: var(--bg); font-weight: 600; }
+  .btn.primary kbd { border-color: rgba(9,9,11,0.3); color: var(--bg); }
+  .hero-art { position: relative; border-radius: 12px; border: 1px solid var(--line); overflow: hidden; }
+
+  /* Rows */
+  .row { margin-top: 24px; }
+  .row + .row { margin-top: 20px; }
+  .row-head { display: flex; align-items: baseline; gap: 12px; margin: 0 0 12px; }
+  .row-head h2 { margin: 0; font-size: 16px; line-height: 24px; font-weight: 600; }
+  .row-head span { color: var(--muted); font: 12px/16px var(--mono); }
+  .tag { padding: 1px 8px; border: 1px solid var(--line); border-radius: 6px; color: var(--soft); }
+  .covers { display: flex; gap: 16px; margin: 0; padding: 0; list-style: none; }
+  .cover { position: relative; display: block; width: 132px; height: 176px; padding: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); cursor: pointer; text-align: left; transition: transform 150ms; }
+  .cover:focus-visible, .app:focus-visible { transform: translateY(-4px); }
+  .cover .t { position: absolute; left: 10px; right: 10px; bottom: 26px; font-weight: 600; font-size: 16px; line-height: 20px; }
+  .cover .y { position: absolute; left: 10px; bottom: 8px; color: var(--soft); font: 12px/16px var(--mono); }
+  .cover .fav { position: absolute; top: 8px; left: 8px; padding: 1px 6px; border-radius: 4px; background: var(--signal); color: var(--bg); font: 600 12px/16px var(--mono); }
+  .cover.wide { width: 214px; height: 120px; }
+
+  /* Stylized placeholder art: token gradients and geometry, never poster art. */
+  .art { position: absolute; inset: 0; }
+  .art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, rgba(9,9,11,0.9) 100%); }
+  .m-moon { background: radial-gradient(circle at 70% 28%, #10b981 0 14%, rgba(16,185,129,0.2) 15% 22%, transparent 23%), repeating-linear-gradient(100deg, transparent 0 9px, rgba(16,185,129,0.12) 9px 11px) bottom / 100% 45% no-repeat, linear-gradient(180deg, #27272a, #09090b); }
+  .m-ring { background: repeating-radial-gradient(circle at 50% 38%, transparent 0 14px, rgba(212,212,216,0.2) 14px 15px), radial-gradient(circle at 50% 38%, #fafafa 0 6%, #09090b 7%); }
+  .m-dune { background: radial-gradient(120% 60% at 50% 100%, #4b4b4b 0 40%, transparent 41%), radial-gradient(140% 70% at 30% 110%, #27272a 0 55%, transparent 56%), radial-gradient(circle at 70% 25%, #d4d4d8 0 8%, transparent 9%), linear-gradient(180deg, #18181b, #09090b); }
+  .m-grid { background: linear-gradient(rgba(16,185,129,0.2) 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, rgba(16,185,129,0.2) 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(160deg, #27272a, #09090b); }
+  .m-dots { background: radial-gradient(rgba(250,250,250,0.3) 2px, transparent 2.5px) 0 0 / 10px 10px, linear-gradient(135deg, #4b4b4b, #09090b 70%); }
+  .m-diag { background: repeating-linear-gradient(135deg, #18181b 0 14px, #27272a 14px 28px); }
+  .m-bars { background: linear-gradient(90deg, #09090b 0 20%, #27272a 20% 40%, #4b4b4b 40% 60%, #27272a 60% 80%, #09090b 80%); }
+  .m-split { background: linear-gradient(115deg, #d4d4d8 0 30%, #09090b 30%); }
+  .m-horizon { background: linear-gradient(180deg, #121212 0 55%, #27272a 55% 56%, #18181b 56%), radial-gradient(circle at 50% 55%, rgba(16,185,129,0.3), transparent 40%); background-blend-mode: normal, screen; }
+
+  .hint { position: absolute; left: 48px; right: 48px; bottom: 20px; display: flex; justify-content: space-between; color: var(--muted); font: 12px/16px var(--mono); }
+  .hint span { display: inline-flex; gap: 6px; align-items: center; }
+
+  @media (prefers-reduced-motion: reduce) { .app, .cover { transition: none; } .cover:focus-visible, .app:focus-visible { transform: none; } }
+</style>
+</head>
+<body>
+<main class="screen" aria-labelledby="hero-title">
+  <header class="top">
+    <div class="brand"><i aria-hidden="true"></i>Kevnnard TV <span>· living room</span></div>
+    <div class="status">
+      <span>♪ Lo-fi radio on the speakers</span>
+      <time datetime="23:14">23:14</time>
+      <button class="back focusable" type="button"><kbd>Esc</kbd> Back to room</button>
+    </div>
+  </header>
+
+  <nav aria-label="Apps">
+    <ul class="dock" data-row="0">
+      <li><button class="app focusable" type="button" aria-current="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M8 5v4M16 5v4"/></svg><span><b>Movies &amp; Series</b><small>6 picks</small></span></button></li>
+      <li><button class="app focusable" type="button" aria-current="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9h12a3 3 0 0 1 3 3v2a3 3 0 0 1-5 2l-1-1H9l-1 1a3 3 0 0 1-5-2v-2a3 3 0 0 1 3-3Z"/><path d="M8 11v3M6.5 12.5h3"/></svg><span><b>Games</b><small>6 picks</small></span></button></li>
+      <li><button class="app focusable" type="button" aria-current="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/></svg><span><b>My videos</b><small>1 clip</small></span></button></li>
+      <li><button class="app focusable" type="button" aria-current="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="m8 3 4 4 4-4M10 11v5l4-2.5Z"/></svg><span><b>Channels</b><small>YouTube embed</small></span></button></li>
+      <li><button class="app focusable" type="button" aria-current="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7v10l8 4 8-4V7Z"/><path d="m4 7 8 4 8-4M12 11v10"/></svg><span><b>Anime</b><small>4 picks</small></span></button></li>
+      <li><button class="app focusable" type="button" aria-current="false"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="12" rx="9" ry="5.5" transform="rotate(-35 12 12)"/><path d="m9 15 6-6M10 11l3 3M12 9l3 3"/></svg><span><b>Highlights</b><small>NFL · Jordan</small></span></button></li>
+      <li><button class="app focusable" type="button" aria-current="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4" height="6" rx="1"/><rect x="17" y="14" width="4" height="6" rx="1"/></svg><span><b>Lo-fi radio</b><small>Five lo-fi loops</small></span></button></li>
+    </ul>
+  </nav>
+
+  <section class="hero" aria-live="polite">
+    <div class="hero-text">
+      <p class="kicker">Games · my favourite</p>
+      <h1 id="hero-title">Ghost of Tsushima</h1>
+      <p class="meta">Sucker Punch · 2020 · PS4 / PS5 / PC · open-world samurai</p>
+      <p class="note"><span class="note-label">Why I love it · draft, owner to confirm</span>No map markers: the wind shows the way. Kurosawa mode turns every standoff into a black-and-white film, and the duels feel like a held breath.</p>
+      <div class="actions">
+        <button class="btn primary focusable" type="button"><kbd>Enter</kbd> Open story</button>
+        <button class="btn focusable" type="button">Watch trailer · YouTube</button>
+      </div>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <div class="art m-moon"></div>
+    </div>
+  </section>
+
+  <section class="row" aria-labelledby="games-row">
+    <div class="row-head"><h2 id="games-row">Games</h2><span class="tag">Sample picks · replace with yours</span><span>covers are placeholders until licensed art (IGDB) is wired</span></div>
+    <ul class="covers" data-row="1">
+      <li><button class="cover focusable" type="button" aria-label="Ghost of Tsushima, 2020, my favourite game"><span class="art m-moon"></span><span class="fav">FAV</span><span class="t">Ghost of Tsushima</span><span class="y">2020</span></button></li>
+      <li><button class="cover focusable" type="button" aria-label="Red Dead Redemption 2, 2018, sample pick"><span class="art m-horizon"></span><span class="t">Red Dead Redemption 2</span><span class="y">2018</span></button></li>
+      <li><button class="cover focusable" type="button" aria-label="God of War Ragnarök, 2022, sample pick"><span class="art m-diag"></span><span class="t">God of War Ragnarök</span><span class="y">2022</span></button></li>
+      <li><button class="cover focusable" type="button" aria-label="Elden Ring, 2022, sample pick"><span class="art m-ring"></span><span class="t">Elden Ring</span><span class="y">2022</span></button></li>
+      <li><button class="cover focusable" type="button" aria-label="The Last of Us Part II, 2020, sample pick"><span class="art m-bars"></span><span class="t">The Last of Us Part II</span><span class="y">2020</span></button></li>
+      <li><button class="cover focusable" type="button" aria-label="Gran Turismo 7, 2022, sample pick"><span class="art m-split"></span><span class="t">Gran Turismo 7</span><span class="y">2022</span></button></li>
+      <li><button class="cover focusable" type="button" aria-label="Madden NFL 26, 2025, sample pick"><span class="art m-grid"></span><span class="t">Madden NFL 26</span><span class="y">2025</span></button></li>
+      <li><button class="cover focusable" type="button" aria-label="Spider-Man 2, 2023, sample pick"><span class="art m-dots"></span><span class="t">Marvel's Spider-Man 2</span><span class="y">2023</span></button></li>
+    </ul>
+  </section>
+
+  <section class="row" aria-labelledby="videos-row">
+    <div class="row-head"><h2 id="videos-row">Continue · from other apps</h2><span>My videos, Channels, Highlights</span></div>
+    <ul class="covers" data-row="2">
+      <li><button class="cover wide focusable" type="button" aria-label="My videos: Carneros DC number 32, game clip"><span class="art m-grid"></span><span class="t">Carneros DC #32 · game clip</span><span class="y">My videos · own clip</span></button></li>
+      <li><button class="cover wide focusable" type="button" aria-label="Highlights: Michael Jordan career highlights, sample pick"><span class="art m-bars"></span><span class="t">Michael Jordan · career</span><span class="y">Highlights · YouTube</span></button></li>
+      <li><button class="cover wide focusable" type="button" aria-label="Highlights: NFL game highlights, sample pick"><span class="art m-diag"></span><span class="t">NFL · week highlights</span><span class="y">Highlights · YouTube</span></button></li>
+      <li><button class="cover wide focusable" type="button" aria-label="Channels: PlayStation channel, sample pick"><span class="art m-ring"></span><span class="t">PlayStation</span><span class="y">Channels · YouTube</span></button></li>
+      <li><button class="cover wide focusable" type="button" aria-label="Lo-fi radio, five local loops"><span class="art m-horizon"></span><span class="t">Lo-fi radio</span><span class="y">On the speakers now</span></button></li>
+    </ul>
+  </section>
+
+  <footer class="hint" aria-label="Remote keys">
+    <span><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd> move</span>
+    <span><kbd>Enter</kbd> select · shows the note</span>
+    <span><kbd>Esc</kbd> camera back to the room</span>
+  </footer>
+</main>
+<script>
+  // Remote-style focus: arrows move within a row and between rows, keeping
+  // the column; one tab stop per row (roving tabindex).
+  const rows = [...document.querySelectorAll("[data-row]")].map(r => [...r.querySelectorAll(".focusable")]);
+  rows.flat().forEach(el => el.tabIndex = -1);
+  rows.forEach(r => r[0].tabIndex = 0);
+  let pos = [1, 0];
+  function go(r, c) {
+    r = Math.max(0, Math.min(rows.length - 1, r));
+    c = Math.max(0, Math.min(rows[r].length - 1, c));
+    rows[pos[0]][pos[1]].tabIndex = -1;
+    pos = [r, c];
+    const el = rows[r][c];
+    el.tabIndex = 0; el.focus();
+  }
+  document.addEventListener("keydown", e => {
+    const map = { ArrowLeft: [0, -1], ArrowRight: [0, 1], ArrowUp: [-1, 0], ArrowDown: [1, 0] };
+    if (!map[e.key]) return;
+    e.preventDefault();
+    go(pos[0] + map[e.key][0], pos[1] + map[e.key][1]);
+  });
+  rows.forEach((r, ri) => r.forEach((el, ci) => el.addEventListener("focus", () => { pos = [ri, ci]; })));
+  window.addEventListener("load", () => go(1, 0));
+</script>
+</body>
+</html>

@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TV home screen · on the panel (diegetic)</title>
+<style>
+  /* Tokens from design/system.md only. The room is a hint drawn with the
+     zinc steps; the UI lives inside the TV's 16:9 panel (976 × 549). */
+  :root {
+    --bg: #09090b; --surface: #18181b; --panel: #27272a; --fg: #fafafa;
+    --muted: #a1a1aa; --soft: #d4d4d8; --signal: #10b981; --line: rgba(212,212,216,0.2);
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; width: 1440px; height: 900px; overflow: hidden; background: var(--bg); color: var(--fg); font: 12px/16px var(--sans); }
+  button { font: inherit; color: inherit; }
+  :focus { outline: none; }
+  .focusable:focus-visible { outline: 2px solid var(--fg); outline-offset: 3px; }
+
+  /* Room hint */
+  .room { position: absolute; inset: 0; background:
+      radial-gradient(50% 45% at 42% 40%, rgba(16,185,129,0.1), transparent 70%),
+      linear-gradient(180deg, #18181b 0%, #121212 72%, #09090b 72%); }
+  .shelf-line { position: absolute; left: 0; right: 0; top: 648px; height: 1px; background: var(--panel); }
+  .console { position: absolute; left: 140px; top: 692px; width: 960px; height: 96px; border: 1px solid var(--panel); border-radius: 6px; background: #121212; }
+  .console::before, .console::after { content: ""; position: absolute; top: 16px; bottom: 16px; width: 1px; background: var(--panel); }
+  .console::before { left: 33%; } .console::after { left: 66%; }
+  .speaker { position: absolute; top: 420px; width: 92px; height: 270px; border: 1px solid var(--panel); border-radius: 8px; background: #121212; }
+  .speaker i { position: absolute; left: 50%; border-radius: 50%; border: 1px solid #4b4b4b; transform: translateX(-50%); }
+  .speaker i:first-child { top: 28px; width: 30px; height: 30px; }
+  .speaker i:last-child { top: 120px; width: 64px; height: 64px; }
+  .speaker.l { left: 28px; } .speaker.r { left: 1120px; }
+
+  /* TV */
+  .tv { position: absolute; left: 132px; top: 96px; width: 976px; padding: 0; }
+  .bezel { position: relative; width: 976px; height: 549px; border: 10px solid #121212; outline: 1px solid var(--panel); border-radius: 8px; overflow: hidden; background: #09090b; box-sizing: content-box; margin-left: -10px; }
+  .stand { width: 220px; height: 12px; margin: 0 auto; border-radius: 0 0 6px 6px; background: var(--panel); }
+  .glare { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(120deg, rgba(250,250,250,0.05) 0 30%, transparent 30%); }
+
+  /* Panel UI */
+  .os { position: absolute; inset: 0; display: grid; grid-template-columns: 148px 1fr; background: linear-gradient(180deg, #121212, #09090b); }
+  .rail { display: flex; flex-direction: column; gap: 4px; padding: 18px 12px; border-right: 1px solid var(--line); }
+  .logo { display: flex; align-items: center; gap: 8px; margin: 0 6px 14px; font: 600 12px/16px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; }
+  .logo i { width: 8px; height: 8px; border-radius: 50%; background: var(--signal); }
+  .rail button { display: flex; align-items: center; gap: 8px; min-height: 34px; padding: 6px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--soft); text-align: left; cursor: pointer; }
+  .rail svg { flex: none; width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+  .rail button[aria-current="true"] { background: var(--fg); color: var(--bg); font-weight: 600; }
+  .rail .clock { margin-top: auto; padding: 0 8px; color: var(--muted); font: 12px/16px var(--mono); }
+  .rail .clock b { display: block; color: var(--fg); font-size: 20px; line-height: 24px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  .main { padding: 18px 20px 0; overflow: hidden; }
+  .feature { position: relative; display: block; width: 100%; height: 178px; padding: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; text-align: left; cursor: pointer; background: var(--surface); }
+  .feature .art { position: absolute; inset: 0; }
+  .feature .body { position: absolute; left: 18px; bottom: 16px; width: 420px; }
+  .kicker { margin: 0; font: 12px/16px var(--mono); color: var(--signal); letter-spacing: 0.1em; text-transform: uppercase; }
+  .feature h1 { margin: 4px 0 4px; font-size: 28px; line-height: 32px; font-weight: 600; }
+  .feature p { margin: 0; color: var(--soft); }
+  .fade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(9,9,11,0.9) 0 40%, transparent 75%); }
+
+  .row-head { display: flex; align-items: baseline; gap: 8px; margin: 14px 0 8px; }
+  .row-head h2 { margin: 0; font-size: 14px; line-height: 20px; font-weight: 600; }
+  .row-head span { color: var(--muted); font-family: var(--mono); }
+  .covers { display: flex; gap: 10px; margin: 0; padding: 0; list-style: none; }
+  .cover { position: relative; display: block; width: 88px; height: 124px; padding: 0; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--surface); text-align: left; cursor: pointer; }
+  .cover.wide { width: 152px; height: 86px; }
+  .cover .t { position: absolute; left: 6px; right: 6px; bottom: 6px; font-weight: 600; }
+  .art { position: absolute; inset: 0; }
+  .cover .art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 30%, rgba(9,9,11,0.9) 100%); }
+  .m-moon { background: radial-gradient(circle at 72% 30%, #10b981 0 12%, rgba(16,185,129,0.2) 13% 20%, transparent 21%), repeating-linear-gradient(100deg, transparent 0 9px, rgba(16,185,129,0.12) 9px 11px) bottom / 100% 45% no-repeat, linear-gradient(180deg, #27272a, #09090b); }
+  .m-ring { background: repeating-radial-gradient(circle at 50% 38%, transparent 0 10px, rgba(212,212,216,0.2) 10px 11px), radial-gradient(circle at 50% 38%, #fafafa 0 6%, #09090b 7%); }
+  .m-dune { background: radial-gradient(120% 60% at 50% 100%, #4b4b4b 0 40%, transparent 41%), radial-gradient(circle at 70% 25%, #d4d4d8 0 8%, transparent 9%), linear-gradient(180deg, #18181b, #09090b); }
+  .m-grid { background: linear-gradient(rgba(16,185,129,0.2) 1px, transparent 1px) 0 0 / 16px 16px, linear-gradient(90deg, rgba(16,185,129,0.2) 1px, transparent 1px) 0 0 / 16px 16px, linear-gradient(160deg, #27272a, #09090b); }
+  .m-dots { background: radial-gradient(rgba(250,250,250,0.3) 1.5px, transparent 2px) 0 0 / 8px 8px, linear-gradient(135deg, #4b4b4b, #09090b 70%); }
+  .m-diag { background: repeating-linear-gradient(135deg, #18181b 0 10px, #27272a 10px 20px); }
+  .m-bars { background: linear-gradient(90deg, #09090b 0 20%, #27272a 20% 40%, #4b4b4b 40% 60%, #27272a 60% 80%, #09090b 80%); }
+  .m-split { background: linear-gradient(115deg, #d4d4d8 0 30%, #09090b 30%); }
+
+  /* Side caption, outside the panel */
+  .caption { position: absolute; left: 1240px; top: 96px; width: 176px; margin: 0; color: var(--soft); font: 12px/18px var(--mono); }
+  .caption h2 { margin: 0 0 8px; color: var(--signal); font-size: 12px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; }
+  .caption p { margin: 0 0 12px; }
+  .caption .sample { padding: 8px; border: 1px solid var(--line); border-radius: 6px; }
+  .keys { display: grid; gap: 6px; margin: 0 0 12px; padding: 0; list-style: none; }
+  kbd { display: inline-flex; justify-content: center; min-width: 20px; padding: 0 5px; border: 1px solid var(--line); border-radius: 4px; color: var(--fg); font: 12px/16px var(--mono); }
+  .back { width: 100%; min-height: 36px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: rgba(9,9,11,0.3); text-align: left; cursor: pointer; }
+  .back:hover { background: rgba(39,39,42,0.5); }
+  .back:focus-visible { outline: 3px solid rgba(212,212,216,0.5); outline-offset: 3px; }
+  .note { position: absolute; left: 132px; top: 812px; width: 956px; display: flex; gap: 12px; align-items: baseline; color: var(--muted); font: 12px/16px var(--mono); }
+  .note b { color: var(--fg); font-family: var(--sans); font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="room" aria-hidden="true">
+  <div class="shelf-line"></div>
+  <div class="speaker l"><i></i><i></i></div>
+  <div class="speaker r"><i></i><i></i></div>
+  <div class="console"></div>
+</div>
+
+<main>
+  <section class="tv" aria-label="Living-room TV">
+    <div class="bezel">
+      <div class="os">
+        <nav class="rail" aria-label="Apps">
+          <div class="logo"><i aria-hidden="true"></i>Kevnnard TV</div>
+          <div data-row="0" style="display:contents">
+            <button class="focusable" type="button" aria-current="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7v10l8 4 8-4V7Z"/></svg>Home</button>
+            <button class="focusable" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18"/></svg>Movies &amp; Series</button>
+            <button class="focusable" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9h12a3 3 0 0 1 3 3v2a3 3 0 0 1-5 2l-1-1H9l-1 1a3 3 0 0 1-5-2v-2a3 3 0 0 1 3-3Z"/></svg>Games</button>
+            <button class="focusable" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/></svg>My videos</button>
+            <button class="focusable" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="m8 3 4 4 4-4"/></svg>Channels</button>
+            <button class="focusable" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M8 12h8"/></svg>Anime</button>
+            <button class="focusable" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="12" rx="9" ry="5.5" transform="rotate(-35 12 12)"/></svg>Highlights</button>
+            <button class="focusable" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4" height="6" rx="1"/><rect x="17" y="14" width="4" height="6" rx="1"/></svg>Lo-fi radio</button>
+          </div>
+          <p class="clock"><b>23:14</b>Thu · night</p>
+        </nav>
+
+        <div class="main">
+          <div data-row="1">
+            <button class="feature focusable" type="button" aria-describedby="feat-note">
+              <span class="art m-moon" aria-hidden="true"></span><span class="fade" aria-hidden="true"></span>
+              <span class="body">
+                <span class="kicker">Games · my favourite</span>
+                <h1>Ghost of Tsushima</h1>
+                <p id="feat-note">The wind shows the way, not a map marker. Draft note, owner to confirm.</p>
+              </span>
+            </button>
+          </div>
+
+          <div class="row-head"><h2>Movies &amp; Series</h2><span>sample picks · replace with yours</span></div>
+          <ul class="covers" data-row="2">
+            <li><button class="cover focusable" type="button" aria-label="Interstellar, sample pick"><span class="art m-ring"></span><span class="t">Interstellar</span></button></li>
+            <li><button class="cover focusable" type="button" aria-label="Breaking Bad, sample pick"><span class="art m-grid"></span><span class="t">Breaking Bad</span></button></li>
+            <li><button class="cover focusable" type="button" aria-label="Dune: Part Two, sample pick"><span class="art m-dune"></span><span class="t">Dune: Part Two</span></button></li>
+            <li><button class="cover focusable" type="button" aria-label="The Last of Us, sample pick"><span class="art m-bars"></span><span class="t">The Last of Us</span></button></li>
+            <li><button class="cover focusable" type="button" aria-label="Top Gun: Maverick, sample pick"><span class="art m-split"></span><span class="t">Top Gun: Maverick</span></button></li>
+            <li><button class="cover focusable" type="button" aria-label="Spider-Man: Into the Spider-Verse, sample pick"><span class="art m-dots"></span><span class="t">Into the Spider-Verse</span></button></li>
+            <li><button class="cover focusable" type="button" aria-label="The Bear, sample pick"><span class="art m-diag"></span><span class="t">The Bear</span></button></li>
+            <li><button class="cover focusable" type="button" aria-label="Shōgun, sample pick"><span class="art m-moon"></span><span class="t">Shōgun</span></button></li>
+          </ul>
+
+          <div class="row-head"><h2>My videos &amp; Highlights</h2><span>own clips · official YouTube embeds</span></div>
+          <ul class="covers" data-row="3">
+            <li><button class="cover wide focusable" type="button" aria-label="My videos: Carneros DC number 32, game clip"><span class="art m-grid"></span><span class="t">Carneros DC #32 · clip</span></button></li>
+            <li><button class="cover wide focusable" type="button" aria-label="Highlights: Michael Jordan career, sample pick"><span class="art m-bars"></span><span class="t">Jordan · career</span></button></li>
+            <li><button class="cover wide focusable" type="button" aria-label="Highlights: NFL week highlights, sample pick"><span class="art m-diag"></span><span class="t">NFL · week highlights</span></button></li>
+            <li><button class="cover wide focusable" type="button" aria-label="Channels: Lofi Girl, sample pick"><span class="art m-dune"></span><span class="t">Lofi Girl · channel</span></button></li>
+          </ul>
+        </div>
+      </div>
+      <div class="glare" aria-hidden="true"></div>
+    </div>
+    <div class="stand" aria-hidden="true"></div>
+  </section>
+
+  <aside class="caption" aria-label="About this screen">
+    <h2>Living-room TV</h2>
+    <p>My own TV: the films, games and clips I keep coming back to.</p>
+    <ul class="keys" aria-label="Remote keys">
+      <li><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> move</li>
+      <li><kbd>Enter</kbd> open</li>
+      <li><kbd>Esc</kbd> back</li>
+    </ul>
+    <p class="sample">Rows marked "sample" are stand-ins to replace. Covers are drawn placeholders.</p>
+    <button class="back focusable" type="button">← Back to room</button>
+  </aside>
+
+  <p class="note" aria-live="polite"><b>Ghost of Tsushima</b> focused · Enter opens its story on the panel</p>
+</main>
+<script>
+  // Remote-style focus on the panel: arrows move within and between rows.
+  const rail = [...document.querySelectorAll('[data-row="0"] .focusable')];
+  const grid = [1, 2, 3].map(n => [...document.querySelectorAll(`[data-row="${n}"] .focusable`)]);
+  const all = [...rail, ...grid.flat()];
+  all.forEach(el => el.tabIndex = -1);
+  const note = document.querySelector(".note");
+  let cur = grid[0][0];
+  function focus(el) { cur.tabIndex = -1; cur = el; el.tabIndex = 0; el.focus(); note.innerHTML = `<b>${(el.querySelector("h1, .t") || el).textContent.trim()}</b> focused · Enter opens it`; }
+  function where(el) { for (let r = 0; r < grid.length; r++) { const c = grid[r].indexOf(el); if (c >= 0) return [r, c]; } return null; }
+  document.addEventListener("keydown", e => {
+    if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) return;
+    if (!all.includes(document.activeElement)) return;
+    e.preventDefault();
+    const ri = rail.indexOf(cur);
+    if (ri >= 0) {
+      if (e.key === "ArrowUp") focus(rail[Math.max(0, ri - 1)]);
+      if (e.key === "ArrowDown") focus(rail[Math.min(rail.length - 1, ri + 1)]);
+      if (e.key === "ArrowRight") focus(grid[0][0]);
+      return;
+    }
+    const [r, c] = where(cur);
+    if (e.key === "ArrowLeft") focus(c === 0 ? rail[0] : grid[r][c - 1]);
+    if (e.key === "ArrowRight") focus(grid[r][Math.min(grid[r].length - 1, c + 1)]);
+    if (e.key === "ArrowUp" && r > 0) focus(grid[r - 1][Math.min(c, grid[r - 1].length - 1)]);
+    if (e.key === "ArrowDown" && r < grid.length - 1) focus(grid[r + 1][Math.min(c, grid[r + 1].length - 1)]);
+  });
+  cur.tabIndex = 0;
+  window.addEventListener("load", () => focus(cur));
+</script>
+</body>
+</html>
