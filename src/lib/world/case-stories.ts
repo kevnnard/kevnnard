@@ -39,15 +39,16 @@ export interface CaseStory {
 }
 
 /**
- * The short card beside the wall katana (katana-wall-shelf T5), styled like
- * the lo-fi music console: a line from the owner and the model's credit.
+ * The short card beside the wall katana (katana-wall-shelf T5, T11), styled
+ * like the lo-fi music console: a framed print and the owner's words. The
+ * model's and the print's credits live in the menu's Credits only (S9).
  */
 export interface WallStory {
   kicker: string;
   title: string;
-  lede: string;
-  /** "3D model by" and the author, linked to their profile. */
-  credit: { text: string; name: string; href: string };
+  paragraphs: readonly string[];
+  /** A shipped file under /world/stories/, credited in credits.json. */
+  image: { src: string; alt: string };
 }
 
 export const CASE_STORIES: Record<DisplayItemId, CaseStory | null> & {
@@ -104,16 +105,19 @@ export const CASE_STORIES: Record<DisplayItemId, CaseStory | null> & {
   },
   "moto-helmet": null,
   "jordan-1": null,
-  // Only the owner's words: their love of Japanese culture, and Mitchell
-  // Bekke's credit for the model.
+  // Only the owner's words: their love of Japanese culture. The print is
+  // Utagawa Kuniyoshi's public-domain Uesugi Kenshin (1843-1844, Wikimedia
+  // Commons), 524 x 720 WebP.
   katana: {
     kicker: "WALL · KATANA",
     title: "Blossom Katana",
-    lede: "Japanese culture pulls me in, above all its feudal era, the age of the samurai. Ghost of Tsushima is my favorite game, and these katanas are my nod to that love of the East.",
-    credit: {
-      text: "3D model by",
-      name: "Mitchell Bekke",
-      href: "https://sketchfab.com/MitchellBekke",
+    paragraphs: [
+      "Japanese culture pulls me in, above all its feudal era: the age of the samurai, when honor, discipline and the blade shaped a whole way of living.",
+      "Ghost of Tsushima is my favorite game. It captures that world like nothing else, from the wind sweeping the fields to the silence before a duel. These katanas are my nod to that love of the East, a small piece of it on my wall.",
+    ],
+    image: {
+      src: "/world/stories/katana-ukiyoe.webp",
+      alt: "Ukiyo-e print by Utagawa Kuniyoshi of the samurai lord Uesugi Kenshin, seated in blue lacquered armour and a white head cowl, a sword at his side",
     },
   },
 };

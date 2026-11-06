@@ -13,6 +13,7 @@ import { DISPLAY_MODEL_FILES } from "../../src/lib/world/display-cases.ts";
 import { KATANA_MODEL } from "../../src/lib/world/katana-shelf.ts";
 import { MODEL_FILES, PROP_FILES } from "../../src/lib/world/models.ts";
 import { BRUNO_CHAIR, BRUNO_MAPS } from "../../src/lib/world/setup.ts";
+import type { WorldCredits } from "../../src/lib/world/world-credits.ts";
 import { PUBLIC, shippedModels } from "./glb.ts";
 
 const credits = (): Credits =>
@@ -100,6 +101,31 @@ describe("credits.json (S4: every author is credited, even CC0)", () => {
         createHash("sha256").update(data).digest("hex"),
         entry.file,
       );
+    }
+  });
+
+  it("credits every shipped story image as public domain, with its Commons page and hashes (katana-wall-shelf T11)", () => {
+    const images = (credits() as WorldCredits).images ?? [];
+    assert.ok(images.length > 0, "image credits");
+    for (const image of images) {
+      const data = readFileSync(new URL(image.file, PUBLIC));
+      assert.equal(image.bytes, data.length, image.file);
+      assert.equal(
+        image.sha256,
+        createHash("sha256").update(data).digest("hex"),
+        image.file,
+      );
+      assert.equal(image.license, "Public domain");
+      assert.ok(image.title.trim() && image.artist.trim() && image.date.trim());
+      assert.match(
+        image.source,
+        /^https:\/\/commons\.wikimedia\.org\/wiki\/File:/,
+      );
+      assert.equal(image.licenseEvidence.url, image.source);
+      assert.match(image.licenseEvidence.quote, /public domain/i);
+      assert.ok(image.sourceFiles.length > 0, `${image.file} source files`);
+      for (const file of image.sourceFiles)
+        assert.match(file.url, /^https:\/\/upload\.wikimedia\.org\//);
     }
   });
 

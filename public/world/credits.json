@@ -1717,5 +1717,31 @@
       "bytes": 129192,
       "sha256": "64abd2ab5aa264cc19b36b87b114893c15f48337d1c0df891d7327d2c6abd4c7"
     }
+  ],
+  "images": [
+    {
+      "file": "stories/katana-ukiyoe.webp",
+      "title": "Uesugi Kenshin, from Stories of 100 Heroes of High Renown (Meikō hyakuyū-den)",
+      "artist": "Utagawa Kuniyoshi",
+      "date": "between 1843 and 1844",
+      "license": "Public domain",
+      "source": "https://commons.wikimedia.org/wiki/File:Uesugi_Kenshin_by_Kuniyoshi.JPG",
+      "licenseEvidence": {
+        "url": "https://commons.wikimedia.org/wiki/File:Uesugi_Kenshin_by_Kuniyoshi.JPG",
+        "quote": "Permission={{PD-art-two|PD-Japan|PD-old-auto-1923|deathyear=1861}}; \"This is a faithful photographic reproduction of a two-dimensional, public domain work of art. The work of art itself is in the public domain in its source country for the following reason: Public domain ... According to Japanese Copyright Law (June 1, 2018 grant) the copyright on this work has expired and is as such public domain.\"; licence: \"Public domain\""
+      },
+      "bytes": 106632,
+      "sha256": "5a7a075532458dc571a542c7e7227f33ec2783bdfc3a9e15bee1de0838d7352e",
+      "width": 524,
+      "height": 720,
+      "changes": "Resized from 1251 x 1721 to 524 x 720 and encoded as WebP (cwebp -q 78 -m 6 -metadata none) for the katana story card.",
+      "sourceFiles": [
+        {
+          "url": "https://upload.wikimedia.org/wikipedia/commons/3/3e/Uesugi_Kenshin_by_Kuniyoshi.JPG",
+          "bytes": 593222,
+          "sha256": "f4c836166102b8da3b2737a74dec339098eb4eb6e8e8e49701cc2bb21d9eb2be"
+        }
+      ]
+    }
   ]
 }

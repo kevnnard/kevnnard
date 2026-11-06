@@ -48,9 +48,11 @@ function SecondaryDiagram({ player }: { player: CaseStoryPlayer }) {
 }
 
 /**
- * The wall katana's card (katana-wall-shelf T5), in the lo-fi console's
- * look: translucent zinc, emerald kicker, monospace. Same place and width
- * as the case card, so the camera frames the stand left of it.
+ * The wall katana's card (katana-wall-shelf T5, T11), in the lo-fi console's
+ * look: translucent zinc, emerald kicker, monospace. A framed ukiyo-e print
+ * beside the owner's words; its credit, like the model's, is in the menu.
+ * Same place and width as the case card, so the camera frames the stand
+ * left of it.
  */
 function WallStoryCard({
   story,
@@ -75,19 +77,22 @@ function WallStoryCard({
     <article className="katana-story" aria-labelledby="case-story-title">
       <p className="katana-story-kicker">{story.kicker}</p>
       <h2 id="case-story-title">{story.title}</h2>
-      <p className="katana-story-lede">{story.lede}</p>
+      <div className="katana-story-body">
+        <figure className="katana-story-print">
+          <img
+            src={story.image.src}
+            alt={story.image.alt}
+            loading="lazy"
+            decoding="async"
+          />
+        </figure>
+        <div className="katana-story-lede">
+          {story.paragraphs.map((text) => (
+            <p key={text}>{text}</p>
+          ))}
+        </div>
+      </div>
       <div className="katana-story-actions">
-        <p className="katana-story-credit">
-          {story.credit.text}{" "}
-          <a
-            href={story.credit.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`${story.credit.name} on Sketchfab (opens in a new tab)`}
-          >
-            {story.credit.name}
-          </a>
-        </p>
         <button type="button" onClick={() => onOpenChange(false)}>
           Hide story
         </button>
@@ -117,7 +122,7 @@ export default function CaseStory({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  if ("credit" in story)
+  if ("paragraphs" in story)
     return (
       <WallStoryCard story={story} open={open} onOpenChange={onOpenChange} />
     );

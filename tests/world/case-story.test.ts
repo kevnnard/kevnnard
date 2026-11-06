@@ -102,6 +102,16 @@ describe("case story card (collection-display-models T10)", () => {
         );
         assert.ok(media.alt.trim(), `${media.src} alt text`);
       }
+      if (story && "image" in story) {
+        assert.match(story.image.src, /^\/world\/stories\//);
+        assert.ok(
+          existsSync(
+            new URL(`../../public${story.image.src}`, import.meta.url),
+          ),
+          story.image.src,
+        );
+        assert.ok(story.image.alt.trim(), `${story.image.src} alt text`);
+      }
     }
   });
 

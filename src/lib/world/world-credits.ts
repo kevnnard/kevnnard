@@ -4,7 +4,7 @@
 // author. The site's own procedural work (`original`) stays in the manifest
 // for provenance but is not listed as a third-party acknowledgement.
 
-import type { Credits } from "./credits.ts";
+import type { Credits, SourceFile } from "./credits.ts";
 
 /** The music entry written by scripts/prepare-world.py. */
 export interface MusicCredit {
@@ -37,9 +37,31 @@ export interface AmbientCredit {
   sha256: string;
 }
 
+/**
+ * A public-domain artwork shown on a story card (katana-wall-shelf T11),
+ * downloaded from Wikimedia Commons and resized for the card.
+ */
+export interface ImageCredit {
+  /** Shipped file, relative to public/world/. */
+  file: string;
+  title: string;
+  artist: string;
+  /** As the Commons file page states it. */
+  date: string;
+  license: string;
+  /** The Commons file page. */
+  source: string;
+  /** Where the public-domain status was read, and the exact words. */
+  licenseEvidence: { url: string; quote: string };
+  bytes: number;
+  sha256: string;
+  sourceFiles: SourceFile[];
+}
+
 export interface WorldCredits extends Credits {
   music?: MusicCredit[];
   ambient?: AmbientCredit[];
+  images?: ImageCredit[];
 }
 
 export interface MusicAcknowledgement {
@@ -63,6 +85,14 @@ export interface AmbientAcknowledgement {
   file: string;
 }
 
+export interface ImageAcknowledgement {
+  title: string;
+  artist: string;
+  date: string;
+  license: string;
+  source: string;
+}
+
 export interface AssetAcknowledgement {
   id: string;
   pack: string;
@@ -79,6 +109,7 @@ export interface CreditSections {
   music: MusicAcknowledgement[];
   ambient: AmbientAcknowledgement[];
   assets: AssetAcknowledgement[];
+  images: ImageAcknowledgement[];
 }
 
 /** Inspiration only for parts; the reused files are listed under assets. */
@@ -157,5 +188,12 @@ export function creditSections(credits: WorldCredits): CreditSections {
       used: [...used, ...ports],
     };
   });
-  return { music, ambient, assets };
+  const images = (credits.images ?? []).map((entry) => ({
+    title: entry.title,
+    artist: entry.artist,
+    date: entry.date,
+    license: entry.license,
+    source: entry.source,
+  }));
+  return { music, ambient, assets, images };
 }

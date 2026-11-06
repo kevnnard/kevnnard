@@ -1,4 +1,4 @@
-/* The wall katana's story card (katana-wall-shelf T5), in the lo-fi music
+/* The wall katana's story card (katana-wall-shelf T5, T11), in the lo-fi music
    console's look (speaker-bar.css): zinc #09090b at 30%, border #d4d4d8 at
    20%, emerald #10b981 as the one accent, 4px blur, mono fallbacks, 12px
    radius, 6px controls. Placed and sized like the case card
@@ -50,31 +50,43 @@
   font-weight: 600;
   line-height: 1.4;
 }
-.katana-story .katana-story-lede {
+/* The print in a narrow frame beside the words (T11): its column is fixed,
+   so the image never pushes past the card's footprint. */
+.katana-story-body {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
   margin-top: 12px;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--katana-line);
+}
+.katana-story-print {
+  margin: 0;
+  padding: 4px;
+  border: 1px solid var(--katana-line);
+  border-radius: 6px;
+  background: rgb(9 9 11 / 0.3);
+}
+.katana-story-print img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 524 / 720;
+  object-fit: cover;
+  border-radius: 3px;
+}
+.katana-story-lede {
   color: var(--katana-soft);
+}
+.katana-story .katana-story-lede p + p {
+  margin-top: 10px;
 }
 .katana-story-actions {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: flex-end;
   margin-top: 16px;
-}
-.katana-story .katana-story-credit {
-  font-size: 12px;
-  color: var(--katana-soft);
-}
-.katana-story-credit a {
-  color: var(--katana-accent);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.katana-story-credit a:hover {
-  color: var(--katana-fg);
 }
 .katana-story-actions button,
 .katana-story-reopen {
@@ -103,6 +115,9 @@
     right: 16px;
     width: 420px;
   }
+  .katana-story-body {
+    grid-template-columns: 112px minmax(0, 1fr);
+  }
   .katana-story-reopen {
     right: 16px;
   }
@@ -118,6 +133,10 @@
     width: auto;
     max-height: 45vh;
     padding: 16px;
+  }
+  .katana-story-body {
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 12px;
   }
   .katana-story-reopen {
     left: auto;

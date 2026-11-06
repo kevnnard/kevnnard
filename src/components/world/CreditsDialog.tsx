@@ -47,8 +47,8 @@ function PackCredit({ pack }: { pack: AssetAcknowledgement }) {
 
 /**
  * The guide's Credits tab (S4): gentle-stream's music engine first, the CC0
- * ambient sounds, Bruno Simon's inspiration, then every external asset pack
- * from /world/credits.json. The site's own procedural work stays in that file and
+ * ambient sounds, Bruno Simon's inspiration, every external asset pack from
+ * /world/credits.json, then the public-domain images on the story cards. The site's own procedural work stays in that file and
  * is not listed here as a third-party credit.
  */
 export function CreditsList() {
@@ -124,6 +124,22 @@ export function CreditsList() {
           ))}
         </ul>
       </section>
+      {credits.images.length > 0 && (
+        <section aria-labelledby="world-credits-images">
+          <h3 id="world-credits-images">Images</h3>
+          <ul>
+            {credits.images.map((image) => (
+              <li key={image.source}>
+                <h4>{image.title}</h4>
+                <p>
+                  By {image.artist}, {image.date} · {image.license} ·{" "}
+                  <External href={image.source}>Source</External>
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }

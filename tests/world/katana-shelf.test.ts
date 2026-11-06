@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { CASE_STORIES } from "../../src/lib/world/case-stories.ts";
@@ -28,6 +29,10 @@ import {
   TV_PANEL,
 } from "../../src/lib/world/living.ts";
 import { SOFA_LAMP, SOFA_LAMPS } from "../../src/lib/world/sofa-lamps.ts";
+import {
+  creditSections,
+  type WorldCredits,
+} from "../../src/lib/world/world-credits.ts";
 import { glbInfo, PUBLIC } from "./glb.ts";
 
 const source = (path: string) =>
@@ -324,23 +329,79 @@ describe("katana inspection and story (katana-wall-shelf T5)", () => {
     }
   });
 
-  it("tells only what the owner said, with the author's credit link", () => {
+  it("tells only what the owner said, in two paragraphs (S8, S9)", () => {
     const story = CASE_STORIES.katana;
-    assert.ok(story && "credit" in story, "wall story");
+    assert.ok(story && "paragraphs" in story, "wall story");
     assert.equal(story.title, "Blossom Katana");
     assert.equal(story.kicker, "WALL · KATANA");
-    assert.equal(
-      story.lede,
-      "Japanese culture pulls me in, above all its feudal era, the age of the samurai. Ghost of Tsushima is my favorite game, and these katanas are my nod to that love of the East.",
-    );
-    assert.deepEqual(story.credit, {
-      text: "3D model by",
-      name: "Mitchell Bekke",
-      href: "https://sketchfab.com/MitchellBekke",
-    });
+    assert.deepEqual(story.paragraphs, [
+      "Japanese culture pulls me in, above all its feudal era: the age of the samurai, when honor, discipline and the blade shaped a whole way of living.",
+      "Ghost of Tsushima is my favorite game. It captures that world like nothing else, from the wind sweeping the fields to the silence before a duel. These katanas are my nod to that love of the East, a small piece of it on my wall.",
+    ]);
     const card = source("src/components/world/CaseStory.tsx");
     assert.match(card, /className="katana-story"/);
-    assert.match(card, /href=\{story\.credit\.href\}/);
+    assert.match(card, /story\.paragraphs\.map\(/);
+  });
+
+  it("shows a public-domain ukiyo-e print, credited in the menu only (S9)", () => {
+    const story = CASE_STORIES.katana;
+    assert.ok(story && "image" in story, "wall story image");
+    assert.equal(story.image.src, "/world/stories/katana-ukiyoe.webp");
+    assert.match(story.image.alt, /Uesugi Kenshin/);
+    assert.match(story.image.alt, /ukiyo-e/i);
+    const file = readFileSync(new URL("stories/katana-ukiyoe.webp", PUBLIC));
+    assert.equal(file.subarray(0, 4).toString("latin1"), "RIFF");
+    assert.equal(file.subarray(8, 12).toString("latin1"), "WEBP");
+    assert.ok(file.length < 120_000, `bytes ${file.length}`);
+    const card = source("src/components/world/CaseStory.tsx");
+    assert.match(card, /src=\{story\.image\.src\}/);
+    assert.match(card, /alt=\{story\.image\.alt\}/);
+    assert.match(card, /loading="lazy"/);
+    // Credits live in the menu, not on the card.
+    assert.doesNotMatch(card, /3D model by|katana-story-credit|story\.credit/);
+    assert.doesNotMatch(
+      source("src/lib/world/case-stories.ts"),
+      /3D model by|credit: \{/,
+    );
+    const css = source("src/components/world/katana-story.css");
+    assert.match(css, /\.katana-story-print img \{[^}]*object-fit: cover;/);
+    assert.match(css, /\.katana-story-print img \{[^}]*max-width: 100%;/);
+    const credits = JSON.parse(
+      readFileSync(new URL("credits.json", PUBLIC), "utf8"),
+    ) as WorldCredits;
+    const print = credits.images?.find(
+      (item) => item.file === "stories/katana-ukiyoe.webp",
+    );
+    assert.ok(print, "print credited");
+    assert.equal(
+      print.source,
+      "https://commons.wikimedia.org/wiki/File:Uesugi_Kenshin_by_Kuniyoshi.JPG",
+    );
+    assert.equal(print.license, "Public domain");
+    assert.equal(print.artist, "Utagawa Kuniyoshi");
+    assert.match(print.licenseEvidence.quote, /PD-old-auto-1923/);
+    assert.equal(print.bytes, file.length);
+    assert.equal(print.sha256, createHash("sha256").update(file).digest("hex"));
+    assert.deepEqual(
+      print.sourceFiles.map((item) => [item.bytes, item.sha256]),
+      [
+        [
+          593222,
+          "f4c836166102b8da3b2737a74dec339098eb4eb6e8e8e49701cc2bb21d9eb2be",
+        ],
+      ],
+    );
+    // Mitchell Bekke's model credit stays in the menu.
+    assert.ok(
+      credits.packs.some(
+        (pack) => pack.authorUrl === "https://sketchfab.com/MitchellBekke",
+      ),
+    );
+    const [listed] = creditSections(credits).images;
+    assert.equal(listed?.source, print.source);
+    const dialog = source("src/components/world/CreditsDialog.tsx");
+    assert.match(dialog, /credits\.images\.map\(/);
+    assert.match(dialog, /id="world-credits-images"/);
   });
 
   it("styles the wall card like the lo-fi console", () => {
