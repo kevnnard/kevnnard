@@ -1,0 +1,66 @@
+/* The desk product card (keyboard-card T1): the katana card's lo-fi console
+   (katana-story.css supplies the panel, kicker, title and footprint), with
+   the owner's one line, a short specs list and the shop link as the one
+   emerald control. No rail below it, so it may run a little taller. */
+.katana-story.product-card {
+  max-height: calc(100% - 64px);
+}
+.product-card .product-card-line {
+  margin-top: 8px;
+  color: var(--katana-soft);
+}
+.product-card-specs {
+  margin: 14px 0 0;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--katana-line);
+  list-style: none;
+  color: var(--katana-soft);
+  font-size: 13px;
+}
+.product-card-specs li {
+  position: relative;
+  padding-left: 18px;
+}
+.product-card-specs li + li {
+  margin-top: 4px;
+}
+.product-card-specs li::before {
+  content: "›";
+  position: absolute;
+  left: 2px;
+  color: var(--katana-accent);
+}
+.product-card-actions {
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--katana-line);
+}
+.product-card-actions .product-card-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid rgb(16 185 129 / 0.6);
+  border-radius: 6px;
+  background: rgb(16 185 129 / 0.12);
+  color: var(--katana-fg);
+  font: inherit;
+  text-decoration: none;
+  touch-action: manipulation;
+  transition: background-color 150ms;
+}
+.product-card-actions a.product-card-link:hover {
+  background: rgb(16 185 129 / 0.24);
+}
+.product-card-actions button.product-card-link:disabled {
+  border-color: var(--katana-line);
+  background: rgb(9 9 11 / 0.2);
+  color: var(--katana-soft);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+@media (max-width: 700px) {
+  .katana-story.product-card {
+    max-height: 45vh;
+  }
+}

@@ -159,7 +159,8 @@ describe("case story card (collection-display-models T10)", () => {
     );
     assert.match(
       app,
-      /const caseStory = galleryCase \? CASE_STORIES\[galleryCase\] : null;/,
+      // Desk things (keyboard-card T1) have product cards, not stories.
+      /const caseStory =\s*galleryCase && !isDeskItemId\(galleryCase\)\s*\? CASE_STORIES\[galleryCase\]\s*: null;/,
     );
     assert.match(
       app,

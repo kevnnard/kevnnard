@@ -127,9 +127,23 @@ export const GALLERY_ORDER: readonly GalleryItemId[] = [
   "collection-shelf",
 ];
 
+/**
+ * Desk things the inspection camera frames too (keyboard-card T1): not
+ * part of the collection, so never on its rail.
+ */
+export type DeskItemId = "keyboard";
+
+/** Anything the inspection camera can frame: the gallery or the desk. */
+export type InspectItemId = GalleryItemId | DeskItemId;
+
+/** Whether an inspected item is one of the desk things. */
+export function isDeskItemId(id: InspectItemId): id is DeskItemId {
+  return id === "keyboard";
+}
+
 /** Whether an inspected item is one of the glass cases. */
-export function isDisplayCaseId(id: GalleryItemId): id is DisplayItemId {
-  return id !== "katana" && id !== "collection-shelf";
+export function isDisplayCaseId(id: InspectItemId): id is DisplayItemId {
+  return id !== "katana" && id !== "collection-shelf" && !isDeskItemId(id);
 }
 
 export type ItemFinish =

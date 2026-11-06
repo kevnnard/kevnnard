@@ -4,9 +4,12 @@ import {
   DISPLAY_CASES,
   DISPLAY_LIFT,
   type GalleryItemId,
+  type InspectItemId,
   ITEM_FLOOR_Y,
+  isDeskItemId,
 } from "./display-cases.ts";
 import { KATANA_CENTRE, KATANA_EYE_OFFSET } from "./katana-shelf.ts";
+import { KEYBOARD } from "./setup.ts";
 import { SHELF_VIEW } from "./shelf.ts";
 
 /** Eye height above the model's centre: level with it, just over the middle. */
@@ -26,6 +29,19 @@ export const STORY_CARD = {
   narrowInset: 16,
   narrowBelow: 1100,
   stackBelow: 700,
+} as const;
+
+/**
+ * The desk keyboard (keyboard-card T1): a still product shot from the
+ * chair's side, 0.61 m out and about 49 degrees down at the board on its
+ * mat, wide enough for the whole board left of the card at 16:10. The
+ * ultrawide's bottom edge stays over the frame; the eye sits over the seat,
+ * in front of the backrest.
+ */
+export const KEYBOARD_VIEW = {
+  centre: KEYBOARD.center,
+  offset: [0.4, 0.46, 0] as Vec3,
+  fov: GUIDE.fov,
 } as const;
 
 /** The inspected model's centre, the eye's offset from it and the lens. */
@@ -49,6 +65,11 @@ function galleryView(id: GalleryItemId): {
   return { centre: [x, centre, z], offset: EYE_OFFSET, fov: GUIDE.fov };
 }
 
+/** Any inspected thing's view: a gallery item's, or the desk keyboard's. */
+function inspectView(id: InspectItemId): ReturnType<typeof galleryView> {
+  return isDeskItemId(id) ? KEYBOARD_VIEW : galleryView(id);
+}
+
 /**
  * Only after clicking a case: look from inside the room, over the sofa, at the
  * model's own level (collection-display-models T8), aimed at its centre once
@@ -56,14 +77,14 @@ function galleryView(id: GalleryItemId): {
  * screen right (T12), so the model sits left of an open story card.
  */
 export function galleryCaseFocus(
-  id: GalleryItemId,
+  id: InspectItemId,
   shift = 0,
 ): {
   position: Vec3;
   target: Vec3;
   fov: number;
 } {
-  const { centre, offset, fov } = galleryView(id);
+  const { centre, offset, fov } = inspectView(id);
   // Screen right: the level view direction turned a quarter toward -x.
   const [vx, , vz] = offset.map((v) => -v);
   const level = Math.hypot(vx, vz);
@@ -90,14 +111,14 @@ export function galleryCaseFocus(
 export function galleryStoryShift(
   width: number,
   aspect: number,
-  id: GalleryItemId = "football-helmet",
+  id: InspectItemId = "football-helmet",
 ): number {
   if (width <= STORY_CARD.stackBelow) return 0;
   const card =
     width <= STORY_CARD.narrowBelow
       ? STORY_CARD.narrowWidth + STORY_CARD.narrowInset
       : STORY_CARD.width + STORY_CARD.inset;
-  const { offset, fov } = galleryView(id);
+  const { offset, fov } = inspectView(id);
   const distance = Math.hypot(...offset);
   const halfWidth = distance * Math.tan(((fov / 2) * Math.PI) / 180) * aspect;
   return (card / width) * halfWidth;

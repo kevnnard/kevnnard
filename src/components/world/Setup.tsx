@@ -1,4 +1,9 @@
-import { createPortal, useFrame, useThree } from "@react-three/fiber";
+import {
+  createPortal,
+  type ThreeEvent,
+  useFrame,
+  useThree,
+} from "@react-three/fiber";
 import { Suspense, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import {
   BackSide,
@@ -15,6 +20,7 @@ import {
   MeshStandardMaterial,
   NoColorSpace,
   Object3D,
+  Raycaster,
   RepeatWrapping,
   type Texture,
   Vector3,
@@ -36,13 +42,14 @@ import SpeakerZone, {
   type SpeakerControl,
 } from "@/components/world/SpeakerZone";
 import { type SurfaceMaps, surfaceMaterial } from "@/components/world/surfaces";
+import type { DeskItemId, InspectItemId } from "@/lib/world/display-cases.ts";
 import {
   DEFAULT_LIGHTS,
   glowPower,
   type LightSettings,
   sideLight,
 } from "@/lib/world/lights.ts";
-import { isMainScreenGlow } from "@/lib/world/monitor.ts";
+import { canEnterMonitor, isMainScreenGlow } from "@/lib/world/monitor.ts";
 import { chairSway, ledLevel, setupAnimates } from "@/lib/world/motion.ts";
 import {
   NORMAL_SIZE,
@@ -52,6 +59,7 @@ import {
 import { isPortraitCodeGlow } from "@/lib/world/portrait.ts";
 import {
   CHAIR_PIVOT,
+  DESK_HITBOXES,
   SETUP_COLORS,
   SETUP_MATERIALS,
   SETUP_PROPS,
@@ -74,6 +82,77 @@ const SOLID_MERGE = {
   roundSegments: SETUP_ROUND_SEGMENTS,
   occlusion: setupOcclusion,
 };
+
+/** Pixels a press may travel and still count as a click, not a drag. */
+const CLICK_SLOP = 6;
+
+/** The desk things the camera inspects (keyboard-card T1), from WorldApp. */
+export interface DeskControl {
+  /** The inspected item, desk or gallery; null in the room. */
+  focused: InspectItemId | null;
+  /** Absent while another close-up holds the camera. */
+  onInspect?: (id: DeskItemId) => void;
+}
+
+/**
+ * A transparent click target just around one desk thing: only from inside
+ * the room (the monitor's gate) with nothing in the way, so the ultrawide,
+ * the portrait, the mouse and the speakers keep their own clicks.
+ */
+function DeskHit({
+  id,
+  occluders,
+  control,
+}: {
+  id: DeskItemId;
+  occluders: Object3D;
+  control: DeskControl;
+}) {
+  const element = useThree((state) => state.gl.domElement);
+  useEffect(
+    () => () => {
+      element.style.cursor = "";
+    },
+    [element],
+  );
+  const raycaster = useMemo(() => new Raycaster(), []);
+  const { center, size } = DESK_HITBOXES[id];
+  const reachable = (event: ThreeEvent<MouseEvent | PointerEvent>) => {
+    if (!control.onInspect || control.focused === id) return false;
+    const { x, y, z } = event.camera.position;
+    if (!canEnterMonitor([x, y, z])) return false;
+    // The box encloses the thing: anything hit before it is in the way.
+    raycaster.set(event.ray.origin, event.ray.direction);
+    raycaster.far = Math.max(0, event.distance - 0.005);
+    return raycaster.intersectObject(occluders, true).length === 0;
+  };
+  return (
+    <mesh
+      name={`setup-${id}-hit`}
+      position={center}
+      onClick={(event) => {
+        if (event.delta > CLICK_SLOP || !reachable(event)) return;
+        event.stopPropagation();
+        element.style.cursor = "";
+        control.onInspect?.(id);
+      }}
+      onPointerOver={(event) => {
+        if (reachable(event)) element.style.cursor = "pointer";
+      }}
+      onPointerOut={() => {
+        element.style.cursor = "";
+      }}
+    >
+      <boxGeometry args={size} />
+      <meshBasicMaterial
+        transparent
+        opacity={0}
+        colorWrite={false}
+        depthWrite={false}
+      />
+    </mesh>
+  );
+}
 
 /** Vertex index of the parts lit by the setup channel in the LED mesh. */
 const CHANNEL_LED = 255;
@@ -257,6 +336,7 @@ export default function Setup({
   terminal,
   portrait,
   speakers,
+  desk,
   prepared,
 }: {
   hours: number;
@@ -275,6 +355,8 @@ export default function Setup({
   portrait?: PortraitControl;
   /** The shelf speakers' music and close-up (world-speaker-music T2). */
   speakers?: SpeakerControl;
+  /** The desk things' inspection (keyboard-card T1). */
+  desk?: DeskControl;
   /**
    * World entry loader: only the textured instance reports its steam and
    * chair; the flat fallback instance is replaced and never counts.
@@ -430,6 +512,7 @@ export default function Setup({
         control={portrait}
       />
       {speakers && <SpeakerZone occluders={group} control={speakers} />}
+      {desk && <DeskHit id="keyboard" occluders={group} control={desk} />}
       <Suspense fallback={null}>
         <CoffeeSteam
           material={steam}

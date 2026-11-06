@@ -52,7 +52,7 @@ describe("gallery inspection camera", () => {
     );
     assert.match(
       app,
-      /ready && entered && galleryCase && !focus && !portrait && !speakers/,
+      /ready &&\s*entered &&\s*galleryCase &&\s*!focus &&\s*!portrait &&\s*!speakers/,
     );
   });
   it("targets each real case from inside the room", () => {
@@ -183,7 +183,11 @@ describe("story framing (collection-display-models T12)", () => {
       new URL("../../src/components/world/WorldApp.tsx", import.meta.url),
       "utf8",
     );
-    assert.match(app, /galleryStory=\{caseStory !== null && storyOpen\}/);
+    // Desk things' product cards are always open (keyboard-card T1).
+    assert.match(
+      app,
+      /galleryStory=\{\s*deskProduct !== null \|\| \(caseStory !== null && storyOpen\)\s*\}/,
+    );
     assert.match(app, /open=\{storyOpen\}/);
     assert.match(app, /onOpenChange=\{setStoryOpen\}/);
     const scene = readFileSync(

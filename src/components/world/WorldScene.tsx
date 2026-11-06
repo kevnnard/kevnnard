@@ -50,7 +50,7 @@ import Living from "@/components/world/Living";
 import type { MonitorTerminal } from "@/components/world/MonitorScreen";
 import NightLights from "@/components/world/NightLights";
 import type { PortraitControl } from "@/components/world/PortraitScreen";
-import Setup from "@/components/world/Setup";
+import Setup, { type DeskControl } from "@/components/world/Setup";
 import Shelf from "@/components/world/Shelf";
 import SofaLamps from "@/components/world/SofaLamps";
 import SpeakerWaves from "@/components/world/SpeakerWaves";
@@ -68,6 +68,7 @@ import {
 import { cloudLayout, cloudShapes } from "@/lib/world/clouds.ts";
 import {
   type GalleryItemId,
+  type InspectItemId,
   isDisplayCaseId,
 } from "@/lib/world/display-cases.ts";
 import {
@@ -167,10 +168,12 @@ interface WorldSceneProps {
   /** The living-room TV's close-up and its on-screen home (tv-home-screen T3). */
   tv?: TvControl;
   /**
-   * The selected gallery item, a case or the wall katana; null restores the
-   * adapted home framing.
+   * The selected gallery item, a case or the wall katana, or a desk thing
+   * (keyboard-card T1); null restores the adapted home framing.
    */
-  galleryCase?: GalleryItemId | null;
+  galleryCase?: InspectItemId | null;
+  /** The desk things' click targets, for both Setup branches. */
+  desk?: DeskControl;
   /** Its story card is open: frame the model left of it (T12). */
   galleryStory?: boolean;
   onInspectCase?: (id: GalleryItemId) => void;
@@ -277,6 +280,7 @@ function SceneCanvas({
   galleryCase,
   galleryStory = false,
   onInspectCase,
+  desk,
   tracker,
   onOutdoor,
 }: Omit<WorldSceneProps, "onReady" | "onProgress"> & {
@@ -342,6 +346,7 @@ function SceneCanvas({
               terminal={terminal}
               portrait={portrait}
               speakers={speakers}
+              desk={desk}
             />
             <Shelf />
             <Suspense fallback={null}>
@@ -361,6 +366,7 @@ function SceneCanvas({
           tv={tv}
           galleryCase={galleryCase}
           onInspectCase={onInspectCase}
+          desk={desk}
           prepared={prepared}
         />
       </Suspense>
@@ -459,6 +465,7 @@ function TexturedHouse({
   tv,
   galleryCase,
   onInspectCase,
+  desk,
   prepared,
 }: {
   reducedMotion: boolean;
@@ -469,8 +476,9 @@ function TexturedHouse({
   portrait?: PortraitControl;
   speakers?: SpeakerControl;
   tv?: TvControl;
-  galleryCase?: GalleryItemId | null;
+  galleryCase?: InspectItemId | null;
   onInspectCase?: (id: GalleryItemId) => void;
+  desk?: DeskControl;
   prepared: Prepared;
 }) {
   const maps = useSurfaceMaps();
@@ -489,6 +497,7 @@ function TexturedHouse({
         terminal={terminal}
         portrait={portrait}
         speakers={speakers}
+        desk={desk}
         prepared={prepared}
       />
       <Shelf
@@ -716,7 +725,7 @@ function GuidedCamera({
   home: number;
   focus: boolean;
   closeUp?: "terminal" | "portrait" | "speakers" | "tv";
-  galleryCase?: GalleryItemId | null;
+  galleryCase?: InspectItemId | null;
   galleryStory?: boolean;
   onArrive?: () => void;
   onTvArrive?: () => void;

@@ -180,6 +180,9 @@ export const KEYBOARD = {
 } as const;
 const CASE_H = 0.014;
 
+/** Padding around a desk thing's click target, each side. */
+const HIT_PAD = 0.01;
+
 /** The owner's curved mouse, right of the keyboard. */
 export const MOUSE = {
   center: w(0.54, MAT_TOP + 0.0175, MID - 0.53),
@@ -1623,6 +1626,18 @@ export const SETUP_PROPS = {
      * portrait screen its x runs up the screen and its y across, scaled down.
      */
     logo: { scale: 0.85, swap: true },
+  },
+} as const;
+
+/**
+ * Click targets around the desk things the camera inspects (keyboard-card
+ * T1): just the board plus a centimetre, clear of the mouse, the mug and the
+ * ultrawide above, so their own clicks still land.
+ */
+export const DESK_HITBOXES = {
+  keyboard: {
+    center: KEYBOARD.center,
+    size: KEYBOARD.size.map((v) => v + 2 * HIT_PAD) as Vec3,
   },
 } as const;
 

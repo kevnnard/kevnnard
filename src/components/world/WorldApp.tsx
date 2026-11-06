@@ -22,7 +22,8 @@ import {
 import { cn } from "@/lib/utils";
 import { AmbientSound } from "@/lib/world/ambient-sound.ts";
 import { CASE_STORIES } from "@/lib/world/case-stories.ts";
-import type { GalleryItemId } from "@/lib/world/display-cases.ts";
+import { DESK_PRODUCTS } from "@/lib/world/desk-products.ts";
+import { type InspectItemId, isDeskItemId } from "@/lib/world/display-cases.ts";
 import {
   DEFAULT_LIGHTS,
   type LightId,
@@ -75,6 +76,8 @@ import {
 } from "@/lib/world/world-preferences.ts";
 import CaseStory from "./CaseStory";
 import CollectionRail from "./CollectionRail";
+import ProductCard from "./ProductCard";
+import type { DeskControl } from "./Setup";
 import WorldEntryLoader from "./WorldEntryLoader";
 import "./world-entry-gate.css";
 import type { MonitorTerminal } from "./MonitorScreen";
@@ -226,12 +229,19 @@ export default function WorldApp() {
   }, [loading]);
   const menuButton = useRef<HTMLElement>(null);
   const [home, setHome] = useState(0);
-  const [galleryCase, setGalleryCase] = useState<GalleryItemId | null>(null);
+  // A gallery item, or a desk thing (keyboard-card T1) framed the same way.
+  const [galleryCase, setGalleryCase] = useState<InspectItemId | null>(null);
   // The inspected case's story card (T10); null when it has none.
-  const caseStory = galleryCase ? CASE_STORIES[galleryCase] : null;
+  const caseStory =
+    galleryCase && !isDeskItemId(galleryCase)
+      ? CASE_STORIES[galleryCase]
+      : null;
+  // The inspected desk thing's product card: always open, no rail.
+  const deskProduct =
+    galleryCase === "keyboard" ? DESK_PRODUCTS.keyboard : null;
   // Hidden only for the case it was hidden on, so it opens again on every
   // other case; while open the camera frames left of it (T12).
-  const [hiddenStory, setHiddenStory] = useState<GalleryItemId | null>(null);
+  const [hiddenStory, setHiddenStory] = useState<InspectItemId | null>(null);
   const storyOpen = hiddenStory === null || hiddenStory !== galleryCase;
   const setStoryOpen = useCallback(
     (open: boolean) => setHiddenStory(open ? null : galleryCase),
@@ -775,6 +785,20 @@ export default function WorldApp() {
     return () => document.removeEventListener("keydown", onEscape);
   }, [galleryCase, focus, portrait, speakers]);
 
+  // The desk things (keyboard-card T1): clicked from the room like the
+  // gallery, never while another close-up holds the camera. The terminal,
+  // the portrait and the speakers still open from a desk view.
+  const deskControl = useMemo<DeskControl>(
+    () => ({
+      focused: galleryCase,
+      onInspect:
+        ready && entered && !focus && !portrait && !speakers && !tv
+          ? setGalleryCase
+          : undefined,
+    }),
+    [galleryCase, ready, entered, focus, portrait, speakers, tv],
+  );
+
   // The guide's buttons (world-game-menu T1): the same callbacks the menu
   // always ran; the close-ups wait for the world to be ready, as before.
   const menuActions = useMemo<GuideActions>(
@@ -894,12 +918,15 @@ export default function WorldApp() {
               }
               tv={tvControl}
               galleryCase={galleryCase}
-              galleryStory={caseStory !== null && storyOpen}
+              galleryStory={
+                deskProduct !== null || (caseStory !== null && storyOpen)
+              }
               onInspectCase={
                 ready && entered && !focus && !portrait && !speakers && !tv
                   ? setGalleryCase
                   : undefined
               }
+              desk={deskControl}
             />
           </Suspense>
         </div>
@@ -936,14 +963,20 @@ export default function WorldApp() {
         )}
       </header>
 
-      {ready && entered && galleryCase && !focus && !portrait && !speakers && (
-        <CollectionRail
-          focused={galleryCase}
-          onInspect={setGalleryCase}
-          onReturn={() => setGalleryCase(null)}
-          compact
-        />
-      )}
+      {ready &&
+        entered &&
+        galleryCase &&
+        !focus &&
+        !portrait &&
+        !speakers &&
+        !isDeskItemId(galleryCase) && (
+          <CollectionRail
+            focused={galleryCase}
+            onInspect={setGalleryCase}
+            onReturn={() => setGalleryCase(null)}
+            compact
+          />
+        )}
       {ready &&
         entered &&
         galleryCase &&
@@ -959,6 +992,14 @@ export default function WorldApp() {
             reducedMotion={reducedMotion}
           />
         )}
+      {/* The desk isn't the collection: no rail, the card leads back. */}
+      {ready && entered && !focus && !portrait && !speakers && deskProduct && (
+        <ProductCard
+          key={galleryCase}
+          product={deskProduct}
+          onReturn={() => setGalleryCase(null)}
+        />
+      )}
 
       {/* Direct children of the world container: ScenePanel measures its
           parent to sit above the clock (L61). */}
