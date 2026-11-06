@@ -1,4 +1,6 @@
 import { GUIDE, type Vec3 } from "./camera.ts";
+import { CHERRY_SPOTS } from "./cherry.ts";
+import { cherryView } from "./cherry-shot.ts";
 import { COFFEE_VIEW } from "./coffee-shot.ts";
 import {
   DISPLAY_CASE,
@@ -60,9 +62,14 @@ function galleryView(id: GalleryItemId): {
   return { centre: [x, centre, z], offset: EYE_OFFSET, fov: GUIDE.fov };
 }
 
-/** Any inspected thing's view: a gallery item's, or the desk keyboard's. */
+/**
+ * Any inspected thing's view: a gallery item's, a desk thing's, or
+ * Cherry's at her first spot (the scene frames her at the day's spot
+ * through cherry-shot.ts).
+ */
 function inspectView(id: InspectItemId): ReturnType<typeof galleryView> {
   if (id === "coffee") return COFFEE_VIEW;
+  if (id === "cherry") return cherryView(CHERRY_SPOTS[0]);
   return isDeskItemId(id) ? KEYBOARD_VIEW : galleryView(id);
 }
 

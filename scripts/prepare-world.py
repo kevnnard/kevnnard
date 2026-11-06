@@ -743,13 +743,16 @@ def kept_credits(credits, previous):
     # scripts/prepare-display-offroad-fox.mjs; the wall katana is Mitchell
     # Bekke's Blossom Katana (katana-wall-shelf T3), derived by
     # scripts/prepare-wall-katana.mjs; the desk mug is AoBlue_Moon's Jack
-    # Skellington cup (coffee-card T3), derived by scripts/prepare-desk-mug.mjs.
+    # Skellington cup (coffee-card T3), derived by scripts/prepare-desk-mug.mjs;
+    # Cherry is 3D Creator's Miniature Pinscher (dog-rig T3), rigged and
+    # animated by scripts/prepare-dog.mjs.
     credits = dict(credits)
     gallery_files = {"models/display-offroad-helmet.glb",
                      "models/display-football-helmet.glb",
                      "models/display-jordan-1.glb",
                      "models/wall-katana.glb",
-                     "models/desk-mug.glb"}
+                     "models/desk-mug.glb",
+                     "models/cherry.glb"}
     gallery_assets = [asset for asset in previous.get("assets", [])
                       if asset["file"] in gallery_files]
     if gallery_assets:

@@ -1,5 +1,6 @@
 // Enter and exit motion for the side cards (card-motion T1): the football
-// helmet's story, the coffee card and the keyboard card. They fade in like
+// helmet's story, the coffee card, the keyboard card and Cherry's card
+// (dog-rig T3). They fade in like
 // the clock and the scene panel do on the way back to the room
 // (world-entry-gate.css, world-entry-hud-in: 1100ms ease-out, opacity
 // 0 -> 1, no offset, scale or blur) and out in reverse, a little faster.

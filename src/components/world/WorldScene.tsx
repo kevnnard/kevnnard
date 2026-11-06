@@ -41,6 +41,7 @@ import {
 } from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import Cherry, { useCherrySpot } from "@/components/world/Cherry";
 import DisplayCases from "@/components/world/DisplayCases";
 import FloorLamp from "@/components/world/FloorLamp";
 import Garden from "@/components/world/Garden";
@@ -65,6 +66,8 @@ import {
   guidePose,
   poseToPosition,
 } from "@/lib/world/camera.ts";
+import type { CherrySpot } from "@/lib/world/cherry.ts";
+import { cherryShot } from "@/lib/world/cherry-shot.ts";
 import { cloudLayout, cloudShapes } from "@/lib/world/clouds.ts";
 import {
   coffeeLeaveAt,
@@ -181,11 +184,12 @@ interface WorldSceneProps {
   /** The living-room TV's close-up and its on-screen home (tv-home-screen T3). */
   tv?: TvControl;
   /**
-   * The selected gallery item, a case or the wall katana, or a desk thing
-   * (keyboard-card T1); null restores the adapted home framing.
+   * The selected gallery item, a case or the wall katana, a desk thing
+   * (keyboard-card T1) or Cherry (dog-rig T3); null restores the adapted
+   * home framing.
    */
   galleryCase?: InspectItemId | null;
-  /** The desk things' click targets, for both Setup branches. */
+  /** The desk things' click targets, for both Setup branches, and Cherry's. */
   desk?: DeskControl;
   /** Its story card is open: frame the model left of it (T12). */
   galleryStory?: boolean;
@@ -310,6 +314,8 @@ function SceneCanvas({
     }),
     [tracker],
   );
+  // Cherry's spot for the in-world day, held while her close-up is open.
+  const cherrySpot = useCherrySpot(hours, galleryCase === "cherry");
   // One close-up at a time (WorldApp): the terminal's, the portrait's,
   // the speakers' or the TV's.
   const closeUp = portrait?.focused
@@ -343,6 +349,7 @@ function SceneCanvas({
         closeUp={closeUp}
         onArrive={focus && closeUp === "terminal" ? onMonitorArrive : undefined}
         onTvArrive={tv?.onArrive}
+        cherrySpot={cherrySpot}
       />
       <Island />
       {/* Flat materials until the texture maps arrive (T4e). */}
@@ -394,6 +401,17 @@ function SceneCanvas({
       {/* Its own boundary, so the scene root commits (and counts) first. */}
       <Suspense fallback={null}>
         <Nature onPrepared={prepared.nature} />
+      </Suspense>
+      {/* Cherry in the front yard (dog-rig T3): not critical, so she never
+          holds the world's preparation; she joins once her model loads. */}
+      <Suspense fallback={null}>
+        <Cherry
+          hours={hours}
+          spot={cherrySpot}
+          reducedMotion={reducedMotion}
+          focused={galleryCase === "cherry"}
+          onInspect={desk?.onInspect}
+        />
       </Suspense>
     </Canvas>
   );
@@ -724,7 +742,8 @@ interface CinematicShot {
 /**
  * The desk things approached by an eased dolly with an arc and a narrowing
  * lens, played in and out: the coffee mug (coffee-card T1) and the keyboard
- * (keyboard-card T2).
+ * (keyboard-card T2). Cherry's (dog-rig T3) depends on the day's spot, so
+ * GuidedCamera builds it with cherryShot.
  */
 const CINEMATIC_SHOTS: Partial<Record<InspectItemId, CinematicShot>> = {
   coffee: {
@@ -761,6 +780,7 @@ function GuidedCamera({
   galleryStory = false,
   onArrive,
   onTvArrive,
+  cherrySpot,
 }: {
   reducedMotion: boolean;
   home: number;
@@ -770,6 +790,8 @@ function GuidedCamera({
   galleryStory?: boolean;
   onArrive?: () => void;
   onTvArrive?: () => void;
+  /** Where Cherry stands today: her shot is built for it. */
+  cherrySpot: CherrySpot;
 }) {
   const controls = useRef<CameraControls>(null);
   const camera = useThree((state) => state.camera) as PerspectiveCamera;
@@ -796,6 +818,14 @@ function GuidedCamera({
   const focused = useRef(focus);
   const saved = useRef<Pose | null>(null);
   const lastGallery = useRef<InspectItemId | null>(null);
+  // The cinematic move last played in, so leaving retraces that very path.
+  const lastShot = useRef<CinematicShot | undefined>(undefined);
+  // Cherry's move for today's spot; a ref, so a new day never re-runs the
+  // camera effect (her spot is held while her close-up is open).
+  const cherry = useRef<CinematicShot>(cherryShot(cherrySpot));
+  useEffect(() => {
+    cherry.current = cherryShot(cherrySpot);
+  }, [cherrySpot]);
   // The room pose a cinematic desk shot leaves from and returns to.
   const shotFrom = useRef<ShotPose | null>(null);
   const epoch = useRef(0);
@@ -839,16 +869,20 @@ function GuidedCamera({
     first.current = false;
     const recentered = lastHome.current !== home;
     lastHome.current = home;
-    // The coffee and keyboard close-ups are cinematic moves (coffee-card
-    // T1, keyboard-card T2): an eased dolly with an arc and a narrowing
-    // lens, played in and out.
-    const shot = galleryCase ? CINEMATIC_SHOTS[galleryCase] : undefined;
-    const left = lastGallery.current
-      ? CINEMATIC_SHOTS[lastGallery.current]
-      : undefined;
+    // The coffee, keyboard and Cherry close-ups are cinematic moves
+    // (coffee-card T1, keyboard-card T2, dog-rig T3): an eased dolly with
+    // an arc and a narrowing lens, played in and out.
+    const shot =
+      galleryCase === "cherry"
+        ? cherry.current
+        : galleryCase
+          ? CINEMATIC_SHOTS[galleryCase]
+          : undefined;
+    const left = lastShot.current;
     const cinematic =
       animate && shot !== undefined && lastGallery.current !== galleryCase;
     lastGallery.current = galleryCase ?? null;
+    lastShot.current = shot;
     const shotShift = (item: CinematicShot) =>
       galleryStory ? item.shift(viewportWidth, aspect) : 0;
     if (focus || galleryCase) {

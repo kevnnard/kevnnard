@@ -22,6 +22,7 @@ import {
 import { cn } from "@/lib/utils";
 import { AmbientSound } from "@/lib/world/ambient-sound.ts";
 import { CASE_STORIES } from "@/lib/world/case-stories.ts";
+import { CHERRY_STORY } from "@/lib/world/cherry.ts";
 import { DESK_PRODUCTS } from "@/lib/world/desk-products.ts";
 import { DESK_STORIES } from "@/lib/world/desk-stories.ts";
 import { type InspectItemId, isDeskItemId } from "@/lib/world/display-cases.ts";
@@ -76,6 +77,7 @@ import {
   saveMusicPreferences,
 } from "@/lib/world/world-preferences.ts";
 import CaseStory from "./CaseStory";
+import CherryCard from "./CherryCard";
 import CoffeeCard from "./CoffeeCard";
 import CollectionRail from "./CollectionRail";
 import ProductCard from "./ProductCard";
@@ -886,6 +888,12 @@ export default function WorldApp() {
     deskStory,
     reducedMotion,
   );
+  // Cherry's card (dog-rig T3), opened from the yard like the desk's.
+  const cherryCards = useCardPresence(
+    cardsShown && galleryCase === "cherry" ? "cherry" : null,
+    CHERRY_STORY,
+    reducedMotion,
+  );
 
   if (!webgl) {
     return (
@@ -943,6 +951,7 @@ export default function WorldApp() {
               tv={tvControl}
               galleryCase={galleryCase}
               galleryStory={
+                galleryCase === "cherry" ||
                 deskProduct !== null ||
                 deskStory !== null ||
                 (caseStory !== null && storyOpen)
@@ -1026,6 +1035,15 @@ export default function WorldApp() {
       ))}
       {coffeeCards.map((card) => (
         <CoffeeCard
+          key={card.key}
+          story={card.value}
+          onClose={() => setGalleryCase(null)}
+          state={card.state}
+          onMotionEnd={card.onMotionEnd}
+        />
+      ))}
+      {cherryCards.map((card) => (
+        <CherryCard
           key={card.key}
           story={card.value}
           onClose={() => setGalleryCase(null)}

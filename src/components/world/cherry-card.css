@@ -1,0 +1,181 @@
+/* Cherry's card (dog-rig T3): the football helmet's story card
+   (case-story.css supplies the panel, kicker, actions, focus rings, the
+   card motion and the footprint the camera frames around), made iconic:
+   her name large and widely spaced with a soft warm glow and an underline
+   that draws in, a drawn paw with a heart, the stats strip and her story.
+   A cherry-red accent beside the family's emerald kicker. Tokens:
+   design/system.md. */
+
+.case-story.cherry-card {
+  --cherry: #f43f5e;
+  /* No collection rail below her card, so it may run a little taller. */
+  max-height: calc(100% - 64px);
+}
+
+.cherry-card-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 10px;
+}
+.case-story .cherry-card-name {
+  position: relative;
+  margin: 0;
+  padding-bottom: 12px;
+  font-size: 60px;
+  line-height: 60px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  /* The tracking's trailing space would push the underline off centre. */
+  margin-right: -0.16em;
+  text-shadow:
+    0 0 18px rgb(244 63 94 / 0.35),
+    0 0 2px rgb(244 63 94 / 0.25);
+}
+.cherry-card-name::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 72px;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--cherry), rgb(244 63 94 / 0));
+  transform-origin: left;
+}
+.cherry-card-glyph {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 10px;
+}
+.cherry-card-glyph ellipse {
+  fill: none;
+  stroke: var(--cherry);
+  stroke-width: 2;
+}
+.cherry-card-glyph path {
+  fill: rgb(244 63 94 / 0.18);
+  stroke: var(--cherry);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+/* The stats strip: three cells in a row, divided by hairlines. */
+.cherry-card-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 16px 0 0;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-lg);
+}
+.cherry-card-stats div {
+  min-width: 0;
+  padding: 10px 12px;
+}
+.cherry-card-stats div + div {
+  border-left: 1px solid hsl(var(--border));
+}
+.cherry-card-stats dt {
+  color: hsl(var(--muted-foreground));
+  font:
+    12px / 16px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.cherry-card-stats dd {
+  margin: 2px 0 0;
+  font-weight: 600;
+  overflow-wrap: break-word;
+}
+
+.cherry-card-story {
+  margin: 16px 0;
+  padding-left: 14px;
+  border-left: 2px solid rgb(244 63 94 / 0.5);
+}
+.cherry-card-story p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 24px;
+}
+.cherry-card-story p + p {
+  margin-top: 10px;
+  color: hsl(var(--muted-foreground));
+}
+
+/* The underline draws in after the name fades up. */
+.cherry-card[data-state="entering"] .cherry-card-name::after {
+  animation: cherry-card-underline 900ms 300ms ease-out both;
+}
+@keyframes cherry-card-underline {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@media (max-width: 1100px) {
+  .case-story .cherry-card-name {
+    font-size: 52px;
+    line-height: 52px;
+  }
+  .cherry-card-stats div {
+    padding: 8px 10px;
+  }
+  .cherry-card-stats dt {
+    letter-spacing: 0.03em;
+  }
+  .cherry-card-stats dd {
+    font-size: 13px;
+    line-height: 18px;
+  }
+}
+@media (max-width: 700px) {
+  .case-story.cherry-card {
+    max-height: 45vh;
+  }
+  .case-story .cherry-card-name {
+    font-size: 36px;
+    line-height: 40px;
+    padding-bottom: 8px;
+  }
+  .cherry-card-glyph {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 6px;
+  }
+  .cherry-card-stats {
+    grid-template-columns: 1fr;
+  }
+  .cherry-card-stats div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .cherry-card-stats dd {
+    margin: 0;
+    text-align: right;
+  }
+  .cherry-card-stats div + div {
+    border-top: 1px solid hsl(var(--border));
+    border-left: 0;
+  }
+  .cherry-card-story {
+    margin: 12px 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cherry-card[data-state] .cherry-card-name::after {
+    animation: none;
+  }
+}

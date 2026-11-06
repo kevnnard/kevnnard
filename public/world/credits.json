@@ -35,7 +35,7 @@
     {
       "id": "kenney-mini-arena",
       "pack": "Kenney Mini Arena 1.0 (Starter Kit Basic Scene)",
-      "author": "Kenney, Tony Schär",
+      "author": "Kenney, Tony Sch\u00e4r",
       "authorUrl": "https://kenney.nl",
       "license": "CC0-1.0",
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -161,6 +161,19 @@
         "url": "https://sketchfab.com/3d-models/jack-skellington-cup-6142a5564edb4a7ba1c948673460afe0",
         "quote": "Sketchfab download (GLB, Sketchfab-12.67.0), asset extras: \"Jack Skellington cup\" by AoBlue_Moon (https://sketchfab.com/Blue_Moon), license CC-BY-4.0, source https://sketchfab.com/3d-models/jack-skellington-cup-6142a5564edb4a7ba1c948673460afe0; Creative Commons Attribution 4.0"
       }
+    },
+    {
+      "id": "sketchfab-3d-creator-miniature-pinscher",
+      "pack": "Dog (Miniature Pinscher \u5c0f\u9e7f\u72ac) (Sketchfab)",
+      "author": "3D Creator",
+      "authorUrl": "https://sketchfab.com/3DChuang-Ke-Ji",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "source": "https://sketchfab.com/3d-models/5db9e974fb344f39b9d1baafbdbe264c",
+      "licenseEvidence": {
+        "url": "https://sketchfab.com/3d-models/5db9e974fb344f39b9d1baafbdbe264c",
+        "quote": "Sketchfab API (dog-rig L5): \"Dog (Miniature Pinscher \u5c0f\u9e7f\u72ac)\", uid 5db9e974fb344f39b9d1baafbdbe264c, by \"3D Creator\" (https://sketchfab.com/3DChuang-Ke-Ji), license CC Attribution (CC BY 4.0), published 2026-06-14; 65,480 faces, source archive 24,696,473 bytes, identical to the downloaded zip; Creative Commons Attribution 4.0"
+      }
     }
   ],
   "assets": [
@@ -168,7 +181,7 @@
       "file": "models/tree.glb",
       "asset": "tree",
       "pack": "kenney-mini-arena",
-      "author": "Kenney, Tony Schär",
+      "author": "Kenney, Tony Sch\u00e4r",
       "license": "CC0-1.0",
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
       "source": "https://github.com/KenneyNL/Starter-Kit-Basic-Scene/blob/a6927e66ff8dd8e173660ce4825abe773c65f683/sample/Mini%20Arena/Models/GLB%20format/tree.glb",
@@ -884,6 +897,26 @@
           "url": "https://sketchfab.com/3d-models/jack-skellington-cup-6142a5564edb4a7ba1c948673460afe0",
           "bytes": 746104,
           "sha256": "da2bed61e78406817431f3f7453e442ae08d918ea87c27fe90d95a7dd0a598e9"
+        }
+      ]
+    },
+    {
+      "file": "models/cherry.glb",
+      "asset": "Dog (Miniature Pinscher \u5c0f\u9e7f\u72ac) (a Miniature Pinscher, shown as Cherry, the owner's dog)",
+      "pack": "sketchfab-3d-creator-miniature-pinscher",
+      "author": "3D Creator",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "source": "https://sketchfab.com/3d-models/5db9e974fb344f39b9d1baafbdbe264c",
+      "bytes": 392680,
+      "sha256": "d705f824e267252d29d6676145d8c4a7c97111b76f583d4096c1e79fdcb0573a",
+      "triangles": 12112,
+      "changes": "Rigged and animated, decimated: by scripts/prepare-dog.mjs and .py in Blender, the welded mesh turned to face +x, scaled to 0.28 m at the withers and decimated from 65,480 to 12,112 triangles; a 32-bone quadruped skeleton bound with automatic weights; two original looping clips keyed, \"idle\" (breathing, tail wag, head turn) and \"run\" (in-place gallop); the textures halved to 2048 px and the doubled specular tint set to white. Then geometry meshopt-compressed and the textures re-encoded as WebP at 1024 px with glTF-Transform.",
+      "sourceFiles": [
+        {
+          "url": "https://sketchfab.com/3d-models/5db9e974fb344f39b9d1baafbdbe264c",
+          "bytes": 24696473,
+          "sha256": "51c00e2139ae94cb1a208375f03ea78f1fb44c78f28b1b790c11a840c8fa277f"
         }
       ]
     }
@@ -1754,7 +1787,7 @@
   "images": [
     {
       "file": "stories/katana-ukiyoe.webp",
-      "title": "Uesugi Kenshin, from Stories of 100 Heroes of High Renown (Meikō hyakuyū-den)",
+      "title": "Uesugi Kenshin, from Stories of 100 Heroes of High Renown (Meik\u014d hyakuy\u016b-den)",
       "artist": "Utagawa Kuniyoshi",
       "date": "between 1843 and 1844",
       "license": "Public domain",

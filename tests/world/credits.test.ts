@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
+import { CHERRY_MODEL } from "../../src/lib/world/cherry.ts";
 import {
   type Credits,
   creditProblems,
@@ -79,6 +80,7 @@ describe("credits.json (S4: every author is credited, even CC0)", () => {
         ...Object.values(PROP_FILES),
         ...DISPLAY_MODEL_FILES,
         KATANA_MODEL.url,
+        CHERRY_MODEL.url,
       ]
         .map((url) => url.replace("/world/", ""))
         .sort(),
@@ -196,6 +198,7 @@ describe("display case meshes (collection-display-models T2)", () => {
     assert.match(gallery, /display-football-helmet\.glb/);
     assert.match(gallery, /display-jordan-1\.glb/);
     assert.match(gallery, /desk-mug\.glb/);
+    assert.match(gallery, /cherry\.glb/);
     assert.doesNotMatch(script, /"id": "football-helmet"/);
     assert.doesNotMatch(script, /poly-pizza-football-helmet|8Htf9hrbXkE/);
     // T15: the off-road helmet is senoaji's; Pieter Ferreira's mesh is retired.
@@ -249,6 +252,16 @@ describe("display case meshes (collection-display-models T2)", () => {
       url: "https://sketchfab.com/3d-models/jack-skellington-cup-6142a5564edb4a7ba1c948673460afe0",
       sha256:
         "da2bed61e78406817431f3f7453e442ae08d918ea87c27fe90d95a7dd0a598e9",
+    },
+    "models/cherry.glb": {
+      pack: "sketchfab-3d-creator-miniature-pinscher",
+      author: "3D Creator",
+      license: "CC-BY-4.0",
+      source:
+        "https://sketchfab.com/3d-models/5db9e974fb344f39b9d1baafbdbe264c",
+      url: "https://sketchfab.com/3d-models/5db9e974fb344f39b9d1baafbdbe264c",
+      sha256:
+        "51c00e2139ae94cb1a208375f03ea78f1fb44c78f28b1b790c11a840c8fa277f",
     },
   } as const;
 
@@ -648,5 +661,28 @@ describe("IGDB attribution (tv-home-screen T5, S7)", () => {
     );
     assert.match(dialog, /\{service\.label\}/);
     assert.doesNotMatch(dialog, />Film posters</, "no fixed heading");
+  });
+});
+
+describe("Cherry's credit (dog-rig T3)", () => {
+  it("credits 3D Creator's Miniature Pinscher, rigged, animated and decimated here", () => {
+    const data = credits();
+    // The shipped record also carries the derivation notes and counts.
+    const entry = data.assets.find(
+      (asset) => asset.file === "models/cherry.glb",
+    ) as
+      | (Credits["assets"][number] & { changes?: string; triangles?: number })
+      | undefined;
+    assert.ok(entry);
+    assert.equal(
+      entry.asset.startsWith("Dog (Miniature Pinscher 小鹿犬)"),
+      true,
+    );
+    assert.match(entry.changes ?? "", /rigged/i);
+    assert.match(entry.changes ?? "", /animated/i);
+    assert.match(entry.changes ?? "", /decimated/i);
+    assert.ok((entry.triangles ?? 0) > 0);
+    const pack = data.packs.find((item) => item.id === entry.pack);
+    assert.equal(pack?.authorUrl, "https://sketchfab.com/3DChuang-Ke-Ji");
   });
 });

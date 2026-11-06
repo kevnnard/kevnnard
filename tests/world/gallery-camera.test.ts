@@ -183,10 +183,11 @@ describe("story framing (collection-display-models T12)", () => {
       new URL("../../src/components/world/WorldApp.tsx", import.meta.url),
       "utf8",
     );
-    // Desk things' product cards are always open (keyboard-card T1).
+    // Desk things' product cards are always open (keyboard-card T1), and
+    // so is Cherry's (dog-rig T3).
     assert.match(
       app,
-      /galleryStory=\{\s*deskProduct !== null \|\|\s*deskStory !== null \|\|\s*\(caseStory !== null && storyOpen\)\s*\}/,
+      /galleryStory=\{\s*galleryCase === "cherry" \|\|\s*deskProduct !== null \|\|\s*deskStory !== null \|\|\s*\(caseStory !== null && storyOpen\)\s*\}/,
     );
     assert.match(app, /open=\{storyOpen\}/);
     assert.match(app, /onOpenChange=\{setStoryOpen\}/);
