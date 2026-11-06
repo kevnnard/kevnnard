@@ -195,6 +195,7 @@ describe("display case meshes (collection-display-models T2)", () => {
     assert.match(gallery, /display-offroad-helmet\.glb/);
     assert.match(gallery, /display-football-helmet\.glb/);
     assert.match(gallery, /display-jordan-1\.glb/);
+    assert.match(gallery, /desk-mug\.glb/);
     assert.doesNotMatch(script, /"id": "football-helmet"/);
     assert.doesNotMatch(script, /poly-pizza-football-helmet|8Htf9hrbXkE/);
     // T15: the off-road helmet is senoaji's; Pieter Ferreira's mesh is retired.
@@ -238,6 +239,16 @@ describe("display case meshes (collection-display-models T2)", () => {
       url: "https://github.com/sceneview/sceneview/releases/download/assets-v1/3537837022a6e852e21e1408e4d8684b056c486d909e23e18204026bda9ce53e",
       sha256:
         "3537837022a6e852e21e1408e4d8684b056c486d909e23e18204026bda9ce53e",
+    },
+    "models/desk-mug.glb": {
+      pack: "sketchfab-aoblue-moon-jack-skellington-cup",
+      author: "AoBlue_Moon",
+      license: "CC-BY-4.0",
+      source:
+        "https://sketchfab.com/3d-models/jack-skellington-cup-6142a5564edb4a7ba1c948673460afe0",
+      url: "https://sketchfab.com/3d-models/jack-skellington-cup-6142a5564edb4a7ba1c948673460afe0",
+      sha256:
+        "da2bed61e78406817431f3f7453e442ae08d918ea87c27fe90d95a7dd0a598e9",
     },
   } as const;
 

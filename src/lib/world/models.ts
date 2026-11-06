@@ -4,7 +4,7 @@
 import { CLOUD_SHAPES } from "./clouds.ts";
 import { KIND_SPECS, type NatureKind } from "./layout.ts";
 import { LIVING_FILES } from "./living.ts";
-import { BRUNO_FILES } from "./setup.ts";
+import { BRUNO_FILES, SETUP_PROPS } from "./setup.ts";
 
 export const MODEL_FILES = Object.fromEntries(
   Object.keys(KIND_SPECS).map((kind) => [kind, `/world/models/${kind}.glb`]),
@@ -12,10 +12,12 @@ export const MODEL_FILES = Object.fromEntries(
 
 /**
  * Single props outside the island layout: steam (T4i), living area (T4j),
- * Bruno's chair and desk overlays (T4k).
+ * Bruno's chair and desk overlays (T4k), the desk's Jack Skellington cup
+ * (coffee-card T3).
  */
 export const PROP_FILES = {
   coffeeSteam: "/world/models/coffee-steam.glb",
+  deskMug: SETUP_PROPS.mug.model.url,
   ...LIVING_FILES,
   ...BRUNO_FILES,
 } as const;

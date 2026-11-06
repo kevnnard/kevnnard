@@ -82,8 +82,9 @@ function Bean() {
  * design/collection-case-story/01-side-story-card) in the same footprint,
  * so the camera still frames the mug left of it: the name and an emblem up
  * top, a stats strip, the owner's photos once shipped, the growing band
- * beside the processes as tabs with their tasting notes, and the friend's
- * shop with its Maps link. The desk is not part of the collection, so there
+ * beside the processes as tabs with their tasting notes, the cup profile
+ * as chips with a line about the mug (T3), and the friend's shop with its
+ * Maps link. The desk is not part of the collection, so there
  * is no rail: "Back to room" leaves, and takes focus as the card opens.
  */
 export default function CoffeeCard({
@@ -230,6 +231,21 @@ export default function CoffeeCard({
           </div>
         </section>
       </div>
+      <section
+        className="coffee-card-cup"
+        aria-labelledby="coffee-card-profile"
+      >
+        <h3 id="coffee-card-profile">Cup profile</h3>
+        <ul className="coffee-card-profile">
+          {story.profile.map((note) => (
+            <li key={note}>{note}</li>
+          ))}
+        </ul>
+        <p className="coffee-card-mug">
+          <span>The mug</span>
+          {story.mug}
+        </p>
+      </section>
       <section className="coffee-card-place" aria-labelledby="coffee-place">
         <h3 id="coffee-place">Where to drink it</h3>
         <p>

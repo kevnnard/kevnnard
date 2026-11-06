@@ -161,7 +161,7 @@ ORIGINAL = [
                "V2-inspired wireless low-profile 75% keyboard with side lights, an original curved mouse, "
                "a curved ultrawide and a portrait monitor on clamp arms, an original white monitor light "
                "bar, a wall shelf with the speakers, gamer lamps and two potted plants, over-ear headphones "
-               "on an under-desk hanger, a coffee mug on a wooden coaster, the PC and the chair base "
+               "on an under-desk hanger, a wooden coaster for the coffee cup, the PC and the chair base "
                "(procedural; modelled from NuPhy's official product pages, no assets downloaded; NuPhy is "
                "a trademark of its owner, no affiliation)"),
      "author": "Kevnnard", "license": "Original work (repository license)",
@@ -742,12 +742,14 @@ def kept_credits(credits, previous):
     # senoaji's Fox X Supreme helmet (T15), derived by
     # scripts/prepare-display-offroad-fox.mjs; the wall katana is Mitchell
     # Bekke's Blossom Katana (katana-wall-shelf T3), derived by
-    # scripts/prepare-wall-katana.mjs.
+    # scripts/prepare-wall-katana.mjs; the desk mug is AoBlue_Moon's Jack
+    # Skellington cup (coffee-card T3), derived by scripts/prepare-desk-mug.mjs.
     credits = dict(credits)
     gallery_files = {"models/display-offroad-helmet.glb",
                      "models/display-football-helmet.glb",
                      "models/display-jordan-1.glb",
-                     "models/wall-katana.glb"}
+                     "models/wall-katana.glb",
+                     "models/desk-mug.glb"}
     gallery_assets = [asset for asset in previous.get("assets", [])
                       if asset["file"] in gallery_files]
     if gallery_assets:

@@ -21,17 +21,21 @@ import {
   coffeeShotShift,
 } from "../../src/lib/world/coffee-shot.ts";
 import { DESK_STORIES } from "../../src/lib/world/desk-stories.ts";
+import { PROP_FILES } from "../../src/lib/world/models.ts";
 import { MONITOR_FOCUS } from "../../src/lib/world/monitor.ts";
 import {
   CHAIR_PIVOT,
+  COASTER,
   DESK_HITBOXES,
   DESK_TOP,
   MAIN_MONITOR,
   MAIN_ROOM,
+  MUG_SOURCE,
   partBounds,
   SETUP_PROPS,
   setupMeshes,
 } from "../../src/lib/world/setup.ts";
+import { glbInfo } from "./glb.ts";
 
 const source = (path: string) =>
   readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
@@ -82,8 +86,17 @@ const dist = (a: readonly number[], b: readonly number[]) =>
   Math.hypot(...a.map((v, i) => v - b[i]));
 
 const mug = SETUP_PROPS.mug;
-/** The mug's handle reaches this far toward +x (SetupEffects mugGeometry). */
-const HANDLE_REACH = 0.04 + 0.024 + 0.0065;
+const DEG = Math.PI / 180;
+/**
+ * Where a local direction (azimuth from +x toward +z) points once the mug
+ * node turns by `mug.yaw` about +y.
+ */
+const restAzimuth = (local: number) => local - mug.yaw;
+/** The handle's tip at rest, on the desk plane (x, z). */
+const handleTip = [
+  mug.center[0] + mug.handleReach * Math.cos(restAzimuth(0)),
+  mug.center[2] + mug.handleReach * Math.sin(restAzimuth(0)),
+];
 
 describe("coffee card data (coffee-card T1, T2)", () => {
   const story = DESK_STORIES.coffee;
@@ -121,6 +134,95 @@ describe("coffee card data (coffee-card T1, T2)", () => {
 
   it("leaves an empty slot for the owner's own photos", () => {
     assert.equal(story.media, null);
+  });
+
+  it("adds Chiroso's typical cup profile and a line about the mug (T3)", () => {
+    assert.deepEqual(story.profile, [
+      "Jasmine & white flowers",
+      "Citrus acidity",
+      "Panela & peach",
+      "Silky body",
+      "Long sweet finish",
+    ]);
+    assert.equal(
+      story.mug,
+      "Jack Skellington cup, a nod to my favourite stop-motion film.",
+    );
+  });
+});
+
+describe("Jack Skellington cup on the coaster (coffee-card T3)", () => {
+  it("ships AoBlue_Moon's cup as authored: meshopt, WebP, from the pinned source", () => {
+    assert.equal(mug.model.url, "/world/models/desk-mug.glb");
+    assert.equal(PROP_FILES.deskMug, mug.model.url);
+    const info = glbInfo("models/desk-mug.glb");
+    assert.equal(info.triangles, 1752, "no geometry dropped");
+    assert.ok(info.bytes < 400_000, `bytes ${info.bytes}`);
+    assert.ok(info.extensions.includes("EXT_meshopt_compression"));
+    assert.ok(info.extensions.includes("EXT_texture_webp"));
+    const script = source("scripts/prepare-desk-mug.mjs");
+    assert.match(
+      script,
+      /da2bed61e78406817431f3f7453e442ae08d918ea87c27fe90d95a7dd0a598e9/,
+    );
+    assert.match(script, /jack-skellington-cup\.glb/);
+    assert.match(script, /"--texture-size", "1024"/);
+    assert.match(script, /"--simplify", "false"/);
+  });
+
+  it("is a real mug, 9-10 cm tall, standing on the coaster and inside it", () => {
+    assert.ok(mug.height >= 0.09 && mug.height <= 0.1, `${mug.height}`);
+    const sourceHeight = MUG_SOURCE.rim - MUG_SOURCE.base;
+    assert.ok(Math.abs(mug.model.scale * sourceHeight - mug.height) < 1e-9);
+    assert.ok(
+      Math.abs(mug.radius - MUG_SOURCE.radius * mug.model.scale) < 1e-9,
+    );
+    assert.ok(
+      Math.abs(mug.handleReach - MUG_SOURCE.handle * mug.model.scale) < 1e-9,
+    );
+    assert.ok(mug.radius < COASTER.radius, "fits on the coaster");
+    // The model's base sits on the node's origin, its body on the axis.
+    const { scale, offset } = mug.model;
+    assert.ok(Math.abs(MUG_SOURCE.base * scale + offset[1]) < 1e-9);
+    assert.ok(Math.abs(MUG_SOURCE.axis[0] * scale + offset[0]) < 1e-9);
+    assert.ok(Math.abs(MUG_SOURCE.axis[1] * scale + offset[2]) < 1e-9);
+    assert.ok(
+      Math.abs(mug.center[1] - (COASTER.center[1] + COASTER.height)) < 1e-9,
+    );
+  });
+
+  it("keeps the coffee in it: a dark disc at 85% height, inside the wall, with crema", () => {
+    const { coffee, model } = mug;
+    assert.ok(Math.abs(coffee.level - 0.85 * mug.height) < 1e-9);
+    assert.ok(
+      coffee.radius > MUG_SOURCE.wall[0] * model.scale,
+      "meets the wall",
+    );
+    assert.ok(coffee.radius < MUG_SOURCE.wall[1] * model.scale, "inside it");
+    const lum = (hex: string) => {
+      const n = Number.parseInt(hex.slice(1), 16);
+      return ((n >> 16) + ((n >> 8) & 255) + (n & 255)) / 765;
+    };
+    assert.ok(lum(coffee.surface) < 0.2, "dark coffee");
+    assert.ok(lum(coffee.crema) > lum(coffee.surface), "lighter crema rim");
+    assert.ok(lum(coffee.crema) < 0.5, "only a subtle tint");
+  });
+
+  it("turns Jack's face to the camera and the handle to screen right", () => {
+    const shot = coffeeShotAt(1);
+    const eye = Math.atan2(
+      shot.eye[2] - shot.target[2],
+      shot.eye[0] - shot.target[0],
+    );
+    const face = restAzimuth(MUG_SOURCE.face);
+    assert.ok(Math.abs(face - eye) < 15 * DEG, `face ${face / DEG}`);
+    // Screen right, looking at the mug, is the view turned a quarter to -z.
+    const right = eye - Math.PI / 2;
+    const handle = restAzimuth(0);
+    assert.ok(Math.cos(handle - right) > 0.9, `handle ${handle / DEG}`);
+    // The handle stays over the desk.
+    assert.ok(handleTip[1] > DESK_TOP.z0 + 0.02);
+    assert.ok(handleTip[0] < DESK_TOP.x1);
   });
 });
 
@@ -202,6 +304,40 @@ describe("mug turntable (coffee-card T2)", () => {
 
 describe("coffee shot (coffee-card T1)", () => {
   const end = coffeeShotAt(1);
+
+  it("frames the whole cup, its handle and the rising steam (T3)", () => {
+    const view = end.target.map((v, i) => v - end.eye[i]);
+    const length = Math.hypot(...view);
+    const forward = view.map((v) => v / length);
+    const level = Math.hypot(forward[0], forward[2]);
+    const right = [-forward[2] / level, 0, forward[0] / level];
+    const up = [
+      right[1] * forward[2] - right[2] * forward[1],
+      right[2] * forward[0] - right[0] * forward[2],
+      right[0] * forward[1] - right[1] * forward[0],
+    ];
+    const aspect = 16 / 10;
+    const half = (end.fov / 2) * DEG;
+    const halfWide = Math.atan(Math.tan(half) * aspect);
+    const inFrame = (point: readonly number[], margin: number) => {
+      const d = point.map((v, i) => v - end.eye[i]);
+      const z = d.reduce((s, v, i) => s + v * forward[i], 0);
+      const x = d.reduce((s, v, i) => s + v * right[i], 0);
+      const y = d.reduce((s, v, i) => s + v * up[i], 0);
+      return (
+        Math.abs(Math.atan2(y, z)) < half * margin &&
+        Math.abs(Math.atan2(x, z)) < halfWide * margin
+      );
+    };
+    const [x, y, z] = mug.center;
+    assert.ok(inFrame([x, y, z], 0.9), "base");
+    assert.ok(inFrame([x, y + mug.height, z], 0.9), "rim");
+    assert.ok(inFrame([x, y + mug.height + 0.08, z], 1), "steam");
+    assert.ok(inFrame([handleTip[0], y + mug.height / 2, handleTip[1]], 0.9));
+    // Big enough to read: the cup fills a good share of the frame's height.
+    const span = (2 * Math.tan(half) * dist(end.eye, end.target)) / mug.height;
+    assert.ok(span < 3.2, `frame is ${span} cups tall`);
+  });
 
   it("ends low and close on the steaming mug at a 3/4 angle", () => {
     // Aimed just under the rim, so the steam rises in the upper frame.
@@ -334,11 +470,22 @@ describe("coffee hitbox (coffee-card T1)", () => {
   const hit = box(COFFEE_HITBOX.center, COFFEE_HITBOX.size);
 
   it("encloses the mug, its handle and the coaster, tightly", () => {
-    assert.ok(hit.max[0] > mug.center[0] + HANDLE_REACH);
-    assert.ok(hit.max[0] < mug.center[0] + HANDLE_REACH + 0.02);
     const coaster = itemBox("coaster");
-    for (const i of [0, 2]) assert.ok(hit.min[i] < coaster.min[i]);
-    assert.ok(hit.max[2] > coaster.max[2]);
+    const extent = {
+      min: [0, 2].map((i) =>
+        Math.min(coaster.min[i], mug.center[i] - mug.radius),
+      ),
+      max: [0, 2].map((i) =>
+        Math.max(coaster.max[i], mug.center[i] + mug.radius),
+      ),
+    };
+    for (const [k, i] of [0, 2].entries()) {
+      extent.min[k] = Math.min(extent.min[k], handleTip[k]);
+      extent.max[k] = Math.max(extent.max[k], handleTip[k]);
+      assert.ok(hit.min[i] < extent.min[k] && hit.max[i] > extent.max[k]);
+      assert.ok(extent.min[k] - hit.min[i] <= 0.02, "tight");
+      assert.ok(hit.max[i] - extent.max[k] <= 0.02, "tight");
+    }
     assert.ok(hit.min[1] >= DESK_TOP.y - 1e-9, "sits on the desk");
     assert.ok(hit.max[1] > mug.center[1] + mug.height);
     assert.ok(hit.max[1] < mug.center[1] + mug.height + 0.02);
@@ -390,6 +537,27 @@ describe("coffee card, mug and hitbox components (coffee-card T1, T2)", () => {
     assert.match(card, /target="_blank"/);
     assert.match(card, /rel="noopener noreferrer"/);
     assert.match(card, /opens in a new tab/);
+  });
+
+  it("shows the cup profile as chips and the mug line, with no credit text (T3)", () => {
+    assert.match(card, />\s*Cup profile\s*</);
+    assert.match(card, /story\.profile\.map/);
+    assert.match(card, /className="coffee-card-profile"/);
+    assert.match(card, /story\.mug/);
+    assert.match(card, />\s*The mug\s*</);
+    assert.doesNotMatch(card, /AoBlue|CC BY|Sketchfab/);
+  });
+
+  it("swaps the procedural mug for the Jack cup, keeping coffee, steam and the turntable node (T3)", () => {
+    const setup = source("src/components/world/Setup.tsx");
+    assert.doesNotMatch(setup, /mugGeometry/);
+    assert.match(setup, /"setup-mug"/);
+    assert.match(setup, /SETUP_PROPS\.mug\.yaw/);
+    assert.match(setup, /PROP_FILES\.deskMug|SETUP_PROPS\.mug\.model\.url/);
+    assert.match(setup, /coffee\.level/);
+    assert.match(setup, /<CoffeeSteam/);
+    const turn = source("src/components/world/CoffeeMug.tsx");
+    assert.match(turn, /const MUG_NAME = "setup-mug"/);
   });
 
   it("respects reduced motion in the card's transitions", () => {

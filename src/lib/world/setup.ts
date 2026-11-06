@@ -3,7 +3,7 @@
 // frame with a cable tray, a giant black mat under the owner's NuPhy Air75
 // V2 (keyboard-faithful T1) and a curved mouse on the right, a curved
 // ultrawide and a portrait monitor on their own clamp arms, a white light bar
-// on the ultrawide, and a coffee mug on a wooden coaster to the right. A
+// on the ultrawide, and a coffee cup on a wooden coaster to the right. A
 // wall shelf above carries the speakers, two gamer lamps (lights.ts) and two
 // broad-leaf plants; over-ear headphones hang under the desk's front edge, the
 // glass-sided PC stands under its far end and the chair is an original
@@ -1608,17 +1608,70 @@ export function swivelPart(p: SetupPart, angle: number): SetupPart {
   };
 }
 
+/**
+ * AoBlue_Moon's "Jack Skellington cup" (Sketchfab, CC BY 4.0; coffee-card
+ * T3) in its own glTF scene axes and units, measured from its vertices: a
+ * hollow, rounded cup, +y up, its handle toward +x.
+ */
+export const MUG_SOURCE = {
+  /** The body's vertical axis (x, z). */
+  axis: [-0.019773, 0] as const,
+  /** Underside and rim heights. */
+  base: -0.043074,
+  rim: 0.041631,
+  /** The body's widest radius, halfway up. */
+  radius: 0.050897,
+  /** How far the handle reaches from the axis, toward +x. */
+  handle: 0.090648,
+  /** Jack's face (his eyes): azimuth from +x toward +z, radians. */
+  face: (81 * Math.PI) / 180,
+  /** Inner and outer wall radii at the coffee's level (85% up). */
+  wall: [0.0394, 0.0437] as const,
+} as const;
+
+const MUG_HEIGHT = 0.095;
+const MUG_SCALE = MUG_HEIGHT / (MUG_SOURCE.rim - MUG_SOURCE.base);
+
 /** Desk props placed at runtime (T4i): the mug and the side screen's face. */
 export const SETUP_PROPS = {
-  /** Base centre on the wooden coaster, right of the mouse (S25). */
+  /**
+   * The Jack Skellington cup (coffee-card T3), base centre on the wooden
+   * coaster, right of the mouse (S25), scaled to a 9.5 cm mug. `yaw` turns
+   * the node so Jack faces the coffee shot's camera and the handle points
+   * to screen right; the coffee is an original disc inside it.
+   */
   mug: {
     center: [
       COASTER.center[0],
       COASTER.center[1] + COASTER.height,
       COASTER.center[2],
     ] as Vec3,
-    radius: 0.045,
-    height: 0.1,
+    /** The body's widest radius. */
+    radius: MUG_SOURCE.radius * MUG_SCALE,
+    height: MUG_HEIGHT,
+    /** The handle's reach from the axis, along the node's +x. */
+    handleReach: MUG_SOURCE.handle * MUG_SCALE,
+    yaw: (50 * Math.PI) / 180,
+    /** The shipped model inside the node: base on its origin, body on its axis. */
+    model: {
+      url: "/world/models/desk-mug.glb",
+      scale: MUG_SCALE,
+      offset: [
+        -MUG_SOURCE.axis[0] * MUG_SCALE,
+        -MUG_SOURCE.base * MUG_SCALE,
+        -MUG_SOURCE.axis[1] * MUG_SCALE,
+      ] as Vec3,
+    },
+    /**
+     * The coffee: a dark disc 85% up, its edge tucked into the wall, the
+     * crema a lighter tint toward the rim.
+     */
+    coffee: {
+      level: 0.85 * MUG_HEIGHT,
+      radius: ((MUG_SOURCE.wall[0] + MUG_SOURCE.wall[1]) / 2) * MUG_SCALE,
+      surface: "#2e1a12",
+      crema: "#7a4e33",
+    },
   },
   /** Just in front of the portrait screen, facing out along its normal. */
   sideScreen: {

@@ -1,6 +1,6 @@
 // The coffee mug's cinematic close-up (coffee-card T1): a slow eased dolly
 // with a slight arc from wherever the camera is to a low, close 3/4 shot of
-// the steaming mug on its wooden coaster, the lens narrowing a little on the
+// the steaming cup on its wooden coaster, the lens narrowing a little on the
 // way; reduced motion cuts straight to the shot. Leaving runs the same path
 // backwards. Pure numbers; the scene samples `coffeeShotAt` each frame.
 
@@ -16,36 +16,48 @@ export interface ShotPose {
 }
 
 const MUG = SETUP_PROPS.mug;
-/** The mug's handle reaches this far toward +x (SetupEffects mugGeometry). */
-const HANDLE_REACH = 0.0705;
 /** Padding around the click target, each side (as setup.ts HIT_PAD). */
 const HIT_PAD = 0.01;
 const DEG = Math.PI / 180;
 
 /**
- * Click target around the mug, its handle and the coaster only: from the
- * desk top to a centimetre over the rim, clear of the mouse and the mat.
+ * Click target around the cup, its handle at rest and the coaster only
+ * (coffee-card T3): from the desk top to a centimetre over the rim, clear
+ * of the mouse and the mat.
  */
 export const COFFEE_HITBOX = (() => {
-  const x0 = MUG.center[0] - COASTER.radius - HIT_PAD;
-  const x1 = MUG.center[0] + HANDLE_REACH + HIT_PAD;
-  const z = COASTER.radius + HIT_PAD;
+  const [cx, cy, cz] = MUG.center;
+  // The node's +x, where the handle points, after its yaw.
+  const tip = [
+    cx + MUG.handleReach * Math.cos(MUG.yaw),
+    cz - MUG.handleReach * Math.sin(MUG.yaw),
+  ];
+  const round = Math.max(COASTER.radius, MUG.radius);
+  const x0 = Math.min(cx - round, tip[0]) - HIT_PAD;
+  const x1 = Math.max(cx + round, tip[0]) + HIT_PAD;
+  const z0 = Math.min(cz - round, tip[1]) - HIT_PAD;
+  const z1 = Math.max(cz + round, tip[1]) + HIT_PAD;
   const y0 = DESK_TOP.y;
-  const y1 = MUG.center[1] + MUG.height + HIT_PAD;
+  const y1 = cy + MUG.height + HIT_PAD;
   return {
-    center: [(x0 + x1) / 2, (y0 + y1) / 2, MUG.center[2]] as Vec3,
-    size: [x1 - x0, y1 - y0, 2 * z] as Vec3,
+    center: [(x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2] as Vec3,
+    size: [x1 - x0, y1 - y0, z1 - z0] as Vec3,
   };
 })();
 
 /**
- * The final shot: 0.42 m out, 9 degrees down at a point just under the rim,
- * from the chair's side turned 30 degrees toward the desk's middle (+z), so
- * the handle shows and the steam rises in the upper frame. The lens closes
- * from 35 to 30 degrees during the move.
+ * The final shot: 0.42 m out, 9 degrees down at a point three quarters up
+ * the cup, from the chair's side turned 30 degrees toward the desk's middle
+ * (+z), so Jack looks into the lens, the handle shows on the right and the
+ * steam rises in the upper frame. The lens closes from 35 to 30 degrees
+ * during the move.
  */
 export const COFFEE_SHOT = {
-  target: [MUG.center[0], MUG.center[1] + 0.075, MUG.center[2]] as Vec3,
+  target: [
+    MUG.center[0],
+    MUG.center[1] + 0.75 * MUG.height,
+    MUG.center[2],
+  ] as Vec3,
   distance: 0.42,
   pitch: 9 * DEG,
   azimuth: 30 * DEG,

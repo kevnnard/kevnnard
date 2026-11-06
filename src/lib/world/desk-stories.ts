@@ -1,5 +1,5 @@
-// Desk things with a short story rather than a shop link (coffee-card T1,
-// T2): the side card beside the inspected mug, laid out like the football
+// Desk things with a short story rather than a shop link (coffee-card T1-T3):
+// the side card beside the inspected mug, laid out like the football
 // helmet's story card. Only what the owner confirmed or the researched facts
 // in odd/tasks/coffee-card.md L2-L3 are written here; no third-party images
 // or requests.
@@ -16,6 +16,10 @@ export interface DeskStory {
   altitude: { low: number; high: number };
   /** Processes of the coffee, each with a short tasting note. */
   processes: readonly { name: string; note: string }[];
+  /** The variety's typical cup profile, as short tasting chips (T3). */
+  profile: readonly string[];
+  /** One line about the cup on the desk (T3); its credit lives in the menu. */
+  mug: string;
   /** Where to drink it. */
   place: {
     name: string;
@@ -46,6 +50,15 @@ export const DESK_STORIES: { coffee: DeskStory } = {
       { name: "Honey", note: "honeyed sweetness, rounder body" },
       { name: "Natural", note: "red fruit, berries, winey" },
     ],
+    // Chiroso's typical notes in the researched sources (L2).
+    profile: [
+      "Jasmine & white flowers",
+      "Citrus acidity",
+      "Panela & peach",
+      "Silky body",
+      "Long sweet finish",
+    ],
+    mug: "Jack Skellington cup, a nod to my favourite stop-motion film.",
     // The owner's friend's shop; no street address (none verified), only
     // the Maps place the owner sent, tracking parameters dropped.
     place: {

@@ -2,12 +2,13 @@ import {
   createPortal,
   type ThreeEvent,
   useFrame,
+  useLoader,
   useThree,
 } from "@react-three/fiber";
 import { Suspense, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import {
   BackSide,
-  type BufferAttribute,
+  BufferAttribute,
   Color,
   DataTexture,
   type Group,
@@ -22,9 +23,11 @@ import {
   Object3D,
   Raycaster,
   RepeatWrapping,
+  RingGeometry,
   type Texture,
   Vector3,
 } from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { BrunoChair } from "@/components/world/BrunoProps";
 import CoffeeHitbox from "@/components/world/CoffeeHitbox";
 import CoffeeMug from "@/components/world/CoffeeMug";
@@ -38,7 +41,7 @@ import PortraitScreen, {
 } from "@/components/world/PortraitScreen";
 import {
   CoffeeSteam,
-  mugGeometry,
+  extendLoader,
   steamMaterial,
 } from "@/components/world/SetupEffects";
 import SpeakerZone, {
@@ -52,6 +55,7 @@ import {
   type LightSettings,
   sideLight,
 } from "@/lib/world/lights.ts";
+import { PROP_FILES } from "@/lib/world/models.ts";
 import { canEnterMonitor, isMainScreenGlow } from "@/lib/world/monitor.ts";
 import { chairSway, ledLevel, setupAnimates } from "@/lib/world/motion.ts";
 import {
@@ -85,6 +89,64 @@ const SOLID_MERGE = {
   roundSegments: SETUP_ROUND_SEGMENTS,
   occlusion: setupOcclusion,
 };
+
+/**
+ * The coffee's surface (coffee-card T3): a flat disc, dark in the middle,
+ * warming to a subtle crema tint at its edge, where it meets the cup's wall.
+ */
+function coffeeGeometry() {
+  const { radius, surface, crema } = SETUP_PROPS.mug.coffee;
+  const geometry = new RingGeometry(0, radius, 32, 3);
+  geometry.rotateX(-Math.PI / 2);
+  const position = geometry.getAttribute("position");
+  const dark = new Color(surface);
+  const light = new Color(crema);
+  const color = new Color();
+  const colors = new Float32Array(position.count * 3);
+  for (let i = 0; i < position.count; i++) {
+    const t = Math.hypot(position.getX(i), position.getZ(i)) / radius;
+    const s = Math.min(1, Math.max(0, (t - 0.55) / 0.45));
+    color.lerpColors(dark, light, s * s * (3 - 2 * s));
+    colors.set([color.r, color.g, color.b], i * 3);
+  }
+  geometry.setAttribute("color", new BufferAttribute(colors, 3));
+  return geometry;
+}
+
+/**
+ * AoBlue_Moon's Jack Skellington cup (coffee-card T3), drawn into Setup's
+ * `setup-mug` node: the shipped model scaled to a real mug, base on the
+ * node's origin, and the coffee inside it. Both appear together once the
+ * model has loaded, so the coffee never floats over an empty coaster.
+ */
+function DeskMug({ coffee }: { coffee: MeshStandardMaterial }) {
+  const gltf = useLoader(GLTFLoader, PROP_FILES.deskMug, extendLoader);
+  const { scene, surface } = useMemo(() => {
+    const scene = gltf.scene.clone(true);
+    scene.traverse((object) => {
+      const mesh = object as Mesh;
+      if (!mesh.isMesh) return;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+    });
+    return { scene, surface: coffeeGeometry() };
+  }, [gltf]);
+  useEffect(() => () => surface.dispose(), [surface]);
+  const { model } = SETUP_PROPS.mug;
+  return (
+    <>
+      <group position={model.offset} scale={model.scale}>
+        <primitive object={scene} />
+      </group>
+      <mesh
+        geometry={surface}
+        material={coffee}
+        position-y={SETUP_PROPS.mug.coffee.level}
+        receiveShadow
+      />
+    </>
+  );
+}
 
 /** Pixels a press may travel and still count as a click, not a drag. */
 const CLICK_SLOP = 6;
@@ -315,8 +377,9 @@ function rest(
  * shader (T4k, BrunoProps.tsx).
  *
  * Effects ported from Bruno Simon's my-room-in-3d (T4i, with permission):
- * the seat sways on its column, the PC LEDs breathe and steam rises from an
- * original mug on its wooden coaster. The keyboard's side lights (T12) never animate: they take
+ * the seat sways on its column, the PC LEDs breathe and steam rises from the
+ * coffee in AoBlue_Moon's Jack Skellington cup (coffee-card T3) on its
+ * wooden coaster. The keyboard's side lights (T12) never animate: they take
  * the setup light's colour at a subtle strength, only at night, through its
  * switch and the master. Frames are requested continuously only while the
  * camera is near the house and motion is allowed; otherwise the setup rests
@@ -367,92 +430,97 @@ export default function Setup({
   prepared?: { steam?: () => void; chair?: () => void };
 }) {
   const { invalidate } = useThree();
-  const { group, glow, owned, swivel, leds, steam } = useMemo(() => {
-    const meshes = setupMeshes();
-    const owned = { materials: [] as Material[], textures: [] as Texture[] };
-    const screens = new MeshBasicMaterial({ vertexColors: true });
-    const ledMaterial = new MeshBasicMaterial({ vertexColors: true });
-    const glass = new MeshStandardMaterial({
-      color: SETUP_COLORS.glass,
-      roughness: 0.05,
-      metalness: 0,
-      transparent: true,
-      opacity: 0.3,
-      depthWrite: false,
-    });
-    const mugMaterial = new MeshStandardMaterial({
-      vertexColors: true,
-      roughness: 0.35,
-      metalness: 0,
-    });
-    const steam = steamMaterial();
-    owned.materials.push(screens, ledMaterial, glass, mugMaterial, steam);
-    const materials = new Map<SetupMaterialId, Material>();
-    const material = (id: SetupMaterialId) => {
-      let found = materials.get(id);
-      if (!found) {
-        found = setupMaterial(SETUP_MATERIALS[id], maps, owned);
-        materials.set(id, found);
-      }
-      return found;
-    };
-    const setup = new Object3D() as Group;
-    setup.name = "house-interior";
-    const shown = meshes.solid.filter(
-      (part) => maps || part.material !== "grille",
-    );
-    addSolids(
-      setup,
-      shown.filter((part) => part.rig !== "swivel"),
-      material,
-    );
-    // The seat turns around the column: Bruno's top chair (BrunoChair) is
-    // rendered into this pivot, on its axis.
-    const swivel = new Object3D();
-    swivel.position.set(CHAIR_PIVOT[0], 0, CHAIR_PIVOT[1]);
-    addSolids(
-      swivel,
-      shown.filter((part) => part.rig === "swivel"),
-      material,
-    );
-    for (const child of swivel.children)
-      (child as Mesh).geometry.translate(-CHAIR_PIVOT[0], 0, -CHAIR_PIVOT[1]);
-    const lit = new Mesh(
-      mergeParts(
-        meshes.glow.filter(
-          (part) =>
-            part.led === undefined &&
-            !isMainScreenGlow(part) &&
-            !isPortraitCodeGlow(part),
+  const { group, glow, owned, swivel, leds, steam, mug, coffee } =
+    useMemo(() => {
+      const meshes = setupMeshes();
+      const owned = { materials: [] as Material[], textures: [] as Texture[] };
+      const screens = new MeshBasicMaterial({ vertexColors: true });
+      const ledMaterial = new MeshBasicMaterial({ vertexColors: true });
+      const glass = new MeshStandardMaterial({
+        color: SETUP_COLORS.glass,
+        roughness: 0.05,
+        metalness: 0,
+        transparent: true,
+        opacity: 0.3,
+        depthWrite: false,
+      });
+      // A liquid's gloss for the coffee's surface.
+      const coffee = new MeshStandardMaterial({
+        vertexColors: true,
+        roughness: 0.18,
+        metalness: 0,
+      });
+      const steam = steamMaterial();
+      owned.materials.push(screens, ledMaterial, glass, coffee, steam);
+      const materials = new Map<SetupMaterialId, Material>();
+      const material = (id: SetupMaterialId) => {
+        let found = materials.get(id);
+        if (!found) {
+          found = setupMaterial(SETUP_MATERIALS[id], maps, owned);
+          materials.set(id, found);
+        }
+        return found;
+      };
+      const setup = new Object3D() as Group;
+      setup.name = "house-interior";
+      const shown = meshes.solid.filter(
+        (part) => maps || part.material !== "grille",
+      );
+      addSolids(
+        setup,
+        shown.filter((part) => part.rig !== "swivel"),
+        material,
+      );
+      // The seat turns around the column: Bruno's top chair (BrunoChair) is
+      // rendered into this pivot, on its axis.
+      const swivel = new Object3D();
+      swivel.position.set(CHAIR_PIVOT[0], 0, CHAIR_PIVOT[1]);
+      addSolids(
+        swivel,
+        shown.filter((part) => part.rig === "swivel"),
+        material,
+      );
+      for (const child of swivel.children)
+        (child as Mesh).geometry.translate(-CHAIR_PIVOT[0], 0, -CHAIR_PIVOT[1]);
+      const lit = new Mesh(
+        mergeParts(
+          meshes.glow.filter(
+            (part) =>
+              part.led === undefined &&
+              !isMainScreenGlow(part) &&
+              !isPortraitCodeGlow(part),
+          ),
+          { roundSegments: SETUP_ROUND_SEGMENTS },
         ),
-        { roundSegments: SETUP_ROUND_SEGMENTS },
-      ),
-      screens,
-    );
-    const leds = ledMesh(
-      meshes.glow.filter((part) => part.led !== undefined),
-      ledMaterial,
-    );
-    const pane = new Mesh(mergeParts(meshes.glass), glass);
-    pane.renderOrder = 1;
-    const mug = new Mesh(mugGeometry(), mugMaterial);
-    mug.name = "setup-mug";
-    mug.position.set(...SETUP_PROPS.mug.center);
-    mug.castShadow = true;
-    mug.receiveShadow = true;
-    const legends = keyboardLegends(invalidate);
-    owned.materials.push(legends.material);
-    owned.textures.push(legends.texture);
-    setup.add(swivel, lit, leds.mesh, pane, mug, legends.mesh);
-    return {
-      group: setup,
-      glow: screens,
-      owned,
-      swivel,
-      leds,
-      steam,
-    };
-  }, [maps, invalidate]);
+        screens,
+      );
+      const leds = ledMesh(
+        meshes.glow.filter((part) => part.led !== undefined),
+        ledMaterial,
+      );
+      const pane = new Mesh(mergeParts(meshes.glass), glass);
+      pane.renderOrder = 1;
+      // The cup and its coffee (DeskMug) turn together on this node; the
+      // coaster and the steam are elsewhere and stay put (CoffeeMug.tsx).
+      const mug = new Object3D();
+      mug.name = "setup-mug";
+      mug.position.set(...SETUP_PROPS.mug.center);
+      mug.rotation.y = SETUP_PROPS.mug.yaw;
+      const legends = keyboardLegends(invalidate);
+      owned.materials.push(legends.material);
+      owned.textures.push(legends.texture);
+      setup.add(swivel, lit, leds.mesh, pane, mug, legends.mesh);
+      return {
+        group: setup,
+        glow: screens,
+        owned,
+        swivel,
+        leds,
+        steam,
+        mug,
+        coffee,
+      };
+    }, [maps, invalidate]);
 
   const base = setupGlow(hours) * glowPower(power, hours);
   const side = sideLight(lights ?? DEFAULT_LIGHTS, hours, power);
@@ -532,6 +600,12 @@ export default function Setup({
           onPrepared={prepared?.steam}
         />
       </Suspense>
+      {createPortal(
+        <Suspense fallback={null}>
+          <DeskMug coffee={coffee} />
+        </Suspense>,
+        mug,
+      )}
       {createPortal(
         <Suspense fallback={null}>
           <BrunoChair
