@@ -1,6 +1,6 @@
-// The TV close-up (tv-home-screen T2): the camera's straight-on framing of
-// the living-room panel, and the remote's arrow-key focus over the home
-// screen's rows. Pure numbers for WorldScene.tsx and TvHome.tsx.
+// The TV close-up (tv-home-screen T2, T3): the camera's straight-on framing
+// of the living-room panel, and the remote's arrow-key focus over the home
+// screen's rows. Pure numbers for WorldScene.tsx and tv-screen.ts.
 
 import { GUIDE, type Vec3 } from "./camera.ts";
 import { TV_PANEL } from "./living.ts";
@@ -18,7 +18,7 @@ const TAN_V = Math.tan((GUIDE.fov / 2) * (Math.PI / 180));
 /**
  * Eye level with the panel's centre, out along its facing (+z), at the
  * distance that fits the whole panel; phones stop at `maxDistance`, in front
- * of the sofa, where the home screen covers the view anyway.
+ * of the sofa, and see the middle of the screen.
  */
 export function tvCameraFocus(aspect: number): {
   position: Vec3;
@@ -61,14 +61,4 @@ export function moveRemote(
     if (lengths[next] > 0)
       return { row: next, col: Math.min(col, lengths[next] - 1) };
   return { row, col };
-}
-
-/** The TV close-up as WorldApp hands it to the scene. */
-export interface TvControl {
-  /** The camera holds the TV (the home screen opens on arrival). */
-  focused: boolean;
-  /** Clicking the TV from the room; unset while it cannot open. */
-  onEnter?: () => void;
-  /** The camera reached the TV. */
-  onArrive?: () => void;
 }

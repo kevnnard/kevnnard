@@ -56,6 +56,7 @@ import SofaLamps from "@/components/world/SofaLamps";
 import SpeakerWaves from "@/components/world/SpeakerWaves";
 import type { SpeakerControl } from "@/components/world/SpeakerZone";
 import { pastelMaterial, useSurfaceMaps } from "@/components/world/surfaces";
+import type { TvControl } from "@/components/world/TvScreen";
 import type { RGB } from "@/lib/room/day-cycle.ts";
 import { outdoorLevel, SHELTER } from "@/lib/world/ambient-sound.ts";
 import {
@@ -105,7 +106,7 @@ import {
 import { portraitFocus } from "@/lib/world/portrait.ts";
 import { seededRandom } from "@/lib/world/random.ts";
 import { lensKeeper, speakerFocus } from "@/lib/world/speaker.ts";
-import { type TvControl, tvCameraFocus } from "@/lib/world/tv-focus.ts";
+import { tvCameraFocus } from "@/lib/world/tv-focus.ts";
 import { normalizeWheel, wheelDolly } from "@/lib/world/wheel.ts";
 import {
   bindWorldContextLoss,
@@ -163,7 +164,7 @@ interface WorldSceneProps {
   portrait?: PortraitControl;
   /** The speakers' music and close-up (world-speaker-music T2). */
   speakers?: SpeakerControl;
-  /** The living-room TV's close-up and home screen (tv-home-screen T2). */
+  /** The living-room TV's close-up and its on-screen home (tv-home-screen T3). */
   tv?: TvControl;
   /**
    * The selected gallery item, a case or the wall katana; null restores the
@@ -699,7 +700,7 @@ type Pose = { position: Vector3Tuple; target: Vector3Tuple };
  * fitted to the viewport (T18), refitted on resize, or the speakers' (T2),
  * whose narrow views widen the lens; the lens it had is restored on exit.
  * The TV's (tv-home-screen T2) looks straight at its panel and reports its
- * own arrival, which opens the home screen.
+ * own arrival, which hands the screen the remote (T3).
  */
 function GuidedCamera({
   reducedMotion,

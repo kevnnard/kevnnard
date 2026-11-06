@@ -21,6 +21,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { mergeParts } from "@/components/world/House";
 import { proceduralNormal, setupMaterial } from "@/components/world/Setup";
 import { pastelMaterial, type SurfaceMaps } from "@/components/world/surfaces";
+import TvScreen, { type TvControl } from "@/components/world/TvScreen";
 import { glowPower } from "@/lib/world/lights.ts";
 import {
   LIVING_FILES,
@@ -32,18 +33,12 @@ import {
   livingMeshes,
   livingOcclusion,
   type ModelPlacement,
-  TV_PANEL,
 } from "@/lib/world/living.ts";
 import { boxUv, TEXTURES } from "@/lib/world/textures.ts";
-import type { TvControl } from "@/lib/world/tv-focus.ts";
 
 const URLS = LIVING_MODELS.map((model) => LIVING_FILES[model.kind]);
 const ROUND_SEGMENTS = 16;
 const UP = new Vector3(0, 1, 0);
-/** Pixels a press may move and still count as a click, not an orbit drag. */
-const CLICK_SLOP = 6;
-/** Depth of the TV's click target, in front of and behind the panel. */
-const TV_HIT_DEPTH = 0.08;
 
 const extendLoader = (loader: GLTFLoader) => {
   loader.setMeshoptDecoder(MeshoptDecoder);
@@ -204,8 +199,8 @@ function modelMaterial(
  * Living area (T4j): KayKit sofa, coffee table, TV bench, rug, books and
  * cactus baked at their placements, plus the original TV, controller, game
  * cases and plants merged into one mesh per material and one unlit glow mesh
- * (screen and light bar) scaled by the hour. Lives outside the cutaway
- * groups, so it never fades.
+ * (screen and light bar) scaled by the hour, with Kevnnard TV drawn on the
+ * TV's glass (TvScreen). Lives outside the cutaway groups, so it never fades.
  */
 export default function Living({
   hours,
@@ -220,7 +215,7 @@ export default function Living({
   power?: boolean;
   /** Called once the loaded room has committed (world entry loader). */
   onPrepared?: () => void;
-  /** Clicking the TV opens its home screen (tv-home-screen T2). */
+  /** Kevnnard TV on the TV's glass, idle or in use (tv-home-screen T3). */
   tv?: TvControl;
 }) {
   const { invalidate } = useThree();
@@ -299,31 +294,7 @@ export default function Living({
   return (
     <>
       <primitive object={group} />
-      {/* Click target over the panel: from the room it moves the camera in
-          to the TV; an orbit drag that ends on it is not a click. */}
-      {tv?.onEnter && !tv.focused && (
-        <mesh
-          name="living-tv-hitbox"
-          position={TV_PANEL.center}
-          onClick={(e) => {
-            if (e.delta > CLICK_SLOP || !tv.onEnter) return;
-            e.stopPropagation();
-            tv.onEnter();
-            document.body.style.cursor = "";
-          }}
-          onPointerOver={(e) => {
-            e.stopPropagation();
-            document.body.style.cursor = "pointer";
-          }}
-          onPointerOut={() => {
-            document.body.style.cursor = "";
-          }}
-          visible={false}
-        >
-          <boxGeometry args={[TV_PANEL.width, TV_PANEL.height, TV_HIT_DEPTH]} />
-          <meshBasicMaterial transparent opacity={0} />
-        </mesh>
-      )}
+      <TvScreen control={tv} glow={level} occluders={group} />
     </>
   );
 }

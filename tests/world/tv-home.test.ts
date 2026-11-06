@@ -6,6 +6,7 @@ import {
   LIVING_MODELS,
   modelBounds,
   TV_PANEL,
+  TV_SCREEN,
 } from "../../src/lib/world/living.ts";
 import {
   moveRemote,
@@ -21,6 +22,19 @@ import {
   type TvTitle,
   tvTitle,
 } from "../../src/lib/world/tv-library.ts";
+import {
+  initialTvHome,
+  TV_SCREEN_H,
+  TV_SCREEN_W,
+  type TvHomeState,
+  type TvScreenOptions,
+  tvClock,
+  tvHitAt,
+  tvHomeAction,
+  tvMove,
+  tvScreenLayout,
+  tvUvToCanvas,
+} from "../../src/lib/world/tv-screen.ts";
 
 const read = (path: string) =>
   readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
@@ -145,7 +159,7 @@ describe("TV library content (tv-home-screen T2, S1, S3)", () => {
     );
   });
 
-  it("draws every cover from a CSS motif and links nothing third-party", () => {
+  it("draws every cover from a motif and links nothing third-party", () => {
     for (const title of allTitles)
       assert.ok(COVER_MOTIFS.includes(title.motif), title.title);
     const text = JSON.stringify(TV_APPS);
@@ -244,10 +258,187 @@ describe("TV remote focus (T2)", () => {
   });
 });
 
-describe("TV wiring (T2)", () => {
+const IDLE: TvScreenOptions = {
+  active: false,
+  clock: "21:30",
+  music: { playing: false, track: null },
+  clipPlaying: false,
+};
+const ACTIVE: TvScreenOptions = { ...IDLE, active: true };
+const center = (layout: ReturnType<typeof tvScreenLayout>, id: string) => {
+  const region = layout.regions.find((entry) => entry.id === id);
+  assert.ok(region, `missing region ${id}`);
+  return [region.x + region.w / 2, region.y + region.h / 2] as const;
+};
+/** Presses region ids in turn from `state`, keeping the last effect. */
+const press = (state: TvHomeState, ...ids: string[]) => {
+  let effect: string | null = null;
+  for (const id of ids) ({ state, effect } = tvHomeAction(state, id));
+  return { state, effect };
+};
+
+describe("TV home screen on the panel (tv-home-screen T3, S6)", () => {
+  it("covers the panel's glass in front of its old picture", () => {
+    assert.ok(TV_SCREEN.width < TV_PANEL.width);
+    assert.ok(TV_SCREEN.height < TV_PANEL.height);
+    assert.equal(TV_SCREEN.center[0], TV_PANEL.center[0]);
+    assert.ok(Math.abs(TV_SCREEN.center[1] - TV_PANEL.center[1]) < 0.02);
+    // In front of the panel face and the glow picture drawn on it.
+    assert.ok(TV_SCREEN.center[2] > TV_PANEL.center[2] + 0.0175);
+    assert.ok(TV_SCREEN.center[2] < TV_PANEL.center[2] + 0.03);
+  });
+
+  it("lays the screen out at the glass's 16:9 proportions", () => {
+    const ratio = TV_SCREEN_W / TV_SCREEN_H;
+    assert.ok(
+      Math.abs(ratio / (TV_SCREEN.width / TV_SCREEN.height) - 1) < 0.01,
+    );
+    assert.ok(Math.abs(ratio / (16 / 9) - 1) < 0.01);
+    assert.deepEqual(tvUvToCanvas(0, 1), { x: 0, y: 0 });
+    assert.deepEqual(tvUvToCanvas(1, 0), { x: TV_SCREEN_W, y: TV_SCREEN_H });
+    assert.equal(tvClock(21.5), "21:30");
+    assert.equal(tvClock(-0.25), "23:45");
+  });
+
+  it("shows the idle preview: dock, Ghost of Tsushima and a cover row", () => {
+    const layout = tvScreenLayout(initialTvHome(), IDLE);
+    assert.equal(layout.dock.length, 7);
+    assert.equal(layout.hero.title, "Ghost of Tsushima");
+    assert.match(layout.hero.kicker, /Games · my favourite/);
+    assert.equal(layout.coversHeading, "Games");
+    assert.ok(layout.covers.length >= 4);
+    assert.ok(layout.continued.length >= 3);
+    assert.equal(layout.ring, null, "no remote ring while idle");
+    assert.match(layout.hint, /Click or tap the TV/);
+    for (const region of layout.regions) {
+      assert.ok(region.x >= 0 && region.y >= 0, region.id);
+      assert.ok(region.x + region.w <= TV_SCREEN_W, region.id);
+      assert.ok(region.y + region.h <= TV_SCREEN_H, region.id);
+    }
+  });
+
+  it("rings the remote's position once the TV is in use", () => {
+    const state = initialTvHome();
+    const layout = tvScreenLayout(state, ACTIVE);
+    assert.equal(layout.ring, `cover:${state.pos.col}`);
+    assert.match(layout.hint, /Esc/);
+  });
+
+  it("hit-tests the drawn items from the screen's UV", () => {
+    const layout = tvScreenLayout(initialTvHome(), ACTIVE);
+    for (const id of ["back", "dock:0", "dock:6", "cover:1", "continue:0"]) {
+      const [x, y] = center(layout, id);
+      assert.equal(tvHitAt(layout, x, y), id);
+    }
+    assert.equal(tvHitAt(layout, 2, TV_SCREEN_H - 2), null);
+  });
+
+  it("switches apps from the dock and opens a collection twice-pressed", () => {
+    let { state } = press(initialTvHome(), "dock:0");
+    assert.equal(state.app, "movies");
+    assert.deepEqual(state.pos, { row: 0, col: 0 });
+    const layout = tvScreenLayout(state, ACTIVE);
+    assert.equal(layout.hero.title, "Harry Potter");
+    ({ state } = press(state, "cover:0"));
+    assert.equal(state.opened, null, "the first press only picks it");
+    ({ state } = press(state, "cover:0"));
+    assert.equal(state.opened, "harry-potter");
+    assert.deepEqual(state.pos, { row: 1, col: 1 });
+    const opened = tvScreenLayout(state, ACTIVE);
+    assert.equal(opened.covers[0].kind, "back");
+    assert.equal(opened.covers.length, 9);
+    ({ state } = press(state, "cover:3"));
+    assert.equal(
+      tvScreenLayout(state, ACTIVE).hero.title,
+      "Harry Potter and the Prisoner of Azkaban",
+    );
+    ({ state } = press(state, "cover:0"));
+    assert.equal(state.opened, null, "the back cover closes it");
+  });
+
+  it("opens a collection from the hero's primary button", () => {
+    const { state } = press(initialTvHome(), "dock:1", "cover:3");
+    const layout = tvScreenLayout(state, ACTIVE);
+    assert.equal(layout.hero.primary, "Open collection");
+    assert.equal(press(state, "primary").state.opened, "hitman");
+  });
+
+  it("plays the muted clip and the lo-fi radio through effects", () => {
+    const clip = press(initialTvHome(), "continue:0");
+    assert.equal(clip.effect, null);
+    const layout = tvScreenLayout(clip.state, ACTIVE);
+    assert.equal(layout.hero.title, "Carneros DC #32 · game clip");
+    assert.equal(layout.hero.video, "/world/stories/carneros-dc-32-clip.mp4");
+    assert.equal(layout.hero.primary, "Play clip · muted");
+    assert.equal(
+      tvScreenLayout(clip.state, { ...ACTIVE, clipPlaying: true }).hero.primary,
+      "Pause clip",
+    );
+    assert.equal(tvHomeAction(clip.state, "primary").effect, "clip");
+    assert.equal(tvHomeAction(clip.state, "continue:0").effect, "clip");
+    const radio = press(initialTvHome(), "dock:6");
+    assert.equal(
+      tvScreenLayout(radio.state, ACTIVE).hero.primary,
+      "Play on the speakers",
+    );
+    assert.equal(
+      tvScreenLayout(radio.state, {
+        ...ACTIVE,
+        music: { playing: true, track: "Rain" },
+      }).hero.primary,
+      "Pause the speakers",
+    );
+    assert.equal(tvHomeAction(radio.state, "primary").effect, "music");
+  });
+
+  it("keeps trailers and channels as coming soon, and Back leaves", () => {
+    const layout = tvScreenLayout(initialTvHome(), ACTIVE);
+    assert.equal(
+      layout.hero.secondary,
+      "Watch trailer · YouTube · coming soon",
+    );
+    assert.equal(tvHomeAction(initialTvHome(), "secondary").effect, null);
+    const channel = press(initialTvHome(), "dock:3");
+    assert.equal(
+      tvScreenLayout(channel.state, ACTIVE).hero.secondary,
+      "Open channel · YouTube · coming soon",
+    );
+    assert.equal(tvHomeAction(initialTvHome(), "back").effect, "exit");
+  });
+
+  it("moves the remote with the arrows and keeps the ring in view", () => {
+    let state = press(initialTvHome(), "dock:0", "cover:2", "cover:2").state;
+    assert.equal(state.opened, "quentin-tarantino");
+    for (let i = 0; i < 12; i++) state = tvMove(state, "ArrowRight") ?? state;
+    assert.deepEqual(state.pos, { row: 1, col: 10 });
+    const layout = tvScreenLayout(state, ACTIVE);
+    const [x] = center(layout, "cover:10");
+    assert.ok(x < TV_SCREEN_W, "the last film scrolls into view");
+    assert.equal(
+      layout.regions.some((r) => r.id === "cover:0"),
+      false,
+    );
+    assert.deepEqual(tvMove(state, "ArrowUp")?.pos, { row: 0, col: 6 });
+    assert.equal(tvMove(state, "Enter"), null);
+  });
+
+  it("names every item for the accessible companion", () => {
+    const layout = tvScreenLayout(initialTvHome(), ACTIVE);
+    for (const cover of [...layout.covers, ...layout.continued])
+      assert.ok(cover.label.length > 0, cover.id);
+    assert.match(
+      layout.covers.find((cover) => cover.title === "Ghost of Tsushima")
+        ?.label ?? "",
+      /Ghost of Tsushima, 2020, my favourite/,
+    );
+  });
+});
+
+describe("TV wiring (T3)", () => {
   const worldApp = read("src/components/world/WorldApp.tsx");
   const scene = read("src/components/world/WorldScene.tsx");
   const living = read("src/components/world/Living.tsx");
+  const screen = read("src/components/world/TvScreen.tsx");
   const home = read("src/components/world/TvHome.tsx");
   const css = read("src/components/world/tv-home.css");
 
@@ -262,21 +453,49 @@ describe("TV wiring (T2)", () => {
     );
   });
 
-  it("shows the overlay once the camera arrives, with a fallback", () => {
+  it("starts no other close-up while the TV holds the camera", () => {
+    assert.match(
+      worldApp,
+      /terminal=\{tv \? \{ \.\.\.screen, onEnter: undefined \} : screen\}/,
+    );
+    assert.match(
+      worldApp,
+      /portrait=\{\s*tv\s*\? \{ \.\.\.portraitControl, onEnter: undefined \}\s*: portraitControl\s*\}/,
+    );
+    assert.match(
+      worldApp,
+      /speakers=\{\s*tv \? \{ \.\.\.speakerControl, onFocus: undefined \} : speakerControl\s*\}/,
+    );
+    assert.match(
+      worldApp,
+      /ready && entered && !focus && !portrait && !speakers && !tv\s*\? setGalleryCase/,
+    );
+  });
+
+  it("draws the home screen on the panel: a canvas texture, no overlay", () => {
+    assert.match(living, /<TvScreen/);
+    assert.match(screen, /name="living-tv-screen"/);
+    assert.match(screen, /new CanvasTexture\(/);
+    assert.match(screen, /tvHitAt\(/);
+    assert.match(screen, /event\.delta > CLICK_SLOP/);
+    assert.doesNotMatch(living, /living-tv-hitbox/);
+    assert.doesNotMatch(home, /role="dialog"|aria-modal/);
+    assert.doesNotMatch(css, /\.tv-home \{|position: fixed|z-index/);
+    assert.doesNotMatch(css, /pointer-events: none/, "the screen takes clicks");
+  });
+
+  it("makes the screen interactive once the camera arrives, with a fallback", () => {
     assert.match(worldApp, /onArrive: arriveTv/);
     assert.match(worldApp, /setTimeout\(arriveTv, ARRIVAL_FALLBACK_MS\)/);
+    assert.match(worldApp, /active: tvOpen/);
     assert.match(worldApp, /\{tvOpen && \(\s*<TvHome/);
     assert.match(worldApp, /onClose=\{leaveTv\}/);
   });
 
-  it("hides the world controls like the other close-ups", () => {
+  it("hides the world header and controls like the monitor close-up", () => {
     assert.match(worldApp, /tv && "world-terminal-focus"/);
     assert.match(worldApp, /tv && "world-tv-focus"/);
-    assert.match(css, /\.world-tv-focus > header/);
-    assert.match(
-      css,
-      /\.world-tv-focus > \.world-entry-scene \{\s*pointer-events: none;/,
-    );
+    assert.match(css, /\.world-tv-focus > header \{\s*visibility: hidden;/);
   });
 
   it("moves the camera to the TV pose and reports arrival", () => {
@@ -284,33 +503,35 @@ describe("TV wiring (T2)", () => {
     assert.match(scene, /tv\?\.focused\s*\? "tv"/);
     assert.match(scene, /closeUp === "tv" \? tvCameraFocus\(aspect\)/);
     assert.match(scene, /onTvArrive=\{tv\?\.onArrive\}/);
-  });
-
-  it("passes the TV click to both Living branches", () => {
     assert.equal(scene.match(/<Living[^>]*tv=\{tv\}/g)?.length, 2);
-    assert.match(living, /name="living-tv-hitbox"/);
-    assert.match(living, /e\.stopPropagation\(\);\s*tv\.onEnter\(\)/);
-    assert.match(living, /e\.delta > CLICK_SLOP/);
   });
 
-  it("is a labelled modal with Esc, a muted clip and no third-party embeds", () => {
-    assert.match(home, /role="dialog"/);
-    assert.match(home, /aria-modal="true"/);
+  it("keeps an offscreen keyboard companion with Esc and named items", () => {
+    assert.match(home, /className="tv-companion"/);
+    assert.match(css, /\.tv-companion \{[^}]*clip-path: inset\(50%\)/);
     assert.match(home, /event\.key === "Escape"/);
-    assert.match(home, /<video[^>]*\bmuted\b/);
-    assert.match(home, /<video[^>]*\bcontrols\b/);
-    assert.doesNotMatch(home, /autoPlay/);
-    assert.doesNotMatch(home, /<iframe/);
-    assert.doesNotMatch(
-      home,
-      /https?:|youtube\.com|youtu\.be|ytimg|themoviedb|igdb\.com/i,
-    );
-    assert.match(home, /Sample picks · replace with yours/);
-    assert.match(home, /coming soon/);
+    assert.match(home, /aria-live="polite"/);
+    assert.match(home, /data-region=/);
   });
 
-  it("respects reduced motion and narrow screens", () => {
-    assert.match(css, /prefers-reduced-motion: reduce/);
-    assert.match(css, /max-width: 767px/);
+  it("plays only the owner's muted clip, user-started, and nothing third-party", () => {
+    assert.match(home, /<video[^>]*\bmuted\b/);
+    assert.doesNotMatch(home + screen, /autoPlay|<iframe/);
+    assert.match(worldApp, /tvVideo\.current/);
+    assert.match(screen, /drawImage\(/);
+    for (const source of [home, screen])
+      assert.doesNotMatch(
+        source,
+        /https?:|youtube\.com|youtu\.be|ytimg|themoviedb|igdb\.com/i,
+      );
+    assert.match(
+      screen + read("src/lib/world/tv-screen.ts"),
+      /Sample picks · replace with yours/,
+    );
+  });
+
+  it("redraws only on change, animating nothing but the started clip", () => {
+    assert.match(screen, /if \(!active \|\| !clipPlaying\) return;/);
+    assert.match(worldApp, /reducedMotion=\{reducedMotion\}/);
   });
 });

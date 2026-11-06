@@ -55,7 +55,13 @@ import {
   spanColumn,
   terminalLayout,
 } from "@/lib/world/terminal-layout.ts";
-import type { TvControl } from "@/lib/world/tv-focus.ts";
+import {
+  initialTvHome,
+  tvClock,
+  tvHomeAction,
+  tvMove,
+  tvScreenLayout,
+} from "@/lib/world/tv-screen.ts";
 import { presentWorldLoad } from "@/lib/world/world-load-presentation.ts";
 import type { WorldLoadState } from "@/lib/world/world-loading.ts";
 import {
@@ -78,6 +84,7 @@ import SpeakerBar from "./SpeakerBar";
 import type { SpeakerControl } from "./SpeakerZone";
 import TerminalMonitor, { TERMINAL_CONTENT } from "./TerminalMonitor";
 import TvHome from "./TvHome";
+import type { TvControl } from "./TvScreen";
 import WorldMenu, { type GuideActions } from "./WorldMenu";
 
 // Loaded only after WebGL is confirmed, so three.js never ships to clients that can't use it.
@@ -658,14 +665,18 @@ export default function WorldApp() {
     [music, speakers, ready, focus, portrait, enterSpeakers, playMusic],
   );
 
-  // The living-room TV (tv-home-screen T2): a click on it from the room
-  // moves the camera straight in to the panel, like the other close-ups,
-  // and once it arrives the full-screen home screen opens over the scene.
-  // The world controls hide (header, clock and lights panel); the screen
-  // covers everything else, so no other close-up starts while it is open.
-  // Esc or Back to room closes it and returns the camera and focus.
+  // The living-room TV (tv-home-screen T2, T3): Kevnnard TV is drawn on
+  // the TV's own glass (TvScreen), idle in the room like the monitor's
+  // terminal. A click on it from the room moves the camera straight in to
+  // the panel and hides the world controls (header, clock and lights
+  // panel); once the camera arrives the screen takes clicks and taps, and
+  // an off-screen companion (TvHome) takes the remote's keys. Esc or Back
+  // to room returns the camera and focus, and the screen to its preview.
   const [tv, setTv] = useState(false);
   const [tvOpen, setTvOpen] = useState(false);
+  const [tvHome, setTvHome] = useState(initialTvHome);
+  const [tvClip, setTvClip] = useState(false);
+  const tvVideo = useRef<HTMLVideoElement>(null);
   const returnTv = useRef(false);
   const enterTv = useCallback(() => {
     if (!focus && !portrait && !speakers) {
@@ -678,6 +689,8 @@ export default function WorldApp() {
     returnTv.current = true;
     setTvOpen(false);
     setTv(false);
+    setTvHome(initialTvHome());
+    setTvClip(false);
   }, []);
   useEffect(() => {
     if (!tv || tvOpen) return;
@@ -689,16 +702,67 @@ export default function WorldApp() {
     returnTv.current = false;
     menuButton.current?.focus();
   }, [tv]);
+  // A press on the screen or the companion; the clip starts from the
+  // visitor's own click or key, muted.
+  const tvNow = useRef(tvHome);
+  tvNow.current = tvHome;
+  const pressTv = useCallback(
+    (id: string) => {
+      const { state, effect } = tvHomeAction(tvNow.current, id);
+      setTvHome(state);
+      if (effect === "exit") leaveTv();
+      else if (effect === "music") playMusic();
+      else if (effect === "clip") {
+        const clip = tvVideo.current;
+        if (clip?.paused) void clip.play().catch(() => undefined);
+        else clip?.pause();
+      }
+    },
+    [leaveTv, playMusic],
+  );
+  const moveTv = useCallback(
+    (key: string) => setTvHome((state) => tvMove(state, key) ?? state),
+    [],
+  );
+  const tvTime = tvClock(clock.hours);
+  const tvLayout = useMemo(
+    () =>
+      tvScreenLayout(tvHome, {
+        active: tvOpen,
+        clock: tvTime,
+        music: { playing: song.playing, track: song.track?.title ?? null },
+        clipPlaying: tvClip,
+      }),
+    [tvHome, tvOpen, tvTime, song.playing, song.track, tvClip],
+  );
   const tvControl = useMemo<TvControl>(
     () => ({
       focused: tv,
+      active: tvOpen,
       onEnter:
         ready && entered && !focus && !portrait && !speakers
           ? enterTv
           : undefined,
       onArrive: arriveTv,
+      layout: tvLayout,
+      onPress: pressTv,
+      video: tvVideo,
+      clipPlaying: tvClip,
     }),
-    [tv, ready, entered, focus, portrait, speakers, enterTv, arriveTv],
+    [
+      tv,
+      tvOpen,
+      ready,
+      entered,
+      focus,
+      portrait,
+      speakers,
+      enterTv,
+      arriveTv,
+      tvLayout,
+      pressTv,
+      tvClip,
+    ],
   );
 
   useEffect(() => {
@@ -817,15 +881,22 @@ export default function WorldApp() {
               onReady={onReady}
               onProgress={setLoading}
               focus={focus}
-              terminal={screen}
+              // While the TV holds the camera no other close-up starts.
+              terminal={tv ? { ...screen, onEnter: undefined } : screen}
               onMonitorArrive={arrive}
-              portrait={portraitControl}
-              speakers={speakerControl}
+              portrait={
+                tv
+                  ? { ...portraitControl, onEnter: undefined }
+                  : portraitControl
+              }
+              speakers={
+                tv ? { ...speakerControl, onFocus: undefined } : speakerControl
+              }
               tv={tvControl}
               galleryCase={galleryCase}
               galleryStory={caseStory !== null && storyOpen}
               onInspectCase={
-                ready && entered && !focus && !portrait && !speakers
+                ready && entered && !focus && !portrait && !speakers && !tv
                   ? setGalleryCase
                   : undefined
               }
@@ -959,9 +1030,12 @@ export default function WorldApp() {
       )}
       {tvOpen && (
         <TvHome
-          hours={clock.hours}
-          song={song}
-          onToggleMusic={playMusic}
+          state={tvHome}
+          layout={tvLayout}
+          videoRef={tvVideo}
+          onPress={pressTv}
+          onMove={moveTv}
+          onClip={setTvClip}
           onClose={leaveTv}
         />
       )}

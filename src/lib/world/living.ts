@@ -279,6 +279,17 @@ export const TV_PANEL = {
   back: TV.z - 0.064,
 } as const;
 
+/**
+ * The panel's glass (tv-home-screen T3): 1 x 0.56 m inside the 2 cm bezel,
+ * just in front of the picture drawn on its face, where TvScreen.tsx shows
+ * the Kevnnard TV home screen.
+ */
+export const TV_SCREEN = {
+  center: [LX, BENCH_TOP + TV.lift + TV.height / 2, TV.z + 0.0205] as Vec3,
+  width: TV.width - 0.04,
+  height: TV.height - 0.04,
+} as const;
+
 /** Thin-bezel flat TV on two feet, a deeper back housing and a game on screen. */
 function tv(solid: LivingPart[], glow: LivingPart[]) {
   const C = LIVING_COLORS;
