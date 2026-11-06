@@ -276,6 +276,8 @@ export interface CherryStory {
   story: readonly string[];
   /** Photos and videos: none yet (null renders nothing). */
   media: readonly CherryMedia[] | null;
+  /** A poem for her (dog-rig S9): stanzas of lines. */
+  poem: { title: string; stanzas: readonly (readonly string[])[] };
 }
 
 /** Her card (CherryCard.tsx): owner-approved copy (dog-rig S8). */
@@ -292,4 +294,39 @@ export const CHERRY_STORY: CherryStory = {
     "Someday she will rest, and she will live on in my thoughts. I wish she never had to go, so I put her here, to keep her with me forever and never forget her.",
   ],
   media: null,
+  poem: {
+    title: "For Cherry",
+    stanzas: [
+      [
+        "You came before I knew how long a life could be,",
+        "a small dark flame with a lion's heart,",
+        "and you walked beside me through every year I grew.",
+      ],
+      [
+        "Nineteen summers folded into your quiet watch:",
+        "the doors you waited at, the nights you kept me warm,",
+        "the way the world grew smaller when you slept close by.",
+      ],
+      [
+        "You never asked for more than where I was.",
+        "You gave me every day as if it were the first,",
+        "and taught me loyalty is simply staying.",
+      ],
+      [
+        "One day the house will hold a softer silence,",
+        "a morning without the sound of your small steps,",
+        "and I will learn the weight of an empty doorway.",
+      ],
+      [
+        "But here, in the world I built with my own hands,",
+        "the sun will always rise on you in the garden,",
+        "your tail still telling time, your eyes still finding me.",
+      ],
+      [
+        "Run where the light is endless, little one.",
+        "Whatever I become, you were the first to love it.",
+        "Cherry, you are the morning that never ends.",
+      ],
+    ],
+  },
 };

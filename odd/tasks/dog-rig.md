@@ -2,6 +2,7 @@
 Add the owner's downloaded Miniature Pinscher to /world, rigged so it can lie down or run, approved in Blender before it ships to the site.
 
 ## Specs
+S9. "me encanta si quiera agregar la rca un poema para ella de su vida connmigo y la vida que no estara conmigo algo bien pro atisitico epico inoviddable" (add a poem for Cherry to her card).
 S8. "bueno descartesmos entonces la acotsada vamos suasr la dee idl par ponerlo en el patio ppricnipal en horas de la amana si le dan click un zoom cinematografico con la card que ya tienes calro para mostrar info es ella se llama cherry es una pincher que tengo tienes mas de 19 anos humanos a estado conmigo toda la vida y se que cuando se vaya descandsar y vivimra en mis epensamientos no quisiera que muerikra nunca pero por eso mismo dejo este para toda la vida y nunca olvidarla deja lasssecion de fotos y videos pora haora sin eso pero despeus que las consiga te las paso si ? Cherry es su nombre al zoom hazlo tipo videojeugo ponla a la izqueirda card derecha con la info y como iddle se meuve es un loop cerry apoaracera o desaparecera aletariamnente en diferentes partes o un mismo lugar depoedne de ti dejo eso libnre a que tu decisdas cual es mejro y el nombre o nose que sea vea iconico la card etc es pequeniota es una picnher asi qeu el mtamano ojo con eso worker y me avisas cuando acabes para erevsairlo"
 S7. "broder el perrtio anda que le das a poder ponerlo a dormir jaja ... corrije las ppartas de tras bro ve mirando que haces para que no hagas cosas ahi" (fix the hind legs of the sleep pose, checking the renders at every step).
 S6. "el perrito debe quedar con la opse bien no las patas partidas o trocians vamos a correir eso" (the sleep pose must be right: no broken or twisted legs).
@@ -12,6 +13,7 @@ S2. "el lie se ven como partidas las patiqucas pero deberia se r mejor dormniido
 S1. "para un 3 agente descargue un modelo nuevo queuqeiro agregar es ssun perrito pero quiero agregarle el rig para poderlo modelar a que este acostadito o una anicmacion de corrienndo es posible ?"
 
 ## Tasks
+T4 [S9] DONE — Parent-written poem "For Cherry" (six three-line stanzas, English, Spanish translation shown to the owner) rendered under her story as an italic coda with the card's rose accent; inline, RED/GREEN observed.
 T3 [S8] IN REVIEW (uncommitted; awaiting the owner, L13) — Phase 2 as "Cherry": drop the sleep clip; ship the dog (idle loop) to the main yard in the morning hours, true Min Pin size; she appears/disappears with a fade at one of a few curated yard spots; click = cinematic video-game-style zoom with Cherry framed left and an iconic card on the right (her story, empty slot for the owner's photos/videos later); CC BY credit to 3D Creator.
 T2 [S1] superseded by T3 (sleep dropped by the owner) —
 T1 [S1] IN PROGRESS (gentle-ai-worker) — Phase 1, Blender preview only: rig the dog (quadruped armature), a lying-down pose and a running loop (plus a calm idle if cheap), lighter mesh for the web; load it into the owner's Blender for approval. No site files.

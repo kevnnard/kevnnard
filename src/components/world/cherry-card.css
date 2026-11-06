@@ -179,3 +179,33 @@
     animation: none;
   }
 }
+
+/* Her poem (dog-rig S9): a quiet italic coda under the story, one line per
+   verse, stanzas spaced, a hairline in the rose accent above it. */
+.cherry-card-poem {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgb(244 63 94 / 0.25);
+}
+.cherry-card-poem h3 {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgb(244 63 94 / 0.9);
+}
+.cherry-card-poem p {
+  margin: 0 0 12px;
+  font-style: italic;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #d4d4d8;
+}
+.cherry-card-poem p:last-child {
+  margin-bottom: 0;
+  color: #fafafa;
+}
+.cherry-card-poem span {
+  display: block;
+}

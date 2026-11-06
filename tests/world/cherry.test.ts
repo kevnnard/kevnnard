@@ -656,6 +656,20 @@ describe("Cherry's card (dog-rig T3)", () => {
     assert.equal(CHERRY_STORY.media, null);
   });
 
+  it("closes with a poem for her, six stanzas of three lines (S9)", () => {
+    assert.equal(CHERRY_STORY.poem.title, "For Cherry");
+    assert.equal(CHERRY_STORY.poem.stanzas.length, 6);
+    for (const stanza of CHERRY_STORY.poem.stanzas)
+      assert.equal(stanza.length, 3);
+    assert.equal(
+      CHERRY_STORY.poem.stanzas[5][2],
+      "Cherry, you are the morning that never ends.",
+    );
+    const card = source("src/components/world/CherryCard.tsx");
+    assert.match(card, /className="cherry-card-poem"/);
+    assert.match(card, /story\.poem\.stanzas\.map\(/);
+  });
+
   it("is inspected like the desk things: off the collection rail, not a glass case", () => {
     assert.equal(isDeskItemId("cherry"), true);
     assert.equal(isDisplayCaseId("cherry"), false);

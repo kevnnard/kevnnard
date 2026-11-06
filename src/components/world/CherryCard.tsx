@@ -77,6 +77,16 @@ export default function CherryCard({
           <p key={paragraph}>{paragraph}</p>
         ))}
       </section>
+      <section className="cherry-card-poem" aria-label={story.poem.title}>
+        <h3>{story.poem.title}</h3>
+        {story.poem.stanzas.map((stanza) => (
+          <p key={stanza[0]}>
+            {stanza.map((line) => (
+              <span key={line}>{line}</span>
+            ))}
+          </p>
+        ))}
+      </section>
       <div className="case-story-actions">
         <button ref={back} type="button" onClick={onClose}>
           Back to room
