@@ -64,7 +64,7 @@ import {
   spanColumn,
   terminalLayout,
 } from "@/lib/world/terminal-layout.ts";
-import { TRUCK_STORY } from "@/lib/world/truck.ts";
+import { GARAGE_STORY } from "@/lib/world/truck.ts";
 import {
   initialTvHome,
   tvClock,
@@ -943,10 +943,10 @@ export default function WorldApp() {
     SIGN_PROFILE,
     reducedMotion,
   );
-  // The dream truck's card (dream-truck T1), opened from the garage.
+  // The garage's "Coming soon" card (dream-truck T4), opened from its door.
   const truckCards = useCardPresence(
     cardsShown && galleryCase === "truck" ? "truck" : null,
-    TRUCK_STORY,
+    GARAGE_STORY,
     reducedMotion,
   );
 

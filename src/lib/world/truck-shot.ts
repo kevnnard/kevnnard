@@ -1,13 +1,11 @@
-// The dream truck's cinematic close-up (dream-truck T1), mirroring the
-// garden sign's and Cherry's (sign-shot.ts, cherry-shot.ts): a slow eased
-// dolly with a sideways arc from wherever the camera is, down to a low
-// three-quarter front view from the open yard left of the garage, the lens
-// narrowing on the way; reduced motion cuts straight to the shot. While it
-// plays the garage's front and left walls and its roof dissolve
-// (TRUCK_REVEAL), so the truck stands clear of them. With the card open the
-// shot slides so the truck stands on the left and the card has the right.
+// The garage's cinematic close-up (dream-truck T4; T1 framed the truck):
+// the shared eased dolly (cinematic.ts) from wherever the camera is to a
+// view of the closed roller door and its "Coming soon" sign from the front
+// yard, a little off its left; reduced motion cuts straight to the shot.
+// Nothing dissolves: the door stays shut. With the card open the shot
+// slides so the door stands on the left and the card has the right.
 // Leaving runs the same path backwards. Pure numbers; the scene samples
-// `truckShotAt` each frame.
+// `truckShotAt` each frame (the internal id stays "truck").
 
 import { GUIDE, type Vec3 } from "./camera.ts";
 import {
@@ -17,33 +15,24 @@ import {
   type ShotPose,
 } from "./cinematic.ts";
 import { STORY_CARD } from "./gallery-camera.ts";
-import type { HouseGroup } from "./house.ts";
-import { TRUCK, truckBox } from "./truck.ts";
+import { GARAGE_DOOR_FACE } from "./truck.ts";
 
 export type { ShotPose };
 
 const DEG = Math.PI / 180;
 
-const BOX = truckBox();
-
 /**
- * The final shot: 6.6 m out, 3 degrees down at a point 0.75 m above the
- * garage floor, a metre ahead of the truck's middle, from 25 degrees off
- * its nose toward the left yard, so the lens stands at bonnet height
- * (1.1 m up) out past the apron, clear of the yard's tree, and sees the
- * grille, the left flank and the wheels, the whole truck left of the card.
- * The lens closes from the room's 35 degrees to 34.
+ * The final shot: 5.5 m out from the door's middle, 4 degrees down, from
+ * 15 degrees off its left, so the lens stands at about head height in the
+ * front yard and sees the whole door, the sign and a little wall round it,
+ * left of the card. The lens closes from the room's 35 degrees to 34.
  */
 export const TRUCK_SHOT = {
-  target: [
-    TRUCK.position[0],
-    TRUCK.position[1] + 0.75,
-    (BOX.z0 + BOX.z1) / 2 + 1,
-  ] as Vec3,
-  distance: 6.6,
-  pitch: 3 * DEG,
-  /** Off the nose (+z), toward -x. */
-  azimuth: 25 * DEG,
+  target: GARAGE_DOOR_FACE.center,
+  distance: 5.5,
+  pitch: 4 * DEG,
+  /** Off the door's normal (+z), toward -x. */
+  azimuth: 15 * DEG,
   fov: 34,
   /** Seconds in, and back out to the room (cinematic.ts). */
   duration: CINEMATIC.duration,
@@ -52,13 +41,6 @@ export const TRUCK_SHOT = {
   arc: 0.06,
   maxArc: 0.3,
 } as const;
-
-/** The garage parts dissolved while the shot plays, eased like the cutaway. */
-export const TRUCK_REVEAL: readonly HouseGroup[] = [
-  "garage-front",
-  "garage-left",
-  "garage-roof",
-];
 
 /** The eye's offset from the shot's target. */
 const OFFSET: Vec3 = (() => {
@@ -93,7 +75,7 @@ const clamp01 = (t: number) => Math.min(1, Math.max(0, t));
 
 /**
  * The final shot, `shift` metres toward screen right (eye and aim
- * together), so the truck sits left of the open card.
+ * together), so the door sits left of the open card.
  */
 function shotEnd(shift: number): ShotPose {
   // Screen right: the level view direction turned a quarter.
@@ -110,7 +92,7 @@ function shotEnd(shift: number): ShotPose {
 }
 
 /**
- * The pose `t` (0-1, clamped) of the way from `from` into the truck shot:
+ * The pose `t` (0-1, clamped) of the way from `from` into the garage shot:
  * the shared move (cinematic.ts), bowed toward the side the shot looks from.
  */
 export function truckShotAt(
@@ -148,10 +130,10 @@ export function truckShotProgress(
 }
 
 /**
- * How far to slide the shot (metres) so the truck sits at the centre of the
+ * How far to slide the shot (metres) so the door sits at the centre of the
  * screen left of the card: the card's share of the width, in the
- * half-width the final lens spans at the truck. Zero once the card stacks
- * above the truck.
+ * half-width the final lens spans at the door. Zero once the card stacks
+ * above the door.
  */
 export function truckShotShift(width: number, aspect: number): number {
   if (width <= STORY_CARD.stackBelow) return 0;

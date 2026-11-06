@@ -44,7 +44,6 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import Cherry, { useCherrySpot } from "@/components/world/Cherry";
 import DisplayCases from "@/components/world/DisplayCases";
 import FloorLamp from "@/components/world/FloorLamp";
-import GarageLights from "@/components/world/GarageLights";
 import Garden from "@/components/world/Garden";
 import House, { NO_REVEAL } from "@/components/world/House";
 import KatanaShelf from "@/components/world/KatanaShelf";
@@ -138,8 +137,8 @@ import {
   signShotShift,
 } from "@/lib/world/sign-shot.ts";
 import { lensKeeper, speakerFocus } from "@/lib/world/speaker.ts";
+import { comingSoonGlow } from "@/lib/world/truck.ts";
 import {
-  TRUCK_REVEAL,
   truckLeaveAt,
   truckShotAt,
   truckShotProgress,
@@ -344,10 +343,11 @@ function SceneCanvas({
   );
   // Cherry's spot for the in-world day, held while her close-up is open.
   const cherrySpot = useCherrySpot(hours, galleryCase === "cherry");
-  // The dream truck's close-up opens the garage round it (dream-truck T1);
-  // by night its door rolls down, back up for the close-up (T2).
-  const reveal = galleryCase === "truck" ? TRUCK_REVEAL : NO_REVEAL;
-  const garageDoor = garageDoorClosed(hours, galleryCase === "truck");
+  // Nothing dissolves for a close-up now; the garage door stays down with
+  // its "Coming soon" sign, softly lit at night (dream-truck T4).
+  const reveal = NO_REVEAL;
+  const garageDoor = garageDoorClosed();
+  const doorGlow = comingSoonGlow(hours, power);
   // One close-up at a time (WorldApp): the terminal's, the portrait's,
   // the speakers' or the TV's.
   const closeUp = portrait?.focused
@@ -392,6 +392,7 @@ function SceneCanvas({
               reducedMotion={reducedMotion}
               reveal={reveal}
               door={garageDoor}
+              glow={doorGlow}
             />
             <Garden
               hours={hours}
@@ -432,6 +433,7 @@ function SceneCanvas({
           prepared={prepared}
           reveal={reveal}
           garageDoor={garageDoor}
+          doorGlow={doorGlow}
         />
       </Suspense>
       <NightLights hours={hours} lights={lights} power={power} />
@@ -457,23 +459,8 @@ function SceneCanvas({
           onInspect={desk?.onInspect}
         />
       </Suspense>
-      {/* The garage's detailing-bay lights (dream-truck T2). */}
-      <GarageLights
-        hours={hours}
-        power={power}
-        inspecting={galleryCase === "truck"}
-        reducedMotion={reducedMotion}
-      />
-      {/* The dream truck in the garage (dream-truck T1): not critical either. */}
-      <Suspense fallback={null}>
-        <Truck
-          focused={galleryCase === "truck"}
-          onInspect={desk?.onInspect}
-          hours={hours}
-          power={power}
-          reducedMotion={reducedMotion}
-        />
-      </Suspense>
+      {/* The closed garage door's click target (dream-truck T4). */}
+      <Truck focused={galleryCase === "truck"} onInspect={desk?.onInspect} />
     </Canvas>
   );
 }
@@ -561,6 +548,7 @@ function TexturedHouse({
   prepared,
   reveal,
   garageDoor,
+  doorGlow,
 }: {
   reducedMotion: boolean;
   hours: number;
@@ -574,10 +562,12 @@ function TexturedHouse({
   onInspectCase?: (id: GalleryItemId) => void;
   desk?: DeskControl;
   prepared: Prepared;
-  /** House groups the truck's close-up dissolves. */
+  /** House groups a close-up dissolves. */
   reveal: readonly HouseGroup[];
   /** The garage's roller door: 1 down, 0 up. */
   garageDoor: number;
+  /** The door's "Coming soon" sign glow. */
+  doorGlow: number;
 }) {
   const maps = useSurfaceMaps();
   // The textured house replaced the flat fallback.
@@ -589,6 +579,7 @@ function TexturedHouse({
         maps={maps}
         reveal={reveal}
         door={garageDoor}
+        glow={doorGlow}
       />
       <Garden
         hours={hours}
@@ -821,8 +812,8 @@ interface CinematicShot {
 /**
  * The desk things approached by an eased dolly with an arc and a narrowing
  * lens, played in and out: the coffee mug (coffee-card T1), the keyboard
- * (keyboard-card T2), the garden sign (garden-sign T2) and the dream truck
- * (dream-truck T1). Cherry's (dog-rig T3) depends on the day's spot, so
+ * (keyboard-card T2), the garden sign (garden-sign T2) and the closed garage
+ * door (dream-truck T4). Cherry's (dog-rig T3) depends on the day's spot, so
  * GuidedCamera builds it with cherryShot.
  */
 const CINEMATIC_SHOTS: Partial<Record<InspectItemId, CinematicShot>> = {

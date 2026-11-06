@@ -9,7 +9,10 @@ S3. "cosa que vi no esta bien iluminada la camioneta deberia al entrar el nmmod 
 
 S4. "hay un bug real la camienta no se ve mmuy bien que digamos a manera de ilumicainio y como se quita el techo y las sparedes las luces debiran venir desde le suelo meno no? eso 2 la camara peude irse a otro preview y hay como un bug en la camar como que tiene un recorrido pero se va al iinnico y ahi si lo hace deberia ser dianmica desde donde este hacer una trasciciond e preview mas smmomth traquila relajaod no tan veloz por que marea"
 
+S5. "mEjor csacalo yd eja coomming soon el carro rapidi que quiero anadir algo mas para ya lanzar mi pagina" (remove the truck; leave a "Coming soon" garage; fast, the owner wants to launch).
+
 ## Tasks
+T4 [S5] DONE — Remove the truck model and its credit/NC exception; keep the bigger garage with its door down and a "Coming soon" marker; clicking it opens the same cinematic shot of the closed door with a short "Coming soon" card.
 T3 [S4] DONE — (1) Light the truck well in the close-up even with the roof and walls dissolved: floor-level showroom light (ground light strips / uplights around the truck plus a soft key from the camera side). (2) Fix the cinematic camera for every close-up: start from wherever the camera is (including from another close-up), never jump to the home view first; slower, calmer, eased transition that does not make people dizzy.
 T2 [S3] DONE, not committed (gentle-ai-worker; see L4) — Detailing-bay lighting in the garage (hexagon LED ceiling grid + low side light bars), bright in the truck close-up; the garage door can close at night with the lights turning on automatically.
 T1 [S1, S2] DONE, not committed (gentle-ai-worker; see L3) — Derive a web GLB from the source (decimate, compress), enlarge the garage to fit the truck at true scale, park it inside, click = cinematic shot + story card ("my dream truck"), credit CC BY-NC 4.0 in the menu.

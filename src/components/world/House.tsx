@@ -5,6 +5,7 @@ import {
   BoxGeometry,
   BufferAttribute,
   BufferGeometry,
+  CanvasTexture,
   Color,
   CylinderGeometry,
   Euler,
@@ -15,7 +16,9 @@ import {
   Mesh,
   MeshStandardMaterial,
   Object3D,
+  PlaneGeometry,
   Quaternion,
+  SRGBColorSpace,
   Vector3,
 } from "three";
 import {
@@ -38,6 +41,7 @@ import {
 } from "@/lib/world/house.ts";
 import { roundedBox } from "@/lib/world/rounded.ts";
 import { boxUv } from "@/lib/world/textures.ts";
+import { COMING_SOON_SIGN } from "@/lib/world/truck.ts";
 
 /** Object names, one per cutaway group. */
 export const HOUSE_NAMES = Object.fromEntries(
@@ -78,6 +82,37 @@ function cutawayMaterial(
   material.customProgramCacheKey = () =>
     `house-cutaway-${source.transparent ? "glass" : "wood"}-${source.userData.surface ?? "flat"}`;
   return material;
+}
+
+/**
+ * The garage door's "Coming soon" plate (dream-truck T4): the site's dark
+ * background inside an emerald hairline, the words in its foreground, mono
+ * and spaced like a stencil. System fonts only.
+ */
+function comingSoonTexture(): CanvasTexture {
+  const [width, height] = COMING_SOON_SIGN.canvas;
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+  if (context) {
+    context.fillStyle = COMING_SOON_SIGN.plate;
+    context.fillRect(0, 0, width, height);
+    context.strokeStyle = COMING_SOON_SIGN.accent;
+    context.lineWidth = 6;
+    context.strokeRect(18, 18, width - 36, height - 36);
+    context.fillStyle = COMING_SOON_SIGN.ink;
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.font =
+      "700 96px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+    context.letterSpacing = "12px";
+    context.fillText(COMING_SOON_SIGN.text, width / 2, height / 2 + 4);
+  }
+  const texture = new CanvasTexture(canvas);
+  texture.colorSpace = SRGBColorSpace;
+  texture.anisotropy = 8;
+  return texture;
 }
 
 const scratch = {
@@ -255,100 +290,145 @@ interface FadeGroup {
  * the dream truck's close-up opens the garage (dream-truck T1). `door`
  * rolls the garage's roller door down (1) or up (0) over about 1.5 s, at
  * once with reduced motion (dream-truck T2); it hangs in the garage front's
- * group, so it fades with the front wall and its reveal.
+ * group, so it fades with the front wall and its reveal. The door stays
+ * down now with a "Coming soon" sign on it (dream-truck T4), whose
+ * lettering glows by `glow` at night.
  */
 export default function House({
   reducedMotion,
   maps,
   reveal = NO_REVEAL,
   door = 0,
+  glow = 0,
 }: {
   reducedMotion: boolean;
   maps?: SurfaceMaps;
   reveal?: readonly HouseGroup[];
   door?: number;
+  glow?: number;
 }) {
-  const { group, materials, fades, curtain } = useMemo(() => {
-    const wood = new MeshStandardMaterial({
-      vertexColors: true,
-      roughness: 0.9,
-      metalness: 0,
-      // Closed boxes cast from their back faces: no acne on lit faces.
-      shadowSide: BackSide,
-    });
-    const glass = new MeshStandardMaterial({
-      color: HOUSE_COLORS.glass,
-      roughness: 0.05,
-      metalness: 0,
-      transparent: true,
-      opacity: 0.25,
-      depthWrite: false,
-    });
-    const owned: MeshStandardMaterial[] = [wood, glass];
-    const surfaces = new Map<string, MeshStandardMaterial>();
-    const fading = new Map<HouseGroup, FadeGroup>();
-    const meshes = houseMeshes();
-    /** Opaque solids of the fading groups; the panes are never added. */
-    const solids: Mesh[] = [];
-    const house = new Object3D() as Group;
-    house.name = "house";
-    for (const name of HOUSE_GROUPS) {
-      const part = new Object3D();
-      part.name = HOUSE_NAMES[name];
-      const fade = { value: 0 };
-      const faded = (material: MeshStandardMaterial) => {
-        if (name === "base") return material;
-        const copy = cutawayMaterial(material, fade);
-        owned.push(copy);
-        return copy;
+  const { group, materials, fades, curtain, sign, signTexture } =
+    useMemo(() => {
+      const wood = new MeshStandardMaterial({
+        vertexColors: true,
+        roughness: 0.9,
+        metalness: 0,
+        // Closed boxes cast from their back faces: no acne on lit faces.
+        shadowSide: BackSide,
+      });
+      const glass = new MeshStandardMaterial({
+        color: HOUSE_COLORS.glass,
+        roughness: 0.05,
+        metalness: 0,
+        transparent: true,
+        opacity: 0.25,
+        depthWrite: false,
+      });
+      const owned: MeshStandardMaterial[] = [wood, glass];
+      const surfaces = new Map<string, MeshStandardMaterial>();
+      const fading = new Map<HouseGroup, FadeGroup>();
+      const meshes = houseMeshes();
+      /** Opaque solids of the fading groups; the panes are never added. */
+      const solids: Mesh[] = [];
+      const house = new Object3D() as Group;
+      house.name = "house";
+      for (const name of HOUSE_GROUPS) {
+        const part = new Object3D();
+        part.name = HOUSE_NAMES[name];
+        const fade = { value: 0 };
+        const faded = (material: MeshStandardMaterial) => {
+          if (name === "base") return material;
+          const copy = cutawayMaterial(material, fade);
+          owned.push(copy);
+          return copy;
+        };
+        const glassMaterial = faded(glass);
+        if (name !== "base") fading.set(name, { object: part, fade });
+        for (const [surface, parts] of bySurface(meshes[name].wood)) {
+          const material = materialFor(surface, wood, maps, surfaces, owned);
+          const solid = new Mesh(mergeParts(parts), faded(material));
+          solid.name = `${part.name}-${surface}`;
+          // Fading solids never cast: the shell does, so no dotted shadows
+          // and no duplicate casters.
+          solid.castShadow = name === "base";
+          solid.receiveShadow = true;
+          if (name !== "base") solids.push(solid);
+          part.add(solid);
+        }
+        if (meshes[name].glass.length > 0) {
+          const panes = new Mesh(mergeParts(meshes[name].glass), glassMaterial);
+          panes.castShadow = false;
+          panes.receiveShadow = false;
+          panes.renderOrder = 1;
+          part.add(panes);
+        }
+        house.add(part);
+      }
+      // A sibling of the fading groups: hiding them never hides the shell.
+      const { shell, materials: blockers } = shadowShell(solids);
+      house.add(shell);
+      // The roller door, hung from the opening's head: scaled down from there
+      // it rolls up into the drum. Rolled up, it hides.
+      const head = HOUSE.floorY + GARAGE_DOOR.v1;
+      const front = fading.get("garage-front");
+      const curtainGeometry = mergeParts(garageDoorCurtain());
+      curtainGeometry.translate(0, -head, 0);
+      const curtainMaterial = cutawayMaterial(
+        wood,
+        front?.fade ?? { value: 0 },
+      );
+      owned.push(curtainMaterial);
+      const curtain = new Mesh(curtainGeometry, curtainMaterial);
+      curtain.name = `${HOUSE_NAMES["garage-front"]}-door`;
+      curtain.position.y = head;
+      curtain.receiveShadow = true;
+      curtain.visible = false;
+      front?.object.add(curtain);
+      // The "Coming soon" plate on the closed door, fading with the front.
+      const signTexture = comingSoonTexture();
+      const signSource = new MeshStandardMaterial({
+        map: signTexture,
+        emissiveMap: signTexture,
+        emissive: new Color("#ffffff"),
+        emissiveIntensity: 0,
+        roughness: 0.7,
+        metalness: 0,
+      });
+      signSource.userData.surface = "coming-soon";
+      const signMaterial = cutawayMaterial(
+        signSource,
+        front?.fade ?? { value: 0 },
+      );
+      signSource.dispose();
+      owned.push(signMaterial);
+      const [signWidth, signHeight] = COMING_SOON_SIGN.size;
+      const sign = new Mesh(
+        new PlaneGeometry(signWidth, signHeight),
+        signMaterial,
+      );
+      sign.name = `${HOUSE_NAMES["garage-front"]}-coming-soon`;
+      sign.position.set(...COMING_SOON_SIGN.center);
+      sign.receiveShadow = true;
+      front?.object.add(sign);
+      const materials: Material[] = [...owned, ...blockers];
+      return {
+        group: house,
+        materials,
+        fades: fading,
+        curtain,
+        sign: signMaterial,
+        signTexture,
       };
-      const glassMaterial = faded(glass);
-      if (name !== "base") fading.set(name, { object: part, fade });
-      for (const [surface, parts] of bySurface(meshes[name].wood)) {
-        const material = materialFor(surface, wood, maps, surfaces, owned);
-        const solid = new Mesh(mergeParts(parts), faded(material));
-        solid.name = `${part.name}-${surface}`;
-        // Fading solids never cast: the shell does, so no dotted shadows
-        // and no duplicate casters.
-        solid.castShadow = name === "base";
-        solid.receiveShadow = true;
-        if (name !== "base") solids.push(solid);
-        part.add(solid);
-      }
-      if (meshes[name].glass.length > 0) {
-        const panes = new Mesh(mergeParts(meshes[name].glass), glassMaterial);
-        panes.castShadow = false;
-        panes.receiveShadow = false;
-        panes.renderOrder = 1;
-        part.add(panes);
-      }
-      house.add(part);
-    }
-    // A sibling of the fading groups: hiding them never hides the shell.
-    const { shell, materials: blockers } = shadowShell(solids);
-    house.add(shell);
-    // The roller door, hung from the opening's head: scaled down from there
-    // it rolls up into the drum. Rolled up, it hides.
-    const head = HOUSE.floorY + GARAGE_DOOR.v1;
-    const front = fading.get("garage-front");
-    const curtainGeometry = mergeParts(garageDoorCurtain());
-    curtainGeometry.translate(0, -head, 0);
-    const curtainMaterial = cutawayMaterial(wood, front?.fade ?? { value: 0 });
-    owned.push(curtainMaterial);
-    const curtain = new Mesh(curtainGeometry, curtainMaterial);
-    curtain.name = `${HOUSE_NAMES["garage-front"]}-door`;
-    curtain.position.y = head;
-    curtain.receiveShadow = true;
-    curtain.visible = false;
-    front?.object.add(curtain);
-    const materials: Material[] = [...owned, ...blockers];
-    return { group: house, materials, fades: fading, curtain };
-  }, [maps]);
+    }, [maps]);
 
   const wake = useThree((state) => state.invalidate);
   // A new reveal or door target wakes the demand frameloop, the camera at
   // rest.
   useEffect(() => wake(), [reveal, door, wake]);
+  useEffect(() => {
+    sign.emissiveIntensity = glow;
+    wake();
+  }, [sign, glow, wake]);
   const closed = useRef(door);
 
   const position = useRef<[number, number, number]>([0, 0, 0]);
@@ -387,6 +467,7 @@ export default function House({
   useEffect(
     () => () => {
       for (const material of materials) material.dispose();
+      signTexture.dispose();
       // The shell shares the solids' geometry: dispose each one once.
       const geometries = new Set<BufferGeometry>();
       group.traverse((object) => {
@@ -395,7 +476,7 @@ export default function House({
       });
       for (const geometry of geometries) geometry.dispose();
     },
-    [group, materials],
+    [group, materials, signTexture],
   );
 
   return <primitive object={group} />;

@@ -1,366 +1,23 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
-import { GARAGE_DOOR, GARAGE_INTERIOR } from "../../src/lib/world/garage.ts";
-import {
-  easeToward,
-  floorStripParts,
-  GARAGE_BARS,
-  GARAGE_DOOR_MOTION,
-  GARAGE_GRID,
-  GARAGE_LIGHT_FIXTURES,
-  GARAGE_LIGHTS,
-  garageDoorClosed,
-  garageIlluminance,
-  garageLightLevel,
-  garageShowroomLevel,
-  garageTruckEnvIntensity,
-  gridParts,
-  hexGrid,
-  TRUCK_SURFACES,
-} from "../../src/lib/world/garage-lights.ts";
+import { GARAGE_DOOR } from "../../src/lib/world/garage.ts";
+import * as garageLights from "../../src/lib/world/garage-lights.ts";
 import { garageDoorCurtain, HOUSE, WALLS } from "../../src/lib/world/house.ts";
-import { environmentIntensity } from "../../src/lib/world/palette.ts";
-import { TRUCK, truckBox } from "../../src/lib/world/truck.ts";
-import { TRUCK_VIEW } from "../../src/lib/world/truck-shot.ts";
 
+const { easeToward, GARAGE_DOOR_MOTION, garageDoorClosed } = garageLights;
 const EPS = 1e-6;
 const FLOOR = HOUSE.floorY;
 const source = (path: string) =>
   readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
-const NOON = 12;
-const NIGHT = 22;
 
-describe("garage detailing-bay LEDs (dream-truck T2)", () => {
-  it("hangs a honeycomb grid under the garage roof, over the truck", () => {
-    const { x0, x1, z0, z1, y } = GARAGE_GRID;
-    assert.ok(x0 >= GARAGE_INTERIOR.x0 + 0.1 && x1 <= GARAGE_INTERIOR.x1 - 0.1);
-    assert.ok(z0 >= GARAGE_INTERIOR.z0 + 0.1);
-    // Clear of the rolled-up door's drum behind the header.
-    assert.ok(z1 <= GARAGE_INTERIOR.z1 - 0.4);
-    const truck = truckBox();
-    assert.ok(y - truck.y1 >= 0.2, "over the truck's roof");
-    assert.ok(y < FLOOR + HOUSE.garage.height, "under the eave");
-    assert.ok(x1 - x0 > 1.6 && z1 - z0 > 4, "most of the ceiling");
+describe("garage door, closed for good (dream-truck T4)", () => {
+  it("stays down at any hour: nothing is parked inside to show", () => {
+    for (let hours = 0; hours < 24; hours += 0.5)
+      assert.equal(garageDoorClosed(), 1, `${hours} h`);
   });
 
-  it("draws whole hexagons, each shared edge once, inside its frame", () => {
-    const edges = hexGrid();
-    assert.ok(edges.length > 60, `${edges.length} edges`);
-    const keys = new Set<string>();
-    for (const [[ax, az], [bx, bz]] of edges) {
-      for (const [x, z] of [
-        [ax, az],
-        [bx, bz],
-      ])
-        assert.ok(
-          x >= GARAGE_GRID.x0 - EPS &&
-            x <= GARAGE_GRID.x1 + EPS &&
-            z >= GARAGE_GRID.z0 - EPS &&
-            z <= GARAGE_GRID.z1 + EPS,
-        );
-      const length = Math.hypot(bx - ax, bz - az);
-      assert.ok(Math.abs(length - GARAGE_GRID.side) < 1e-6, `${length}`);
-      const key = [(ax + bx) / 2, (az + bz) / 2]
-        .map((v) => v.toFixed(4))
-        .join();
-      assert.ok(!keys.has(key), "an edge twice");
-      keys.add(key);
-    }
-  });
-
-  it("is one small merged mesh of tubes and a frame", () => {
-    const parts = gridParts();
-    assert.equal(parts.length, hexGrid().length + 4);
-    assert.ok(parts.length * 12 < 3000, "triangles");
-    for (const part of parts) {
-      assert.ok(Math.abs(part.center[1] - GARAGE_GRID.y) < EPS);
-      assert.equal(part.shape, "box");
-    }
-  });
-
-  it("runs two low LED bars along the side walls, under the windows", () => {
-    assert.equal(GARAGE_BARS.length, 2);
-    const truck = truckBox();
-    const windows = WALLS.find((w) => w.id === "garage-left")?.openings ?? [];
-    for (const bar of GARAGE_BARS) {
-      const [x, y] = bar.center;
-      const [w, h, d] = bar.size;
-      assert.ok(d >= 3, "long");
-      assert.ok(y - FLOOR > 0.5 && y - FLOOR < 1, "waist height");
-      assert.ok(x - w / 2 > truck.x1 + 0.05 || x + w / 2 < truck.x0 - 0.05);
-      for (const window of windows)
-        assert.ok(y + h / 2 < FLOOR + window.v0 - 0.05, "under the sills");
-    }
-    const xs = GARAGE_BARS.map((bar) => bar.center[0]).sort((a, b) => a - b);
-    assert.ok(xs[0] < truck.x0 && xs[1] > truck.x1, "one each side");
-  });
-
-  it("glows cool daylight white, about 6000 K", () => {
-    const hex = GARAGE_LIGHTS.color;
-    const [r, g, b] = [1, 3, 5].map((i) =>
-      Number.parseInt(hex.slice(i, i + 2), 16),
-    );
-    assert.ok(r >= 245 && g >= 235 && b >= 225, hex);
-    assert.ok(r - b < 30, "not warm");
-  });
-});
-
-describe("garage lights", () => {
-  it("are soft, finite spots: two from the ceiling, two low side fills", () => {
-    const ceiling = GARAGE_LIGHT_FIXTURES.filter((f) => f.role === "ceiling");
-    const side = GARAGE_LIGHT_FIXTURES.filter((f) => f.role === "side");
-    assert.equal(ceiling.length, 2);
-    assert.equal(side.length, 2);
-    for (const fixture of GARAGE_LIGHT_FIXTURES) {
-      // Even light within the cutoff, no falloff hot spot near the lamp.
-      assert.equal(fixture.decay, 0);
-      assert.ok(fixture.penumbra >= 0.3);
-      assert.equal(fixture.castShadow, false);
-      assert.ok(fixture.intensity + fixture.showroom > 0);
-      // The cutoff keeps the light inside the garage: never past the
-      // main house's wall, nor out of the left wall.
-      const [x] = fixture.position;
-      const [tx] = fixture.target;
-      const reach = x + Math.sign(tx - x || 0) * fixture.distance;
-      if (fixture.role === "side") {
-        assert.ok(reach > HOUSE.garage.x0 && reach < HOUSE.garage.x1);
-      }
-    }
-    for (const fixture of [...ceiling, ...side])
-      assert.ok(fixture.intensity > 0, "on at night too");
-    for (const fixture of ceiling) {
-      assert.ok(Math.abs(fixture.position[1] - GARAGE_GRID.y) < 0.1);
-      assert.ok(fixture.target[1] < fixture.position[1] - 1, "aimed down");
-      assert.ok(
-        fixture.distance < fixture.position[1] + 0.4,
-        "stops at the floor",
-      );
-    }
-    for (const fixture of side)
-      assert.ok(
-        Math.abs(fixture.target[1] - fixture.position[1]) < 0.3,
-        "across",
-      );
-  });
-
-  it("go to showroom level in the close-up, at any hour", () => {
-    for (const hours of [0, 6, NOON, 18, NIGHT])
-      assert.equal(garageLightLevel(hours, true, true), 1);
-  });
-
-  it("come on softer by themselves at night, off by day", () => {
-    const night = garageLightLevel(NIGHT, true, false);
-    assert.ok(night > 0.25 && night < 0.7, `${night}`);
-    assert.equal(garageLightLevel(NOON, true, false), 0);
-  });
-
-  it("obey the master power switch, like the cases", () => {
-    assert.equal(garageLightLevel(NIGHT, false, false), 0);
-    assert.equal(garageLightLevel(NIGHT, false, true), 0);
-  });
-
-  it("ramp in about 0.8 s; reduced motion jumps", () => {
-    assert.ok(Math.abs(GARAGE_LIGHTS.ramp - 0.8) < 0.1);
-    let level = 0;
-    for (let t = 0; t < GARAGE_LIGHTS.ramp - 0.1; t += 1 / 60)
-      level = easeToward(level, 1, 1 / 60, GARAGE_LIGHTS.ramp, false);
-    assert.ok(level > 0.5 && level < 1, `${level}`);
-    for (let t = 0; t < 0.2; t += 1 / 60)
-      level = easeToward(level, 1, 1 / 60, GARAGE_LIGHTS.ramp, false);
-    assert.equal(level, 1);
-    assert.equal(easeToward(0, 1, 1 / 60, GARAGE_LIGHTS.ramp, true), 1);
-    assert.equal(easeToward(1, 0, 1 / 60, GARAGE_LIGHTS.ramp, true), 0);
-  });
-});
-
-const NOON_ENV = environmentIntensity(NOON);
-const CLOSE_UP = { bay: 1, showroom: 1 };
-const lux = (surface: keyof typeof TRUCK_SURFACES, bay = 1, showroom = 1) =>
-  TRUCK_SURFACES[surface].map(({ point, normal }) =>
-    garageIlluminance(point, normal, bay, showroom),
-  );
-const stats = (values: number[]) => ({
-  mean: values.reduce((a, b) => a + b, 0) / values.length,
-  min: Math.min(...values),
-  max: Math.max(...values),
-});
-
-describe("showroom light with the roof and walls gone (dream-truck T3)", () => {
-  it("samples the truck's real flank, bonnet and grille", () => {
-    const box = truckBox();
-    for (const surface of ["flank", "hood", "front"] as const)
-      assert.ok(TRUCK_SURFACES[surface].length >= 9, surface);
-    for (const { point } of TRUCK_SURFACES.flank) {
-      // Measured from the GLB at 0.82: the doors and fenders, x -3.24..-3.45.
-      assert.ok(point[0] > box.x0 && point[0] < TRUCK.position[0] - 0.7);
-      assert.ok(point[2] > box.z0 && point[2] < box.z1);
-    }
-    for (const { point } of TRUCK_SURFACES.hood)
-      assert.ok(Math.abs(point[1] - (FLOOR + 1.15)) < 0.1, "bonnet top");
-    for (const { point } of TRUCK_SURFACES.front)
-      assert.ok(point[2] > box.z1 - 0.3 && point[2] <= box.z1, "grille");
-  });
-
-  it("puts about the display cases' 23 lx on the flank, bonnet and front", () => {
-    for (const surface of ["flank", "hood", "front"] as const) {
-      const { mean, min, max } = stats(lux(surface));
-      assert.ok(mean >= 23 && mean <= 32, `${surface} mean ${mean}`);
-      // Even: no dark patch and no hot spot.
-      assert.ok(min >= 18, `${surface} min ${min}`);
-      assert.ok(max <= 40, `${surface} max ${max}`);
-      assert.ok(max / min <= 2, `${surface} ${max}/${min}`);
-    }
-  });
-
-  it("was dark before: the detailing bay alone barely reached the body", () => {
-    // The bay's own lights at full level, without the showroom set.
-    for (const surface of ["flank", "hood", "front"] as const)
-      assert.ok(stats(lux(surface, 1, 0)).mean < 5, surface);
-  });
-
-  it("lights the floor round the truck softer than the truck itself", () => {
-    let peak = 0;
-    for (let x = -6; x <= 0; x += 0.1)
-      for (let z = -3; z <= 6; z += 0.1)
-        peak = Math.max(
-          peak,
-          garageIlluminance([x, FLOOR, z], [0, 1, 0], 1, 1),
-        );
-    assert.ok(peak < stats(lux("flank")).mean, `floor ${peak}`);
-  });
-
-  it("never reaches the main room, whatever the surface faces", () => {
-    const { main, wall } = HOUSE;
-    const top = FLOOR + main.height + main.rise;
-    let lit = 0;
-    for (let x = main.x0 + wall; x <= main.x1 - wall + EPS; x += 0.1)
-      for (let y = FLOOR; y <= top + EPS; y += 0.1)
-        for (let z = main.z0 + wall; z <= main.z1 - wall + EPS; z += 0.1)
-          if (garageIlluminance([x, y, z], null, 1, 1) > 0) lit++;
-    assert.equal(lit, 0);
-  });
-
-  it("keys from the camera's side, rims from behind, uplights from the floor", () => {
-    const box = truckBox();
-    const centre = [TRUCK.position[0], FLOOR + 0.8, (box.z0 + box.z1) / 2];
-    const camera = TRUCK_VIEW.offset;
-    const facing = (p: readonly number[]) =>
-      (p[0] - centre[0]) * camera[0] + (p[2] - centre[2]) * camera[2];
-    const roles = (role: string) =>
-      GARAGE_LIGHT_FIXTURES.filter((f) => f.role === role);
-    assert.ok(roles("key").length >= 1);
-    for (const key of roles("key")) {
-      assert.ok(facing(key.position) > 0, "camera side");
-      assert.ok(key.penumbra >= 0.6, "soft");
-    }
-    const [rim] = roles("rim");
-    assert.ok(rim && facing(rim.position) < 0, "behind");
-    assert.ok(rim.position[2] < box.z0 + 0.3 && rim.position[1] > box.y1);
-    assert.ok(rim.showroom < Math.min(...roles("key").map((f) => f.showroom)));
-    const ups = roles("uplight");
-    assert.ok(ups.length >= 3);
-    for (const up of ups) {
-      assert.ok(up.position[1] - FLOOR < 0.15, "at the floor");
-      assert.ok(up.target[1] > up.position[1] + 0.5, "aimed up");
-    }
-    assert.ok(
-      ups.some((f) => f.position[0] < box.x0),
-      "left side",
-    );
-    assert.ok(
-      ups.some((f) => f.position[2] > box.z1),
-      "front",
-    );
-    // The right side is the main house's wall: its low bar fill covers it.
-    assert.ok(
-      roles("side").some((f) => f.position[0] > box.x1 && f.showroom >= 0),
-    );
-  });
-
-  it("adds the showroom set only in the close-up; the bay keeps its night level", () => {
-    assert.equal(garageShowroomLevel(true, true), 1);
-    assert.equal(garageShowroomLevel(true, false), 0);
-    assert.equal(garageShowroomLevel(false, true), 0, "master power off");
-    // Night with no close-up: the bay alone, as before.
-    const night = garageLightLevel(NIGHT, true, false);
-    assert.equal(night, GARAGE_LIGHTS.night);
-    for (const { point, normal } of TRUCK_SURFACES.flank)
-      assert.equal(
-        garageIlluminance(
-          point,
-          normal,
-          night,
-          garageShowroomLevel(true, false),
-        ),
-        garageIlluminance(point, normal, night, 0),
-      );
-    // Showroom-only fixtures are dark outside the close-up.
-    for (const f of GARAGE_LIGHT_FIXTURES)
-      if (f.role !== "ceiling" && f.role !== "side") {
-        assert.equal(f.intensity, 0, f.role);
-        assert.ok(f.showroom > 0, f.role);
-      }
-    assert.deepEqual(CLOSE_UP, { bay: 1, showroom: 1 });
-  });
-
-  it("runs an LED strip round the truck on the garage floor", () => {
-    const parts = floorStripParts();
-    const box = truckBox();
-    assert.equal(parts.length, 4);
-    for (const part of parts) {
-      const [x, y, z] = part.center;
-      const [w, h, d] = part.size;
-      assert.ok(y - h / 2 >= FLOOR - EPS && y + h / 2 <= FLOOR + 0.012);
-      assert.ok(x - w / 2 >= GARAGE_INTERIOR.x0 - EPS);
-      assert.ok(x + w / 2 <= GARAGE_INTERIOR.x1 + EPS);
-      assert.ok(z - d / 2 >= GARAGE_INTERIOR.z0 - EPS);
-      assert.ok(z + d / 2 <= GARAGE_INTERIOR.z1 + EPS);
-      assert.equal(part.color, GARAGE_LIGHTS.color);
-      // Clear of the tyres: outside the truck's footprint.
-      const inside =
-        x - w / 2 > box.x0 &&
-        x + w / 2 < box.x1 &&
-        z - d / 2 > box.z0 &&
-        z + d / 2 < box.z1;
-      assert.equal(inside, false);
-    }
-    const xs = parts.flatMap((p) => [
-      p.center[0] - p.size[0] / 2,
-      p.center[0] + p.size[0] / 2,
-    ]);
-    const zs = parts.flatMap((p) => [
-      p.center[2] - p.size[2] / 2,
-      p.center[2] + p.size[2] / 2,
-    ]);
-    assert.ok(Math.min(...xs) < box.x0 && Math.max(...xs) > box.x1, "round it");
-    assert.ok(Math.min(...zs) < box.z0 && Math.max(...zs) > box.z1, "round it");
-  });
-
-  it("boosts the paint's reflections in the close-up, like the cases", () => {
-    assert.equal(garageTruckEnvIntensity(0, NOON), NOON_ENV);
-    assert.equal(
-      garageTruckEnvIntensity(0, NIGHT),
-      environmentIntensity(NIGHT),
-    );
-    for (const hours of [NOON, NIGHT]) {
-      const boosted = garageTruckEnvIntensity(1, hours);
-      assert.ok(boosted >= 0.5 && boosted <= 1, `${boosted}`);
-      assert.ok(boosted >= environmentIntensity(hours));
-      const half = garageTruckEnvIntensity(0.5, hours);
-      assert.ok(half >= environmentIntensity(hours) && half < boosted);
-    }
-  });
-});
-
-describe("garage door at night", () => {
-  it("rolls down at night and stays up by day or for the close-up", () => {
-    assert.equal(garageDoorClosed(NIGHT, false), 1);
-    assert.equal(garageDoorClosed(NOON, false), 0);
-    assert.equal(garageDoorClosed(NIGHT, true), 0);
-  });
-
-  it("takes about 1.5 s, reduced motion at once", () => {
+  it("still eases in about 1.5 s, reduced motion at once", () => {
     assert.ok(Math.abs(GARAGE_DOOR_MOTION.duration - 1.5) < 0.1);
     let closed = 0;
     for (let t = 0; t < 0.75; t += 1 / 60)
@@ -397,30 +54,28 @@ describe("garage door at night", () => {
   });
 });
 
-describe("garage lights wiring", () => {
-  it("mounts the lights at zero and drives them from the clock and the close-up", () => {
-    const lights = source("src/components/world/GarageLights.tsx");
-    assert.match(lights, /garageLightLevel\(/);
-    assert.match(lights, /easeToward\(/);
-    assert.match(lights, /intensity=\{0\}/);
-    assert.match(lights, /gridParts\(/);
-    assert.match(lights, /GARAGE_BARS/);
-    assert.doesNotMatch(lights, /RectAreaLight/);
-    assert.match(lights, /garageShowroomLevel\(/);
-    assert.match(lights, /floorStripParts\(/);
-    assert.match(lights, /fixture\.showroom/);
-    const truck = source("src/components/world/Truck.tsx");
-    assert.match(truck, /garageTruckEnvIntensity\(/);
-    assert.match(truck, /\.clone\(\)/);
-    assert.match(truck, /envMapIntensity/);
-    const scene = source("src/components/world/WorldScene.tsx");
-    assert.match(scene, /<GarageLights\b/);
-    assert.match(scene, /garageDoorClosed\(/);
-    assert.match(scene, /<Truck\b[^>]*\bhours=/s);
-    assert.match(scene, /<Truck\b[^>]*\bpower=/s);
+describe("no showroom inside the closed garage (dream-truck T4)", () => {
+  it("drops the LED grid, bars, strip and showroom spots", () => {
+    for (const name of [
+      "GARAGE_LIGHT_FIXTURES",
+      "GARAGE_GRID",
+      "GARAGE_BARS",
+      "gridParts",
+      "floorStripParts",
+      "garageShowroomLevel",
+      "garageTruckEnvIntensity",
+    ])
+      assert.equal(name in garageLights, false, name);
   });
 
-  it("rolls the curtain with the garage front, so the reveal takes it too", () => {
+  it("mounts no garage lights; the scene keeps the door down", () => {
+    const scene = source("src/components/world/WorldScene.tsx");
+    assert.doesNotMatch(scene, /GarageLights/);
+    assert.match(scene, /garageDoorClosed\(\)/);
+    assert.doesNotMatch(scene, /TRUCK_REVEAL/);
+  });
+
+  it("rolls the curtain with the garage front, so the cutaway takes it too", () => {
     const house = source("src/components/world/House.tsx");
     assert.match(house, /garageDoorCurtain\(/);
     assert.match(house, /fading\.get\("garage-front"\)/);

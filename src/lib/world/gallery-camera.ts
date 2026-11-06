@@ -66,7 +66,7 @@ function galleryView(id: GalleryItemId): {
 
 /**
  * Any inspected thing's view: a gallery item's, a desk thing's, the
- * garden sign's, the dream truck's, or Cherry's at her first spot (the scene frames her at
+ * garden sign's, the garage door's, or Cherry's at her first spot (the scene frames her at
  * the day's spot through cherry-shot.ts).
  */
 function inspectView(id: InspectItemId): ReturnType<typeof galleryView> {

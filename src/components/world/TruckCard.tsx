@@ -1,16 +1,15 @@
 import { type AnimationEvent, useEffect, useRef } from "react";
 import type { CardState } from "@/lib/world/card-motion.ts";
-import type { TruckStory } from "@/lib/world/truck.ts";
+import type { GarageStory } from "@/lib/world/truck.ts";
 import "./case-story.css";
 import "./truck-card.css";
 
 /**
- * The dream truck's card (dream-truck T1), beside its close-up in the
- * garage: Cherry's card family (case-story.css supplies the panel, kicker,
- * actions, focus rings, card motion and the footprint the camera frames the
- * truck left of). The model's name set large, the stats strip and the
- * owner's words. No images. The truck is not part of the collection, so
- * there is no rail: "Back to room" leaves, and takes focus as the card
+ * The garage's card (dream-truck T4), beside the close-up of its closed
+ * door: Cherry's card family (case-story.css supplies the panel, kicker,
+ * actions, focus rings, card motion and the footprint the camera frames
+ * the door left of). A kicker, "Coming soon" set large and one line. No
+ * images, no rail: "Back to room" leaves, and takes focus as the card
  * opens; leaving, it is inert.
  */
 export default function TruckCard({
@@ -19,7 +18,7 @@ export default function TruckCard({
   state,
   onMotionEnd,
 }: {
-  story: TruckStory;
+  story: GarageStory;
   onClose: () => void;
   /** The card's presence, from WorldApp's useCardPresence. */
   state: CardState;
@@ -30,29 +29,17 @@ export default function TruckCard({
 
   return (
     <article
-      className="case-story truck-card"
-      aria-labelledby="truck-card-title"
+      className="case-story garage-card"
+      aria-labelledby="garage-card-title"
       data-state={state}
       inert={state === "leaving"}
       onAnimationEnd={onMotionEnd}
     >
       <p className="case-story-kicker">{story.kicker}</p>
-      <h2 id="truck-card-title" className="truck-card-title">
+      <h2 id="garage-card-title" className="garage-card-title">
         {story.title}
       </h2>
-      <dl className="truck-card-stats">
-        {story.stats.map((stat) => (
-          <div key={stat.label}>
-            <dt>{stat.label}</dt>
-            <dd>{stat.value}</dd>
-          </div>
-        ))}
-      </dl>
-      <section className="truck-card-story" aria-label="Why it is here">
-        {story.story.map((paragraph) => (
-          <p key={paragraph}>{paragraph}</p>
-        ))}
-      </section>
+      <p className="garage-card-line">{story.line}</p>
       <div className="case-story-actions">
         <button ref={back} type="button" onClick={onClose}>
           Back to room

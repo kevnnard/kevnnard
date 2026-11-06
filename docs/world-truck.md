@@ -1,109 +1,46 @@
-# The dream truck in /world
+# The garage in /world: coming soon
 
-The owner's dream truck, a Ford F-150 Raptor, is parked nose out in the house's garage. The garage grew to hold it and works as a detailing bay. Click the truck to get a cinematic close-up and its card (odd/tasks/dream-truck.md, T1 to T3).
+The house's garage is closed, with a "Coming soon" sign on its roller door. Click the door to get a cinematic close-up and a short card (odd/tasks/dream-truck.md, T4).
 
-Ford and Raptor are trademarks of Ford Motor Company. This site has no affiliation with Ford.
+The garage once held the owner's dream truck (T1 to T3). The truck, its model, its build script, its CC BY-NC 4.0 credit and the garage's showroom lights were removed in T4. The grown garage stayed.
 
 ## Where things live
 
 | What | File |
 | --- | --- |
-| Model | `public/world/models/dream-truck.glb`, built by `scripts/prepare-truck.mjs` |
-| Garage size, open door, roller door curtain | `src/lib/world/house.ts` (`HOUSE.garage`, `GARAGE_SIDE`, `garageDoorCurtain`) |
+| Garage size, door opening, roller door curtain | `src/lib/world/house.ts` (`HOUSE.garage`, `GARAGE_SIDE`, `garageDoorCurtain`) |
 | Garage inside, door, nature clearing | `src/lib/world/garage.ts` |
-| Truck scale, parking spot, click box, card copy | `src/lib/world/truck.ts` |
-| Close-up camera and garage reveal | `src/lib/world/truck-shot.ts` |
+| Door face, sign, night glow, click box, card copy | `src/lib/world/truck.ts` |
+| Close-up camera | `src/lib/world/truck-shot.ts` |
 | Cinematic move shared by every close-up | `src/lib/world/cinematic.ts` |
-| LED grid, side bars, floor strip, lights, door timing | `src/lib/world/garage-lights.ts` |
-| Truck in the scene | `src/components/world/Truck.tsx` |
-| LEDs and lights in the scene | `src/components/world/GarageLights.tsx` |
+| Door state and timing | `src/lib/world/garage-lights.ts` |
+| Sign painted on the door | `src/components/world/House.tsx` |
+| Click target | `src/components/world/Truck.tsx` |
 | Card | `src/components/world/TruckCard.tsx`, `truck-card.css` |
-| Credit (CC BY-NC 4.0, Outlaw Games™) | `public/world/credits.json` |
+
+The internal inspect id is still `"truck"`, so the camera, cards and tests keep their wiring. Users only see "Garage" and "Coming soon".
 
 ## The garage
 
-| | Before | Now |
+| | Original | Now |
 | --- | --- | --- |
 | x | -3.1 to -1.25 | -3.8 to -1.25 |
 | z | -2.45 to 0.55 | -2.75 to 2.85 |
 | Wall height | 1.45 m | 1.95 m, the same as the main house |
-| Door | 1.38 × 1.15 m, sectional, closed | 2.08 × 1.78 m roller door, open by day |
+| Door | 1.38 × 1.15 m, sectional | 2.08 × 1.78 m roller door, always down |
 | Apron | z 0.55 to 2 | z 2.85 to 3.65, on the grass |
 
-The garage now reaches past the pad, so it stands on its own plinth from the grass up. A short wall closes its right side where it runs past the main house's front. Its back is flush with the house. The left eave is 0.1 m, so it stays clear of the yard's nearest tree. `clearOfGarage` removes the tufts, flowers and bush that the seeded layout had put under the new garage and apron. No tree moves, and the island layout, the pad, Cherry's spots, the mailbox, the sign and the path stay where they were. `HOUSE_FOCUS` is pinned to its old x, so the home view and the cutaway are unchanged.
+The garage reaches past the pad, so it stands on its own plinth from the grass up. `clearOfGarage` keeps tufts, flowers and bushes off the garage and its apron. No tree moved. `HOUSE_FOCUS` is pinned to its old x, so the home view and the cutaway are unchanged.
 
-## The truck's scale
+## The sign
 
-The model is authored at true scale: 5.9 m bumper to bumper, 1.97 m tall and 2.40 m wide at the mirrors. True scale cannot fit a house whose walls are 1.95 m tall. The truck is shown at 0.82, which is the largest scale the grown garage can take:
+- A 0.9 × 0.24 m plate centred on the door, 1.2 m above the floor, just proud of the slats.
+- Painted on a canvas in the site's tokens (design/system.md): `#09090b` plate, an emerald `#10b981` hairline, "COMING SOON" in `#fafafa` monospace.
+- At night the lettering glows softly (emissive 0.45) next to the garage lantern. It is off by day and when the master power is off (`comingSoonGlow`).
+- It belongs to the garage front's cutaway group, so it fades with the wall and the door.
 
-- Size at that scale: 4.9 m long, 1.62 m tall, 1.97 m at the mirrors.
-- Door width: the mirrors clear the 2.08 m door by 5 cm on each side.
-- Door head: 0.16 m above the roof.
-- Depth: the nose stops 0.25 m before the door.
+## The close-up and the card
 
-A scale step of 0.02 more no longer fits.
-
-## Close-up
-
-- **Eye:** 25° off the nose toward the left yard, 6.6 m out, 1.1 m above the garage floor. That is about bonnet height, so the shot is low.
-- **Lens:** fov 34. The whole truck sits left of the card at 1100 to 1920 px wide.
-- **Reveal:** while the shot plays, the garage's front wall (with its corner post, lantern and roller door), its left wall and its roof dissolve (`TRUCK_REVEAL`).
-- **Move:** the shared cinematic move (`cinematic.ts`), the same for the coffee mug, the keyboard, Cherry, the sign and the truck:
-  - It starts at the pose the camera is drawn at: the room, another close-up, or a move still under way. It never cuts to the home view first.
-  - About 3.8 s in and 3 s out, on a quintic ease that starts and lands at rest.
-  - A small sideways bow, half the old one. The lens change runs over the whole move.
-  - Closing before the move in has finished goes straight back from where the camera is.
-  - Reduced motion cuts.
-
-## Detailing bay
-
-- **Ceiling grid:** a honeycomb LED grid hangs 1.88 m above the floor. It is 133 tubes plus a frame, in one draw with the side bars and the floor strip.
-- **Side bars:** two low LED bars run along the side walls, 0.62 m above the floor and under the window sills.
-- **Floor strip:** a thin LED outline on the floor, 8 cm round the truck.
-- **Light colour:** daylight white, about 6000 K.
-- **Spots:** two from the ceiling and two from the side bars, all decay 0 and no shadows. Each spot's cutoff stops short of the main room and the yard. Area lights are not used, for the same reason as in `lights.ts`.
-
-## Showroom light in the close-up
-
-The close-up dissolves the roof and two walls, and the bay's own spots then put almost nothing on the body (under 1 lx). So the close-up adds a showroom set lit like the display cases (T14).
-
-| Light | Where | Strength |
-| --- | --- | --- |
-| Key | High off the front-left corner, the camera's side, penumbra 0.8 | 38 |
-| Two uplights | At the floor past the dissolved left wall, under the front and back doors | 35 each |
-| Front uplight | On the apron, under the grille | 30 |
-| Top light | Over the bonnet from the right wall, every ray heading away from the main room | 37 |
-| Rim | Behind and above on the right, the camera's far side | 6 |
-
-All of them are spots with decay 0 and no shadows. None lights any point inside the main room; a test samples the whole room every 10 cm.
-
-The paint's reflections also rise to 0.6 in the close-up, the way the cases boost theirs at night (`garageTruckEnvIntensity`). Without that, the black paint shows only as a flat silhouette.
-
-On the truck's real surfaces, measured from the GLB:
-
-| | Average | Range |
-| --- | --- | --- |
-| Left flank | 26.8 lx | 21.7 to 33.2 |
-| Bonnet | 26.3 lx | 21.7 to 29.2 |
-| Front | 26.5 lx | 22.1 to 29.2 |
-| Floor, brightest point | 18.6 lx | |
-
-The display cases put about 23 lx on their items.
-
-| When | Bay | Showroom set and reflections | Door |
-| --- | --- | --- | --- |
-| Truck close-up | Full, at any hour | On | Up |
-| Night, 18:00 to 05:59 | 0.45 | Off | Rolls down |
-| Day | Off | Off | Up |
-| Master power off | Off, like the display cases | Off | Unchanged |
-
-The lights and the reflections ramp in about 0.8 s, and the door rolls in about 1.5 s. Reduced motion jumps straight to the end.
-
-## Rebuild the model
-
-```sh
-cp ~/Downloads/ford_f150_raptor.glb node_modules/.cache/world/dream-truck-source/ford-f150-raptor-original.glb
-GLTF_TRANSFORM_CLI=$(cat /tmp/gltfcli-path) node scripts/prepare-truck.mjs
-```
-
-The command checks the source's sha256 before it builds. The output is deterministic. When the bytes change, update the `dream-truck.glb` entry in `credits.json`.
+- The shot looks at the middle of the door from 5.5 m out in the front yard, 15 degrees off its left and 4 degrees down, with a 34 degree lens. Nothing dissolves.
+- It uses the shared cinematic move: it starts from wherever the camera is, takes 3.8 s in and 3 s out, and reduced motion cuts straight to the shot. With the card open, the shot slides so the door stays left of the card.
+- The card is in the same family as Cherry's and the sign's. It has the kicker "GARAGE", the title "Coming soon", one line ("Something special will park here soon.") and "Back to room", which gets focus when the card opens.

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import {
   GUIDE,
@@ -22,7 +22,6 @@ import {
   clearOfGarage,
   GARAGE_DOOR,
   GARAGE_GROUNDS,
-  GARAGE_INTERIOR,
 } from "../../src/lib/world/garage.ts";
 import {
   clearOfGarden,
@@ -40,15 +39,18 @@ import {
 } from "../../src/lib/world/house.ts";
 import { ISLAND } from "../../src/lib/world/island.ts";
 import { islandLayout, KIND_SPECS } from "../../src/lib/world/layout.ts";
+import { nightLightsOn } from "../../src/lib/world/lights.ts";
+import * as truckModule from "../../src/lib/world/truck.ts";
 import {
-  TRUCK,
-  TRUCK_HITBOX,
-  TRUCK_MODEL,
-  TRUCK_STORY,
-  truckBox,
+  COMING_SOON_SIGN,
+  comingSoonGlow,
+  GARAGE_DOOR_FACE,
+  GARAGE_DOOR_HITBOX,
+  GARAGE_STORY,
+  garageDoorInSight,
 } from "../../src/lib/world/truck.ts";
+import * as shotModule from "../../src/lib/world/truck-shot.ts";
 import {
-  TRUCK_REVEAL,
   TRUCK_SHOT,
   TRUCK_START,
   TRUCK_VIEW,
@@ -57,7 +59,6 @@ import {
   truckShotProgress,
   truckShotShift,
 } from "../../src/lib/world/truck-shot.ts";
-import { glbInfo } from "./glb.ts";
 
 type Vec3 = [number, number, number];
 const EPS = 1e-6;
@@ -74,25 +75,7 @@ const FLOWERS = clearOfGarage(
   0.06,
 );
 
-describe("dream truck model (dream-truck T1)", () => {
-  it("ships one meshopt GLB under 5 MB with 30-50k triangles", () => {
-    const info = glbInfo(TRUCK_MODEL.url.replace("/world/", ""));
-    assert.ok(info.bytes <= 5_000_000, `${info.bytes} bytes`);
-    assert.ok(info.triangles >= 30_000 && info.triangles <= 50_000);
-    assert.ok(info.extensions.includes("EXT_meshopt_compression"));
-    assert.ok(info.primitives <= 32, `${info.primitives} draws`);
-  });
-
-  it("is authored at true scale: 5.9 m bumper to bumper, about 2 m tall", () => {
-    const [width, height, length] = TRUCK_MODEL.size;
-    assert.ok(Math.abs(TRUCK_MODEL.body - 5.9) < 0.01);
-    assert.ok(length > 5.9 && length < 6.1, "plus the tow hitch");
-    assert.ok(height > 1.9 && height < 2.05);
-    assert.ok(width > 2.2 && width < 2.5, "mirrors included");
-  });
-});
-
-describe("grown garage (dream-truck T1)", () => {
+describe("grown garage (dream-truck T1, kept in T4)", () => {
   it("grows toward true scale, no taller than the main house", () => {
     assert.deepEqual(
       { x0: G.x0, x1: G.x1, z0: G.z0, z1: G.z1, height: G.height },
@@ -102,7 +85,7 @@ describe("grown garage (dream-truck T1)", () => {
     assert.equal(G.z0, HOUSE.main.z0, "back flush with the house");
   });
 
-  it("opens its door wide and high: no panel fills the opening", () => {
+  it("keeps its door opening wide and high; the roller door is its own mesh", () => {
     const front = WALLS.find((wall) => wall.id === "garage-front");
     const door = front?.openings.find((o) => o.kind === "garage");
     assert.ok(door);
@@ -199,51 +182,6 @@ describe("grown garage (dream-truck T1)", () => {
   });
 });
 
-describe("the truck parked in the garage", () => {
-  const box = truckBox();
-
-  it("is scaled to the largest size the grown garage takes", () => {
-    assert.equal(TRUCK.scale, 0.82);
-    const [width, height, length] = TRUCK_MODEL.size;
-    const door = GARAGE_DOOR.u1 - GARAGE_DOOR.u0;
-    const depth = GARAGE_INTERIOR.z1 - GARAGE_INTERIOR.z0;
-    const fits = (s: number) =>
-      height * s < GARAGE_DOOR.v1 - 0.1 &&
-      width * s < door - 0.08 &&
-      length * s < depth - 0.3;
-    assert.ok(fits(TRUCK.scale));
-    // A step bigger would not fit through the door or before it.
-    assert.ok(!fits(TRUCK.scale + 0.02));
-  });
-
-  it("stands inside, wheels on the floor, nose out to the open door", () => {
-    assert.equal(TRUCK.rotationY, 0, "the model's nose looks down +z");
-    assert.ok(Math.abs(box.y0 - HOUSE.floorY) < 0.01);
-    assert.ok(box.x0 > GARAGE_INTERIOR.x0 + 0.1, "left");
-    assert.ok(box.x1 < GARAGE_INTERIOR.x1 - 0.1, "right");
-    assert.ok(box.z0 > GARAGE_INTERIOR.z0 + 0.1, "back");
-    assert.ok(box.z1 < GARAGE_INTERIOR.z1 - 0.2, "front");
-    assert.ok(box.z1 > GARAGE_INTERIOR.z1 - 0.4, "nose by the door");
-  });
-
-  it("drives straight out through the door", () => {
-    const mid = (GARAGE_DOOR.u0 + GARAGE_DOOR.u1) / 2;
-    assert.ok(Math.abs((box.x0 + box.x1) / 2 - mid) < 0.01);
-    assert.ok(box.x0 > GARAGE_DOOR.u0 && box.x1 < GARAGE_DOOR.u1);
-  });
-
-  it("clicks on a box around the whole truck", () => {
-    const [x, y, z] = TRUCK_HITBOX.center;
-    const [w, h, d] = TRUCK_HITBOX.size;
-    assert.ok(Math.abs(x - (box.x0 + box.x1) / 2) < 0.01);
-    assert.ok(Math.abs(y - (box.y0 + box.y1) / 2) < 0.01);
-    assert.ok(Math.abs(z - (box.z0 + box.z1) / 2) < 0.01);
-    assert.ok(Math.abs(w - (box.x1 - box.x0)) < 0.01);
-    assert.ok(Math.abs(h - (box.y1 - box.y0)) < 0.01);
-    assert.ok(Math.abs(d - (box.z1 - box.z0)) < 0.01);
-  });
-});
-
 /** NDC x, y and depth of `p` seen from `pose` at `aspect`. */
 function project(
   pose: { eye: Vec3; target: Vec3; fov: number },
@@ -271,12 +209,129 @@ function project(
   };
 }
 
-describe("dream truck close-up (truck-shot.ts)", () => {
-  const box = truckBox();
+describe("no truck in the garage (dream-truck T4)", () => {
+  it("loads no dream-truck model anywhere and ships none", () => {
+    assert.equal("TRUCK_MODEL" in truckModule, false);
+    assert.equal("truckBox" in truckModule, false);
+    const files = (dir: string): string[] =>
+      readdirSync(new URL(`../../${dir}`, import.meta.url), {
+        recursive: true,
+        withFileTypes: true,
+      })
+        .filter((entry) => entry.isFile())
+        .map((entry) => `${entry.parentPath}/${entry.name}`);
+    for (const file of files("src"))
+      assert.doesNotMatch(readFileSync(file, "utf8"), /dream-truck\.glb/, file);
+    assert.doesNotMatch(source("scripts/prepare-world.py"), /dream-truck/);
+    assert.doesNotMatch(source("public/world/credits.json"), /dream-truck/);
+    assert.equal(
+      existsSync(
+        new URL("../../public/world/models/dream-truck.glb", import.meta.url),
+      ),
+      false,
+    );
+  });
+
+  it("draws no truck from the scene: the door takes the click", () => {
+    const truck = source("src/components/world/Truck.tsx");
+    assert.doesNotMatch(truck, /useLoader|GLTFLoader|<primitive/);
+    assert.match(truck, /GARAGE_DOOR_HITBOX/);
+    assert.match(truck, /onInspect\?\.\("truck"\)/);
+    assert.match(truck, /event\.stopPropagation\(\)/);
+    const scene = source("src/components/world/WorldScene.tsx");
+    assert.match(scene, /<Truck\b/);
+    assert.match(
+      scene,
+      /truck: \{\s*shotAt: truckShotAt,\s*leaveAt: truckLeaveAt,\s*progress: truckShotProgress,\s*shift: truckShotShift,?\s*\}/,
+    );
+    assert.match(scene, /clearOfGarage\(/);
+  });
+});
+
+describe("coming soon on the closed garage door (dream-truck T4)", () => {
+  const front = WALLS.find((wall) => wall.id === "garage-front");
+
+  it("faces the yard on the door's outer face", () => {
+    assert.ok(front);
+    const [x, y, z] = GARAGE_DOOR_FACE.center;
+    assert.ok(Math.abs(x - (GARAGE_DOOR.u0 + GARAGE_DOOR.u1) / 2) < EPS);
+    assert.ok(Math.abs(y - (HOUSE.floorY + GARAGE_DOOR.v1 / 2)) < EPS);
+    assert.ok(z > front.at && z < front.at + W, "just proud of the slats");
+    assert.ok(
+      Math.abs(GARAGE_DOOR_FACE.width - (GARAGE_DOOR.u1 - GARAGE_DOOR.u0)) <
+        EPS,
+    );
+    assert.ok(Math.abs(GARAGE_DOOR_FACE.height - GARAGE_DOOR.v1) < EPS);
+  });
+
+  it("paints a small COMING SOON sign on it, in the site's tokens", () => {
+    assert.equal(COMING_SOON_SIGN.text, "COMING SOON");
+    const [w, h] = COMING_SOON_SIGN.size;
+    assert.ok(w < GARAGE_DOOR_FACE.width * 0.6 && w > 0.6, `small: ${w}`);
+    assert.ok(h < 0.4 && h > 0.15);
+    const [cx, cy, cz] = COMING_SOON_SIGN.center;
+    const [dx] = GARAGE_DOOR_FACE.center;
+    assert.ok(Math.abs(cx - dx) < EPS, "centred on the door");
+    assert.ok(
+      cy - h / 2 > HOUSE.floorY + 0.5 &&
+        cy + h / 2 < HOUSE.floorY + GARAGE_DOOR.v1,
+    );
+    assert.ok(cz > GARAGE_DOOR_FACE.center[2], "over the slats");
+    const [px, py] = COMING_SOON_SIGN.canvas;
+    assert.ok(Math.abs(px / py - w / h) < 0.01, "canvas matches the plate");
+    // design/system.md: background, foreground and the emerald accent.
+    assert.equal(COMING_SOON_SIGN.plate, "#09090b");
+    assert.equal(COMING_SOON_SIGN.ink, "#fafafa");
+    assert.equal(COMING_SOON_SIGN.accent, "#10b981");
+  });
+
+  it("glows softly at night, under the garage lantern, and not by day", () => {
+    for (let hours = 0; hours < 24; hours += 0.5) {
+      const glow = comingSoonGlow(hours, true);
+      if (nightLightsOn(hours)) assert.ok(glow > 0 && glow <= 0.6, `${hours}`);
+      else assert.equal(glow, 0, `${hours}`);
+      assert.equal(comingSoonGlow(hours, false), 0, "master power off");
+    }
+    const [x, , z] = LANTERN_FIXTURES.lanternGarage.position;
+    assert.ok(
+      Math.abs(z - COMING_SOON_SIGN.center[2]) < 0.4,
+      "the lantern is by the door",
+    );
+    assert.ok(x < GARAGE_DOOR.u0 + 0.5);
+  });
+
+  it("is drawn with the door, in the garage front's cutaway group", () => {
+    const house = source("src/components/world/House.tsx");
+    assert.match(house, /COMING_SOON_SIGN/);
+    assert.match(house, /CanvasTexture/);
+    assert.match(house, /emissiveIntensity = glow/);
+    assert.match(house, /front\?\.object\.add\(sign\)/);
+    const scene = source("src/components/world/WorldScene.tsx");
+    assert.match(scene, /comingSoonGlow\(hours, power\)/);
+    assert.equal(scene.match(/glow=\{doorGlow\}/g)?.length, 2, "both houses");
+  });
+
+  it("takes the click on the closed door, seen from the front", () => {
+    const [x, y, z] = GARAGE_DOOR_HITBOX.center;
+    const [w, h, d] = GARAGE_DOOR_HITBOX.size;
+    assert.ok(Math.abs(x - GARAGE_DOOR_FACE.center[0]) < EPS);
+    assert.ok(Math.abs(y - GARAGE_DOOR_FACE.center[1]) < EPS);
+    assert.ok(Math.abs(w - GARAGE_DOOR_FACE.width) < EPS);
+    assert.ok(Math.abs(h - GARAGE_DOOR_FACE.height) < EPS);
+    assert.ok(d > 0 && d < 0.3);
+    assert.ok(z - d / 2 < GARAGE_DOOR_FACE.center[2]);
+    assert.equal(garageDoorInSight([-2.5, 1.5, 7]), true, "the front yard");
+    assert.equal(garageDoorInSight([-2.5, 1.5, -6]), false, "behind the house");
+  });
+});
+
+describe("garage close-up (truck-shot.ts, dream-truck T4)", () => {
+  const { x0, x1 } = { x0: GARAGE_DOOR.u0, x1: GARAGE_DOOR.u1 };
+  const zFace = GARAGE_DOOR_FACE.center[2];
   const corners: Vec3[] = [];
-  for (const x of [box.x0, box.x1])
-    for (const y of [box.y0, box.y1])
-      for (const z of [box.z0, box.z1]) corners.push([x, y, z]);
+  for (const x of [x0, x1])
+    for (const y of [HOUSE.floorY, HOUSE.floorY + GARAGE_DOOR.v1])
+      corners.push([x, y, zFace]);
   const aspect = 1440 / 900;
   const home = () => ({
     eye: poseToPosition(guidePose(aspect)) as Vec3,
@@ -287,28 +342,27 @@ describe("dream truck close-up (truck-shot.ts)", () => {
   it("times like the other cinematic shots; reduced motion cuts", () => {
     assert.equal(TRUCK_SHOT.duration, CINEMATIC.duration);
     assert.equal(TRUCK_SHOT.leaveDuration, CINEMATIC.leaveDuration);
-    assert.ok(TRUCK_SHOT.leaveDuration < TRUCK_SHOT.duration);
     assert.equal(truckShotProgress(0, true), 1);
     assert.equal(truckShotProgress(0, true, true), 1);
     assert.equal(truckShotProgress(TRUCK_SHOT.duration / 2, false), 0.5);
   });
 
-  it("ends low, three-quarters off the nose, from the open front-left yard", () => {
+  it("aims at the closed door from the front yard, a little off its left", () => {
+    assert.deepEqual(TRUCK_SHOT.target, GARAGE_DOOR_FACE.center);
     const end = truckShotAt(1, home(), 0);
-    const [cx, , cz] = TRUCK_SHOT.target;
-    const out = [end.eye[0] - cx, end.eye[2] - cz];
-    // The nose looks down +z; the lens stands in front, on the -x side.
-    assert.ok(out[0] < 0 && out[1] > 0);
+    const out = [end.eye[0] - TRUCK_SHOT.target[0], end.eye[2] - zFace];
+    assert.ok(out[1] > 3, "out in the yard");
     const angle = (Math.atan2(-out[0], out[1]) * 180) / Math.PI;
-    assert.ok(angle > 20 && angle < 35, `${angle} degrees off the nose`);
+    assert.ok(angle >= 0 && angle < 30, `${angle} degrees off the door`);
     const height = end.eye[1] - HOUSE.floorY;
-    assert.ok(height > 0.8 && height < 1.4, `low: ${height} m`);
-    assert.ok(end.eye[1] < box.y1, "below the roof line");
-    assert.equal(end.fov, TRUCK_SHOT.fov);
-    assert.ok(end.eye[2] > G.z1 + 1, "outside, in front of the garage");
+    assert.ok(height > 0.8 && height < 2, `${height} m up`);
   });
 
-  it("frames the whole truck left of the card", () => {
+  it("dissolves nothing: no wall reveal for a closed door", () => {
+    assert.equal("TRUCK_REVEAL" in shotModule, false);
+  });
+
+  it("frames the whole door left of the card", () => {
     for (const [width, height] of [
       [1440, 900],
       [1280, 800],
@@ -319,30 +373,29 @@ describe("dream truck close-up (truck-shot.ts)", () => {
       const shift = truckShotShift(width, ratio);
       assert.ok(shift > 0);
       const end = truckShotAt(1, home(), shift);
-      const points = corners.map((p) => project(end, p, ratio));
       const card =
         width <= STORY_CARD.narrowBelow
           ? STORY_CARD.narrowWidth + STORY_CARD.narrowInset
           : STORY_CARD.width + STORY_CARD.inset;
       const cardLeft = 1 - (2 * card) / width;
+      const points = corners.map((p) => project(end, p, ratio));
       for (const p of points) {
         assert.ok(p.depth > 0.5);
         assert.ok(p.x < cardLeft, `${width}: under the card ${p.x}`);
         assert.ok(p.x > -1 && Math.abs(p.y) < 1, `${width}: cut off`);
       }
       const ys = points.map((p) => p.y);
-      assert.ok((Math.max(...ys) - Math.min(...ys)) / 2 > 0.4, `${width}`);
+      assert.ok((Math.max(...ys) - Math.min(...ys)) / 2 > 0.3, `${width}`);
     }
     assert.equal(truckShotShift(STORY_CARD.stackBelow, 0.6), 0);
   });
 
-  it("sees the truck past every tree, bush and rock left standing", () => {
+  it("sees the door past every tree, bush and rock left standing", () => {
     const end = truckShotAt(1, home(), truckShotShift(1440, aspect));
-    const sights: Vec3[] = [TRUCK_SHOT.target, ...corners];
     for (const item of LAYOUT) {
       const reach = KIND_SPECS[item.kind].radius * item.scale;
       const tall = KIND_SPECS[item.kind].height * item.scale;
-      for (const sight of sights)
+      for (const sight of [TRUCK_SHOT.target, ...corners])
         for (let s = 0.02; s < 1; s += 0.02) {
           const p = end.eye.map((v, i) => v + (sight[i] - v) * s);
           if (p[1] > tall) continue;
@@ -355,24 +408,11 @@ describe("dream truck close-up (truck-shot.ts)", () => {
     }
   });
 
-  it("dissolves the garage's front, left wall and roof while it plays", () => {
-    assert.deepEqual([...TRUCK_REVEAL].sort(), [
-      "garage-front",
-      "garage-left",
-      "garage-roof",
-    ]);
-  });
-
-  it("dollies in on an eased arc and leaves the same way", () => {
+  it("starts from the live pose on an eased arc and leaves the same way", () => {
     const from = home();
     const start = truckShotAt(0, from, 0);
     assert.deepEqual(start.eye, from.eye);
     const end = truckShotAt(1, from, 0);
-    const mid = truckShotAt(0.5, from, 0);
-    const line = start.eye.map((v, i) => (v + end.eye[i]) / 2);
-    assert.ok(Math.hypot(mid.eye[0] - line[0], mid.eye[2] - line[2]) > 0.05);
-    for (let t = 0; t <= 1; t += 0.05)
-      assert.ok(truckShotAt(t, from, 0).eye[1] > 0.4);
     assert.deepEqual(truckLeaveAt(0, from, 0), end);
     assert.deepEqual(truckLeaveAt(1, from, 0), start);
     assert.deepEqual(truckShotAt(0).eye, TRUCK_START.eye);
@@ -391,63 +431,40 @@ describe("dream truck close-up (truck-shot.ts)", () => {
   });
 });
 
-describe("dream truck card", () => {
-  it("tells the owner's story in English, with sourced stats only", () => {
-    assert.equal(TRUCK_STORY.kicker, "GARAGE · DREAM TRUCK");
-    assert.equal(TRUCK_STORY.title, "Ford F-150 Raptor");
-    assert.deepEqual(TRUCK_STORY.story, [
-      "This is my dream truck. One day it will be parked in my real garage; for now it lives here, in the world I built.",
-    ]);
-    assert.ok(TRUCK_STORY.stats.length >= 2 && TRUCK_STORY.stats.length <= 3);
-    for (const stat of TRUCK_STORY.stats)
-      assert.ok(stat.label.trim() && stat.value.trim());
-    // The stats' source is cited where they are written.
-    assert.match(source("src/lib/world/truck.ts"), /Source: Ford/);
+describe("garage card (dream-truck T4)", () => {
+  it("says coming soon, in English, nothing else", () => {
+    assert.deepEqual(GARAGE_STORY, {
+      kicker: "GARAGE",
+      title: "Coming soon",
+      line: "Something special will park here soon.",
+    });
   });
 
-  it("renders in the card family, Back to room focused, no images", () => {
+  it("renders in the card family, Back to room focused, no truck copy", () => {
     const card = source("src/components/world/TruckCard.tsx");
-    assert.match(card, /className="case-story truck-card"/);
+    assert.match(card, /className="case-story garage-card"/);
     assert.match(card, /story\.kicker/);
-    assert.match(card, /story\.stats\.map/);
+    assert.match(card, /story\.title/);
+    assert.match(card, /story\.line/);
     assert.match(card, /Back to room/);
     assert.match(card, /back\.current\?\.focus\(/);
     assert.match(card, /data-state=\{state\}/);
     assert.match(card, /inert=\{state === "leaving"\}/);
     assert.match(card, /onAnimationEnd=\{onMotionEnd\}/);
-    assert.doesNotMatch(card, /<img\b/);
-    const css = source("src/components/world/truck-card.css");
-    assert.match(css, /@media \(max-width: 700px\)/);
-  });
-});
-
-describe("dream truck wiring", () => {
-  it("parks the truck from the scene, clickable, with the garage revealed", () => {
-    const truck = source("src/components/world/Truck.tsx");
-    assert.match(truck, /TRUCK_MODEL\.url/);
-    assert.match(truck, /setMeshoptDecoder/);
-    assert.match(truck, /onInspect\?\.\("truck"\)/);
-    assert.match(truck, /event\.stopPropagation\(\)/);
-    const scene = source("src/components/world/WorldScene.tsx");
-    assert.match(scene, /<Truck\b/);
-    assert.match(
-      scene,
-      /truck: \{\s*shotAt: truckShotAt,\s*leaveAt: truckLeaveAt,\s*progress: truckShotProgress,\s*shift: truckShotShift,?\s*\}/,
+    assert.doesNotMatch(card, /<img\b|stats|(className|id)="[^"]*truck/);
+    assert.doesNotMatch(
+      source("src/components/world/truck-card.css"),
+      /\.truck-/,
     );
-    assert.match(scene, /clearOfGarage\(/);
-    assert.match(scene, /TRUCK_REVEAL/);
   });
 
-  it("opens the card with the shared motion, framed left of it", () => {
+  it("opens with the shared motion, framed left of it", () => {
     const app = source("src/components/world/WorldApp.tsx");
     assert.match(
       app,
-      /useCardPresence\(\s*cardsShown && galleryCase === "truck" \? "truck" : null,\s*TRUCK_STORY,\s*reducedMotion,?\s*\)/,
+      /useCardPresence\(\s*cardsShown && galleryCase === "truck" \? "truck" : null,\s*GARAGE_STORY,\s*reducedMotion,?\s*\)/,
     );
-    assert.match(
-      app,
-      /truckCards\.map\(\(card\) => \(\s*<TruckCard\s+key=\{card\.key\}[\s\S]*?state=\{card\.state\}\s*onMotionEnd=\{card\.onMotionEnd\}/,
-    );
-    assert.match(app, /galleryCase === "truck" \|\|/);
+    assert.match(app, /<TruckCard\s+key=\{card\.key\}/);
+    assert.doesNotMatch(app, /TRUCK_STORY/);
   });
 });

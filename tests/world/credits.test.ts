@@ -16,7 +16,6 @@ import { DISPLAY_MODEL_FILES } from "../../src/lib/world/display-cases.ts";
 import { KATANA_MODEL } from "../../src/lib/world/katana-shelf.ts";
 import { MODEL_FILES, PROP_FILES } from "../../src/lib/world/models.ts";
 import { BRUNO_CHAIR, BRUNO_MAPS } from "../../src/lib/world/setup.ts";
-import { TRUCK_MODEL } from "../../src/lib/world/truck.ts";
 import { TV_COVERS } from "../../src/lib/world/tv-covers.ts";
 import {
   creditSections,
@@ -82,7 +81,6 @@ describe("credits.json (S4: every author is credited, even CC0)", () => {
         ...DISPLAY_MODEL_FILES,
         KATANA_MODEL.url,
         CHERRY_MODEL.url,
-        TRUCK_MODEL.url,
       ]
         .map((url) => url.replace("/world/", ""))
         .sort(),
@@ -101,31 +99,30 @@ describe("credits.json (S4: every author is credited, even CC0)", () => {
     }
   });
 
-  it("accepts CC BY-NC 4.0 only for the owner's dream truck (dream-truck S2)", () => {
-    const truck = credits().assets.find(
-      (entry) => entry.file === "models/dream-truck.glb",
+  it("ships no non-commercial asset: the dream truck is gone (dream-truck T4)", () => {
+    const data = credits();
+    for (const entry of [...data.packs, ...data.assets])
+      assert.doesNotMatch(
+        entry.license,
+        /NC/,
+        JSON.stringify(entry).slice(0, 80),
+      );
+    assert.doesNotMatch(
+      readFileSync(
+        new URL("../../src/lib/world/credits.ts", import.meta.url),
+        "utf8",
+      ),
+      /NONCOMMERCIAL|ford-f150/,
     );
-    assert.ok(truck, "credited");
-    assert.equal(truck.license, "CC-BY-NC-4.0");
-    assert.ok(licenseAllowed(truck));
-    assert.match(
-      truck.asset,
-      /Ford and Raptor are trademarks of Ford Motor Company/,
-    );
-    assert.match(
-      (truck as typeof truck & { note?: string }).note ?? "",
-      /no affiliation/,
-    );
-    // Any other non-commercial asset is still refused.
+    // Even the old truck's own source is refused now.
     assert.equal(
       licenseAllowed({
-        ...truck,
-        source: "https://sketchfab.com/3d-models/another-car-0123456789abcdef",
+        license: "CC-BY-NC-4.0",
+        author: "Outlaw Games",
+        source:
+          "https://sketchfab.com/3d-models/ford-f150-raptor-5bde9684bf6d40e0902ee8e482ad1063",
+        sourceFiles: [],
       }),
-      false,
-    );
-    assert.equal(
-      licenseAllowed({ ...truck, sourceFiles: [], license: "CC-BY-NC-SA-4.0" }),
       false,
     );
   });
