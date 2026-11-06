@@ -94,7 +94,7 @@ describe("case story card (collection-display-models T10)", () => {
 
   it("ships only real media files, never placeholder slots", () => {
     for (const story of Object.values(CASE_STORIES)) {
-      for (const media of story?.media ?? []) {
+      for (const media of story && "media" in story ? story.media : []) {
         assert.match(media.src, /^\/world\/stories\//);
         assert.ok(
           existsSync(new URL(`../../public${media.src}`, import.meta.url)),
@@ -162,10 +162,10 @@ describe("case story card (collection-display-models T10)", () => {
     const app = source("src/components/world/WorldApp.tsx");
     const railTag = app.match(/<CollectionRail[\s\S]*?\/>/)?.[0] ?? "";
     assert.match(railTag, /\bcompact\b/);
-    assert.doesNotMatch(railTag, /compact=\{/, "compact for all three cases");
+    assert.doesNotMatch(railTag, /compact=\{/, "compact for every item");
     const rail = source("src/components/world/CollectionRail.tsx");
     assert.match(rail, /compact \? \(/);
-    assert.match(rail, /03 OBJECTS/);
+    assert.match(rail, /04 OBJECTS/);
     assert.match(rail, /collection-rail-compact/);
     const css = source("src/components/world/collection-rail.css");
     assert.match(css, /\.collection-rail-compact \{/);

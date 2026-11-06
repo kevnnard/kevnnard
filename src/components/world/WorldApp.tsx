@@ -22,7 +22,7 @@ import {
 import { cn } from "@/lib/utils";
 import { AmbientSound } from "@/lib/world/ambient-sound.ts";
 import { CASE_STORIES } from "@/lib/world/case-stories.ts";
-import type { DisplayItemId } from "@/lib/world/display-cases.ts";
+import type { GalleryItemId } from "@/lib/world/display-cases.ts";
 import {
   DEFAULT_LIGHTS,
   type LightId,
@@ -217,12 +217,12 @@ export default function WorldApp() {
   }, [loading]);
   const menuButton = useRef<HTMLElement>(null);
   const [home, setHome] = useState(0);
-  const [galleryCase, setGalleryCase] = useState<DisplayItemId | null>(null);
+  const [galleryCase, setGalleryCase] = useState<GalleryItemId | null>(null);
   // The inspected case's story card (T10); null when it has none.
   const caseStory = galleryCase ? CASE_STORIES[galleryCase] : null;
   // Hidden only for the case it was hidden on, so it opens again on every
   // other case; while open the camera frames left of it (T12).
-  const [hiddenStory, setHiddenStory] = useState<DisplayItemId | null>(null);
+  const [hiddenStory, setHiddenStory] = useState<GalleryItemId | null>(null);
   const storyOpen = hiddenStory === null || hiddenStory !== galleryCase;
   const setStoryOpen = useCallback(
     (open: boolean) => setHiddenStory(open ? null : galleryCase),

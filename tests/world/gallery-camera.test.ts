@@ -190,7 +190,7 @@ describe("story framing (collection-display-models T12)", () => {
     );
     assert.match(
       scene,
-      /galleryCaseFocus\(\s*galleryCase,\s*galleryStory \? galleryStoryShift\(viewportWidth, aspect\) : 0,?\s*\)/,
+      /galleryCaseFocus\(\s*galleryCase,\s*galleryStory\s*\?\s*galleryStoryShift\(viewportWidth, aspect, galleryCase\)\s*:\s*0,?\s*\)/,
     );
   });
 });

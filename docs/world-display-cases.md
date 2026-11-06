@@ -84,3 +84,24 @@ GLTF_TRANSFORM_CLI=<cached @gltf-transform/cli 4.5.1 package dir> node scripts/p
 5. Optimize with the CLI (meshopt, 2,048 px WebP, `--join false`) and ship the same bytes. The script also renders the staged GLB through each fitted camera and writes photo/render pairs (`compare-*.png`) to the cache for review.
 
 `public/world/credits.json` has an entry for each downloaded mesh. Each entry includes the author, the license, an official source URL, the hash of the shipped file and the hash of the source file. The license evidence for the Jordans comes from the SceneView manifest pinned at commit `0b96f50`. For the football helmet it is the attribution Sketchfab embeds in the download; for the off-road helmet it is the CC Attribution license on the model page, recorded at download, because the OBJ archive carries no license file. The football helmet's `graphicReference` names the Rams photo, which is neither shipped nor licensed. The off-road helmet's names the Motocard product photos: their pixels are baked into the shipped texture, but they are third-party photos and not covered by the mesh's CC BY license. `scripts/prepare-world.py` preserves the independently sourced display-mesh entries (both helmets and the shoes) when it regenerates base-world credits; it does not download or re-optimize them.
+
+## Katana wall shelf
+
+The katanas sit on a wall shelf, not in a case (katana-wall-shelf T3-T5). The shelf hangs on the room side of the window wall (`main-right`, x 3.91), centred on the free stretch between the back corner and the window (z -1.605, between -2.61 and -0.6). It is a lacquered black board, 1.3 m long and 0.28 m deep, with a brass inlay along its front edge and two black steel brackets. Its top is 1.33 m above the house floor, so the katanas' middle sits at eye height (about 1.58 m). The shelf stays clear of the TV, the sofa and the sofa lamps. Like the setup and the TV, it lives outside the cutaway groups, so it never fades with its wall.
+
+- **Model:** Mitchell Bekke's "Blossom Katana" ([Sketchfab](https://sketchfab.com/3d-models/blossom-katana-6cff8d381e2948ef9527d3d99e80520c), CC BY 4.0). It is a two-tier tabletop stand holding a drawn katana, a sheathed katana and an empty scabbard. It ships as authored.
+- **Placement:** at runtime the stand is turned so its front faces the room, with the hilts toward the back corner, and scaled uniformly to 1.2 m long, about 0.50 m tall and 0.23 m deep. It rests on the board, 2 cm off the wall (`src/lib/world/katana-shelf.ts`).
+- **Night light:** a slim picture light above the stand holds a warm spot of 2 cd aimed at the katanas' middle. The spot has an angle of 1.1 rad, a penumbra of 0.8 and no shadow map. It lights only at night, like the cases. It is always mounted and runs at zero intensity when off. The katanas' materials get the same night reflections as the cases' items (`displayCaseEnvIntensity`). By day nothing changes.
+- **Inspection:** clicking the shelf enters inspection like a case. It uses the same `galleryCase` state, the hidden header, the compact rail (now four objects) and a story card. The camera looks from the room at the katanas' level, from 2.3 m away and a little toward the sofa, so the whole stand fits left of the card. The katanas stay still: a wall rack does not turn. Clicking the inspected shelf toggles its light.
+- **Story card:** styled like the lo-fi music console: translucent zinc, an emerald kicker and monospace type. It has the same footprint as the case card. It shows only the owner's line about Japanese culture and the credit "3D model by Mitchell Bekke", which links to his Sketchfab profile.
+
+The GLB is derived from the Sketchfab download (13,358,436 bytes, sha256 `9197c171…9a60`), kept at `node_modules/.cache/world/blossom-katana-original.glb`. There is no Blender step:
+
+```text
+GLTF_TRANSFORM_CLI=<cached @gltf-transform/cli 4.5.1 package dir> node scripts/prepare-wall-katana.mjs
+```
+
+1. Check the source hash.
+2. Optimize with the CLI: meshopt geometry, the nine 1,024 px textures re-encoded as WebP at their own size, meshes joined by material (three draws), no simplification and no GPU instancing. The shipped file is 1,957,216 bytes with 122,438 triangles, and two runs give the same bytes.
+
+`public/world/credits.json` credits the stand to Mitchell Bekke under CC BY 4.0, with his profile (`https://sketchfab.com/MitchellBekke`) as the pack's `authorUrl`, so the menu's Credits links his name. `scripts/prepare-world.py` keeps the entry in `gallery_files`.

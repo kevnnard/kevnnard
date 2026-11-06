@@ -10,6 +10,7 @@ import {
   PERMISSION_LICENSE,
 } from "../../src/lib/world/credits.ts";
 import { DISPLAY_MODEL_FILES } from "../../src/lib/world/display-cases.ts";
+import { KATANA_MODEL } from "../../src/lib/world/katana-shelf.ts";
 import { MODEL_FILES, PROP_FILES } from "../../src/lib/world/models.ts";
 import { BRUNO_CHAIR, BRUNO_MAPS } from "../../src/lib/world/setup.ts";
 import { PUBLIC, shippedModels } from "./glb.ts";
@@ -70,6 +71,7 @@ describe("credits.json (S4: every author is credited, even CC0)", () => {
         ...Object.values(MODEL_FILES),
         ...Object.values(PROP_FILES),
         ...DISPLAY_MODEL_FILES,
+        KATANA_MODEL.url,
       ]
         .map((url) => url.replace("/world/", ""))
         .sort(),

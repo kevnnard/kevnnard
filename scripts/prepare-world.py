@@ -738,13 +738,16 @@ def write_credits(credits):
     # The football helmet is Exodusks' SpeedFlex (collection-display-models T7),
     # derived by scripts/prepare-display-football.mjs; the off-road helmet is
     # senoaji's Fox X Supreme helmet (T15), derived by
-    # scripts/prepare-display-offroad-fox.mjs.
+    # scripts/prepare-display-offroad-fox.mjs; the wall katana is Mitchell
+    # Bekke's Blossom Katana (katana-wall-shelf T3), derived by
+    # scripts/prepare-wall-katana.mjs.
     path = OUTPUT / "credits.json"
     if path.exists():
         previous = json.loads(path.read_text(encoding="utf-8"))
         gallery_files = {"models/display-offroad-helmet.glb",
                          "models/display-football-helmet.glb",
-                         "models/display-jordan-1.glb"}
+                         "models/display-jordan-1.glb",
+                         "models/wall-katana.glb"}
         gallery_assets = [asset for asset in previous.get("assets", [])
                           if asset["file"] in gallery_files]
         if gallery_assets:

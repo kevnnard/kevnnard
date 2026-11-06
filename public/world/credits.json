@@ -135,6 +135,19 @@
         "url": "https://sketchfab.com/3d-models/buffalo-bills-helmet-fd471344bf9c4900b8cc0f59fedb8093",
         "quote": "Sketchfab download (GLB), asset extras: \"author\": \"Exodusks (https://sketchfab.com/IwontUseThisAccountLOL)\", \"license\": \"CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)\", \"source\": \"https://sketchfab.com/3d-models/buffalo-bills-helmet-fd471344bf9c4900b8cc0f59fedb8093\", \"title\": \"Buffalo Bills Helmet\"; Creative Commons Attribution 4.0"
       }
+    },
+    {
+      "id": "sketchfab-mitchellbekke-blossom-katana",
+      "pack": "Blossom Katana (Sketchfab)",
+      "author": "Mitchell Bekke",
+      "authorUrl": "https://sketchfab.com/MitchellBekke",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "source": "https://sketchfab.com/3d-models/blossom-katana-6cff8d381e2948ef9527d3d99e80520c",
+      "licenseEvidence": {
+        "url": "https://sketchfab.com/3d-models/blossom-katana-6cff8d381e2948ef9527d3d99e80520c",
+        "quote": "Sketchfab download (GLB, Sketchfab-12.65.0), asset extras: \"author\": \"Mitchell Bekke (https://sketchfab.com/MitchellBekke)\", \"license\": \"CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)\", \"source\": \"https://sketchfab.com/3d-models/blossom-katana-6cff8d381e2948ef9527d3d99e80520c\", \"title\": \"Blossom Katana\"; Creative Commons Attribution 4.0"
+      }
     }
   ],
   "assets": [
@@ -820,6 +833,26 @@
         "url": "https://commons.wikimedia.org/wiki/File:LA_RAMS_Helmet.jpg",
         "note": "Photo of a Los Angeles Rams helmet used only as a visual reference for the horn's path; the photo is not shipped and is not covered by this license. Riddell, SpeedFlex, the Rams and the Bills belong to their owners; no affiliation."
       }
+    },
+    {
+      "file": "models/wall-katana.glb",
+      "asset": "Blossom Katana (a tabletop stand with two katanas and a scabbard)",
+      "pack": "sketchfab-mitchellbekke-blossom-katana",
+      "author": "Mitchell Bekke",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "source": "https://sketchfab.com/3d-models/blossom-katana-6cff8d381e2948ef9527d3d99e80520c",
+      "bytes": 1957216,
+      "sha256": "f2217d4ea9e82ec763f7702a008de3ceb4c1ead946fd8363457e0b908aecc189",
+      "triangles": 122438,
+      "changes": "Shipped as authored (geometry, materials and textures unchanged; no simplification): meshes sharing a material joined, geometry meshopt-compressed and the nine 1024 px textures re-encoded as WebP with glTF-Transform by scripts/prepare-wall-katana.mjs; turned to face the room and scaled to 1.2 m at runtime.",
+      "sourceFiles": [
+        {
+          "url": "https://sketchfab.com/3d-models/blossom-katana-6cff8d381e2948ef9527d3d99e80520c",
+          "bytes": 13358436,
+          "sha256": "9197c171c39c29c4bc8a676f439860e49d5c5457e6dffcc30f9530949bf99a60"
+        }
+      ]
     }
   ],
   "original": [

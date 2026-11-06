@@ -3,9 +3,10 @@ import {
   DISPLAY_CASE,
   DISPLAY_CASES,
   DISPLAY_LIFT,
-  type DisplayItemId,
+  type GalleryItemId,
   ITEM_FLOOR_Y,
 } from "./display-cases.ts";
+import { KATANA_CENTRE, KATANA_EYE_OFFSET } from "./katana-shelf.ts";
 
 /** Eye height above the model's centre: level with it, just over the middle. */
 const EYE_LIFT = 0.05;
@@ -26,6 +27,20 @@ export const STORY_CARD = {
   stackBelow: 700,
 } as const;
 
+/** The inspected model's centre and the eye's offset from it. */
+function galleryView(id: GalleryItemId): { centre: Vec3; offset: Vec3 } {
+  // The katanas on the wall shelf (katana-wall-shelf T5): static, framed
+  // from the room at their own level.
+  if (id === "katana")
+    return { centre: KATANA_CENTRE, offset: KATANA_EYE_OFFSET };
+  const item = DISPLAY_CASES.find((caseItem) => caseItem.id === id);
+  if (!item) throw new RangeError("Unknown display case");
+  const [x, y, z] = item.base;
+  const centre =
+    y + ITEM_FLOOR_Y + DISPLAY_CASE.itemFit.height / 2 + DISPLAY_LIFT.height;
+  return { centre: [x, centre, z], offset: EYE_OFFSET };
+}
+
 /**
  * Only after clicking a case: look from inside the room, over the sofa, at the
  * model's own level (collection-display-models T8), aimed at its centre once
@@ -33,30 +48,26 @@ export const STORY_CARD = {
  * screen right (T12), so the model sits left of an open story card.
  */
 export function galleryCaseFocus(
-  id: DisplayItemId,
+  id: GalleryItemId,
   shift = 0,
 ): {
   position: Vec3;
   target: Vec3;
   fov: number;
 } {
-  const item = DISPLAY_CASES.find((caseItem) => caseItem.id === id);
-  if (!item) throw new RangeError("Unknown display case");
-  const [x, y, z] = item.base;
-  const centre =
-    y + ITEM_FLOOR_Y + DISPLAY_CASE.itemFit.height / 2 + DISPLAY_LIFT.height;
+  const { centre, offset } = galleryView(id);
   // Screen right: the level view direction turned a quarter toward -x.
-  const [vx, , vz] = EYE_OFFSET.map((v) => -v);
+  const [vx, , vz] = offset.map((v) => -v);
   const level = Math.hypot(vx, vz);
   const right = [-vz / level, 0, vx / level];
   const slide = right.map((v) => v * shift);
-  const target: Vec3 = [x + slide[0], centre, z + slide[2]];
+  const target: Vec3 = [centre[0] + slide[0], centre[1], centre[2] + slide[2]];
   return {
     target,
     position: [
-      target[0] + EYE_OFFSET[0],
-      target[1] + EYE_OFFSET[1],
-      target[2] + EYE_OFFSET[2],
+      target[0] + offset[0],
+      target[1] + offset[1],
+      target[2] + offset[2],
     ],
     fov: GUIDE.fov,
   };
@@ -68,13 +79,17 @@ export function galleryCaseFocus(
  * width, in the half-width the view spans at the model. Zero once the card
  * stacks above the model.
  */
-export function galleryStoryShift(width: number, aspect: number): number {
+export function galleryStoryShift(
+  width: number,
+  aspect: number,
+  id: GalleryItemId = "football-helmet",
+): number {
   if (width <= STORY_CARD.stackBelow) return 0;
   const card =
     width <= STORY_CARD.narrowBelow
       ? STORY_CARD.narrowWidth + STORY_CARD.narrowInset
       : STORY_CARD.width + STORY_CARD.inset;
-  const distance = Math.hypot(...EYE_OFFSET);
+  const distance = Math.hypot(...galleryView(id).offset);
   const halfWidth =
     distance * Math.tan(((GUIDE.fov / 2) * Math.PI) / 180) * aspect;
   return (card / width) * halfWidth;

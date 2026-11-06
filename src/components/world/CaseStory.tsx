@@ -1,8 +1,10 @@
 import type {
   CaseStoryPlayer,
   CaseStory as Story,
+  WallStory,
 } from "@/lib/world/case-stories.ts";
 import "./case-story.css";
+import "./katana-story.css";
 
 /** Where each position lines up in the secondary diagram (220 x 96). */
 const SPOTS: Record<string, readonly [number, number][]> = {
@@ -46,12 +48,62 @@ function SecondaryDiagram({ player }: { player: CaseStoryPlayer }) {
 }
 
 /**
+ * The wall katana's card (katana-wall-shelf T5), in the lo-fi console's
+ * look: translucent zinc, emerald kicker, monospace. Same place and width
+ * as the case card, so the camera frames the stand left of it.
+ */
+function WallStoryCard({
+  story,
+  open,
+  onOpenChange,
+}: {
+  story: WallStory;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  if (!open)
+    return (
+      <button
+        type="button"
+        className="katana-story-reopen"
+        onClick={() => onOpenChange(true)}
+      >
+        Show story
+      </button>
+    );
+  return (
+    <article className="katana-story" aria-labelledby="case-story-title">
+      <p className="katana-story-kicker">{story.kicker}</p>
+      <h2 id="case-story-title">{story.title}</h2>
+      <p className="katana-story-lede">{story.lede}</p>
+      <div className="katana-story-actions">
+        <p className="katana-story-credit">
+          {story.credit.text}{" "}
+          <a
+            href={story.credit.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`${story.credit.name} on Sketchfab (opens in a new tab)`}
+          >
+            {story.credit.name}
+          </a>
+        </p>
+        <button type="button" onClick={() => onOpenChange(false)}>
+          Hide story
+        </button>
+      </div>
+    </article>
+  );
+}
+
+/**
  * The side story card beside an inspected display case (collection-display-
  * models T10, T11; design/collection-case-story/01-side-story-card): the
  * team and number up top, the owner's photos or clip when shipped, the
  * position and seasons side by side, a dated timeline, the story and the
  * team link. "Hide story" folds it to a small button so the turning model
- * has the room; WorldApp opens it again on every case.
+ * has the room; WorldApp opens it again on every case. The wall katana's
+ * story takes the lo-fi WallStoryCard instead.
  */
 export default function CaseStory({
   story,
@@ -59,12 +111,16 @@ export default function CaseStory({
   open,
   onOpenChange,
 }: {
-  story: Story;
+  story: Story | WallStory;
   reducedMotion: boolean;
   /** Owned by WorldApp: the camera frames left of the card while open. */
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  if ("credit" in story)
+    return (
+      <WallStoryCard story={story} open={open} onOpenChange={onOpenChange} />
+    );
   if (!open)
     return (
       <button

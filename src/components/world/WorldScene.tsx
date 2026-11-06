@@ -45,6 +45,7 @@ import DisplayCases from "@/components/world/DisplayCases";
 import FloorLamp from "@/components/world/FloorLamp";
 import Garden from "@/components/world/Garden";
 import House from "@/components/world/House";
+import KatanaShelf from "@/components/world/KatanaShelf";
 import Living from "@/components/world/Living";
 import type { MonitorTerminal } from "@/components/world/MonitorScreen";
 import NightLights from "@/components/world/NightLights";
@@ -64,7 +65,10 @@ import {
   poseToPosition,
 } from "@/lib/world/camera.ts";
 import { cloudLayout, cloudShapes } from "@/lib/world/clouds.ts";
-import type { DisplayItemId } from "@/lib/world/display-cases.ts";
+import {
+  type GalleryItemId,
+  isDisplayCaseId,
+} from "@/lib/world/display-cases.ts";
 import {
   FLOWER_COLORS,
   flowerLayout,
@@ -158,11 +162,14 @@ interface WorldSceneProps {
   portrait?: PortraitControl;
   /** The speakers' music and close-up (world-speaker-music T2). */
   speakers?: SpeakerControl;
-  /** The selected gallery case; null restores the adapted home framing. */
-  galleryCase?: DisplayItemId | null;
+  /**
+   * The selected gallery item, a case or the wall katana; null restores the
+   * adapted home framing.
+   */
+  galleryCase?: GalleryItemId | null;
   /** Its story card is open: frame the model left of it (T12). */
   galleryStory?: boolean;
-  onInspectCase?: (id: DisplayItemId) => void;
+  onInspectCase?: (id: GalleryItemId) => void;
 }
 
 /** Critical groups that report their commit; the textured branch only. */
@@ -451,8 +458,8 @@ function TexturedHouse({
   terminal?: MonitorTerminal;
   portrait?: PortraitControl;
   speakers?: SpeakerControl;
-  galleryCase?: DisplayItemId | null;
-  onInspectCase?: (id: DisplayItemId) => void;
+  galleryCase?: GalleryItemId | null;
+  onInspectCase?: (id: GalleryItemId) => void;
   prepared: Prepared;
 }) {
   const maps = useSurfaceMaps();
@@ -480,8 +487,16 @@ function TexturedHouse({
         power={power}
         hours={hours}
         onPrepared={prepared.display}
-        focused={galleryCase}
+        focused={
+          galleryCase && isDisplayCaseId(galleryCase) ? galleryCase : null
+        }
         reducedMotion={reducedMotion}
+        onInspect={onInspectCase}
+      />
+      <KatanaShelf
+        power={power}
+        hours={hours}
+        focused={galleryCase === "katana"}
         onInspect={onInspectCase}
       />
       <Suspense fallback={null}>
@@ -682,7 +697,7 @@ function GuidedCamera({
   home: number;
   focus: boolean;
   closeUp?: "terminal" | "portrait" | "speakers";
-  galleryCase?: DisplayItemId | null;
+  galleryCase?: GalleryItemId | null;
   galleryStory?: boolean;
   onArrive?: () => void;
 }) {
@@ -762,7 +777,9 @@ function GuidedCamera({
       const gallery = galleryCase
         ? galleryCaseFocus(
             galleryCase,
-            galleryStory ? galleryStoryShift(viewportWidth, aspect) : 0,
+            galleryStory
+              ? galleryStoryShift(viewportWidth, aspect, galleryCase)
+              : 0,
           )
         : null;
       lens.focus(gallery?.fov ?? speaker?.fov ?? GUIDE.fov);

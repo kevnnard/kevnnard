@@ -1,15 +1,19 @@
 import { useEffect, useRef } from "react";
 import {
   DISPLAY_CASES,
-  type DisplayItemId,
+  type GalleryItemId,
 } from "@/lib/world/display-cases.ts";
 import "./collection-rail.css";
 
-// Looking toward +z reverses world-x on screen.
-const VIEW_CASES = [...DISPLAY_CASES].reverse();
+// Looking toward +z reverses world-x on screen; the wall katana
+// (katana-wall-shelf T5) follows as the fourth object.
+const VIEW_CASES: readonly { id: GalleryItemId }[] = [
+  ...[...DISPLAY_CASES].reverse(),
+  { id: "katana" },
+];
 
 const collection: Record<
-  DisplayItemId,
+  GalleryItemId,
   { title: string; subtitle: string; detail: string }
 > = {
   "football-helmet": {
@@ -30,6 +34,12 @@ const collection: Record<
     detail:
       "Credited Air Jordan 1 pair; black/sail is not the exact Black Toe.",
   },
+  katana: {
+    title: "Blossom Katana",
+    subtitle: "Wall · katana stand",
+    detail:
+      "Mitchell Bekke's Blossom Katana (CC BY 4.0) on a lacquered wall shelf.",
+  },
 };
 
 /**
@@ -43,8 +53,8 @@ export default function CollectionRail({
   onReturn,
   compact = false,
 }: {
-  focused: DisplayItemId;
-  onInspect: (id: DisplayItemId) => void;
+  focused: GalleryItemId;
+  onInspect: (id: GalleryItemId) => void;
   onReturn: () => void;
   compact?: boolean;
 }) {
@@ -93,12 +103,12 @@ export default function CollectionRail({
       aria-label="Collection navigation"
     >
       <span className="collection-rail-mono collection-rail-count">
-        03 OBJECTS
+        04 OBJECTS
       </span>
       <div
         className="collection-rail-pills"
         role="tablist"
-        aria-label="Display cases"
+        aria-label="Collection objects"
       >
         {VIEW_CASES.map((item, index) => (
           <button key={item.id} {...tab(item, index)}>
@@ -116,14 +126,14 @@ export default function CollectionRail({
   ) : (
     <section className="collection-rail" aria-label="Collection navigation">
       <div className="collection-rail-intro">
-        <span className="collection-rail-mono">EXPLORE / 03 OBJECTS</span>
+        <span className="collection-rail-mono">EXPLORE / 04 OBJECTS</span>
         <h2>The collection</h2>
-        <p>Choose another case, or return to the sofa view.</p>
+        <p>Choose another object, or return to the sofa view.</p>
       </div>
       <div
         className="collection-rail-tabs"
         role="tablist"
-        aria-label="Display cases"
+        aria-label="Collection objects"
       >
         {VIEW_CASES.map((item, index) => (
           <button
@@ -142,7 +152,7 @@ export default function CollectionRail({
           >
             <span className="collection-rail-mono collection-rail-index">
               {String(index + 1).padStart(2, "0")} /{" "}
-              {(["LEFT", "CENTER", "RIGHT"] as const)[index]}
+              {(["LEFT", "CENTER", "RIGHT", "WALL"] as const)[index]}
             </span>
             <strong>{collection[item.id].title}</strong>
             <small>{collection[item.id].subtitle}</small>

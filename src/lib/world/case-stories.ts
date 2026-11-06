@@ -38,7 +38,21 @@ export interface CaseStory {
   link?: { label: string; href: string };
 }
 
-export const CASE_STORIES: Record<DisplayItemId, CaseStory | null> = {
+/**
+ * The short card beside the wall katana (katana-wall-shelf T5), styled like
+ * the lo-fi music console: a line from the owner and the model's credit.
+ */
+export interface WallStory {
+  kicker: string;
+  title: string;
+  lede: string;
+  /** "3D model by" and the author, linked to their profile. */
+  credit: { text: string; name: string; href: string };
+}
+
+export const CASE_STORIES: Record<DisplayItemId, CaseStory | null> & {
+  katana: WallStory;
+} = {
   "football-helmet": {
     kicker: "CASE 01 · FOOTBALL HELMET",
     title: "Carneros DC",
@@ -90,4 +104,16 @@ export const CASE_STORIES: Record<DisplayItemId, CaseStory | null> = {
   },
   "moto-helmet": null,
   "jordan-1": null,
+  // Only the owner's words: their love of Japanese culture, and Mitchell
+  // Bekke's credit for the model.
+  katana: {
+    kicker: "WALL · KATANA",
+    title: "Blossom Katana",
+    lede: "I love Eastern culture, Japanese culture above all.",
+    credit: {
+      text: "3D model by",
+      name: "Mitchell Bekke",
+      href: "https://sketchfab.com/MitchellBekke",
+    },
+  },
 };

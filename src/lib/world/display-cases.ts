@@ -107,6 +107,17 @@ export const DISPLAY_CASE = {
 
 export type DisplayItemId = "football-helmet" | "moto-helmet" | "jordan-1";
 
+/**
+ * Everything the gallery inspects: the three cases and the katanas on the
+ * wall shelf (katana-wall-shelf T5, src/lib/world/katana-shelf.ts).
+ */
+export type GalleryItemId = DisplayItemId | "katana";
+
+/** Whether an inspected item is one of the glass cases. */
+export function isDisplayCaseId(id: GalleryItemId): id is DisplayItemId {
+  return id !== "katana";
+}
+
 export type ItemFinish =
   | "gloss"
   | "metallic"
