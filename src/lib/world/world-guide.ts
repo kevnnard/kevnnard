@@ -115,17 +115,18 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     id: "video",
     tab: "Video",
     eyebrow: "The portrait screen",
-    title: "Video and documentation",
+    title: "Neovim, video and documentation",
     illustration:
       "Illustration of the portrait monitor with a video player above documentation",
     paragraphs: [
-      "Select the portrait monitor, or Watch video, to move in close. It plays a Gentleman Programming video in YouTube's official player, above the NestJS Controllers documentation.",
+      "From the room the portrait monitor shows Neovim typing this site's own code. Select it, or Watch video, to move in close: the NVIM tab is a small playable Neovim (try :help), and the Gentleman and NestJS tabs hold a Gentleman Programming video in YouTube's official player and the NestJS Controllers documentation.",
       "Use the player's own controls. Exit portrait returns to the world.",
     ],
     keys: [
       {
         keys: ["Esc"],
-        action: "Leave the close-up (when focus is outside the player).",
+        action:
+          "In Neovim's NORMAL mode, leave the close-up; on the Gentleman or NestJS tab, go back to NVIM.",
       },
     ],
     actions: ["video"],

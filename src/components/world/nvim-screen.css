@@ -1,0 +1,229 @@
+/*
+ * The entered portrait's Neovim (portrait-neovim T2, NvimScreen.tsx), on
+ * the 480 px portrait page under its tabs. design/system.md dark tokens:
+ * zinc surfaces and the one emerald accent, as the idle preview draws them
+ * (nvim-preview.ts NVIM_COLORS). 36 buffer rows (EDITOR_ROWS) of 20 px.
+ */
+.nvim {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: #09090b;
+  color: #d4d4d8;
+  font:
+    14px / 20px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  cursor: text;
+}
+.nvim:focus {
+  outline: none;
+}
+.nvim:focus-visible {
+  outline: 3px solid #d4d4d8;
+  outline-offset: -3px;
+}
+.nvim p,
+.nvim h3,
+.nvim pre,
+.nvim ul {
+  margin: 0;
+}
+.nvim-winbar {
+  flex: none;
+  padding: 2px 12px;
+  color: #a1a1aa;
+  border-bottom: 1px solid #27272a;
+}
+.nvim-buffer {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.nvim-line {
+  display: flex;
+  height: 20px;
+  white-space: pre;
+}
+.nvim-line[data-current] {
+  background: #18181b;
+}
+.nvim-line[data-selected] {
+  background: #27272a;
+}
+.nvim-number {
+  flex: none;
+  width: 4ch;
+  margin-right: 1ch;
+  color: #71717a;
+  text-align: right;
+}
+.nvim-line[data-current] .nvim-number {
+  color: #10b981;
+}
+.nvim-empty .nvim-number {
+  color: #27272a;
+}
+.nvim-text {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+.nvim-tk-keyword,
+.nvim-tk-number {
+  color: #10b981;
+}
+.nvim-tk-string {
+  color: #e4e4e7;
+}
+.nvim-tk-comment {
+  color: #71717a;
+  font-style: italic;
+}
+.nvim-tk-type,
+.nvim-tk-function {
+  color: #fafafa;
+}
+.nvim-tk-punct {
+  color: #a1a1aa;
+}
+.nvim-tk-plain {
+  color: #d4d4d8;
+}
+.nvim-cursor {
+  position: absolute;
+  top: 0;
+  width: 1ch;
+  height: 20px;
+  background: #fafafa;
+  color: #09090b;
+}
+.nvim[data-mode="insert"] .nvim-cursor {
+  width: 2px;
+}
+.nvim:not(:focus) .nvim-cursor {
+  background: transparent;
+  outline: 1px solid #a1a1aa;
+  color: inherit;
+}
+.nvim-status {
+  display: flex;
+  flex: none;
+  gap: 1ch;
+  align-items: center;
+  height: 26px;
+  padding-right: 1ch;
+  background: #18181b;
+  color: #a1a1aa;
+  white-space: nowrap;
+}
+.nvim-mode {
+  align-self: stretch;
+  padding: 3px 1ch;
+  background: #10b981;
+  color: #09090b;
+  font-weight: 700;
+}
+.nvim[data-mode="insert"] .nvim-mode,
+.nvim[data-mode="picker"] .nvim-mode {
+  background: #fafafa;
+}
+.nvim[data-mode="visual"] .nvim-mode,
+.nvim[data-mode="command"] .nvim-mode {
+  background: #d4d4d8;
+}
+.nvim-branch {
+  color: #10b981;
+}
+.nvim-file {
+  overflow: hidden;
+  color: #fafafa;
+  text-overflow: ellipsis;
+}
+.nvim-right {
+  margin-left: auto;
+}
+.nvim-command {
+  flex: none;
+  height: 26px;
+  padding: 3px 1ch;
+  overflow: hidden;
+  color: #fafafa;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+/* The light theme's destructive token: the dark one is too dim for text. */
+.nvim-command[data-error] {
+  color: #ef4444;
+}
+/* Floating windows: a panel's output or Telescope, over the buffer. */
+.nvim-float {
+  position: absolute;
+  top: 48px;
+  right: 16px;
+  left: 16px;
+  max-height: 620px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  overflow: hidden;
+  border: 1px solid #10b981;
+  border-radius: 6px;
+  background: #18181b;
+  color: #fafafa;
+}
+.nvim-float h3 {
+  color: #10b981;
+  font-size: 14px;
+}
+.nvim-float pre {
+  min-height: 0;
+  overflow: hidden;
+  font: inherit;
+  white-space: pre-wrap;
+}
+.nvim-float > p:last-child {
+  color: #a1a1aa;
+  font-size: 12px;
+}
+.nvim-prompt {
+  padding-bottom: 6px;
+  border-bottom: 1px solid #27272a;
+}
+.nvim-picker ul {
+  padding: 0;
+  list-style: none;
+}
+.nvim-picker li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1ch;
+  padding: 0 6px;
+  white-space: nowrap;
+}
+.nvim-picker li span:last-child {
+  overflow: hidden;
+  color: #a1a1aa;
+  font-size: 12px;
+  text-overflow: ellipsis;
+}
+.nvim-picker li[data-selected] {
+  background: #27272a;
+  box-shadow: inset 2px 0 #10b981;
+}
+/* Read by screen readers only. */
+.nvim-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

@@ -1,7 +1,9 @@
 /*
- * Portrait monitor page (T18, PortraitScreen.tsx). Laid on the flat screen
- * by drei's <Html transform>: 480 CSS px across the 0.27 m screen, clipped
- * to it. Same zinc and emerald as the terminal (MonitorScreen.tsx).
+ * Portrait monitor page (T18, PortraitScreen.tsx), shown in its close-up.
+ * Laid on the flat screen by drei's <Html transform>: 480 CSS px across the
+ * 0.27 m screen, clipped to it. Same zinc and emerald as the terminal
+ * (MonitorScreen.tsx). Tabs on top (portrait-neovim T2): Neovim
+ * (nvim-screen.css), the Gentleman Programming player and the NestJS docs.
  */
 .portrait-page {
   display: flex;
@@ -25,14 +27,64 @@
   outline: 3px solid #d4d4d8;
   outline-offset: 2px;
 }
+/* Neovim's bufferline: the open tab is lit, emerald on top. */
+.portrait-tabs {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  padding-right: 16px;
+  background: #18181b;
+  border-bottom: 1px solid #27272a;
+}
+.portrait-tabs nav {
+  display: flex;
+  flex: 1;
+  align-self: stretch;
+  min-width: 0;
+}
+.portrait-tabs nav button {
+  padding: 0 18px;
+  border: 0;
+  border-right: 1px solid #27272a;
+  border-top: 3px solid transparent;
+  background: transparent;
+  color: #a1a1aa;
+  font:
+    15px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  cursor: pointer;
+}
+.portrait-tabs nav button[aria-current="true"] {
+  border-top-color: #10b981;
+  background: #09090b;
+  color: #fafafa;
+}
+.portrait-tabs button:focus-visible {
+  outline: 3px solid #d4d4d8;
+  outline-offset: -3px;
+}
+.portrait-gentleman {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
 .portrait-channel {
   display: flex;
   flex: none;
   align-items: center;
   gap: 12px;
-  padding: 0 16px;
+  padding: 16px;
   background: #18181b;
-  border-bottom: 1px solid #27272a;
+  border-top: 1px solid #27272a;
+}
+.portrait-channel > a {
+  flex: none;
+  font-size: 14px;
 }
 /* Original monogram, not the channel's avatar. */
 .portrait-mark {
@@ -95,6 +147,9 @@
   background: radial-gradient(circle at 50% 40%, #18181b, #09090b 70%);
   color: #a1a1aa;
   text-align: center;
+}
+.portrait-gentleman .portrait-still {
+  background: radial-gradient(circle at 50% 40%, #18181b, #000 70%);
 }
 .portrait-still .portrait-mark {
   width: 72px;
