@@ -3,7 +3,7 @@
 // remote's state, what a press does, and where every item sits on the
 // 1600 x 896 canvas. Pure data for TvScreen.tsx (drawing and clicks on the
 // panel) and TvHome.tsx (the keyboard companion). Covers are the shipped
-// TMDB and IGDB images of tv-covers.ts (T7, S7); the drawn motif stays where
+// TMDB, IGDB and channel images of tv-covers.ts (T7, T8); the drawn motif stays where
 // there is none, and under an image until it loads. What plays (T8, S8-S10):
 // YouTube channels, trailers and Twitch streams from tv-media.ts, in the
 // player TvPlayer.tsx frames on the glass, only once a press opens it.
@@ -701,7 +701,11 @@ export function tvScreenLayout(
         ? "posters from TMDB · see Credits"
         : app.id === "games"
           ? "covers from IGDB · see Credits"
-          : "drawn covers",
+          : app.id === "channels"
+            ? "channel art from YouTube · see Credits"
+            : app.id === "live"
+              ? "channel art from Twitch · see Credits"
+              : "drawn covers",
     sampleTag:
       !opened && app.sample ? "Sample picks · replace with yours" : null,
     covers,

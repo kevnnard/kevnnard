@@ -24,10 +24,16 @@
 // 2. Download each pinned image (TMDB w342, IGDB t_cover_big_2x), only when
 //    the shipped WebP is missing or no longer matches the manifest, and
 //    convert it to WebP under COVER_MAX_BYTES into public/world/tv/covers/.
-// 3. Write src/lib/world/tv-covers.ts and the TMDB and IGDB entries in
-//    public/world/credits.json. The site never calls TMDB or IGDB at
-//    runtime.
-import { spawnSync } from "node:child_process";
+// 3. Compose a cover for each channel of the Channels and Live apps (T8):
+//    the creator's avatar, round, over their banner (or a gradient tinted
+//    with the avatar's colour when there is none). YouTube's come from the
+//    public /@handle page (og:image, imageBannerViewModel), Twitch's from
+//    Helix /users (profile_image_url, offline_image_url) with the same app
+//    token as IGDB. Channel ids come from src/lib/world/tv-media.ts.
+// 4. Write src/lib/world/tv-covers.ts and the TMDB, IGDB, YouTube and Twitch
+//    entries in public/world/credits.json. The site never calls TMDB, IGDB,
+//    YouTube or Twitch for any of it at runtime.
+import { spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -41,6 +47,12 @@ const API = "https://api.themoviedb.org/3";
 const IMAGES = "https://image.tmdb.org/t/p/w342";
 const TWITCH_TOKEN = "https://id.twitch.tv/oauth2/token";
 const IGDB_API = "https://api.igdb.com/v4";
+const HELIX = "https://api.twitch.tv/helix";
+const YOUTUBE = "https://www.youtube.com";
+const YT3 = "https://yt3.googleusercontent.com/";
+const TWITCH_CDN = "https://static-cdn.jtvnw.net/";
+/** A channel cover: the posters' 2:3 at their width. */
+const CHANNEL = { width: 342, height: 513, avatar: 196, band: 190 };
 // t_cover_big is 264 px wide, under the 300 px floor; its 2x variant is the
 // same cover at 528 px, scaled down here.
 const IGDB_IMAGES = "https://images.igdb.com/igdb/image/upload/t_cover_big_2x";
@@ -301,24 +313,30 @@ async function pace() {
   lastIgdbRequest = Date.now();
 }
 
-/** One IGDB v4 query (Apicalypse body); returns the result array. */
-async function igdb(path, query) {
+/** One request with the Twitch app token: an IGDB query or a Helix GET. */
+async function twitchApp(label, url, init = {}) {
   if (!igdbToken) await twitchToken();
   await pace();
-  const response = await fetch(`${IGDB_API}${path}`, {
-    method: "POST",
+  const response = await fetch(url, {
+    ...init,
     headers: {
       accept: "application/json",
       "Client-ID": igdbClientId,
       Authorization: `Bearer ${igdbToken}`,
     },
-    body: query,
   }).catch((error) => {
-    throw new Error(redact(`IGDB ${path}: ${error.message}`));
+    throw new Error(redact(`${label}: ${error.message}`));
   });
-  if (!response.ok) throw new Error(`IGDB ${path}: HTTP ${response.status}`);
+  if (!response.ok) throw new Error(`${label}: HTTP ${response.status}`);
   return response.json();
 }
+
+/** One IGDB v4 query (Apicalypse body); returns the result array. */
+const igdb = (path, query) =>
+  twitchApp(`IGDB ${path}`, `${IGDB_API}${path}`, {
+    method: "POST",
+    body: query,
+  });
 
 // --- titles ------------------------------------------------------------------
 
@@ -654,26 +672,272 @@ async function ship(item, match, previous) {
   };
 }
 
+// --- channel art (T8) ---------------------------------------------------------
+
+/** Every channel of the Channels and Live apps, with its pinned id. */
+async function channelItems() {
+  const library = await import(
+    pathToFileURL(join(ROOT, "src/lib/world/tv-library.ts")).href
+  );
+  const media = await import(
+    pathToFileURL(join(ROOT, "src/lib/world/tv-media.ts")).href
+  );
+  const items = [];
+  for (const title of library.tvApp("channels").titles) {
+    const channel = media.TV_YOUTUBE[title.id];
+    if (!channel) throw new Error(`${title.id}: not in tv-media.ts`);
+    items.push({
+      key: title.id,
+      platform: "youtube",
+      file: `channel-${slug(channel.handle)}`,
+      channel,
+    });
+  }
+  for (const title of library.tvApp("live").titles) {
+    const channel = media.TV_TWITCH[title.id];
+    if (!channel) throw new Error(`${title.id}: not in tv-media.ts`);
+    items.push({
+      key: title.id,
+      platform: "twitch",
+      file: `live-${slug(channel.login)}`,
+      channel,
+    });
+  }
+  return items;
+}
+
+const unescapeJson = (text) => JSON.parse(`"${text}"`);
+
+/**
+ * A YouTube channel's art from its public page: the avatar (og:image, asked
+ * for at 800 px) and the desktop banner when it has one, by their yt3 ids.
+ */
+async function youtubeArt({ handle, channelId }) {
+  const response = await fetch(`${YOUTUBE}/@${handle}`, {
+    headers: { "accept-language": "en", "user-agent": "Mozilla/5.0" },
+  });
+  if (!response.ok) throw new Error(`@${handle}: HTTP ${response.status}`);
+  const page = await response.text();
+  if (page.match(/"externalId":"(UC[\w-]{22})"/)?.[1] !== channelId)
+    throw new Error(`@${handle}: not channel ${channelId}`);
+  const avatar = page.match(
+    /<meta property="og:image" content="https:\/\/yt3\.googleusercontent\.com\/((?:ytc\/)?[\w-]+)=/,
+  )?.[1];
+  if (!avatar) throw new Error(`@${handle}: no avatar on the page`);
+  // The smallest desktop source (about 1060 x 175) is plenty for 342 px.
+  const banner = page.match(
+    /"imageBannerViewModel":\{"image":\{"sources":\[\{"url":"(https:\/\/yt3\.googleusercontent\.com\/((?:ytc\/)?[\w-]+)=[^"]+)"/,
+  );
+  return {
+    avatar,
+    avatarUrl: `${YT3}${avatar}=s800-c-k-c0x00ffffff-no-rj`,
+    banner: banner ? banner[2] : null,
+    bannerUrl: banner ? unescapeJson(banner[1]) : null,
+  };
+}
+
+/** A path on Twitch's image CDN, the part pinned in the manifest. */
+function twitchPath(url) {
+  if (!url) return null;
+  if (!url.startsWith(TWITCH_CDN)) throw new Error(`Twitch image: ${url}`);
+  return url.slice(TWITCH_CDN.length);
+}
+
+/** Twitch's profile and offline images for every Live login, from Helix. */
+async function twitchArt(items) {
+  const logins = items.map((item) => item.channel.login);
+  if (!logins.length) return new Map();
+  const users = await twitchApp(
+    "Helix /users",
+    `${HELIX}/users?${logins.map((login) => `login=${login}`).join("&")}`,
+  );
+  const art = new Map();
+  for (const item of items) {
+    const user = (users.data ?? []).find(
+      (entry) => entry.id === item.channel.twitchId,
+    );
+    if (!user) throw new Error(`Twitch: no user ${item.channel.login}`);
+    const avatar = twitchPath(user.profile_image_url);
+    if (!avatar) throw new Error(`Twitch: ${item.channel.login} has no avatar`);
+    const banner = twitchPath(user.offline_image_url);
+    art.set(item.key, {
+      avatar,
+      avatarUrl: user.profile_image_url,
+      banner,
+      bannerUrl: banner ? user.offline_image_url : null,
+    });
+  }
+  return art;
+}
+
+/**
+ * Runs ImageMagick with `inputs` on stdin ("-") and fd 3, 4, … ("fd:3");
+ * returns stdout.
+ */
+function magick(args, ...inputs) {
+  return new Promise((done, fail) => {
+    const child = spawn("magick", args, {
+      stdio: ["pipe", "pipe", "pipe", ...inputs.slice(1).map(() => "pipe")],
+    });
+    const out = [];
+    const err = [];
+    child.stdout.on("data", (chunk) => out.push(chunk));
+    child.stderr.on("data", (chunk) => err.push(chunk));
+    child.on("error", fail);
+    child.on("close", (status) =>
+      status === 0
+        ? done(Buffer.concat(out))
+        : fail(new Error(`magick failed: ${Buffer.concat(err).toString()}`)),
+    );
+    inputs.forEach((input, i) => {
+      const pipe = child.stdio[i === 0 ? 0 : i + 2];
+      pipe.on("error", () => undefined);
+      pipe.end(input);
+    });
+  });
+}
+
+/** The avatar's mean colour, darkened toward the screen's #09090b. */
+async function tint(avatar) {
+  const mean = (
+    await magick(
+      [
+        ...["-", "-background", "#09090b", "-flatten", "-resize", "1x1!"],
+        ...["-format", "%[fx:int(255*r)],%[fx:int(255*g)],%[fx:int(255*b)]"],
+        "info:",
+      ],
+      avatar,
+    )
+  )
+    .toString()
+    .split(",")
+    .map(Number);
+  const dark = [9, 9, 11];
+  const mix = mean.map((value, i) => Math.round(value * 0.42 + dark[i] * 0.58));
+  return `rgb(${mix.join(",")})`;
+}
+
+/**
+ * The cover: a gradient tinted with the avatar's colour, the banner's centre
+ * (its safe area) fading into it across the top, and the round avatar in a
+ * dark ring. The lower part stays plain for the title the TV draws over its
+ * scrim.
+ */
+async function composeChannel(avatar, banner) {
+  const { width, height, avatar: size, band } = CHANNEL;
+  const color = await tint(avatar);
+  const r = size / 2;
+  const cx = width / 2;
+  const cy = banner ? band : 176;
+  const strip = banner
+    ? [
+        ...["(", "fd:3", "-resize", `${width}x${band}^`, "-gravity", "center"],
+        ...["-extent", `${width}x${band}`, "-modulate", "78"],
+        ...["(", "-size", `${width}x${band - 80}`, "xc:white", ")"],
+        ...["(", "-size", `${width}x80`, "gradient:white-black", ")"],
+        ...["(", "-clone", "1,2", "-append", ")", "-delete", "1,2"],
+        ...["-alpha", "off", "-compose", "CopyOpacity", "-composite", ")"],
+        ...["-compose", "over", "-gravity", "northwest"],
+        ...["-geometry", "+0+0", "-composite"],
+      ]
+    : [];
+  const args = [
+    "-respect-parentheses",
+    ...["-size", `${width}x${height}`, `gradient:${color}-#09090b`],
+    ...["-gravity", "northwest", "-compose", "over"],
+    ...strip,
+    ...["-fill", "#09090b", "-stroke", "none"],
+    ...["-draw", `circle ${cx},${cy} ${cx},${cy - r - 6}`],
+    ...["(", "-", "-background", "#09090b", "-flatten"],
+    ...["-resize", `${size}x${size}^`, "-gravity", "center"],
+    ...["-extent", `${size}x${size}`],
+    ...["(", "-size", `${size}x${size}`, "xc:black", "-fill", "white"],
+    ...["-draw", `circle ${r},${r} ${r},1`, ")"],
+    ...["-alpha", "off", "-compose", "CopyOpacity", "-composite", ")"],
+    ...["-compose", "over", "-gravity", "northwest"],
+    ...["-geometry", `+${cx - r}+${cy - r}`, "-composite"],
+    ...["-fill", "none", "-stroke", "rgba(250,250,250,0.35)"],
+    ...["-strokewidth", "2", "-draw", `circle ${cx},${cy} ${cx},${cy - r - 3}`],
+    "-strip",
+  ];
+  const inputs = banner ? [avatar, banner] : [avatar];
+  for (let quality = 84; quality >= 56; quality -= 4) {
+    const bytes = await magick(
+      [...args, "-quality", String(quality), "-define", "webp:method=6"].concat(
+        "webp:-",
+      ),
+      ...inputs,
+    );
+    if (bytes.length <= COVER_MAX_BYTES) return bytes;
+  }
+  throw new Error(`channel cover does not fit ${COVER_MAX_BYTES} B`);
+}
+
+async function download(url) {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`image ${url}: HTTP ${response.status}`);
+  return Buffer.from(await response.arrayBuffer());
+}
+
+/** Ships a channel's cover; composes it only when its art or file changed. */
+async function shipChannel(item, art, previous) {
+  const src = `/world/tv/covers/${item.file}.webp`;
+  const target = join(COVERS, `${item.file}.webp`);
+  const old = previous[item.key];
+  let bytes = existsSync(target) ? readFileSync(target) : null;
+  const fresh =
+    bytes &&
+    old?.src === src &&
+    old.avatar === art.avatar &&
+    old.banner === art.banner &&
+    old.sha256 === sha256(bytes);
+  if (!fresh) {
+    const avatar = await download(art.avatarUrl);
+    const banner = art.bannerUrl ? await download(art.bannerUrl) : null;
+    bytes = await composeChannel(avatar, banner);
+    writeFileSync(target, bytes);
+  }
+  return {
+    src,
+    ...webpSize(bytes),
+    bytes: bytes.length,
+    sha256: sha256(bytes),
+    downloaded: !fresh,
+  };
+}
+
 // --- outputs -----------------------------------------------------------------
 
 const quote = (value) => JSON.stringify(value);
 const property = (name) =>
   /^[A-Za-z_$][\w$]*$/.test(name) ? name : quote(name);
 
+/**
+ * One manifest field, wrapped as Biome wraps it: onto its own line past 80
+ * columns, except under a key narrower than 5 (Prettier's short key).
+ */
+function field(name, value) {
+  const line = `    ${name}: ${quote(value)},`;
+  return line.length <= 80 || name.length < 5
+    ? line
+    : `    ${name}:\n      ${quote(value)},`;
+}
+
 function manifestSource(covers) {
   const entries = Object.entries(covers).map(([key, cover]) => {
     const fields = Object.entries(cover)
-      .map(([name, value]) => `    ${name}: ${quote(value)},`)
+      .map(([name, value]) => field(name, value))
       .join("\n");
     return `  ${property(key)}: {\n${fields}\n  },`;
   });
-  return `// Generated by scripts/prepare-tv-covers.mjs (tv-home-screen T4, T5, S7);
-// do not edit by hand: fix a match in the script's PINS or GAME_PINS and
-// rerun it. Film and collection posters from TMDB, game covers from IGDB,
-// downloaded once at prepare time and shipped as WebP under
-// public/world/tv/covers/. Nothing here calls TMDB or IGDB at runtime. The
-// images belong to their studios, publishers and rights holders, shown for
-// personal, non-commercial reference; both sources are in the menu's Credits.
+  return `// Generated by scripts/prepare-tv-covers.mjs (tv-home-screen T4, T5, T8,
+// S7); do not edit by hand: fix a match in the script's PINS or GAME_PINS
+// and rerun it. Film and collection posters from TMDB, game covers from
+// IGDB, channel covers from each creator's YouTube or Twitch art, downloaded
+// once at prepare time and shipped as WebP under public/world/tv/covers/.
+// Nothing here calls TMDB, IGDB, YouTube or Twitch at runtime. The images
+// belong to their studios, publishers, creators and rights holders, shown
+// for personal, non-commercial reference; every source is in the Credits.
 
 import type { TvEntry } from "./tv-library.ts";
 
@@ -710,7 +974,27 @@ export interface TvGameCover extends TvCoverFile {
   imageId: string;
 }
 
-export type TvCover = TvFilmCover | TvGameCover;
+/**
+ * A channel's cover (T8): its avatar over its banner, composed at prepare
+ * time from the creator's own art on YouTube or Twitch.
+ */
+export interface TvChannelCover {
+  src: string;
+  /** The channel's name. */
+  title: string;
+  width: number;
+  height: number;
+  sha256: string;
+  platform: "youtube" | "twitch";
+  /** The YouTube channel id or the Twitch user id. */
+  channelId: string;
+  /** The avatar's image id on YouTube, or its path on Twitch's image CDN. */
+  avatar: string;
+  /** The banner's (YouTube) or offline image's (Twitch) id; null for none. */
+  banner: string | null;
+}
+
+export type TvCover = TvFilmCover | TvGameCover | TvChannelCover;
 
 /** Each shipped poster stays at or under this many bytes. */
 export const COVER_MAX_BYTES = ${COVER_MAX_BYTES};
@@ -729,8 +1013,8 @@ export function coverKey(collectionId: string, film: TvEntry): string {
 }
 
 /**
- * By library id (single films and games, collections) or coverKey() (their
- * films and games).
+ * By library id (single films and games, collections, channels) or
+ * coverKey() (their films and games).
  */
 export const TV_COVERS: Readonly<Record<string, TvCover>> = {
 ${entries.join("\n")}
@@ -738,7 +1022,7 @@ ${entries.join("\n")}
 `;
 }
 
-function writeCredits(films, games) {
+function writeCredits(films, games, youtube, twitch) {
   const credits = JSON.parse(readFileSync(CREDITS, "utf8"));
   const tmdbCredit = {
     id: "tmdb",
@@ -769,9 +1053,39 @@ function writeCredits(films, games) {
     count: games,
     script: "scripts/prepare-tv-covers.mjs",
   };
-  // In place, so the TV's player entries (prepare-tv-media.mjs) keep theirs.
+  const youtubeCredit = {
+    id: "youtube",
+    label: "Videos on the TV",
+    name: "YouTube",
+    url: "https://www.youtube.com",
+    notice:
+      "Channel uploads, live streams and trailers play in YouTube's official privacy-enhanced player (youtube-nocookie.com).",
+    usage:
+      "The living-room TV loads the player only after a visitor presses play, muted; its channel covers are made once at build time from each channel's public page, and the site ships no YouTube video or key.",
+    rights:
+      "The videos belong to their creators and rights holders, under YouTube's terms; the channel avatars and banners belong to their creators.",
+    files: "tv/covers/",
+    count: youtube,
+    script: "scripts/prepare-tv-covers.mjs",
+  };
+  const twitchCredit = {
+    id: "twitch",
+    label: "Live streams on the TV",
+    name: "Twitch",
+    url: "https://www.twitch.tv",
+    notice:
+      "Live streams play in Twitch's official embedded player (player.twitch.tv).",
+    usage:
+      "The living-room TV's Live app loads the player only after a visitor presses play, muted; Twitch shows its own screen when a channel is offline. Its channel covers are made once at build time.",
+    rights:
+      "The streams belong to their creators, under Twitch's terms; the channel avatars and banners belong to their creators.",
+    files: "tv/covers/",
+    count: twitch,
+    script: "scripts/prepare-tv-covers.mjs",
+  };
+  // In place, so the order in Credits stays put.
   const services = credits.services ?? [];
-  for (const credit of [tmdbCredit, igdbCredit]) {
+  for (const credit of [tmdbCredit, igdbCredit, youtubeCredit, twitchCredit]) {
     const at = services.findIndex((entry) => entry.id === credit.id);
     if (at >= 0) services[at] = credit;
     else services.push(credit);
@@ -850,13 +1164,50 @@ async function main() {
   const ordered = Object.fromEntries(
     items.map((item) => [item.key, covers[item.key]]),
   );
+  const channels = await channelItems();
+  const twitch = await twitchArt(
+    channels.filter((item) => item.platform === "twitch"),
+  );
+  const channelFiles = [];
+  for (const item of channels) {
+    const art =
+      item.platform === "twitch"
+        ? twitch.get(item.key)
+        : await youtubeArt(item.channel);
+    const file = await shipChannel(item, art, previous);
+    channelFiles.push({ ...file, platform: item.platform });
+    ordered[item.key] = {
+      src: file.src,
+      title: item.channel.name,
+      width: file.width,
+      height: file.height,
+      sha256: file.sha256,
+      platform: item.platform,
+      channelId:
+        item.platform === "twitch"
+          ? item.channel.twitchId
+          : item.channel.channelId,
+      avatar: art.avatar,
+      banner: art.banner,
+    };
+    say(
+      `  ${file.downloaded ? "got " : "kept"} ${item.key} -> ${item.platform} "${item.channel.name}"${art.banner ? " + banner" : ""} ${file.bytes} B`,
+    );
+  }
   writeFileSync(MANIFEST, manifestSource(ordered));
   const files = [...shipped.values()];
   const games = files.filter((file) => file.game);
-  writeCredits(files.length - games.length, games.length);
+  const on = (platform) =>
+    channelFiles.filter((file) => file.platform === platform);
+  writeCredits(
+    files.length - games.length,
+    games.length,
+    on("youtube").length,
+    on("twitch").length,
+  );
   const bytes = (list) => list.reduce((sum, file) => sum + file.bytes, 0);
   say(
-    `${files.length - games.length} posters, ${bytes(files) - bytes(games)} B; ${games.length} game covers, ${bytes(games)} B; ${Object.keys(ordered).length} covers`,
+    `${files.length - games.length} posters, ${bytes(files) - bytes(games)} B; ${games.length} game covers, ${bytes(games)} B; ${channelFiles.length} channel covers, ${bytes(channelFiles)} B; ${Object.keys(ordered).length} covers`,
   );
   if (Object.keys(unpinned).length) {
     say("Unpinned matches; paste into PINS or GAME_PINS:");

@@ -13,7 +13,7 @@ The screen has these parts:
 - A top bar with the speakers' lo-fi status, the world clock and Back to room.
 - A dock of eight apps: Movies & Series, Games, My videos, Channels, Live, Anime, Highlights and Lo-fi radio.
 - A hero for the picked title, with its main button.
-- A cover row for the selected app, with the real TMDB posters and IGDB game covers (`docs/world-tv-covers.md`).
+- A cover row for the selected app, with the real TMDB posters and IGDB game covers (`docs/world-tv-covers.md`), and each channel's own art in Channels and Live.
 - A "Continue · from other apps" row.
 
 Keys:
@@ -85,16 +85,27 @@ It uses the same keys as `scripts/prepare-tv-covers.mjs`, read from the environm
 
 First run, 2026-11-06: 5 channels (midudev `UC8LeXCWOalN8SxlrPcG-PaQ`, Gentleman Programming `UCbx_d228PdYwgB4Jz202SIQ`, Fazt `@FaztTech` `UCX9NJ471o7Wie1DQe94RVIg`, Soy Dalto `UCtoo4_P6ilCj7jwa4FmA5lQ`, Theo `@theo` `UCbRP3c757lWg9M-U7TyEkXA`), 3 Twitch users, and 50 of 50 trailers. `@fazt` is a different person. `@t3dotgg` points to Theo's channel, but its uploads list `@theo` as the handle. Some trailers are uploads by archive channels: TMDB lists them, but not as official.
 
-YouTube and Twitch are credited in the menu's Credits ("Videos on the TV", "Live streams on the TV") as third-party players. The content belongs to its creators.
+YouTube and Twitch are credited in the menu's Credits ("Videos on the TV", "Live streams on the TV") as third-party players. The content belongs to its creators, and so do the channel avatars and banners on the covers. `scripts/prepare-tv-covers.mjs` writes these two entries with the cover counts, next to TMDB and IGDB.
 
 ## Covers on the screen
 
-The screen draws the real covers of `TV_COVERS` in `src/lib/world/tv-covers.ts` (T7, S7): TMDB posters for films and IGDB covers for games. They come from the shipped `public/world/tv/covers/*.webp` only. The site never requests TMDB, IGDB or any other host for them.
+The screen draws the real covers of `TV_COVERS` in `src/lib/world/tv-covers.ts` (T7, T8, S7): TMDB posters for films, IGDB covers for games, and channel art for the Channels and Live apps. They come from the shipped `public/world/tv/covers/*.webp` only. The site never requests TMDB, IGDB, YouTube, Twitch or any other host for them.
 
 - **Which cover:** `tvCoverSrc` in `tv-screen.ts` looks up a title by its library id. It looks up a film or game inside a collection by `coverKey(collectionId, entry)`. Each cover item and the hero carry the result as `cover`.
 - **Hero:** the picked title's cover, at its own proportions, centred on a dimmed and blurred fill of the same image. The title and meta stay on the dark side.
 - **Rows:** each cover fills its card (object-fit: cover). A gradient scrim keeps the title and year legible over the image.
-- **Continue row:** the owner's clip shows its own local poster (`video.poster`). Channels, Highlights and the lo-fi radio have no covers, so they keep their motif.
+- **Continue row:** the owner's clip shows its own local poster (`video.poster`), and midudev's channel shows its channel cover. Highlights and the lo-fi radio have no covers, so they keep their motif.
+
+### Channel covers (T8)
+
+`scripts/prepare-tv-covers.mjs` makes one 342 x 513 WebP per channel, `channel-<handle>.webp` and `live-<login>.webp`, keyed by the library id (`TvChannelCover`). It takes the channel ids from `tv-media.ts`, so run `prepare-tv-media.mjs` first when a channel changes.
+
+- **YouTube:** the public `/@handle` page. The script checks that the page's `externalId` is the pinned channel id. It takes the avatar from `og:image` (fetched at 800 px) and the desktop banner from `imageBannerViewModel` when the channel has one.
+- **Twitch:** Helix `/users` with the IGDB app token: `profile_image_url` and `offline_image_url`.
+- **Composition:** a gradient tinted with the avatar's mean colour, the centre of the banner (or Twitch offline image) fading in across the top, and the round avatar in a dark ring. The lower half stays plain for the title and scrim the TV draws. ImageMagick reads the avatar on stdin and the banner on fd 3, so nothing is written but the WebP.
+- **Pinned:** the manifest records the avatar's and banner's image ids (yt3 ids, or paths on Twitch's image CDN) and the WebP's sha256. A rerun composes a cover again only when the creator changed their art or the file no longer matches.
+
+First run, 2026-11-06: 8 covers, 80,486 B. Every channel has a banner except Theo on YouTube and midudev on Twitch, which get the tinted gradient.
 - **Fallback:** the title's motif is drawn when it has no cover, while the image loads, or if it fails to load.
 
 `TvScreen.tsx` loads each image of `tvImageSources(layout)` once, into a cache shared by every screen. It waits for `decode()` before it draws an image. Each decoded image triggers one redraw, so the idle preview in the room shows the covers too.

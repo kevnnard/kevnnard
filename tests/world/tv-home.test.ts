@@ -604,8 +604,31 @@ describe("Real covers on the TV screen (tv-home-screen T7, S7)", () => {
     }
   });
 
+  it("shows each YouTube and Twitch channel's own art (T8)", () => {
+    for (const [appId, note] of [
+      ["channels", /channel art from YouTube · see Credits/],
+      ["live", /channel art from Twitch · see Credits/],
+    ] as const) {
+      const appCol = TV_APPS.findIndex((entry) => entry.id === appId);
+      const layout = tvScreenLayout(
+        press(initialTvHome(), `dock:${appCol}`).state,
+        ACTIVE,
+      );
+      assert.match(layout.coversNote, note);
+      assert.equal(layout.hero.cover, manifest(app(appId).titles[0].id));
+      layout.covers.forEach((item, col) => {
+        const { id } = app(appId).titles[col];
+        assert.ok(item.cover, `${id} has channel art`);
+        assert.equal(item.cover, manifest(id));
+      });
+    }
+    const idle = tvScreenLayout(initialTvHome(), IDLE);
+    const midudev = TV_CONTINUE.indexOf("channel-midudev");
+    assert.equal(idle.continued[midudev].cover, manifest("channel-midudev"));
+  });
+
   it("keeps the drawn motif where no cover exists", () => {
-    for (const appId of ["channels", "live", "anime", "highlights", "radio"]) {
+    for (const appId of ["anime", "highlights", "radio"]) {
       const appCol = TV_APPS.findIndex((entry) => entry.id === appId);
       const layout = tvScreenLayout(
         press(initialTvHome(), `dock:${appCol}`).state,

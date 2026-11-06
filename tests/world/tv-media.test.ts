@@ -237,6 +237,8 @@ describe("Player credits (T8, S8-S10)", () => {
     url: string;
     notice: string;
     rights: string;
+    files: string;
+    count: number;
   }[];
 
   it("names YouTube and Twitch as third-party players, content by its creators", () => {
@@ -250,6 +252,15 @@ describe("Player credits (T8, S8-S10)", () => {
       assert.equal(entry.url, url);
       assert.match(entry.notice, /official/i);
       assert.match(entry.rights, /creators/);
+      // The channel art on the TV's covers is theirs too.
+      assert.match(entry.rights, /avatars and banners belong to/);
+      assert.equal(entry.files, "tv/covers/");
+      assert.equal(
+        entry.count,
+        Object.values(TV_COVERS).filter(
+          (cover) => "platform" in cover && cover.platform === id,
+        ).length,
+      );
     }
   });
 

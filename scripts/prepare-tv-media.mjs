@@ -3,8 +3,9 @@
 // (tv-home-screen T8, S8-S10): the YouTube channel id behind each channel of
 // the Channels app, the Twitch user behind each streamer of the Live app,
 // and an official YouTube trailer for every film and game of the Movies and
-// Games apps. Writes src/lib/world/tv-media.ts and the YouTube and Twitch
-// player entries in public/world/credits.json. The site never calls YouTube,
+// Games apps. Writes src/lib/world/tv-media.ts; the YouTube and Twitch
+// entries in Credits come with their channel covers from
+// scripts/prepare-tv-covers.mjs. The site never calls YouTube,
 // Twitch, TMDB or IGDB APIs; it only loads their official players after a
 // visitor presses play.
 //
@@ -27,13 +28,12 @@
 //    when YouTube's oEmbed says it is public and embeddable. A trailer pinned
 //    in the previous manifest is kept while it still qualifies, so a rerun
 //    does not drift.
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const MANIFEST = join(ROOT, "src/lib/world/tv-media.ts");
-const CREDITS = join(ROOT, "public/world/credits.json");
 const API = "https://api.themoviedb.org/3";
 const TWITCH_TOKEN = "https://id.twitch.tv/oauth2/token";
 const HELIX = "https://api.twitch.tv/helix";
@@ -402,50 +402,6 @@ export const TV_TRAILERS_MISSING: readonly string[] = ${list};
 `;
 }
 
-/** The two players in Credits, in place, after the cover sources. */
-function writeCredits() {
-  const credits = JSON.parse(readFileSync(CREDITS, "utf8"));
-  const players = [
-    {
-      id: "youtube",
-      label: "Videos on the TV",
-      name: "YouTube",
-      url: "https://www.youtube.com",
-      notice:
-        "Channel uploads, live streams and trailers play in YouTube's official privacy-enhanced player (youtube-nocookie.com).",
-      usage:
-        "The living-room TV loads the player only after a visitor presses play, muted; the site ships no YouTube video, thumbnail or key.",
-      rights:
-        "The videos belong to their creators and rights holders, under YouTube's terms.",
-      files: "",
-      count: 0,
-      script: "scripts/prepare-tv-media.mjs",
-    },
-    {
-      id: "twitch",
-      label: "Live streams on the TV",
-      name: "Twitch",
-      url: "https://www.twitch.tv",
-      notice:
-        "Live streams play in Twitch's official embedded player (player.twitch.tv).",
-      usage:
-        "The living-room TV's Live app loads the player only after a visitor presses play, muted; Twitch shows its own screen when a channel is offline.",
-      rights: "The streams belong to their creators, under Twitch's terms.",
-      files: "",
-      count: 0,
-      script: "scripts/prepare-tv-media.mjs",
-    },
-  ];
-  const services = credits.services ?? [];
-  for (const player of players) {
-    const at = services.findIndex((entry) => entry.id === player.id);
-    if (at >= 0) services[at] = player;
-    else services.push(player);
-  }
-  credits.services = services;
-  writeFileSync(CREDITS, `${JSON.stringify(credits, null, 2)}\n`);
-}
-
 // --- main --------------------------------------------------------------------
 
 async function main() {
@@ -530,7 +486,6 @@ async function main() {
     MANIFEST,
     manifestSource({ youtube, twitch, trailers, missing }),
   );
-  writeCredits();
   say(
     `${Object.keys(youtube).length} YouTube channels; ${Object.keys(twitch).length} Twitch channels; ${Object.keys(trailers).length} of ${items.length} trailers`,
   );

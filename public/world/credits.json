@@ -1808,11 +1808,11 @@
       "name": "YouTube",
       "url": "https://www.youtube.com",
       "notice": "Channel uploads, live streams and trailers play in YouTube's official privacy-enhanced player (youtube-nocookie.com).",
-      "usage": "The living-room TV loads the player only after a visitor presses play, muted; the site ships no YouTube video, thumbnail or key.",
-      "rights": "The videos belong to their creators and rights holders, under YouTube's terms.",
-      "files": "",
-      "count": 0,
-      "script": "scripts/prepare-tv-media.mjs"
+      "usage": "The living-room TV loads the player only after a visitor presses play, muted; its channel covers are made once at build time from each channel's public page, and the site ships no YouTube video or key.",
+      "rights": "The videos belong to their creators and rights holders, under YouTube's terms; the channel avatars and banners belong to their creators.",
+      "files": "tv/covers/",
+      "count": 5,
+      "script": "scripts/prepare-tv-covers.mjs"
     },
     {
       "id": "twitch",
@@ -1820,11 +1820,11 @@
       "name": "Twitch",
       "url": "https://www.twitch.tv",
       "notice": "Live streams play in Twitch's official embedded player (player.twitch.tv).",
-      "usage": "The living-room TV's Live app loads the player only after a visitor presses play, muted; Twitch shows its own screen when a channel is offline.",
-      "rights": "The streams belong to their creators, under Twitch's terms.",
-      "files": "",
-      "count": 0,
-      "script": "scripts/prepare-tv-media.mjs"
+      "usage": "The living-room TV's Live app loads the player only after a visitor presses play, muted; Twitch shows its own screen when a channel is offline. Its channel covers are made once at build time.",
+      "rights": "The streams belong to their creators, under Twitch's terms; the channel avatars and banners belong to their creators.",
+      "files": "tv/covers/",
+      "count": 3,
+      "script": "scripts/prepare-tv-covers.mjs"
     }
   ]
 }

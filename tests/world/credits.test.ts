@@ -625,7 +625,10 @@ describe("IGDB attribution (tv-home-screen T5, S7)", () => {
     assert.equal(igdb.count, shippedFrom("igdbId"), "the shipped covers");
     // Every shipped file is credited to exactly one of them.
     const shipped = readdirSync(new URL("tv/covers/", PUBLIC)).length;
-    assert.equal(services[0].count + igdb.count, shipped);
+    assert.equal(
+      services.reduce((sum, entry) => sum + entry.count, 0),
+      shipped,
+    );
   });
 
   it("shows each service under its own heading in the menu's Credits", () => {

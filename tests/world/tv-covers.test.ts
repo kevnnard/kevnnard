@@ -12,11 +12,13 @@ import {
   COVER_MAX_BYTES,
   coverKey,
   TV_COVERS,
+  type TvChannelCover,
   type TvCover,
   type TvFilmCover,
   type TvGameCover,
 } from "../../src/lib/world/tv-covers.ts";
 import { tvApp } from "../../src/lib/world/tv-library.ts";
+import { TV_TWITCH, TV_YOUTUBE } from "../../src/lib/world/tv-media.ts";
 
 const ROOT = new URL("../../", import.meta.url);
 const COVERS = new URL("public/world/tv/covers/", ROOT);
@@ -138,10 +140,15 @@ describe("TV covers (tv-home-screen T4, S7)", () => {
     assert.equal(hitman.year, 2000, "a collection takes its first game's");
   });
 
-  it("lists no cover for channels or titles outside the library", () => {
+  it("lists a cover for every library title, channels included, and nothing else", () => {
     assert.deepEqual(
       Object.keys(TV_COVERS).sort(),
-      [...expected("movies"), ...expected("games")].map((k) => k.key).sort(),
+      [
+        ...expected("movies").map((k) => k.key),
+        ...expected("games").map((k) => k.key),
+        ...tvApp("channels").titles.map((title) => title.id),
+        ...tvApp("live").titles.map((title) => title.id),
+      ].sort(),
     );
   });
 
@@ -178,6 +185,54 @@ describe("TV covers (tv-home-screen T4, S7)", () => {
         key,
       );
     }
+  });
+
+  it("composes each YouTube and Twitch channel's own art into a cover (T8)", () => {
+    const channel = (key: string): TvChannelCover => {
+      const cover = TV_COVERS[key];
+      assert.ok(cover && "platform" in cover, `${key} is channel art`);
+      return cover;
+    };
+    for (const [id, youtube] of Object.entries(TV_YOUTUBE)) {
+      const cover = channel(id);
+      assert.equal(cover.platform, "youtube", id);
+      assert.equal(cover.channelId, youtube.channelId, id);
+      assert.equal(cover.title, youtube.name, id);
+      assert.match(
+        cover.src,
+        /^\/world\/tv\/covers\/channel-[a-z0-9-]+\.webp$/,
+      );
+      // The avatar is pinned by its image id on yt3; never a full URL.
+      const yt3 = /^(ytc\/)?[\w-]{20,}$/;
+      assert.match(cover.avatar, yt3, id);
+      assert.ok(cover.banner === null || yt3.test(cover.banner), id);
+    }
+    for (const [id, twitch] of Object.entries(TV_TWITCH)) {
+      const cover = channel(id);
+      assert.equal(cover.platform, "twitch", id);
+      assert.equal(cover.channelId, twitch.twitchId, id);
+      assert.match(cover.src, /^\/world\/tv\/covers\/live-[a-z0-9-]+\.webp$/);
+      assert.match(cover.avatar, /^[\w/.-]+\.(png|jpe?g)$/, id);
+      assert.doesNotMatch(cover.avatar, /^https?:/, id);
+    }
+    // At least one channel shows its banner behind the avatar.
+    assert.ok(
+      Object.values(TV_COVERS).some(
+        (cover) => "platform" in cover && cover.banner,
+      ),
+    );
+  });
+
+  it("downloads channel art from the public page and Helix, at prepare time only", () => {
+    const source = readFileSync(SCRIPT, "utf8");
+    assert.match(source, /YOUTUBE = "https:\/\/www\.youtube\.com"/);
+    assert.match(source, /`\$\{YOUTUBE\}\/@\$\{handle\}`/);
+    assert.match(source, /imageBannerViewModel/);
+    assert.match(source, /og:image/);
+    assert.match(source, /profile_image_url/);
+    assert.match(source, /offline_image_url/);
+    assert.match(source, /HELIX = "https:\/\/api\.twitch\.tv\/helix"/);
+    assert.match(source, /`\$\{HELIX\}\/users\?/);
   });
 
   it("ships no poster the manifest does not list", () => {
