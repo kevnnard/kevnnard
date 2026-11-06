@@ -1,7 +1,7 @@
 // The living-room TV's library (tv-home-screen T2, S1, S3): the apps on the
 // dock, their titles and the "Continue" row. Pure data for tv-screen.ts.
-// Covers are drawn motifs, never poster art: real covers need a
-// licensed source with attribution (TMDB, IGDB), see docs/world-tv-home.md.
+// Real covers come from the generated tv-covers.ts (TMDB posters, IGDB game
+// covers, shipped locally); each title's motif is the drawn fallback.
 // No YouTube ids yet, so nothing here loads a third-party embed.
 
 export type TvAppId =
@@ -13,7 +13,7 @@ export type TvAppId =
   | "highlights"
   | "radio";
 
-/** The drawn placeholder cover art (TvScreen.tsx paints each motif). */
+/** The drawn cover art where no real cover exists or while it loads. */
 export const COVER_MOTIFS = [
   "moon",
   "ring",

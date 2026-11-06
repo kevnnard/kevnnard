@@ -8,6 +8,7 @@ import {
   TV_PANEL,
   TV_SCREEN,
 } from "../../src/lib/world/living.ts";
+import { coverKey, TV_COVERS } from "../../src/lib/world/tv-covers.ts";
 import {
   moveRemote,
   TV_FOCUS,
@@ -29,8 +30,10 @@ import {
   type TvHomeState,
   type TvScreenOptions,
   tvClock,
+  tvCoverSrc,
   tvHitAt,
   tvHomeAction,
+  tvImageSources,
   tvMove,
   tvScreenLayout,
   tvUvToCanvas,
@@ -434,6 +437,134 @@ describe("TV home screen on the panel (tv-home-screen T3, S6)", () => {
   });
 });
 
+describe("Real covers on the TV screen (tv-home-screen T7, S7)", () => {
+  const manifest = (key: string) =>
+    Object.hasOwn(TV_COVERS, key) ? TV_COVERS[key].src : null;
+  const opened = (id: string) => {
+    const title = tvTitle(id);
+    const appCol = TV_APPS.findIndex((entry) => entry.id === title.app);
+    const col = app(title.app).titles.indexOf(title);
+    return press(initialTvHome(), `dock:${appCol}`, `cover:${col}`, "primary")
+      .state;
+  };
+
+  it("shows Ghost of Tsushima's cover in the idle preview's hero and row", () => {
+    const layout = tvScreenLayout(initialTvHome(), IDLE);
+    assert.equal(layout.hero.cover, TV_COVERS["ghost-of-tsushima"].src);
+    for (const item of layout.covers) {
+      const title = titled("games", item.title);
+      assert.equal(item.cover, manifest(title.id), item.title);
+      assert.ok(item.cover, `${item.title} has a cover`);
+    }
+  });
+
+  it("resolves every Movies and Games cover to the manifest", () => {
+    for (const appId of ["movies", "games"]) {
+      const appCol = TV_APPS.findIndex((entry) => entry.id === appId);
+      const state = press(initialTvHome(), `dock:${appCol}`).state;
+      const layout = tvScreenLayout(state, ACTIVE);
+      layout.covers.forEach((item, col) => {
+        const title = app(appId).titles[col];
+        assert.equal(item.cover, manifest(title.id), title.title);
+        assert.ok(item.cover, `${title.title} has a cover`);
+      });
+    }
+  });
+
+  it("draws each film and game of an opened collection with its own cover", () => {
+    for (const title of allTitles.filter((entry) => entry.films)) {
+      const state = opened(title.id);
+      assert.equal(state.opened, title.id);
+      const layout = tvScreenLayout(state, ACTIVE);
+      assert.equal(layout.covers[0].kind, "back");
+      assert.equal(layout.covers[0].cover, null, "the back card is drawn");
+      (title.films ?? []).forEach((entry, i) => {
+        const key = coverKey(title.id, entry);
+        assert.equal(layout.covers[i + 1].cover, manifest(key), key);
+        assert.ok(layout.covers[i + 1].cover, `${key} has a cover`);
+      });
+      const picked = press(state, "cover:2").state;
+      assert.equal(
+        tvScreenLayout(picked, ACTIVE).hero.cover,
+        manifest(coverKey(title.id, (title.films ?? [])[1])),
+        "the hero shows the picked entry's cover",
+      );
+    }
+  });
+
+  it("keeps the drawn motif where no cover exists", () => {
+    for (const appId of ["channels", "anime", "highlights", "radio"]) {
+      const appCol = TV_APPS.findIndex((entry) => entry.id === appId);
+      const layout = tvScreenLayout(
+        press(initialTvHome(), `dock:${appCol}`).state,
+        ACTIVE,
+      );
+      assert.equal(layout.hero.cover, null, appId);
+      for (const item of layout.covers) {
+        assert.equal(item.cover, null, item.title);
+        assert.ok(COVER_MOTIFS.includes(item.motif), item.title);
+      }
+    }
+    const unknown: TvTitle = {
+      id: "not-in-the-manifest",
+      app: "movies",
+      title: "Not in the manifest",
+      motif: "moon",
+    };
+    assert.equal(tvCoverSrc(unknown), null);
+    assert.equal(
+      tvCoverSrc(tvTitle("harry-potter"), { title: "Unknown", year: 1999 }),
+      null,
+    );
+  });
+
+  it("gives the Continue row the clip's own poster and covers where they exist", () => {
+    const layout = tvScreenLayout(initialTvHome(), IDLE);
+    layout.continued.forEach((item, col) => {
+      const title = tvTitle(TV_CONTINUE[col]);
+      const expected = title.video?.poster ?? manifest(title.id);
+      assert.equal(item.cover, expected, title.title);
+    });
+    assert.equal(
+      layout.continued[0].cover,
+      "/world/stories/carneros-dc-32-clip-poster.jpg",
+    );
+    const clip = press(initialTvHome(), "continue:0").state;
+    const hero = tvScreenLayout(clip, ACTIVE).hero;
+    assert.equal(hero.cover, null, "the clip's hero shows its frame or poster");
+    assert.equal(hero.poster, "/world/stories/carneros-dc-32-clip-poster.jpg");
+  });
+
+  it("loads only shipped local images, never a third-party URL", () => {
+    const states = [
+      initialTvHome(),
+      ...TV_APPS.map((_, col) => press(initialTvHome(), `dock:${col}`).state),
+      ...allTitles.filter((entry) => entry.films).map((t) => opened(t.id)),
+      press(initialTvHome(), "continue:0").state,
+    ];
+    const shipped = new Set([
+      ...Object.values(TV_COVERS).map((cover) => cover.src),
+      "/world/stories/carneros-dc-32-clip-poster.jpg",
+    ]);
+    const seen = new Set<string>();
+    for (const state of states)
+      for (const options of [IDLE, ACTIVE])
+        for (const src of tvImageSources(tvScreenLayout(state, options))) {
+          assert.ok(shipped.has(src), src);
+          assert.doesNotMatch(src, /^(https?:)?\/\//);
+          assert.ok(
+            existsSync(new URL(`../../public${src}`, import.meta.url)),
+            src,
+          );
+          seen.add(src);
+        }
+    assert.ok(seen.has(TV_COVERS["ghost-of-tsushima"].src));
+    const idle = tvImageSources(tvScreenLayout(initialTvHome(), IDLE));
+    assert.equal(new Set(idle).size, idle.length, "each image listed once");
+    assert.ok(idle.includes(TV_COVERS.hitman.src), "the idle row's covers");
+  });
+});
+
 describe("TV wiring (T3)", () => {
   const worldApp = read("src/components/world/WorldApp.tsx");
   const scene = read("src/components/world/WorldScene.tsx");
@@ -528,6 +659,17 @@ describe("TV wiring (T3)", () => {
       screen + read("src/lib/world/tv-screen.ts"),
       /Sample picks · replace with yours/,
     );
+  });
+
+  it("draws covers from a decoded image cache, with a scrim under the title", () => {
+    assert.match(screen, /tvImageSources\(layout\)/);
+    assert.match(screen, /new Map<string, /);
+    assert.match(screen, /\.decode\(\)/);
+    assert.match(
+      screen,
+      /drawCover\(ctx, item, false, lift\(item\.id\), image\(item\.cover\)\)/,
+    );
+    assert.match(screen, /shade\(ctx, area/);
   });
 
   it("redraws only on change, animating nothing but the started clip", () => {

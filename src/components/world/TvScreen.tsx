@@ -27,6 +27,7 @@ import {
   type TvRegion,
   type TvScreenLayout,
   tvHitAt,
+  tvImageSources,
   tvScreenLayout,
   tvUvToCanvas,
 } from "@/lib/world/tv-screen.ts";
@@ -92,6 +93,34 @@ const IDLE = tvScreenLayout(initialTvHome(), {
 });
 
 type Ctx = CanvasRenderingContext2D;
+
+/**
+ * Decoded cover images by site path, loaded once for every TV screen: the
+ * shipped covers and the clip's poster (tvImageSources), never a remote
+ * URL. "failed" keeps the motif without retrying.
+ */
+const IMAGES = new Map<string, HTMLImageElement | "loading" | "failed">();
+const LOADED = new Set<() => void>();
+
+function loadImage(src: string) {
+  if (IMAGES.has(src)) return;
+  IMAGES.set(src, "loading");
+  const image = new Image();
+  image.decoding = "async";
+  image.src = src;
+  image.decode().then(
+    () => {
+      IMAGES.set(src, image);
+      for (const listener of LOADED) listener();
+    },
+    () => IMAGES.set(src, "failed"),
+  );
+}
+
+const loadedImage = (src: string | null) => {
+  const entry = src ? IMAGES.get(src) : undefined;
+  return entry instanceof HTMLImageElement ? entry : null;
+};
 
 function box(ctx: Ctx, { x, y, w, h }: Omit<TvRegion, "id">, r: number) {
   ctx.beginPath();
@@ -293,13 +322,13 @@ function shade(
   ctx.fillRect(x, y, w, h);
 }
 
-/** The video frame or poster scaled to cover `area`. */
+/** The video frame or image scaled to cover `area` (object-fit: cover). */
 function cover(
   ctx: Ctx,
   image: CanvasImageSource,
   iw: number,
   ih: number,
-  area: TvRegion,
+  area: Omit<TvRegion, "id">,
 ) {
   const scale = Math.max(area.w / iw, area.h / ih);
   const w = iw * scale;
@@ -313,7 +342,13 @@ function cover(
   );
 }
 
-function drawCover(ctx: Ctx, item: TvCoverItem, wide: boolean, lift: number) {
+function drawCover(
+  ctx: Ctx,
+  item: TvCoverItem,
+  wide: boolean,
+  lift: number,
+  image: HTMLImageElement | null,
+) {
   const area = { x: item.x, y: item.y - lift, w: item.w, h: item.h };
   ctx.save();
   box(ctx, area, 8);
@@ -333,8 +368,10 @@ function drawCover(ctx: Ctx, item: TvCoverItem, wide: boolean, lift: number) {
       area.y + area.h / 2 + 24,
     );
   } else {
-    motif(ctx, item.motif, area.x, area.y, area.w, area.h);
-    shade(ctx, area, 0.4, 0.9);
+    // The real cover once decoded, the drawn motif until then or without.
+    if (image) cover(ctx, image, image.naturalWidth, image.naturalHeight, area);
+    else motif(ctx, item.motif, area.x, area.y, area.w, area.h);
+    shade(ctx, area, image ? 0.3 : 0.4, image ? 0.96 : 0.9);
     ctx.textAlign = "left";
     ctx.fillStyle = C.fg;
     ctx.font = `600 ${wide ? 19 : 18}px ${SANS}`;
@@ -363,6 +400,11 @@ function drawCover(ctx: Ctx, item: TvCoverItem, wide: boolean, lift: number) {
     }
     if (item.collection) {
       // Two card edges peeking at the top right: a collection.
+      if (image) {
+        ctx.fillStyle = "rgba(9, 9, 11, 0.7)";
+        box(ctx, { x: area.x + area.w - 44, y: area.y + 4, w: 38, h: 32 }, 6);
+        ctx.fill();
+      }
       ctx.strokeStyle = C.soft;
       ctx.lineWidth = 1.5;
       box(ctx, { x: area.x + area.w - 34, y: area.y + 9, w: 24, h: 17 }, 3);
@@ -409,10 +451,42 @@ function rowHead(
 }
 
 /**
+ * The hero's cover: a dimmed, blurred fill of the art box behind the whole
+ * cover, centred at its own 2:3 or 3:4 proportions.
+ */
+function heroCover(ctx: Ctx, image: HTMLImageElement, art: TvRegion) {
+  const iw = image.naturalWidth;
+  const ih = image.naturalHeight;
+  ctx.filter = "blur(16px)";
+  cover(ctx, image, iw, ih, {
+    x: art.x - 24,
+    y: art.y - 24,
+    w: art.w + 48,
+    h: art.h + 48,
+  });
+  ctx.filter = "none";
+  ctx.fillStyle = "rgba(9, 9, 11, 0.55)";
+  ctx.fillRect(art.x, art.y, art.w, art.h);
+  const h = art.h - 32;
+  const w = (h * iw) / ih;
+  const area = { x: art.x + (art.w - w) / 2, y: art.y + 16, w, h };
+  ctx.save();
+  box(ctx, area, 6);
+  ctx.clip();
+  ctx.drawImage(image, area.x, area.y, w, h);
+  ctx.restore();
+  ctx.strokeStyle = C.line;
+  ctx.lineWidth = 1.5;
+  box(ctx, area, 6);
+  ctx.stroke();
+}
+
+/**
  * Paints Kevnnard TV onto the panel's canvas: top bar, app dock, hero
- * (the clip's frame or poster when it is the owner's video), the cover
- * rows, the key hints, the remote's ring (a static lift and outline) and
- * the idle hover outline.
+ * (the title's cover, or the clip's frame or poster when it is the owner's
+ * video), the cover rows (real covers once decoded, motifs otherwise), the
+ * key hints, the remote's ring (a static lift and outline) and the idle
+ * hover outline.
  */
 export function drawTvScreen(
   ctx: Ctx,
@@ -420,12 +494,16 @@ export function drawTvScreen(
   {
     hover,
     frame,
+    images,
   }: {
     hover: boolean;
     frame: { image: CanvasImageSource; width: number; height: number } | null;
+    /** A decoded image by site path, or null while loading or missing. */
+    images: (src: string) => HTMLImageElement | null;
   },
 ) {
   const { pad } = TV_LAYOUT;
+  const image = (src: string | null) => (src ? images(src) : null);
   ctx.setTransform(RESOLUTION, 0, 0, RESOLUTION, 0, 0);
   ctx.textBaseline = "middle";
   const bg = ctx.createLinearGradient(0, 0, 0, TV_SCREEN_H);
@@ -582,8 +660,10 @@ export function drawTvScreen(
   ctx.clip();
   ctx.fillStyle = C.surface;
   ctx.fillRect(hero.art.x, hero.art.y, hero.art.w, hero.art.h);
+  const heroImage = image(hero.cover);
   if (hero.video && frame)
     cover(ctx, frame.image, frame.width, frame.height, hero.art);
+  else if (heroImage) heroCover(ctx, heroImage, hero.art);
   else motif(ctx, hero.motif, hero.art.x, hero.art.y, hero.art.w, hero.art.h);
   shade(ctx, hero.art, 0.6, 0.6);
   if (hero.video && hero.primary === "Play clip · muted") {
@@ -616,7 +696,7 @@ export function drawTvScreen(
   );
   for (const item of layout.covers) {
     if (!item.visible) continue;
-    drawCover(ctx, item, false, lift(item.id));
+    drawCover(ctx, item, false, lift(item.id), image(item.cover));
     if (layout.ring === item.id) ringAt({ ...item, y: item.y - 6 }, 8);
   }
   rowHead(
@@ -628,7 +708,7 @@ export function drawTvScreen(
   );
   for (const item of layout.continued) {
     if (!item.visible) continue;
-    drawCover(ctx, item, true, lift(item.id));
+    drawCover(ctx, item, true, lift(item.id), image(item.cover));
     if (layout.ring === item.id) ringAt({ ...item, y: item.y - 6 }, 8);
   }
 
@@ -692,18 +772,21 @@ export default function TvScreen({
     [geometry, material],
   );
 
-  // The clip's local poster, loaded only once the clip is in the hero.
-  const [poster, setPoster] = useState<{
-    src: string;
-    image: HTMLImageElement;
-  } | null>(null);
-  const posterSrc = layout.hero.poster;
+  // The covers and the clip's poster this screen can show, each loaded and
+  // decoded once; a decoded image redraws the screen, nothing else does.
+  const [decoded, setDecoded] = useState(0);
   useEffect(() => {
-    if (!posterSrc || poster?.src === posterSrc) return;
-    const image = new Image();
-    image.onload = () => setPoster({ src: posterSrc, image });
-    image.src = posterSrc;
-  }, [posterSrc, poster]);
+    const listener = () => setDecoded((count) => count + 1);
+    LOADED.add(listener);
+    return () => {
+      LOADED.delete(listener);
+    };
+  }, []);
+  const sources = useMemo(() => tvImageSources(layout), [layout]);
+  useEffect(() => {
+    for (const src of sources) loadImage(src);
+  }, [sources]);
+  const poster = loadedImage(layout.hero.poster);
 
   const redraw = useCallback(() => {
     if (!context || !material.map) return;
@@ -717,26 +800,27 @@ export default function TvScreen({
             width: element.videoWidth,
             height: element.videoHeight,
           }
-        : poster && poster.src === posterSrc
+        : poster
           ? {
-              image: poster.image,
-              width: poster.image.width,
-              height: poster.image.height,
+              image: poster,
+              width: poster.naturalWidth,
+              height: poster.naturalHeight,
             }
           : null;
-    drawTvScreen(context, layout, { hover, frame });
+    drawTvScreen(context, layout, { hover, frame, images: loadedImage });
     material.map.needsUpdate = true;
     invalidate();
+    // `decoded` counts loaded images: each one repaints the screen once.
   }, [
     context,
     material,
     video,
     clipPlaying,
     poster,
-    posterSrc,
     layout,
     hover,
     invalidate,
+    decoded,
   ]);
   useEffect(redraw, [redraw]);
 

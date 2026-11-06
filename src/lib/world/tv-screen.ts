@@ -2,8 +2,11 @@
 // home screen of artboard 01-tv-os-overlay laid out for the 16:9 panel. The
 // remote's state, what a press does, and where every item sits on the
 // 1600 x 896 canvas. Pure data for TvScreen.tsx (drawing and clicks on the
-// panel) and TvHome.tsx (the keyboard companion).
+// panel) and TvHome.tsx (the keyboard companion). Covers are the shipped
+// TMDB and IGDB images of tv-covers.ts (T7, S7); the drawn motif stays where
+// there is none, and under an image until it loads.
 
+import { coverKey, TV_COVERS } from "./tv-covers.ts";
 import { moveRemote, type RemotePosition } from "./tv-focus.ts";
 import {
   appCount,
@@ -96,6 +99,8 @@ export interface TvCoverItem extends TvRegion {
   title: string;
   line: string;
   motif: CoverMotif;
+  /** The shipped cover image, or null to draw the motif. */
+  cover: string | null;
   favourite: boolean;
   collection: boolean;
   picked: boolean;
@@ -113,6 +118,8 @@ export interface TvHero {
   primary: string | null;
   secondary: string | null;
   motif: CoverMotif;
+  /** The title's or picked entry's shipped cover; null for the clip. */
+  cover: string | null;
   video: string | null;
   poster: string | null;
   videoLabel: string | null;
@@ -143,6 +150,17 @@ type Cover =
   | { kind: "title"; title: TvTitle }
   | { kind: "entry"; title: TvTitle; entry: TvEntry; index: number }
   | { kind: "back"; title: TvTitle };
+
+/** A shipped cover under public/world/tv/covers/, never a remote URL. */
+const SHIPPED_COVER = /^\/world\/tv\/covers\/[a-z0-9-]+\.webp$/;
+
+/** The manifest's cover of a title, or of one entry of its collection. */
+export function tvCoverSrc(title: TvTitle, entry?: TvEntry): string | null {
+  const key = entry ? coverKey(title.id, entry) : title.id;
+  if (!Object.hasOwn(TV_COVERS, key)) return null;
+  const { src } = TV_COVERS[key];
+  return SHIPPED_COVER.test(src) ? src : null;
+}
 
 /** The screen as the room first sees it: Ghost of Tsushima in the hero. */
 export function initialTvHome(): TvHomeState {
@@ -375,6 +393,7 @@ function heroOf(
             ? null
             : "Watch trailer · YouTube · coming soon",
     motif: title.motif,
+    cover: title.video ? null : tvCoverSrc(title, entry),
     video: title.video?.src ?? null,
     poster: title.video?.poster ?? null,
     videoLabel: title.video?.label ?? null,
@@ -461,6 +480,13 @@ export function tvScreenLayout(
       h: COVER.h,
       visible: place.visible,
       motif: cover.title.motif,
+      cover:
+        cover.kind === "back"
+          ? null
+          : tvCoverSrc(
+              cover.title,
+              cover.kind === "entry" ? cover.entry : undefined,
+            ),
       picked: col === pickedCol,
     };
     if (cover.kind === "back")
@@ -523,6 +549,8 @@ export function tvScreenLayout(
       title: title.title,
       line: title.caption ?? owner.label,
       motif: title.motif,
+      // The owner's clip shows its own local poster.
+      cover: title.video?.poster ?? tvCoverSrc(title),
       favourite: false,
       collection: false,
       picked: state.hero.id === id && state.hero.entry === undefined,
@@ -544,7 +572,11 @@ export function tvScreenLayout(
     coversHeading: opened ? opened.title : app.label,
     coversNote: opened
       ? `${opened.films?.length ?? 0} ${entryUnit(opened)}${opened.collectionNote ? ` · ${opened.collectionNote}` : ""}`
-      : "covers are drawn placeholders until licensed art (TMDB / IGDB) is wired",
+      : app.id === "movies"
+        ? "posters from TMDB · see Credits"
+        : app.id === "games"
+          ? "covers from IGDB · see Credits"
+          : "drawn covers",
     sampleTag:
       !opened && app.sample ? "Sample picks · replace with yours" : null,
     covers,
@@ -563,6 +595,25 @@ export function tvScreenLayout(
       ? "← → ↑ ↓ move · Enter select, again to open or play · Esc back to the room"
       : "Kevnnard TV · Click or tap the TV to use it",
   };
+}
+
+/**
+ * Every image the screen can draw for `layout`, once each: the hero's cover
+ * and clip poster, then both rows (scrolled-off covers too, so scrolling
+ * never waits). Only the shipped covers and the clip's local poster.
+ */
+export function tvImageSources(layout: TvScreenLayout): string[] {
+  const sources = [
+    layout.hero.cover,
+    layout.hero.poster,
+    ...layout.covers.map((item) => item.cover),
+    ...layout.continued.map((item) => item.cover),
+  ];
+  return [
+    ...new Set(
+      sources.filter((src): src is string => Boolean(src?.startsWith("/"))),
+    ),
+  ];
 }
 
 /** The world clock as the top bar shows it, "HH:MM". */
