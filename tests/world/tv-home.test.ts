@@ -23,7 +23,11 @@ import {
   type TvTitle,
   tvTitle,
 } from "../../src/lib/world/tv-library.ts";
-import { TV_TRAILERS, TV_YOUTUBE } from "../../src/lib/world/tv-media.ts";
+import {
+  TV_TRAILERS,
+  TV_VIDEOS,
+  TV_YOUTUBE,
+} from "../../src/lib/world/tv-media.ts";
 import {
   initialTvHome,
   TV_SCREEN_H,
@@ -145,10 +149,27 @@ describe("TV library content (tv-home-screen T2, S1, S3)", () => {
     assert.ok(live.titles.every((entry) => entry.app === "live"));
   });
 
-  it("marks only the rows still without the owner's picks as samples", () => {
+  it("keeps no sample rows: every app holds the owner's picks (T10, S11)", () => {
     assert.deepEqual(
       TV_APPS.filter((entry) => entry.sample).map((entry) => entry.id),
-      ["anime", "highlights"],
+      [],
+    );
+  });
+
+  it("lists the best-known anime series and real highlights (T10, S11)", () => {
+    assert.deepEqual(
+      app("anime").titles.map((entry) => [entry.title, entry.year]),
+      [
+        ["Naruto", 2002],
+        ["Naruto Shippuden", 2007],
+        ["Dragon Ball Z", 1989],
+        ["Demon Slayer: Kimetsu no Yaiba", 2019],
+        ["One Piece", 1999],
+      ],
+    );
+    assert.deepEqual(
+      app("highlights").titles.map((entry) => entry.id),
+      ["highlights-nfl", "highlights-jordan"],
     );
   });
 
@@ -500,12 +521,37 @@ describe("TV home screen on the panel (tv-home-screen T3, S6)", () => {
     assert.equal(tvHomeAction(initialTvHome(), "back").effect, "exit");
   });
 
-  it("keeps Highlights as coming soon, with nothing to play", () => {
+  it("plays NFL's uploads and Jordan's highlights from Highlights (T10)", () => {
     const highlights = press(initialTvHome(), "dock:6").state;
-    const layout = tvScreenLayout(highlights, ACTIVE);
-    assert.equal(layout.hero.secondary, "Watch on YouTube · coming soon");
-    assert.equal(layout.hero.secondaryReady, false);
-    assert.equal(tvHomeAction(highlights, "secondary").state.player, null);
+    const nfl = tvScreenLayout(highlights, ACTIVE);
+    assert.equal(nfl.hero.title, "NFL");
+    assert.equal(nfl.hero.primary, "Play latest uploads · YouTube");
+    assert.deepEqual(press(highlights, "primary").state.player?.media, {
+      kind: "uploads",
+      channelId: TV_YOUTUBE["highlights-nfl"].channelId,
+    });
+    const jordan = press(highlights, "cover:1").state;
+    assert.equal(tvScreenLayout(jordan, ACTIVE).hero.primary, "Play · YouTube");
+    const played = press(jordan, "primary").state;
+    assert.deepEqual(played.player?.media, {
+      kind: "video",
+      youtube: TV_VIDEOS["highlights-jordan"].youtube,
+    });
+    assert.match(
+      tvScreenLayout(played, ACTIVE).player?.credit ?? "",
+      /YouTube · NBA/,
+    );
+  });
+
+  it("plays each anime series' trailer (T10)", () => {
+    const anime = press(initialTvHome(), "dock:5").state;
+    const layout = tvScreenLayout(anime, ACTIVE);
+    assert.equal(layout.hero.title, "Naruto");
+    assert.equal(layout.hero.secondary, "Watch trailer · YouTube");
+    assert.deepEqual(press(anime, "secondary").state.player?.media, {
+      kind: "trailer",
+      youtube: TV_TRAILERS.naruto.youtube,
+    });
   });
 
   it("renders no player in any state reached without a play press", () => {
@@ -628,7 +674,7 @@ describe("Real covers on the TV screen (tv-home-screen T7, S7)", () => {
   });
 
   it("keeps the drawn motif where no cover exists", () => {
-    for (const appId of ["anime", "highlights", "radio"]) {
+    for (const appId of ["radio"]) {
       const appCol = TV_APPS.findIndex((entry) => entry.id === appId);
       const layout = tvScreenLayout(
         press(initialTvHome(), `dock:${appCol}`).state,
@@ -697,6 +743,90 @@ describe("Real covers on the TV screen (tv-home-screen T7, S7)", () => {
     const idle = tvImageSources(tvScreenLayout(initialTvHome(), IDLE));
     assert.equal(new Set(idle).size, idle.length, "each image listed once");
     assert.ok(idle.includes(TV_COVERS.hitman.src), "the idle row's covers");
+  });
+});
+
+describe("Every tile on the TV has a cover and an action (T10, S11)", () => {
+  /** Lo-fi radio's art is drawn locally; the own clip has its poster. */
+  const LOCAL_ART = new Set(["lofi-radio"]);
+  const plays = (state: TvHomeState, id: string) => {
+    const { state: next, effect } = tvHomeAction(state, id);
+    return (
+      Boolean(next.player) ||
+      next.opened !== state.opened ||
+      effect === "clip" ||
+      effect === "music"
+    );
+  };
+
+  it("draws a dock icon and switches app for every dock tile", () => {
+    const screen = read("src/components/world/TvScreen.tsx");
+    TV_APPS.forEach((entry, col) => {
+      assert.match(
+        screen,
+        new RegExp(`\\b${entry.id}:\\s*\\n?\\s*"M`),
+        entry.id,
+      );
+      assert.equal(press(initialTvHome(), `dock:${col}`).state.app, entry.id);
+    });
+  });
+
+  it("covers every title of every app, and Enter twice plays or opens it", () => {
+    TV_APPS.forEach((entry, appCol) => {
+      const home = press(initialTvHome(), `dock:${appCol}`).state;
+      const layout = tvScreenLayout(home, ACTIVE);
+      entry.titles.forEach((title, col) => {
+        const item = layout.covers[col];
+        assert.equal(item.title, title.title);
+        if (!LOCAL_ART.has(title.id))
+          assert.ok(item.cover, `${title.id} cover`);
+        const picked = press(home, `cover:${col}`).state;
+        assert.ok(plays(picked, `cover:${col}`), `${title.id} does something`);
+      });
+    });
+  });
+
+  it("covers every film and game inside a collection, each playing its trailer", () => {
+    for (const title of allTitles.filter((entry) => entry.films)) {
+      const appCol = TV_APPS.findIndex((entry) => entry.id === title.app);
+      const col = app(title.app).titles.indexOf(title);
+      const opened = press(
+        initialTvHome(),
+        `dock:${appCol}`,
+        `cover:${col}`,
+        "primary",
+      ).state;
+      (title.films ?? []).forEach((film, i) => {
+        const id = `cover:${i + 1}`;
+        assert.ok(
+          tvScreenLayout(opened, ACTIVE).covers[i + 1].cover,
+          film.title,
+        );
+        const picked = press(opened, id).state;
+        assert.ok(plays(picked, id), `${film.title} plays its trailer`);
+      });
+    }
+  });
+
+  it("covers every Continue tile and plays it", () => {
+    const layout = tvScreenLayout(initialTvHome(), ACTIVE);
+    TV_CONTINUE.forEach((id, col) => {
+      if (!LOCAL_ART.has(id)) assert.ok(layout.continued[col].cover, id);
+      const picked = press(initialTvHome(), `continue:${col}`).state;
+      assert.ok(plays(picked, `continue:${col}`), `${id} does something`);
+    });
+  });
+
+  it("shows the own clip's poster in its own row too", () => {
+    const videos = TV_APPS.findIndex((entry) => entry.id === "videos");
+    const layout = tvScreenLayout(
+      press(initialTvHome(), `dock:${videos}`).state,
+      ACTIVE,
+    );
+    assert.equal(
+      layout.covers[0].cover,
+      "/world/stories/carneros-dc-32-clip-poster.jpg",
+    );
   });
 });
 

@@ -7,6 +7,7 @@ import {
   TV_TRAILERS,
   TV_TRAILERS_MISSING,
   TV_TWITCH,
+  TV_VIDEOS,
   TV_YOUTUBE,
   tvEmbedSrc,
 } from "../../src/lib/world/tv-media.ts";
@@ -17,8 +18,8 @@ const SCRIPT = "scripts/prepare-tv-media.mjs";
 
 /** Every film and game that can play a trailer, by cover key. */
 const trailerKeys = () =>
-  ["movies", "games"].flatMap((id) =>
-    tvApp(id as "movies" | "games").titles.flatMap((title) =>
+  ["movies", "games", "anime"].flatMap((id) =>
+    tvApp(id as "movies" | "games" | "anime").titles.flatMap((title) =>
       title.films
         ? title.films.map((entry) => coverKey(title.id, entry))
         : [title.id],
@@ -28,13 +29,20 @@ const trailerKeys = () =>
 describe("TV media manifest (tv-home-screen T8, S8-S10)", () => {
   it("resolves every YouTube channel of the Channels app to its id", () => {
     const channels = tvApp("channels").titles;
-    assert.deepEqual(
-      Object.keys(TV_YOUTUBE),
-      channels.map((title) => title.id),
-    );
+    assert.deepEqual(Object.keys(TV_YOUTUBE), [
+      ...channels.map((title) => title.id),
+      "highlights-nfl",
+    ]);
     assert.deepEqual(
       Object.values(TV_YOUTUBE).map((channel) => channel.handle),
-      ["midudev", "GentlemanProgramming", "FaztTech", "soydalto", "theo"],
+      [
+        "midudev",
+        "GentlemanProgramming",
+        "FaztTech",
+        "soydalto",
+        "theo",
+        "NFL",
+      ],
     );
     for (const channel of Object.values(TV_YOUTUBE)) {
       assert.match(channel.channelId, /^UC[\w-]{22}$/, channel.handle);
@@ -62,7 +70,7 @@ describe("TV media manifest (tv-home-screen T8, S8-S10)", () => {
 
   it("pins a YouTube trailer for every film and game, or says why not", () => {
     const keys = trailerKeys();
-    assert.ok(keys.length >= 45, "every film and game");
+    assert.ok(keys.length >= 55, "every film, game and anime series");
     for (const key of keys) {
       const trailer = Object.hasOwn(TV_TRAILERS, key) ? TV_TRAILERS[key] : null;
       if (!trailer) {
@@ -88,6 +96,22 @@ describe("TV media manifest (tv-home-screen T8, S8-S10)", () => {
       assert.ok(keys.includes(key) && !Object.hasOwn(TV_TRAILERS, key), key);
     // Most of the library has one.
     assert.ok(Object.keys(TV_TRAILERS).length >= keys.length - 6);
+  });
+});
+
+describe("Highlights videos (T10, S11)", () => {
+  it("pins Jordan's highlights to an official NBA video", () => {
+    assert.deepEqual(Object.keys(TV_VIDEOS), ["highlights-jordan"]);
+    const jordan = TV_VIDEOS["highlights-jordan"];
+    assert.match(jordan.youtube, /^[\w-]{11}$/);
+    assert.equal(jordan.handle, "NBA");
+    assert.match(jordan.name, /Jordan/);
+    const src = new URL(
+      tvEmbedSrc({ kind: "video", youtube: jordan.youtube }, "localhost"),
+    );
+    assert.equal(src.origin, "https://www.youtube-nocookie.com");
+    assert.equal(src.pathname, `/embed/${jordan.youtube}`);
+    assert.equal(src.searchParams.get("mute"), "1");
   });
 });
 

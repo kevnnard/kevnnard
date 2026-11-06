@@ -18,7 +18,11 @@ import {
   type TvGameCover,
 } from "../../src/lib/world/tv-covers.ts";
 import { tvApp } from "../../src/lib/world/tv-library.ts";
-import { TV_TWITCH, TV_YOUTUBE } from "../../src/lib/world/tv-media.ts";
+import {
+  TV_TWITCH,
+  TV_VIDEOS,
+  TV_YOUTUBE,
+} from "../../src/lib/world/tv-media.ts";
 
 const ROOT = new URL("../../", import.meta.url);
 const COVERS = new URL("public/world/tv/covers/", ROOT);
@@ -148,6 +152,8 @@ describe("TV covers (tv-home-screen T4, S7)", () => {
         ...expected("games").map((k) => k.key),
         ...tvApp("channels").titles.map((title) => title.id),
         ...tvApp("live").titles.map((title) => title.id),
+        ...tvApp("anime").titles.map((title) => title.id),
+        ...tvApp("highlights").titles.map((title) => title.id),
       ].sort(),
     );
   });
@@ -190,7 +196,7 @@ describe("TV covers (tv-home-screen T4, S7)", () => {
   it("composes each YouTube and Twitch channel's own art into a cover (T8)", () => {
     const channel = (key: string): TvChannelCover => {
       const cover = TV_COVERS[key];
-      assert.ok(cover && "platform" in cover, `${key} is channel art`);
+      assert.ok(cover && "avatar" in cover, `${key} is channel art`);
       return cover;
     };
     for (const [id, youtube] of Object.entries(TV_YOUTUBE)) {
@@ -233,6 +239,25 @@ describe("TV covers (tv-home-screen T4, S7)", () => {
     assert.match(source, /offline_image_url/);
     assert.match(source, /HELIX = "https:\/\/api\.twitch\.tv\/helix"/);
     assert.match(source, /`\$\{HELIX\}\/users\?/);
+  });
+
+  it("has a TMDB series poster for every anime (T10, S11)", () => {
+    for (const title of tvApp("anime").titles) {
+      const cover = film(title.id);
+      assert.equal(cover.tmdbType, "tv", title.id);
+      assert.equal(cover.year, title.year, title.id);
+      assert.equal(norm(cover.title), norm(title.title), title.id);
+    }
+  });
+
+  it("covers Highlights with NFL's channel art and the Jordan video's thumbnail", () => {
+    const nfl = TV_COVERS["highlights-nfl"];
+    assert.ok("avatar" in nfl, "NFL is channel art");
+    assert.equal(nfl.channelId, TV_YOUTUBE["highlights-nfl"].channelId);
+    const jordan = TV_COVERS["highlights-jordan"];
+    assert.ok("videoId" in jordan, "Jordan is a video thumbnail");
+    assert.equal(jordan.videoId, TV_VIDEOS["highlights-jordan"].youtube);
+    assert.equal(jordan.platform, "youtube");
   });
 
   it("ships no poster the manifest does not list", () => {

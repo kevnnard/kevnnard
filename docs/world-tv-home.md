@@ -48,7 +48,8 @@ All content lives in `TV_APPS` in `src/lib/world/tv-library.ts`. `tests/world/tv
 - **Add a title:** add an entry to the app's `titles`. Give it a unique `id`, the `title`, a `year` or a `meta` line, and one of the `COVER_MOTIFS` for the drawn cover. For a film or game, rerun `scripts/prepare-tv-covers.mjs` to add its real cover (`docs/world-tv-covers.md`).
 - **Add a saga:** a single title with `films: [{ title, year }, …]` is one collection cover. It opens to its entries. `collectionNote` adds the owner's word, for example "all of them, favourites".
 - **Add the owner's "Why I love it" words:** set `note: { text, draft }`. Never invent a note. The hero shows nothing when the note is empty.
-- **Replace a sample row:** Anime and Highlights are still `sample: true`, labelled "Sample picks · replace with yours". Replace their titles and set `sample: false`.
+- **Sample rows:** none are left (T10). An app with `sample: true` is labelled "Sample picks · replace with yours".
+- **Add an anime series:** add it to the Anime app with its first-air `year`. Run `scripts/prepare-tv-covers.mjs`, check the printed match on themoviedb.org/tv, paste it into `PINS`, then run `scripts/prepare-tv-media.mjs` for its trailer and the covers script once more.
 - **Feature a title:** `TV_FEATURED` picks the hero of the preview, shown again each time the TV opens. `TV_CONTINUE` lists the ids in the bottom row.
 - **Add a video:** set `video: { src, poster, label }` on a title. Local files only, under `public/world/stories/`. The clip plays muted on the TV, only after a click or key press, and the companion keeps its native controls.
 
@@ -68,7 +69,11 @@ The TV plays three kinds of third-party video, all in the official players:
 - **On the TV.** `TvPlayer` is a page framed on the TV's glass with drei's `<Html transform occlude="blending">`, like the portrait monitor's YouTube tab. Cross-origin video cannot be drawn into the canvas, so it is a DOM page over the panel. It has a top bar with **Back to Kevnnard TV**, the title, and Latest uploads / Live now for a channel, and a credit line under the video.
 - **Esc order.** Esc closes the player first and leaves the home screen as it was. A second Esc returns the camera to the room. While the keyboard is inside the YouTube or Twitch frame, the page cannot hear Esc, so use Back. Any other press on the companion closes the player too.
 - **Twitch `parent`.** It is `window.location.hostname` at runtime, so localhost, 127.0.0.1 and the production domain all work. Twitch shows its own offline screen when a channel is not live. The browser makes no Twitch API call. A "live now" badge would need a server-side check, so the Twitch secret never ships (T6).
-- **Highlights** stays "Watch on YouTube · coming soon": it is still a sample row without video ids.
+- **Highlights (T10)** plays the NFL's official channel like a channel (latest uploads, Live now) and one pinned video, Michael Jordan's top 60 career plays from the NBA's official channel (`VIDEOS` in the media script, checked with oEmbed: public, embeddable, by `@NBA`). Its cover is the video's thumbnail, downloaded at prepare time.
+- **Anime (T10)** plays each series' trailer, from TMDB `/tv/{id}/videos` in English or Japanese: trailers first, then openings, then teasers.
+- **Enter twice** on a film, game, series or collection entry plays its trailer, like **Watch trailer**.
+
+Every tile has a cover and an action (tests/world/tv-home.test.ts, "Every tile on the TV …"). The exceptions are the lo-fi radio, which keeps its drawn local art, and the own clip, which keeps its local poster.
 
 ### Update the media
 
@@ -94,11 +99,11 @@ The screen draws the real covers of `TV_COVERS` in `src/lib/world/tv-covers.ts` 
 - **Which cover:** `tvCoverSrc` in `tv-screen.ts` looks up a title by its library id. It looks up a film or game inside a collection by `coverKey(collectionId, entry)`. Each cover item and the hero carry the result as `cover`.
 - **Hero:** the picked title's cover, at its own proportions, centred on a dimmed and blurred fill of the same image. The title and meta stay on the dark side.
 - **Rows:** each cover fills its card (object-fit: cover). A gradient scrim keeps the title and year legible over the image.
-- **Continue row:** the owner's clip shows its own local poster (`video.poster`), and midudev's channel shows its channel cover. Highlights and the lo-fi radio have no covers, so they keep their motif.
+- **Continue row:** the owner's clip shows its own local poster (`video.poster`), in My videos too. Every other tile has its cover; only the lo-fi radio keeps its drawn motif.
 
 ### Channel covers (T8)
 
-`scripts/prepare-tv-covers.mjs` makes one 342 x 513 WebP per channel, `channel-<handle>.webp` and `live-<login>.webp`, keyed by the library id (`TvChannelCover`). It takes the channel ids from `tv-media.ts`, so run `prepare-tv-media.mjs` first when a channel changes.
+`scripts/prepare-tv-covers.mjs` makes one 342 x 513 WebP per channel in `TV_YOUTUBE` and `TV_TWITCH`, `channel-<handle>.webp` and `live-<login>.webp`, keyed by the library id (`TvChannelCover`). The NFL in Highlights is one of them. Each single video of `TV_VIDEOS` gets `<library id>.webp` (`TvVideoCover`): its YouTube thumbnail (`maxresdefault`, else `hqdefault`) across the middle of a blurred fill of itself. The ids come from `tv-media.ts`, and trailers need the covers' TMDB ids. For a new title, run the covers script, then the media script, then the covers script again.
 
 - **YouTube:** the public `/@handle` page. The script checks that the page's `externalId` is the pinned channel id. It takes the avatar from `og:image` (fetched at 800 px) and the desktop banner from `imageBannerViewModel` when the channel has one.
 - **Twitch:** Helix `/users` with the IGDB app token: `profile_image_url` and `offline_image_url`.

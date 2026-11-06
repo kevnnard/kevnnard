@@ -293,46 +293,61 @@ export const TV_APPS: readonly TvApp[] = [
     })),
   },
   {
+    // The best-known series (S11): TMDB posters and trailers (T10).
     id: "anime",
     label: "Anime",
-    sample: true,
-    titles: [
-      ["Cowboy Bebop", 1998, "horizon"],
-      ["Spirited Away", 2001, "dune"],
-      ["Attack on Titan", 2013, "diag"],
-      ["Demon Slayer", 2019, "moon"],
-    ].map(([title, year, motif]) => ({
-      id: `anime-${String(title)
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")}`,
+    sample: false,
+    titles: (
+      [
+        ["naruto", "Naruto", 2002, "Masashi Kishimoto", "ring"],
+        [
+          "naruto-shippuden",
+          "Naruto Shippuden",
+          2007,
+          "Masashi Kishimoto",
+          "split",
+        ],
+        ["dragon-ball-z", "Dragon Ball Z", 1989, "Akira Toriyama", "horizon"],
+        [
+          "demon-slayer",
+          "Demon Slayer: Kimetsu no Yaiba",
+          2019,
+          "Tanjiro Kamado's story · Koyoharu Gotouge",
+          "moon",
+        ],
+        ["one-piece", "One Piece", 1999, "Eiichiro Oda", "dune"],
+      ] as const
+    ).map(([id, title, year, by, motif]) => ({
+      id,
       app: "anime" as const,
-      title: String(title),
-      year: Number(year),
-      meta: `${year} · sample pick`,
-      motif: motif as CoverMotif,
+      title,
+      year,
+      meta: `${by} · ${year} · anime series`,
+      motif,
     })),
   },
   {
+    // NFL and Michael Jordan (S11), from their official YouTube channels.
     id: "highlights",
     label: "Highlights",
-    sample: true,
+    sample: false,
     count: "NFL · Jordan",
     titles: [
       {
-        id: "highlights-jordan",
-        app: "highlights",
-        title: "Michael Jordan · career",
-        meta: "Highlights · sample pick",
-        caption: "Highlights · YouTube",
-        motif: "bars",
-      },
-      {
         id: "highlights-nfl",
         app: "highlights",
-        title: "NFL · week highlights",
-        meta: "Highlights · sample pick",
+        title: "NFL",
+        meta: "The NFL's official channel · latest uploads",
         caption: "Highlights · YouTube",
         motif: "diag",
+      },
+      {
+        id: "highlights-jordan",
+        app: "highlights",
+        title: "Michael Jordan · top 60 career plays",
+        meta: "The NBA's official channel · career highlights",
+        caption: "Highlights · YouTube",
+        motif: "bars",
       },
     ],
   },

@@ -57,6 +57,16 @@ const CHANNELS = {
   "channel-dalto": { handle: "soydalto", name: /^Soy Dalto$/ },
   // @t3dotgg points to the same channel; @theo is its own handle.
   "channel-theo-t3-gg-": { handle: "theo", name: /^Theo\b/ },
+  // Highlights (S11): the NFL's own channel plays like a channel.
+  "highlights-nfl": { handle: "NFL", name: /^NFL$/ },
+};
+
+/**
+ * Single videos of the Highlights app (S11), by library id: the video and
+ * the official channel that must have published it (checked via oEmbed).
+ */
+const VIDEOS = {
+  "highlights-jordan": { youtube: "jbW4f60dCNA", handle: "NBA" },
 };
 
 /** Each streamer of the Live app (by library id) and their Twitch login. */
@@ -183,6 +193,27 @@ const decodeHtml = (text) =>
     .replace(/&#39;/g, "'")
     .replace(/&quot;/g, '"');
 
+/** oEmbed's author is `handle` (a relative or absolute /@handle URL). */
+const byHandle = (embed, handle) =>
+  Boolean(
+    embed?.author_url?.toLowerCase().endsWith(`/@${handle}`.toLowerCase()),
+  );
+
+/** A pinned single video: public, embeddable and by the right channel. */
+async function video(titleId, { youtube, handle }) {
+  const embed = await oembed(`${YOUTUBE}/watch?v=${youtube}`);
+  if (!embed) throw new Error(`${titleId}: ${youtube} is not embeddable`);
+  if (!byHandle(embed, handle))
+    throw new Error(`${titleId}: ${youtube} is not by @${handle}`);
+  say(`  video ${titleId} -> ${youtube} "${embed.title}" (@${handle})`);
+  return {
+    youtube,
+    handle,
+    name: String(embed.title),
+    channel: String(embed.author_name),
+  };
+}
+
 /** A channel's id and name, read from its public /@handle page. */
 async function channel(titleId, { handle, name }) {
   const response = await fetch(`${YOUTUBE}/@${handle}`, {
@@ -204,7 +235,7 @@ async function channel(titleId, { handle, name }) {
   const uploads = await oembed(
     `${YOUTUBE}/playlist?list=UU${external.slice(2)}`,
   );
-  if (uploads?.author_url?.toLowerCase() !== `/@${handle}`.toLowerCase())
+  if (!byHandle(uploads, handle))
     throw new Error(`@${handle}: the uploads playlist is not theirs`);
   say(`  channel ${titleId} -> @${handle} ${external} "${title}"`);
   return { handle, channelId: external, name: title };
@@ -223,7 +254,7 @@ const slug = (text) =>
 /** Every film and game that can play a trailer: its cover key and cover. */
 function trailerItems(library, covers) {
   const items = [];
-  for (const app of ["movies", "games"])
+  for (const app of ["movies", "games", "anime"])
     for (const title of library.tvApp(app).titles) {
       const keys = title.films
         ? title.films.map(
@@ -239,13 +270,25 @@ function trailerItems(library, covers) {
   return items;
 }
 
-/** TMDB trailers on YouTube, best first: official, English, earliest. */
-async function tmdbCandidates(tmdbId) {
-  const { results = [] } = await tmdb(`/movie/${tmdbId}/videos`);
+/**
+ * TMDB trailers on YouTube, best first: official, English, earliest. A
+ * series (anime, T10) also takes Japanese videos, and its openings and
+ * teasers after its trailers.
+ */
+async function tmdbCandidates(cover) {
+  const series = cover.tmdbType === "tv";
+  const { results = [] } = series
+    ? await tmdb(`/tv/${cover.tmdbId}/videos`, {
+        include_video_language: "en,ja,null",
+      })
+    : await tmdb(`/movie/${cover.tmdbId}/videos`);
+  const types = series ? ["Trailer", "Opening Credits", "Teaser"] : ["Trailer"];
   const rank = (video) =>
-    (video.official ? 0 : 2) + (video.iso_639_1 === "en" ? 0 : 1);
+    types.indexOf(video.type) * 4 +
+    (video.official ? 0 : 2) +
+    (video.iso_639_1 === "en" ? 0 : 1);
   return results
-    .filter((video) => video.site === "YouTube" && video.type === "Trailer")
+    .filter((video) => video.site === "YouTube" && types.includes(video.type))
     .sort(
       (a, b) =>
         rank(a) - rank(b) ||
@@ -299,24 +342,36 @@ async function pickTrailer(key, candidates, previous) {
 const quote = (value) => JSON.stringify(value);
 const property = (name) =>
   /^[A-Za-z_$][\w$]*$/.test(name) ? name : quote(name);
+/**
+ * One manifest field, wrapped as Biome wraps it: onto its own line past 80
+ * columns, except under a key narrower than 5 (Prettier's short key).
+ */
+function fieldLine(name, value) {
+  const line = `    ${name}: ${quote(value)},`;
+  return line.length <= 80 || name.length < 5
+    ? line
+    : `    ${name}:\n      ${quote(value)},`;
+}
+
 const record = (entries) =>
   Object.entries(entries)
     .map(([key, value]) => {
       const fields = Object.entries(value)
-        .map(([name, field]) => `    ${name}: ${quote(field)},`)
+        .map(([name, field]) => fieldLine(name, field))
         .join("\n");
       return `  ${property(key)}: {\n${fields}\n  },`;
     })
     .join("\n");
 
-function manifestSource({ youtube, twitch, trailers, missing }) {
+function manifestSource({ youtube, twitch, videos, trailers, missing }) {
   const list = missing.length
     ? `[\n${missing.map((key) => `  ${quote(key)},`).join("\n")}\n]`
     : "[]";
   return `// Generated by scripts/prepare-tv-media.mjs (tv-home-screen T8, S8-S10);
 // do not edit by hand: rerun the script. What the living-room TV can play:
-// YouTube channels by their channel id, Twitch streamers by login, and an
-// official YouTube trailer per film and game (from TMDB and IGDB), resolved
+// YouTube channels by their channel id, Twitch streamers by login, single
+// Highlights videos, and an official YouTube trailer per film, game and
+// anime series (from TMDB and IGDB), resolved
 // once at prepare time. The site calls no API: it loads YouTube's
 // privacy-enhanced player or Twitch's official player, only after a press.
 // The videos belong to their creators; both players are in the Credits.
@@ -338,6 +393,17 @@ export interface TvTwitchChannel {
   name: string;
 }
 
+/** A single YouTube video of the Highlights app, by its library id. */
+export interface TvVideo {
+  youtube: string;
+  /** The official channel that published it, without the @. */
+  handle: string;
+  /** The video's title on YouTube. */
+  name: string;
+  /** The channel's name. */
+  channel: string;
+}
+
 /** An official trailer on YouTube, by cover key (see tv-covers.ts). */
 export interface TvTrailer {
   /** The YouTube video id. */
@@ -356,6 +422,7 @@ export type TvMedia =
   | { kind: "uploads"; channelId: string }
   | { kind: "live"; channelId: string }
   | { kind: "trailer"; youtube: string }
+  | { kind: "video"; youtube: string }
   | { kind: "twitch"; login: string };
 
 const NOCOOKIE = "https://www.youtube-nocookie.com/embed";
@@ -377,7 +444,7 @@ export function tvEmbedSrc(media: TvMedia, host: string): string {
     const parent = check(host, /^[a-z0-9.-]+$/i, "host");
     return \`https://player.twitch.tv/?channel=\${login}&parent=\${parent}&muted=true&autoplay=false\`;
   }
-  if (media.kind === "trailer")
+  if (media.kind === "trailer" || media.kind === "video")
     return \`\${NOCOOKIE}/\${check(media.youtube, /^[\\w-]{11}$/, "video id")}?\${YOUTUBE_PARAMS}\`;
   const id = check(media.channelId, /^UC[\\w-]{22}$/, "channel id");
   return media.kind === "uploads"
@@ -391,6 +458,10 @@ ${record(youtube)}
 
 export const TV_TWITCH: Readonly<Record<string, TvTwitchChannel>> = {
 ${record(twitch)}
+};
+
+export const TV_VIDEOS: Readonly<Record<string, TvVideo>> = {
+${record(videos)}
 };
 
 export const TV_TRAILERS: Readonly<Record<string, TvTrailer>> = {
@@ -425,6 +496,14 @@ async function main() {
     const wanted = CHANNELS[title.id];
     if (!wanted) throw new Error(`${title.id}: add its handle to CHANNELS`);
     youtube[title.id] = await channel(title.id, wanted);
+  }
+  const videos = {};
+  for (const title of library.tvApp("highlights").titles) {
+    if (CHANNELS[title.id])
+      youtube[title.id] = await channel(title.id, CHANNELS[title.id]);
+    else if (VIDEOS[title.id])
+      videos[title.id] = await video(title.id, VIDEOS[title.id]);
+    else throw new Error(`${title.id}: add it to CHANNELS or VIDEOS`);
   }
 
   const twitch = {};
@@ -465,7 +544,7 @@ async function main() {
     const game = "igdbId" in cover;
     const candidates = game
       ? await igdbCandidates(videosOf.get(cover.igdbId) ?? [])
-      : await tmdbCandidates(cover.tmdbId);
+      : await tmdbCandidates(cover);
     const pick = await pickTrailer(key, candidates, previous);
     if (!pick) {
       missing.push(key);
@@ -484,10 +563,10 @@ async function main() {
 
   writeFileSync(
     MANIFEST,
-    manifestSource({ youtube, twitch, trailers, missing }),
+    manifestSource({ youtube, twitch, videos, trailers, missing }),
   );
   say(
-    `${Object.keys(youtube).length} YouTube channels; ${Object.keys(twitch).length} Twitch channels; ${Object.keys(trailers).length} of ${items.length} trailers`,
+    `${Object.keys(youtube).length} YouTube channels; ${Object.keys(videos).length} YouTube videos; ${Object.keys(twitch).length} Twitch channels; ${Object.keys(trailers).length} of ${items.length} trailers`,
   );
 }
 

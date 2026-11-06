@@ -85,6 +85,12 @@ const SEARCH_PREFIX = {
  * [id, poster path]. Edit a pin to fix a wrong match or swap a poster.
  */
 const PINS = {
+  // Anime series (T10, S11): TMDB TV ids.
+  naruto: [46260, "/xppeysfvDKVx775MFuH8Z9BlpMk.jpg"],
+  "naruto-shippuden": [31910, "/kV27j3Nz4d5z8u6mN3EJw9RiLg2.jpg"],
+  "dragon-ball-z": [12971, "/oQ5CnVj3TRifXl2bIOri6H6rfNe.jpg"],
+  "demon-slayer": [85937, "/xUfRZu2mi8jH6SzQEJGP6tjBuYj.jpg"],
+  "one-piece": [37854, "/dB4EDhre2dsC2kxYDavyKWqLQwi.jpg"],
   "harry-potter": [1241, "/eVPs2Y0LyvTLZn6AP5Z6O2rtiGB.jpg"],
   "harry-potter/harry-potter-and-the-philosopher-s-stone-2001": [
     671,
@@ -405,6 +411,16 @@ async function wanted() {
     }
     items.push(...films);
   }
+  // Anime (T10, S11): TMDB series posters, under each title's library id.
+  for (const title of library.tvApp("anime").titles)
+    items.push({
+      key: title.id,
+      kind: "tv",
+      title: title.title,
+      year: title.year,
+      file: `${slug(title.title)}-${title.year}`,
+      query: title.title,
+    });
   for (const title of library.tvApp("games").titles) {
     if (!title.films) {
       const year = title.year ?? SERIES_YEAR[title.id];
@@ -487,6 +503,43 @@ async function resolveMovie(item, doubts) {
       `${item.key}: ${exact.length} exact matches; took ${best.id} "${best.title}" (${best.release_date})`,
     );
   return { id: best.id, poster: best.poster_path, title: best.title };
+}
+
+/** An anime series (T10): pinned and re-verified, or searched by first year. */
+async function resolveTv(item, doubts) {
+  const pin = PINS[item.key];
+  if (pin) {
+    const show = await tmdb(`/tv/${pin[0]}`, { language: "en-US" });
+    const ok =
+      (titleMatches(show.name, item) ||
+        titleMatches(show.original_name, item)) &&
+      yearOf(show.first_air_date) === item.year;
+    if (!ok)
+      doubts.push(
+        `${item.key}: pinned ${pin[0]} is "${show.name}" (${show.first_air_date})`,
+      );
+    return { id: pin[0], poster: pin[1], title: show.name, pinned: true };
+  }
+  const { results } = await tmdb("/search/tv", {
+    query: item.query,
+    first_air_date_year: item.year,
+    language: "en-US",
+  });
+  const exact = results.filter(
+    (show) =>
+      titleMatches(show.name, item) &&
+      yearOf(show.first_air_date) === item.year &&
+      show.poster_path,
+  );
+  const best = (exact.length ? exact : results).toSorted(
+    (a, b) => b.vote_count - a.vote_count || a.id - b.id,
+  )[0];
+  if (!best) throw new Error(`${item.key}: no TMDB series "${item.query}"`);
+  if (exact.length !== 1)
+    doubts.push(
+      `${item.key}: ${exact.length} exact matches; took ${best.id} "${best.name}" (${best.first_air_date})`,
+    );
+  return { id: best.id, poster: best.poster_path, title: best.name };
 }
 
 async function resolveCollection(item, doubts) {
@@ -683,16 +736,17 @@ async function channelItems() {
     pathToFileURL(join(ROOT, "src/lib/world/tv-media.ts")).href
   );
   const items = [];
-  for (const title of library.tvApp("channels").titles) {
-    const channel = media.TV_YOUTUBE[title.id];
-    if (!channel) throw new Error(`${title.id}: not in tv-media.ts`);
+  for (const title of library.tvApp("channels").titles)
+    if (!media.TV_YOUTUBE[title.id])
+      throw new Error(`${title.id}: not in tv-media.ts`);
+  // The Channels app, then any channel elsewhere (NFL in Highlights).
+  for (const [key, channel] of Object.entries(media.TV_YOUTUBE))
     items.push({
-      key: title.id,
+      key,
       platform: "youtube",
       file: `channel-${slug(channel.handle)}`,
       channel,
     });
-  }
   for (const title of library.tvApp("live").titles) {
     const channel = media.TV_TWITCH[title.id];
     if (!channel) throw new Error(`${title.id}: not in tv-media.ts`);
@@ -906,6 +960,82 @@ async function shipChannel(item, art, previous) {
   };
 }
 
+// --- video thumbnails (T10) --------------------------------------------------
+
+const YTIMG = "https://i.ytimg.com/vi/";
+
+/** The single videos of tv-media.ts (Highlights), by library id. */
+async function videoItems() {
+  const media = await import(
+    `${pathToFileURL(join(ROOT, "src/lib/world/tv-media.ts")).href}?t=${Date.now()}`
+  );
+  return Object.entries(media.TV_VIDEOS ?? {}).map(([key, video]) => ({
+    key,
+    file: slug(key),
+    video,
+  }));
+}
+
+/**
+ * The cover: the thumbnail (16:9) across the upper middle, over a dimmed,
+ * blurred fill of itself; the lower part stays calm for the TV's title.
+ */
+async function composeVideo(thumbnail) {
+  const { width, height } = CHANNEL;
+  const shown = Math.round((width * 9) / 16);
+  const args = [
+    ...["-respect-parentheses", "-"],
+    ...["(", "-clone", "0", "-resize", `${width}x${height}^`],
+    ...["-gravity", "center", "-extent", `${width}x${height}`],
+    ...["-blur", "0x14", "-modulate", "45"],
+    ...["(", "-size", `${width}x${height}`, "gradient:none-#09090b", ")"],
+    ...["-compose", "over", "-composite", ")"],
+    ...["(", "-clone", "0", "-resize", `${width}x${shown}^`],
+    ...["-gravity", "center", "-extent", `${width}x${shown}`, ")"],
+    ...["-delete", "0", "-gravity", "northwest", "-compose", "over"],
+    ...["-geometry", "+0+120", "-composite"],
+    "-strip",
+  ];
+  for (let quality = 84; quality >= 56; quality -= 4) {
+    const bytes = await magick(
+      [...args, "-quality", String(quality), "-define", "webp:method=6"].concat(
+        "webp:-",
+      ),
+      thumbnail,
+    );
+    if (bytes.length <= COVER_MAX_BYTES) return bytes;
+  }
+  throw new Error(`video cover does not fit ${COVER_MAX_BYTES} B`);
+}
+
+/** Ships a video's cover; downloads its thumbnail only when stale. */
+async function shipVideo(item, previous) {
+  const src = `/world/tv/covers/${item.file}.webp`;
+  const target = join(COVERS, `${item.file}.webp`);
+  const old = previous[item.key];
+  let bytes = existsSync(target) ? readFileSync(target) : null;
+  const fresh =
+    bytes &&
+    old?.src === src &&
+    old.videoId === item.video.youtube &&
+    old.sha256 === sha256(bytes);
+  if (!fresh) {
+    const id = item.video.youtube;
+    const thumbnail = await download(`${YTIMG}${id}/maxresdefault.jpg`).catch(
+      () => download(`${YTIMG}${id}/hqdefault.jpg`),
+    );
+    bytes = await composeVideo(thumbnail);
+    writeFileSync(target, bytes);
+  }
+  return {
+    src,
+    ...webpSize(bytes),
+    bytes: bytes.length,
+    sha256: sha256(bytes),
+    downloaded: !fresh,
+  };
+}
+
 // --- outputs -----------------------------------------------------------------
 
 const quote = (value) => JSON.stringify(value);
@@ -960,8 +1090,11 @@ interface TvCoverFile {
 
 /** A film or collection poster from TMDB. */
 export interface TvFilmCover extends TvCoverFile {
-  /** A collection cover uses TMDB's collection poster, or a film's. */
-  tmdbType: "movie" | "collection";
+  /**
+   * A collection cover uses TMDB's collection poster, or a film's; an anime
+   * series (T10) its TV poster.
+   */
+  tmdbType: "movie" | "collection" | "tv";
   tmdbId: number;
   /** TMDB's poster file the WebP was made from. */
   poster: string;
@@ -994,7 +1127,23 @@ export interface TvChannelCover {
   banner: string | null;
 }
 
-export type TvCover = TvFilmCover | TvGameCover | TvChannelCover;
+/**
+ * A single YouTube video's cover (T10): its thumbnail over a blurred fill
+ * of itself, composed at prepare time.
+ */
+export interface TvVideoCover {
+  src: string;
+  /** The video's title on YouTube. */
+  title: string;
+  width: number;
+  height: number;
+  sha256: string;
+  platform: "youtube";
+  /** The YouTube video id whose thumbnail it shows. */
+  videoId: string;
+}
+
+export type TvCover = TvFilmCover | TvGameCover | TvChannelCover | TvVideoCover;
 
 /** Each shipped poster stays at or under this many bytes. */
 export const COVER_MAX_BYTES = ${COVER_MAX_BYTES};
@@ -1032,7 +1181,7 @@ function writeCredits(films, games, youtube, twitch) {
     notice:
       "This product uses the TMDB API but is not endorsed or certified by TMDB.",
     usage:
-      "Film and collection posters on the living-room TV, fetched once at build time; the site makes no requests to TMDB.",
+      "Film, series and collection posters on the living-room TV, fetched once at build time; the site makes no requests to TMDB.",
     rights:
       "The posters belong to their studios and rights holders and are shown for personal, non-commercial reference.",
     files: "tv/covers/",
@@ -1118,7 +1267,9 @@ async function main() {
         ? await resolveGame(item, doubts)
         : item.kind === "collection"
           ? await resolveCollection(item, doubts)
-          : await resolveMovie(item, doubts);
+          : item.kind === "tv"
+            ? await resolveTv(item, doubts)
+            : await resolveMovie(item, doubts);
     if (!match.pinned)
       unpinned[item.key] = [match.id, match.poster ?? match.imageId];
     const file = await ship(item, match, previous);
@@ -1194,6 +1345,22 @@ async function main() {
       `  ${file.downloaded ? "got " : "kept"} ${item.key} -> ${item.platform} "${item.channel.name}"${art.banner ? " + banner" : ""} ${file.bytes} B`,
     );
   }
+  for (const item of await videoItems()) {
+    const file = await shipVideo(item, previous);
+    channelFiles.push({ ...file, platform: "youtube" });
+    ordered[item.key] = {
+      src: file.src,
+      title: item.video.name,
+      width: file.width,
+      height: file.height,
+      sha256: file.sha256,
+      platform: "youtube",
+      videoId: item.video.youtube,
+    };
+    say(
+      `  ${file.downloaded ? "got " : "kept"} ${item.key} -> youtube video ${item.video.youtube} ${file.bytes} B`,
+    );
+  }
   writeFileSync(MANIFEST, manifestSource(ordered));
   const files = [...shipped.values()];
   const games = files.filter((file) => file.game);
@@ -1207,7 +1374,7 @@ async function main() {
   );
   const bytes = (list) => list.reduce((sum, file) => sum + file.bytes, 0);
   say(
-    `${files.length - games.length} posters, ${bytes(files) - bytes(games)} B; ${games.length} game covers, ${bytes(games)} B; ${channelFiles.length} channel covers, ${bytes(channelFiles)} B; ${Object.keys(ordered).length} covers`,
+    `${files.length - games.length} posters, ${bytes(files) - bytes(games)} B; ${games.length} game covers, ${bytes(games)} B; ${channelFiles.length} channel and video covers, ${bytes(channelFiles)} B; ${Object.keys(ordered).length} covers`,
   );
   if (Object.keys(unpinned).length) {
     say("Unpinned matches; paste into PINS or GAME_PINS:");

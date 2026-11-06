@@ -1784,10 +1784,10 @@
       "name": "TMDB",
       "url": "https://www.themoviedb.org",
       "notice": "This product uses the TMDB API but is not endorsed or certified by TMDB.",
-      "usage": "Film and collection posters on the living-room TV, fetched once at build time; the site makes no requests to TMDB.",
+      "usage": "Film, series and collection posters on the living-room TV, fetched once at build time; the site makes no requests to TMDB.",
       "rights": "The posters belong to their studios and rights holders and are shown for personal, non-commercial reference.",
       "files": "tv/covers/",
-      "count": 41,
+      "count": 46,
       "script": "scripts/prepare-tv-covers.mjs"
     },
     {
@@ -1811,7 +1811,7 @@
       "usage": "The living-room TV loads the player only after a visitor presses play, muted; its channel covers are made once at build time from each channel's public page, and the site ships no YouTube video or key.",
       "rights": "The videos belong to their creators and rights holders, under YouTube's terms; the channel avatars and banners belong to their creators.",
       "files": "tv/covers/",
-      "count": 5,
+      "count": 7,
       "script": "scripts/prepare-tv-covers.mjs"
     },
     {

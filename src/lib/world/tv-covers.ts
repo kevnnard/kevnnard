@@ -28,8 +28,11 @@ interface TvCoverFile {
 
 /** A film or collection poster from TMDB. */
 export interface TvFilmCover extends TvCoverFile {
-  /** A collection cover uses TMDB's collection poster, or a film's. */
-  tmdbType: "movie" | "collection";
+  /**
+   * A collection cover uses TMDB's collection poster, or a film's; an anime
+   * series (T10) its TV poster.
+   */
+  tmdbType: "movie" | "collection" | "tv";
   tmdbId: number;
   /** TMDB's poster file the WebP was made from. */
   poster: string;
@@ -62,7 +65,23 @@ export interface TvChannelCover {
   banner: string | null;
 }
 
-export type TvCover = TvFilmCover | TvGameCover | TvChannelCover;
+/**
+ * A single YouTube video's cover (T10): its thumbnail over a blurred fill
+ * of itself, composed at prepare time.
+ */
+export interface TvVideoCover {
+  src: string;
+  /** The video's title on YouTube. */
+  title: string;
+  width: number;
+  height: number;
+  sha256: string;
+  platform: "youtube";
+  /** The YouTube video id whose thumbnail it shows. */
+  videoId: string;
+}
+
+export type TvCover = TvFilmCover | TvGameCover | TvChannelCover | TvVideoCover;
 
 /** Each shipped poster stays at or under this many bytes. */
 export const COVER_MAX_BYTES = 40960;
@@ -572,6 +591,61 @@ export const TV_COVERS: Readonly<Record<string, TvCover>> = {
     sha256: "90f5c74a05a49f9789f37ace08c4f162efd64815f9f55e8a6d8a5a3630a94550",
     poster: "/oQffRNjK8e19rF7xVYEN8ew0j7b.jpg",
   },
+  naruto: {
+    src: "/world/tv/covers/naruto-2002.webp",
+    tmdbType: "tv",
+    tmdbId: 46260,
+    title: "Naruto",
+    year: 2002,
+    width: 342,
+    height: 513,
+    sha256: "fd905cd7f0b3e300f1fdc8a325d08f016d1390de2544fe23c10e97c79b17ea1d",
+    poster: "/xppeysfvDKVx775MFuH8Z9BlpMk.jpg",
+  },
+  "naruto-shippuden": {
+    src: "/world/tv/covers/naruto-shippuden-2007.webp",
+    tmdbType: "tv",
+    tmdbId: 31910,
+    title: "Naruto Shippūden",
+    year: 2007,
+    width: 342,
+    height: 519,
+    sha256: "8da0ed639fe2a97242d7c9c5769d55c92e99e9655781c550334957bf3f95066f",
+    poster: "/kV27j3Nz4d5z8u6mN3EJw9RiLg2.jpg",
+  },
+  "dragon-ball-z": {
+    src: "/world/tv/covers/dragon-ball-z-1989.webp",
+    tmdbType: "tv",
+    tmdbId: 12971,
+    title: "Dragon Ball Z",
+    year: 1989,
+    width: 342,
+    height: 456,
+    sha256: "bfad01665dedf0e5cd3883b969b86a92be809ba2d24782cd7b4dbd8c825e75e9",
+    poster: "/oQ5CnVj3TRifXl2bIOri6H6rfNe.jpg",
+  },
+  "demon-slayer": {
+    src: "/world/tv/covers/demon-slayer-kimetsu-no-yaiba-2019.webp",
+    tmdbType: "tv",
+    tmdbId: 85937,
+    title: "Demon Slayer: Kimetsu no Yaiba",
+    year: 2019,
+    width: 342,
+    height: 513,
+    sha256: "90205c702fe463ce10789aba30415719a872cd1ab5a92dd64b15086b554db9c5",
+    poster: "/xUfRZu2mi8jH6SzQEJGP6tjBuYj.jpg",
+  },
+  "one-piece": {
+    src: "/world/tv/covers/one-piece-1999.webp",
+    tmdbType: "tv",
+    tmdbId: 37854,
+    title: "One Piece",
+    year: 1999,
+    width: 342,
+    height: 513,
+    sha256: "90427d30139738b30967537accc2da6d3548e00bad9cce398d4a14e0b84a1249",
+    poster: "/dB4EDhre2dsC2kxYDavyKWqLQwi.jpg",
+  },
   "ghost-of-tsushima": {
     src: "/world/tv/covers/ghost-of-tsushima-2020.webp",
     igdbId: 75235,
@@ -757,6 +831,19 @@ export const TV_COVERS: Readonly<Record<string, TvCover>> = {
       "Y6jut5A-dhWRlv7W81kGxVFPtZGjZN97IhBP75uLnx2AVV7ZEJUUUxBKHlFw9GcwILxkz1E_cLc",
     banner: null,
   },
+  "highlights-nfl": {
+    src: "/world/tv/covers/channel-nfl.webp",
+    title: "NFL",
+    width: 342,
+    height: 513,
+    sha256: "a926b49eef8a113a2f657bb35cc80d585f9b34c0b063127b30591e8adb8bcee7",
+    platform: "youtube",
+    channelId: "UCDVYQ4Zhbm3S2dlz7P1GBDg",
+    avatar:
+      "mTNz2WARw0gLIz_BM5cuB6oRAQCTapuIwiiAAHd-IeWMCfE_zNcRVOXt4N6c4YxJbQ_kibWOFg",
+    banner:
+      "DaJoyOAX2X3BciAbKfm_fcQSAPx_1JqQR5lJRzvfNqOZ9IYR-OOf2vuiv8AY8juO1aufhFvMyA",
+  },
   "live-gentleman-programming": {
     src: "/world/tv/covers/live-gentleman-programming.webp",
     title: "gentleman_programming",
@@ -794,5 +881,14 @@ export const TV_COVERS: Readonly<Record<string, TvCover>> = {
       "jtv_user_pictures/0d80c66b-d0d3-4431-b17e-5b0125ee1e97-profile_image-300x300.png",
     banner:
       "jtv_user_pictures/49e681d9-40d5-4bd7-b0e8-ec86868574c9-channel_offline_image-1920x1080.jpeg",
+  },
+  "highlights-jordan": {
+    src: "/world/tv/covers/highlights-jordan.webp",
+    title: "Michael Jordan’s Top 60 Career Plays",
+    width: 342,
+    height: 513,
+    sha256: "7565cfe25c8ab51daae5e52565d3c6c2d64606820d565ad6887270706a05dc9e",
+    platform: "youtube",
+    videoId: "jbW4f60dCNA",
   },
 };

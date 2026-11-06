@@ -28,6 +28,7 @@ import {
 import {
   TV_TRAILERS,
   TV_TWITCH,
+  TV_VIDEOS,
   TV_YOUTUBE,
   type TvMedia,
   type TvTrailer,
@@ -229,6 +230,8 @@ function primaryMedia(state: TvHomeState): TvMedia | null {
     return { kind: "uploads", channelId: TV_YOUTUBE[id].channelId };
   if (Object.hasOwn(TV_TWITCH, id))
     return { kind: "twitch", login: TV_TWITCH[id].login };
+  if (Object.hasOwn(TV_VIDEOS, id))
+    return { kind: "video", youtube: TV_VIDEOS[id].youtube };
   return null;
 }
 
@@ -237,7 +240,7 @@ function secondaryMedia(state: TvHomeState): TvMedia | null {
   const title = heroTitle(state);
   if (Object.hasOwn(TV_YOUTUBE, title.id))
     return { kind: "live", channelId: TV_YOUTUBE[title.id].channelId };
-  if (title.app !== "movies" && title.app !== "games") return null;
+  if (!["movies", "games", "anime"].includes(title.app)) return null;
   const trailer = tvTrailer(title, heroEntry(state));
   return trailer ? { kind: "trailer", youtube: trailer.youtube } : null;
 }
@@ -323,6 +326,9 @@ function runPrimary(state: TvHomeState): {
   }
   if (primary === "play")
     return { state: play(state, primaryMedia(state)), effect: null };
+  // A film, game, series or collection entry: Enter again plays its trailer.
+  if (!primary)
+    return { state: play(state, secondaryMedia(state)), effect: null };
   return { state, effect: primary };
 }
 
@@ -416,6 +422,13 @@ function pressRegion(
       },
       effect: null,
     };
+  if (
+    cover.kind === "entry" &&
+    state.hero.entry === cover.index &&
+    state.pos.row === row &&
+    state.pos.col === col
+  )
+    return runPrimary(state);
   if (cover.kind === "entry")
     return {
       state: {
@@ -504,7 +517,9 @@ function heroOf(
             : primary === "play"
               ? primaryMedia(state)?.kind === "twitch"
                 ? "Watch on Twitch · muted"
-                : "Play latest uploads · YouTube"
+                : primaryMedia(state)?.kind === "video"
+                  ? "Play · YouTube"
+                  : "Play latest uploads · YouTube"
               : null,
     secondary:
       secondary?.kind === "live"
@@ -605,13 +620,16 @@ export function tvScreenLayout(
       h: COVER.h,
       visible: place.visible,
       motif: cover.title.motif,
+      // The owner's clip shows its own local poster, as in Continue.
       cover:
         cover.kind === "back"
           ? null
-          : tvCoverSrc(
-              cover.title,
-              cover.kind === "entry" ? cover.entry : undefined,
-            ),
+          : cover.kind === "title" && cover.title.video
+            ? cover.title.video.poster
+            : tvCoverSrc(
+                cover.title,
+                cover.kind === "entry" ? cover.entry : undefined,
+              ),
       picked: col === pickedCol,
     };
     if (cover.kind === "back")
@@ -705,7 +723,13 @@ export function tvScreenLayout(
             ? "channel art from YouTube · see Credits"
             : app.id === "live"
               ? "channel art from Twitch · see Credits"
-              : "drawn covers",
+              : app.id === "anime"
+                ? "posters from TMDB · see Credits"
+                : app.id === "highlights"
+                  ? "from YouTube · see Credits"
+                  : app.id === "videos"
+                    ? "my own clips"
+                    : "drawn locally",
     sampleTag:
       !opened && app.sample ? "Sample picks · replace with yours" : null,
     covers,
@@ -738,6 +762,16 @@ function playerView(player: TvPlayerState): TvPlayerView {
       platform: "Twitch",
       title: `${channel.name} · live on Twitch`,
       credit: `Twitch · twitch.tv/${channel.login} · Twitch shows its own screen when offline`,
+      options: [],
+    };
+  }
+  if (media.kind === "video") {
+    const video = TV_VIDEOS[player.id];
+    return {
+      media,
+      platform: "YouTube",
+      title: title.title,
+      credit: `YouTube · ${video.channel} · “${video.name}”`,
       options: [],
     };
   }
