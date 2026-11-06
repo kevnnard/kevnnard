@@ -1,4 +1,4 @@
-# World coffee card (coffee-card S1-S3)
+# World coffee card (coffee-card S1-S4)
 
 Click the coffee mug on the desk in `/world`. The camera dollies slowly onto
 the steaming mug and ends on a low, close 3/4 shot. A side card then tells
@@ -16,6 +16,8 @@ Café Mi Tierra in Bogotá, a friend's coffee shop.
 | Mug turntable (moves Setup's mug) | `src/components/world/CoffeeMug.tsx` |
 | Side card | `src/components/world/CoffeeCard.tsx`, `coffee-card.css` |
 | Click target | `src/components/world/CoffeeHitbox.tsx` |
+| Close-up light level and fade (pure) | `src/lib/world/coffee-light.ts` |
+| Close-up light | `src/components/world/CoffeeLight.tsx` |
 | Tests | `tests/world/coffee-card.test.ts` |
 
 ## The cup (S3)
@@ -92,6 +94,26 @@ steam stay where they are; the coffee turns with the cup.
 `CoffeeMug` renders nothing. It finds the `setup-mug` node in Setup's group
 and applies `mugPose` on top of that node's own pose. When the component
 unmounts, the mug returns to its rest pose.
+
+## The close-up light (S4)
+
+At night a soft key light picks out the cup while the close-up is open, like
+the display cases' key on their items (`display-cases.ts`).
+
+- **Light:** a warm `#ffe6c2` spot (the cases' museum white), 25 cm above
+  the shot's end camera and 10 cm further back from the cup, aimed at the
+  cup's middle. It has a 0.27 rad half-angle (a ~17 cm pool at the cup), the
+  cases' 0.8 penumbra, a 0.8 m range (the cup is 0.62 m away, so the desk
+  behind barely catches it), decay 2 and no shadow map.
+- **Level:** 17 cd, so about 19 lx on the cup's middle, under the cases'
+  ~23 lx on their items. It is on only at night (the `nightLightsOn` gate),
+  off by day (`dayLevel` 0), and off when the scene panel's master power is
+  off, like the cases.
+- **Fade:** in over 0.8 s (a smoothstep) when the close-up opens
+  (`desk.focused === "coffee"`), out over 0.8 s on leave. Reduced motion
+  cuts. Frames are requested only while it fades.
+- **Always mounted:** at zero intensity when off, because a changing light
+  count recompiles every shader.
 
 ## The card
 

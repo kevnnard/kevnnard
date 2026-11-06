@@ -30,6 +30,7 @@ import {
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { BrunoChair } from "@/components/world/BrunoProps";
 import CoffeeHitbox from "@/components/world/CoffeeHitbox";
+import CoffeeLight from "@/components/world/CoffeeLight";
 import CoffeeMug from "@/components/world/CoffeeMug";
 import { mergeParts } from "@/components/world/House";
 import { keyboardLegends } from "@/components/world/KeyboardLegends";
@@ -591,6 +592,12 @@ export default function Setup({
       <CoffeeMug
         root={group}
         turning={desk?.focused === "coffee"}
+        reducedMotion={reducedMotion}
+      />
+      <CoffeeLight
+        active={desk?.focused === "coffee"}
+        hours={hours}
+        power={power}
         reducedMotion={reducedMotion}
       />
       <Suspense fallback={null}>

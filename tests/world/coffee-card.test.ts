@@ -3,6 +3,16 @@ import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { GUIDE } from "../../src/lib/world/camera.ts";
 import {
+  COFFEE_LIGHT,
+  COFFEE_LIGHT_AIM,
+  COFFEE_LIGHT_POSITION,
+  coffeeLightFadeStep,
+  coffeeLightLevel,
+  coffeeLightLux,
+  coffeeLightOutput,
+  spotLux,
+} from "../../src/lib/world/coffee-light.ts";
+import {
   MUG_REST,
   MUG_TURN,
   type MugTurn,
@@ -21,6 +31,11 @@ import {
   coffeeShotShift,
 } from "../../src/lib/world/coffee-shot.ts";
 import { DESK_STORIES } from "../../src/lib/world/desk-stories.ts";
+import {
+  DISPLAY_CASE,
+  DISPLAY_CASE_AIM,
+  DISPLAY_CASE_SPOT_POSITION,
+} from "../../src/lib/world/display-cases.ts";
 import { PROP_FILES } from "../../src/lib/world/models.ts";
 import { MONITOR_FOCUS } from "../../src/lib/world/monitor.ts";
 import {
@@ -586,5 +601,111 @@ describe("coffee card, mug and hitbox components (coffee-card T1, T2)", () => {
     assert.match(hit, /canEnterMonitor\(/);
     assert.match(hit, /cursor = "pointer"/);
     assert.match(hit, /colorWrite=\{false\}/);
+  });
+});
+
+describe("coffee close-up light (coffee-card T4)", () => {
+  const NIGHT = 22;
+  const DAY = 12;
+  const distance = (a: Vec3, b: Vec3) =>
+    Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+  const casesLux = spotLux(
+    DISPLAY_CASE.spotIntensity,
+    distance(DISPLAY_CASE_SPOT_POSITION, DISPLAY_CASE_AIM),
+    DISPLAY_CASE.spotDistance,
+  );
+
+  it("is a warm, soft, shadowless spot like the cases' key", () => {
+    assert.equal(COFFEE_LIGHT.color, DISPLAY_CASE.lightColor);
+    assert.ok(Math.abs(COFFEE_LIGHT.penumbra - 0.8) < 1e-9);
+    assert.equal(COFFEE_LIGHT.decay, DISPLAY_CASE.lightDecay);
+    assert.equal(COFFEE_LIGHT.castShadow, false);
+  });
+
+  it("sits above and slightly behind the shot's end camera, aimed at the cup's middle", () => {
+    const end = coffeeShotAt(1);
+    const mug = SETUP_PROPS.mug;
+    assert.deepEqual(COFFEE_LIGHT_AIM, [
+      mug.center[0],
+      mug.center[1] + mug.height / 2,
+      mug.center[2],
+    ]);
+    assert.ok(COFFEE_LIGHT_POSITION[1] > end.eye[1] + 0.1, "above the eye");
+    const level = (p: Vec3) =>
+      Math.hypot(p[0] - COFFEE_LIGHT_AIM[0], p[2] - COFFEE_LIGHT_AIM[2]);
+    const back = level(COFFEE_LIGHT_POSITION) - level(end.eye);
+    assert.ok(back > 0 && back < 0.2, `slightly behind: ${back}`);
+    // Same side as the lens: within 10 degrees of the camera's bearing.
+    const bearing = (p: Vec3) =>
+      Math.atan2(p[2] - COFFEE_LIGHT_AIM[2], p[0] - COFFEE_LIGHT_AIM[0]);
+    assert.ok(
+      Math.abs(bearing(COFFEE_LIGHT_POSITION) - bearing(end.eye)) <
+        (10 * Math.PI) / 180,
+    );
+  });
+
+  it("has a short range: past the cup and coaster, not much of the desk", () => {
+    const toCup = distance(COFFEE_LIGHT_POSITION, COFFEE_LIGHT_AIM);
+    assert.ok(COFFEE_LIGHT.distance > toCup + 0.1);
+    assert.ok(COFFEE_LIGHT.distance < toCup + 0.35);
+    assert.equal(
+      spotLux(
+        COFFEE_LIGHT.intensity,
+        COFFEE_LIGHT.distance + 0.01,
+        COFFEE_LIGHT.distance,
+      ),
+      0,
+    );
+    // The cone's full-strength core covers the cup, the soft edge the coaster.
+    const pool = toCup * Math.tan(COFFEE_LIGHT.angle);
+    assert.ok(pool > COASTER.radius && pool < 0.2, `pool radius ${pool}`);
+  });
+
+  it("lights the cup at night like the cases' key, never above it", () => {
+    const lux = coffeeLightLux(1);
+    assert.ok(casesLux > 20 && casesLux < 25, `cases ${casesLux}`);
+    assert.ok(lux >= 17 && lux <= 21, `cup ${lux}`);
+    assert.ok(lux < casesLux);
+    assert.equal(coffeeLightLux(0), 0);
+  });
+
+  it("is on at night, off by day and with the power off", () => {
+    assert.equal(coffeeLightLevel(NIGHT), 1);
+    assert.equal(coffeeLightLevel(3), 1);
+    assert.equal(coffeeLightLevel(NIGHT, false), 0);
+    assert.ok(coffeeLightLevel(DAY) <= 0.2);
+    assert.equal(coffeeLightLevel(DAY), COFFEE_LIGHT.dayLevel);
+  });
+
+  it("fades in over ~0.8 s eased and out on leave", () => {
+    assert.equal(COFFEE_LIGHT.fade, 0.8);
+    assert.equal(coffeeLightFadeStep(0, 0.4, true, false), 0.5);
+    assert.equal(coffeeLightFadeStep(0.5, 1, true, false), 1);
+    assert.equal(coffeeLightFadeStep(1, 0.4, false, false), 0.5);
+    assert.equal(coffeeLightFadeStep(0.5, 1, false, false), 0);
+    // Eased: slow start and landing, half at the middle.
+    assert.equal(coffeeLightOutput(0, 1), 0);
+    assert.equal(coffeeLightOutput(1, 1), 1);
+    assert.ok(Math.abs(coffeeLightOutput(0.5, 1) - 0.5) < 1e-9);
+    assert.ok(coffeeLightOutput(0.1, 1) < 0.1);
+    assert.ok(coffeeLightOutput(0.9, 1) > 0.9);
+    assert.equal(coffeeLightOutput(1, 0), 0, "no level, no light");
+    // Reduced motion cuts.
+    assert.equal(coffeeLightFadeStep(0, 0.01, true, true), 1);
+    assert.equal(coffeeLightFadeStep(1, 0.01, false, true), 0);
+  });
+
+  it("is always mounted next to the mug and fades on the coffee focus", () => {
+    const setup = source("src/components/world/Setup.tsx");
+    assert.match(
+      setup,
+      /<CoffeeLight[\s\S]*?active=\{desk\?\.focused === "coffee"\}/,
+    );
+    const light = source("src/components/world/CoffeeLight.tsx");
+    assert.match(light, /<spotLight/);
+    assert.match(light, /castShadow=\{false\}/);
+    assert.match(light, /coffeeLightFadeStep\(/);
+    assert.match(light, /coffeeLightLevel\(/);
+    assert.doesNotMatch(light, /&&\s*<spotLight|\?\s*<spotLight/);
   });
 });
