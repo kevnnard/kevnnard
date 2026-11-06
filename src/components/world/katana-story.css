@@ -51,17 +51,21 @@
   line-height: 1.4;
 }
 /* The print in a narrow frame beside the words (T11): its column is fixed,
-   so the image never pushes past the card's footprint. */
+   so the image never pushes past the card's footprint. The frame stretches
+   to the text's height and the print fills it (S10), so both read as one
+   even block. */
 .katana-story-body {
   display: grid;
   grid-template-columns: 132px minmax(0, 1fr);
-  align-items: start;
+  align-items: stretch;
   gap: 16px;
   margin-top: 12px;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--katana-line);
 }
 .katana-story-print {
+  position: relative;
+  min-height: 120px;
   margin: 0;
   padding: 4px;
   border: 1px solid var(--katana-line);
@@ -69,12 +73,14 @@
   background: rgb(9 9 11 / 0.3);
 }
 .katana-story-print img {
+  position: absolute;
+  inset: 4px;
   display: block;
-  width: 100%;
+  width: calc(100% - 8px);
   max-width: 100%;
-  height: auto;
-  aspect-ratio: 524 / 720;
+  height: calc(100% - 8px);
   object-fit: cover;
+  object-position: center top;
   border-radius: 3px;
 }
 .katana-story-lede {

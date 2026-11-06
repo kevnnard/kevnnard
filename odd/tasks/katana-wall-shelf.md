@@ -4,6 +4,7 @@ A wall shelf on the wall to the right of the TV in /world holding Mitchell Bekke
 ## Specs
 S1. "uiero una repisa en la pared de la derecha del v para poner un modelo nuevo que seran unas katanas ya descargue el gbl esta en dowlosad perolo quiero bien preciosotambiewn si damos click preview paraver mejor esas katanas y en menu credits a este autort y darle el link para que vean sus demas artes pero al hacer preview djemeos una card como el de lofi la musica solo para decir que soyy amante a la cultura oriental principalmente la jhaponesa https://sketchfab.com/MitchellBekke"
 S2. "antes comitea y todo yy vamos con la nuecava tarea"
+S10. "depronto la imagen mismo tamno del textopara que se vea unifornme no ?" (the print as tall as the text, for an even look).
 S9. "dale y mejora expande aun mas el descriiotion agraggggggo eun toque ams ejjelos creditos ya van el el menu no ahi" (yes to a public-domain ukiyo-e print on the card; expand the description further; the credits go in the menu only, not on the card).
 S8. "bienn ahhora quiero que en la historia pongamos algo mejor nose que me gusta l acultura japones asobre todo la era feudal donde exisitian los samuarais  mi juego favorito ghost of shuchima creoq ue se llama y las katanas rtpresentas como ese gusto orienta podemos imagens o que crees ? mejora obvio el escrito ajja"
 S7. "osea la misma de la urna acutla se ve mas smoth mas nai doble luzx puede ser ?" (the same light as the cases, which looks smoother and nicer; two lights).
@@ -15,6 +16,7 @@ S3. "dale sirapido" / screenshot reply "esa": the wall is the one with the windo
 ## Tasks
 T1 [S2] DONE — Nothing left to commit: the working tree was clean (only the untracked scripts/__pycache__/ leftover); last commit 605b4fb.
 T2 [S1, S3] DONE — Map the scene: the TV, the wall to its right, the lo-fi music card, the Credits menu and the gallery inspection flow; route gentle-ai-explore.
+T12 [S10] DONE — The print's frame stretches to the text's height and the image fills it (object-fit cover, anchored top); inline.
 T11 [S9] DONE — Public-domain ukiyo-e samurai print on the katana card, credited in the menu's Credits only; longer story text; the "3D model by" line removed from the card (Mitchell Bekke stays credited in the menu).
 T10 [S8] DONE — Story card lede rewritten from the owner's words: Japanese culture, the feudal era of the samurai, Ghost of Tsushima as favorite game, the katanas as a nod to that love of the East; images left as an open choice (no game screenshots: copyrighted); inline.
 T9 [S7] DONE — Two case-like spots on a 0.72 m bar, one over each half's quarter point (0.4 m above the katanas' middle, 0.22 m out): 3.8 cd each, ~23 lx on its aim like a case's key, angle 1.0, the cases' penumbra 0.8, range 1.1 m; hilts, middle and tips within 1.6x; the cases' uplight kept; inline.

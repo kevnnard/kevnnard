@@ -365,6 +365,12 @@ describe("katana inspection and story (katana-wall-shelf T5)", () => {
     );
     const css = source("src/components/world/katana-story.css");
     assert.match(css, /\.katana-story-print img \{[^}]*object-fit: cover;/);
+    // As tall as the text beside it (S10): the frame stretches with the
+    // words and the print fills it, so it never sets the row's height.
+    assert.match(css, /\.katana-story-body \{[^}]*align-items: stretch;/);
+    assert.match(css, /\.katana-story-print \{[^}]*position: relative;/);
+    assert.match(css, /\.katana-story-print img \{[^}]*position: absolute;/);
+    assert.doesNotMatch(css, /aspect-ratio: 524 \/ 720/);
     assert.match(css, /\.katana-story-print img \{[^}]*max-width: 100%;/);
     const credits = JSON.parse(
       readFileSync(new URL("credits.json", PUBLIC), "utf8"),
