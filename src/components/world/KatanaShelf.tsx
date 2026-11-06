@@ -22,6 +22,7 @@ import {
   KATANA_MODEL,
   KATANA_SHELF,
   KATANA_SHELF_HITBOX,
+  KATANA_UPLIGHT_POSITION,
   katanaLightLevel,
   katanaModelFit,
   SHELF_INTERIOR_X,
@@ -269,6 +270,13 @@ export default function KatanaShelf({
         distance={light.distance}
         decay={light.decay}
         castShadow={false}
+      />
+      <pointLight
+        position={KATANA_UPLIGHT_POSITION}
+        color={light.color}
+        intensity={light.upIntensity * level}
+        distance={light.upDistance}
+        decay={light.decay}
       />
     </group>
   );

@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { CASE_STORIES } from "../../src/lib/world/case-stories.ts";
 import type { Credits } from "../../src/lib/world/credits.ts";
+import { DISPLAY_CASE } from "../../src/lib/world/display-cases.ts";
 import {
   galleryCaseFocus,
   galleryStoryShift,
@@ -16,6 +17,7 @@ import {
   KATANA_MODEL,
   KATANA_SHELF,
   KATANA_SHELF_HITBOX,
+  KATANA_UPLIGHT_POSITION,
   katanaLightLevel,
   katanaModelFit,
   SHELF_INTERIOR_X,
@@ -213,18 +215,28 @@ describe("katana night light (katana-wall-shelf T4)", () => {
     assert.deepEqual(KATANA_LIGHT_AIM, KATANA_CENTRE);
     assert.ok(KATANA_LIGHT_POSITION[1] > KATANA_CENTRE[1]);
     assert.ok(KATANA_LIGHT_POSITION[0] < SHELF_INTERIOR_X);
-    // Smooth but bright (S5): even along the whole stand, no hot spot.
+    // Like the cases' museum light (S6): a compact fixture close to the
+    // wall, a soft key under the cases' ~23 lx, a tight soft-edged cone
+    // that stays off the wall, a weak warm fill from the shelf's edge.
+    const { light } = KATANA_SHELF;
+    assert.ok(light.out <= 0.25, `arm ${light.out}`);
     const [lx, ly, lz] = KATANA_LIGHT_POSITION;
-    const lux = (dz: number) =>
-      KATANA_SHELF.light.intensity /
-      ((lx - KATANA_CENTRE[0]) ** 2 +
-        (ly - KATANA_CENTRE[1]) ** 2 +
-        (lz - KATANA_CENTRE[2] - dz) ** 2);
-    const middle = lux(0);
-    const end = lux(KATANA_MODEL.length / 2);
-    assert.ok(middle >= 12 && middle <= 20, `middle ${middle} lx`);
-    assert.ok(middle / end <= 2.2, `middle/end ${middle / end}`);
-    assert.ok(KATANA_SHELF.light.penumbra >= 0.5, "soft edge");
+    const d2 =
+      (lx - KATANA_CENTRE[0]) ** 2 +
+      (ly - KATANA_CENTRE[1]) ** 2 +
+      (lz - KATANA_CENTRE[2]) ** 2;
+    const middle = light.intensity / d2;
+    assert.ok(middle >= 8 && middle <= 14, `middle ${middle} lx`);
+    assert.ok(light.angle <= 0.9, `cone ${light.angle}`);
+    assert.equal(light.penumbra, DISPLAY_CASE.spotPenumbra);
+    assert.ok(light.distance <= 1, `range ${light.distance}`);
+    assert.ok(light.emissive <= DISPLAY_CASE.puckEmissive, "bar glow");
+    assert.equal(light.upIntensity, DISPLAY_CASE.upIntensity);
+    assert.equal(light.upDistance, DISPLAY_CASE.upDistance);
+    assert.ok(KATANA_UPLIGHT_POSITION[1] < KATANA_CENTRE[1]);
+    assert.ok(
+      KATANA_UPLIGHT_POSITION[0] < SHELF_INTERIOR_X - KATANA_SHELF.depth,
+    );
   });
 
   it("keeps its lights mounted at zero intensity when off", () => {

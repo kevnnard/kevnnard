@@ -82,21 +82,27 @@ export const KATANA_SHELF = {
     barLength: 0.42,
     barRadius: 0.014,
     /** Bar this far out from the wall and above the katanas' middle. */
-    out: 0.5,
-    rise: 0.45,
+    out: 0.22,
+    rise: 0.32,
     armRadius: 0.004,
     color: "#ffe6c2",
     /**
-     * Smooth but bright (S5): ~15 lx at the katanas' middle, 0.57 m away,
-     * and about half that at the hilts and tips, with no hot spot.
+     * Lit like the cases (S6): a soft key of ~11 lx at the katanas' middle,
+     * 0.33 m away, under the cases' ~23 lx so the polished blade never
+     * burns; the cases' soft edge, a tight cone and a short range keep the
+     * wall around it dark.
      */
-    intensity: 5,
-    /** Full output over the stand's middle, fading gently past the ends. */
-    angle: 1.2,
-    penumbra: 0.6,
-    distance: 2,
+    intensity: 1.2,
+    angle: 0.9,
+    penumbra: 0.8,
+    distance: 0.9,
     decay: 2,
-    emissive: 1.2,
+    /** The bar's glow, like the cases' lid puck. */
+    emissive: 0.8,
+    /** Warm fill from the board's front edge, the cases' uplight values. */
+    upIntensity: 0.12,
+    upDistance: 0.45,
+    upInset: 0.02,
     defaultEnabled: true,
     storageKey: "world:katana-light",
   },
@@ -134,6 +140,13 @@ export const KATANA_LIGHT_POSITION: Vec3 = [
 ];
 
 export const KATANA_LIGHT_AIM: Vec3 = KATANA_CENTRE;
+
+/** Warm fill (S6), like the cases' uplight: in front of the board's edge, below the katanas. */
+export const KATANA_UPLIGHT_POSITION: Vec3 = [
+  SHELF_INTERIOR_X - KATANA_SHELF.depth - KATANA_SHELF.light.upInset,
+  KATANA_SHELF.topY + 0.01,
+  KATANA_SHELF.centreZ,
+];
 
 /** Click target around the brackets, board, stand and light. */
 export const KATANA_SHELF_HITBOX = (() => {
