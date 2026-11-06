@@ -22,9 +22,9 @@
 .case-story .cherry-card-name {
   position: relative;
   margin: 0;
-  padding-bottom: 12px;
-  font-size: 60px;
-  line-height: 60px;
+  padding-bottom: 10px;
+  font-size: 48px;
+  line-height: 48px;
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -65,15 +65,16 @@
 
 /* The stats strip: three cells in a row, divided by hairlines. */
 .cherry-card-stats {
+  /* compact (dog-rig S10) */
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin: 16px 0 0;
+  margin: 12px 0 0;
   border: 1px solid hsl(var(--border));
   border-radius: var(--radius-lg);
 }
 .cherry-card-stats div {
   min-width: 0;
-  padding: 10px 12px;
+  padding: 8px 10px;
 }
 .cherry-card-stats div + div {
   border-left: 1px solid hsl(var(--border));
@@ -96,17 +97,17 @@
 }
 
 .cherry-card-story {
-  margin: 16px 0;
+  margin: 12px 0;
   padding-left: 14px;
   border-left: 2px solid rgb(244 63 94 / 0.5);
 }
 .cherry-card-story p {
   margin: 0;
-  font-size: 15px;
-  line-height: 24px;
+  font-size: 14px;
+  line-height: 21px;
 }
 .cherry-card-story p + p {
-  margin-top: 10px;
+  margin-top: 8px;
   color: hsl(var(--muted-foreground));
 }
 
@@ -125,8 +126,8 @@
 
 @media (max-width: 1100px) {
   .case-story .cherry-card-name {
-    font-size: 52px;
-    line-height: 52px;
+    font-size: 42px;
+    line-height: 42px;
   }
   .cherry-card-stats div {
     padding: 8px 10px;
@@ -183,12 +184,15 @@
 /* Her poem (dog-rig S9): a quiet italic coda under the story, one line per
    verse, stanzas spaced, a hairline in the rose accent above it. */
 .cherry-card-poem {
-  margin-top: 16px;
-  padding-top: 14px;
+  margin-top: 12px;
+  padding-top: 10px;
+  column-count: 2;
+  column-gap: 18px;
   border-top: 1px solid rgb(244 63 94 / 0.25);
 }
 .cherry-card-poem h3 {
-  margin: 0 0 10px;
+  column-span: all;
+  margin: 0 0 8px;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.16em;
@@ -196,10 +200,11 @@
   color: rgb(244 63 94 / 0.9);
 }
 .cherry-card-poem p {
-  margin: 0 0 12px;
+  break-inside: avoid;
+  margin: 0 0 8px;
   font-style: italic;
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: 12px;
+  line-height: 1.45;
   color: #d4d4d8;
 }
 .cherry-card-poem p:last-child {
@@ -208,4 +213,11 @@
 }
 .cherry-card-poem span {
   display: block;
+}
+
+/* Narrow screens: the poem reads in one column again. */
+@media (max-width: 700px) {
+  .cherry-card-poem {
+    column-count: 1;
+  }
 }
