@@ -67,7 +67,7 @@ export const DESK_STORIES: { coffee: DeskStory } = {
       text: "my friend's coffee shop. Go have a cup there.",
       link: {
         label: "Open in Google Maps",
-        url: "https://www.google.com/maps/place/Caf%C3%A9+Mi+Tierra/@4.6035678,-74.1123538,17z/data=!4m6!3m5!1s0x8e3f990041f72565:0xf58a44f4848c28b5!8m2!3d4.6035678!4d-74.1123538",
+        url: "https://www.google.com/maps?cid=17693029903064901813",
       },
     },
     media: null,
