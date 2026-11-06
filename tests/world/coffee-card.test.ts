@@ -3,6 +3,14 @@ import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { GUIDE } from "../../src/lib/world/camera.ts";
 import {
+  MUG_REST,
+  MUG_TURN,
+  type MugTurn,
+  mugAtRest,
+  mugPose,
+  mugTurnStep,
+} from "../../src/lib/world/coffee-mug.ts";
+import {
   COFFEE_HITBOX,
   COFFEE_SHOT,
   COFFEE_START,
@@ -77,16 +85,22 @@ const mug = SETUP_PROPS.mug;
 /** The mug's handle reaches this far toward +x (SetupEffects mugGeometry). */
 const HANDLE_REACH = 0.04 + 0.024 + 0.0065;
 
-describe("coffee card data (coffee-card T1)", () => {
+describe("coffee card data (coffee-card T1, T2)", () => {
   const story = DESK_STORIES.coffee;
 
   it("holds the owner's coffee, its processes and their friend's shop", () => {
     assert.equal(story.kicker, "DESK · COFFEE");
     assert.equal(story.title, "Chiroso");
     assert.equal(
-      story.line,
-      "My favourite coffee: Chiroso, a rare Colombian variety from Urrao, Antioquia, grown at 1,800-2,200 m.",
+      story.subtitle,
+      "My favourite coffee, a rare Colombian variety",
     );
+    assert.deepEqual(story.stats, [
+      { label: "Origin", value: "Urrao, Antioquia" },
+      { label: "Altitude", value: "1,800–2,200 m" },
+      { label: "Variety", value: "Caturra Chiroso" },
+    ]);
+    assert.deepEqual(story.altitude, { low: 1800, high: 2200 });
     assert.deepEqual(story.processes, [
       { name: "Washed", note: "clean, bright citrus acidity, floral" },
       { name: "Honey", note: "honeyed sweetness, rounder body" },
@@ -103,6 +117,86 @@ describe("coffee card data (coffee-card T1)", () => {
       story.place.link.url,
       "https://www.google.com/maps/place/Caf%C3%A9+Mi+Tierra/@4.6035678,-74.1123538,17z/data=!4m6!3m5!1s0x8e3f990041f72565:0xf58a44f4848c28b5!8m2!3d4.6035678!4d-74.1123538",
     );
+  });
+
+  it("leaves an empty slot for the owner's own photos", () => {
+    assert.equal(story.media, null);
+  });
+});
+
+describe("mug turntable (coffee-card T2)", () => {
+  const TURN = 2 * Math.PI;
+  /** Runs `seconds` at 60 fps from `state`. */
+  const run = (
+    state: MugTurn,
+    seconds: number,
+    turning: boolean,
+    reduced = false,
+  ) => {
+    let next = state;
+    for (let i = 0; i < Math.round(seconds * 60); i++)
+      next = mugTurnStep(next, 1 / 60, turning, reduced);
+    return next;
+  };
+
+  it("turns once per 20 s, like the display cases, once up to speed", () => {
+    assert.equal(MUG_TURN.period, 20);
+    const steady = run(MUG_REST, MUG_TURN.spinUp + 0.5, true);
+    const later = run(steady, 5, true);
+    const turned = (later.yaw - steady.yaw + TURN) % TURN;
+    assert.ok(Math.abs(turned - TURN / 4) < 1e-6, `quarter: ${turned}`);
+  });
+
+  it("eases in on arrival rather than jumping to full speed", () => {
+    const first = mugTurnStep(MUG_REST, 0.1, true, false);
+    const full = (TURN * 0.1) / MUG_TURN.period;
+    assert.ok(first.yaw > 0 && first.yaw < full * 0.1, `${first.yaw}`);
+    let state = MUG_REST;
+    let last = 0;
+    for (let i = 0; i < MUG_TURN.spinUp * 60; i++) {
+      const next = mugTurnStep(state, 1 / 60, true, false);
+      const step = next.yaw - state.yaw;
+      assert.ok(step >= last - 1e-12, "speed only grows");
+      last = step;
+      state = next;
+    }
+  });
+
+  it("lifts about a centimetre, eased, and stays up while focused", () => {
+    assert.ok(MUG_TURN.lift >= 0.008 && MUG_TURN.lift <= 0.012);
+    assert.equal(mugPose(MUG_REST).lift, 0);
+    const early = mugPose(run(MUG_REST, 0.1, true)).lift;
+    assert.ok(early > 0 && early < MUG_TURN.lift * 0.1);
+    assert.equal(mugPose(run(MUG_REST, 4, true)).lift, MUG_TURN.lift);
+    assert.equal(mugPose(run(MUG_REST, 30, true)).lift, MUG_TURN.lift);
+  });
+
+  it("eases back to its rest angle and height on leave, then rests", () => {
+    for (const seconds of [3, 7, 11, 16]) {
+      const away = run(MUG_REST, seconds, true);
+      assert.equal(mugAtRest(away), false);
+      const soon = run(away, 0.2, false);
+      // No jump: the first moments of the leave stay close to the turn.
+      const moved = Math.abs(
+        ((soon.yaw - away.yaw + 3 * Math.PI) % TURN) - Math.PI,
+      );
+      assert.ok(moved < 0.6, `moved ${moved}`);
+      const back = run(away, 4, false);
+      assert.deepEqual(back, MUG_REST);
+      assert.equal(mugAtRest(back), true);
+      assert.deepEqual(mugPose(back), { yaw: 0, lift: 0 });
+    }
+  });
+
+  it("never turns or lifts under reduced motion", () => {
+    assert.deepEqual(run(MUG_REST, 5, true, true), MUG_REST);
+    const away = run(MUG_REST, 5, true);
+    assert.deepEqual(mugTurnStep(away, 1 / 60, true, true), MUG_REST);
+  });
+
+  it("keeps its yaw within one turn", () => {
+    const state = run(MUG_REST, 45, true);
+    assert.ok(state.yaw >= 0 && state.yaw < TURN);
   });
 });
 
@@ -262,19 +356,59 @@ describe("coffee hitbox (coffee-card T1)", () => {
   });
 });
 
-describe("coffee card and hitbox components (coffee-card T1)", () => {
-  it("renders the lo-fi card: processes, the shop and a safe Maps link", () => {
-    const card = source("src/components/world/CoffeeCard.tsx");
-    assert.match(card, /katana-story/);
+describe("coffee card, mug and hitbox components (coffee-card T1, T2)", () => {
+  const card = source("src/components/world/CoffeeCard.tsx");
+
+  it("renders the helmet card's layout for Chiroso", () => {
+    assert.match(card, /className="case-story coffee-card"/);
+    assert.match(card, /case-story\.css/);
     assert.match(card, /coffee-card\.css/);
-    assert.match(card, />\s*Processes\s*</);
+    assert.match(card, /case-story-head/);
+    assert.match(card, /coffee-card-stats/);
+    assert.match(card, /<svg/);
+    assert.match(card, /story\.altitude/);
+    assert.match(card, /case-story-media/);
     assert.match(card, />\s*Where to drink it\s*</);
+    assert.doesNotMatch(card, /https?:\/\//, "no hard-coded requests");
+  });
+
+  it("shows the processes as accessible tabs with roving focus", () => {
+    assert.match(card, /role="tablist"/);
+    assert.match(card, /role="tab"/);
+    assert.match(card, /aria-selected=\{/);
+    assert.match(card, /aria-controls=/);
+    assert.match(card, /tabIndex=\{[^}]*-1/);
+    assert.match(card, /role="tabpanel"/);
+    for (const key of ["ArrowRight", "ArrowLeft", "Home", "End"])
+      assert.match(card, new RegExp(`"${key}"`));
+  });
+
+  it("opens on Back to room and links Maps safely in a new tab", () => {
+    assert.match(card, /Back to room/);
+    assert.match(card, /onClose/);
+    assert.match(card, /focus\(\{ preventScroll: true \}\)/);
     assert.match(card, /target="_blank"/);
     assert.match(card, /rel="noopener noreferrer"/);
     assert.match(card, /opens in a new tab/);
-    assert.match(card, /Back to room/);
-    assert.match(card, /onClose/);
-    assert.doesNotMatch(card, /<img\b|https?:\/\//);
+  });
+
+  it("respects reduced motion in the card's transitions", () => {
+    const css = source("src/components/world/coffee-card.css");
+    assert.match(css, /prefers-reduced-motion: reduce/);
+    assert.match(css, /max-width: 1100px/);
+    assert.match(css, /max-width: 700px/);
+  });
+
+  it("turns the mug from the pure timing and rests it afterwards", () => {
+    const mug = source("src/components/world/CoffeeMug.tsx");
+    assert.match(mug, /useFrame/);
+    assert.match(mug, /mugTurnStep\(/);
+    assert.match(mug, /mugPose\(/);
+    assert.match(mug, /mugAtRest\(/);
+    assert.match(mug, /reducedMotion/);
+    assert.match(mug, /invalidate\(\)/);
+    assert.match(mug, /rotation\.y/);
+    assert.match(mug, /position\.y/);
   });
 
   it("makes an invisible, gated, drag-safe click box", () => {

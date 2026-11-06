@@ -1,85 +1,209 @@
-/* The desk coffee card (coffee-card T1): the katana card's lo-fi console
-   (katana-story.css supplies the panel, kicker, title and footprint), with
-   the owner's one line, the processes, the friend's shop and the Maps link
-   as the one emerald control. No rail below it, so it may run a little
-   taller. */
-.katana-story.coffee-card {
+/* The desk coffee card (coffee-card T1, T2): the football helmet's story
+   card (case-story.css supplies the panel, kicker, head, media, blocks,
+   actions, focus rings and the footprint the camera frames around), with
+   the coffee's own parts: the bean emblem, the stats strip, the altitude
+   band, the process tabs and the shop. Tokens: design/system.md. */
+
+/* No collection rail below the desk's card, so it may run a little taller. */
+.case-story.coffee-card {
   max-height: calc(100% - 64px);
 }
-.coffee-card .coffee-card-line {
-  margin-top: 8px;
-  color: var(--katana-soft);
+.coffee-card-bean {
+  flex: none;
+  width: 64px;
+  height: 64px;
 }
-.coffee-card-section {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid var(--katana-line);
+.coffee-card-bean :is(ellipse, path) {
+  fill: none;
+  stroke: #10b981;
+  stroke-width: 2;
+  stroke-linecap: round;
 }
-.coffee-card-section h3 {
-  margin: 0 0 6px;
-  color: var(--katana-accent);
-  font: inherit;
-  font-size: 11px;
-  letter-spacing: 0.08em;
+
+/* The stats strip: three cells in a row, divided by hairlines. */
+.coffee-card-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 16px 0 0;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-lg);
+}
+.coffee-card-stats div {
+  padding: 10px 12px;
+}
+.coffee-card-stats div + div {
+  border-left: 1px solid hsl(var(--border));
+}
+.coffee-card-stats dt {
+  color: hsl(var(--muted-foreground));
+  font:
+    12px / 16px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-.coffee-card-processes {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  color: var(--katana-soft);
-  font-size: 13px;
-}
-.coffee-card-processes li {
-  position: relative;
-  padding-left: 18px;
-}
-.coffee-card-processes li + li {
-  margin-top: 4px;
-}
-.coffee-card-processes li::before {
-  content: "›";
-  position: absolute;
-  left: 2px;
-  color: var(--katana-accent);
-}
-.coffee-card :is(.coffee-card-processes, .coffee-card-place) strong {
-  color: var(--katana-fg);
+.coffee-card-stats dd {
+  margin: 2px 0 0;
   font-weight: 600;
 }
-.coffee-card .coffee-card-place {
-  color: var(--katana-soft);
-  font-size: 13px;
+
+/* The growing band on the mountain, drawn like the helmet's field. */
+.coffee-card-altitude {
+  display: block;
+  width: 100%;
+  height: 96px;
 }
-.coffee-card-actions {
-  gap: 8px;
-  padding-top: 16px;
-  border-top: 1px solid var(--katana-line);
+.coffee-card-altitude .frame {
+  fill: none;
+  stroke: hsl(var(--border));
 }
-.coffee-card-actions .coffee-card-link {
-  display: inline-flex;
-  align-items: center;
-  min-height: 40px;
-  padding: 8px 14px;
-  border: 1px solid rgb(16 185 129 / 0.6);
-  border-radius: 6px;
-  background: rgb(16 185 129 / 0.12);
-  color: var(--katana-fg);
-  font: inherit;
-  text-decoration: none;
+.coffee-card-altitude .ridge {
+  fill: hsl(var(--secondary));
+  stroke: hsl(var(--muted-foreground));
+  stroke-linejoin: round;
+}
+.coffee-card-altitude .band {
+  fill: #10b981;
+  opacity: 0.85;
+}
+.coffee-card-altitude .edge {
+  stroke: #10b981;
+  stroke-dasharray: 4 4;
+}
+.coffee-card-altitude .label {
+  fill: hsl(var(--foreground));
+  font:
+    10px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+}
+.coffee-card-altitude .caption {
+  fill: hsl(var(--muted-foreground));
+  font:
+    9px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+}
+
+/* The processes as chips (tabs) over the selected one's tasting note. */
+.coffee-card-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.coffee-card-tabs [role="tab"] {
+  min-height: 32px;
+  padding: 4px 10px;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  font-size: 12px;
+  line-height: 16px;
+  cursor: pointer;
   touch-action: manipulation;
-  transition: background-color 150ms;
+  transition:
+    background-color 150ms,
+    border-color 150ms,
+    color 150ms;
 }
-.coffee-card-actions .coffee-card-link:hover {
-  background: rgb(16 185 129 / 0.24);
+.coffee-card-tabs [role="tab"]:hover {
+  background: hsl(var(--accent));
+  color: hsl(var(--foreground));
+}
+.coffee-card-tabs [role="tab"][aria-selected="true"] {
+  border-color: #10b981;
+  background: rgb(16 185 129 / 0.16);
+  color: hsl(var(--foreground));
+}
+.coffee-card-note {
+  margin-top: 10px;
+  animation: coffee-card-note 200ms ease-out;
+}
+.coffee-card-note span {
+  color: hsl(var(--muted-foreground));
+  font-size: 12px;
+  line-height: 16px;
+}
+.coffee-card-note p {
+  margin: 2px 0 0;
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 600;
+}
+@keyframes coffee-card-note {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+/* The friend's shop, above the actions. */
+.coffee-card-place {
+  margin: 16px 0 12px;
+  padding: 12px;
+  border-left: 2px solid #10b981;
+  background: hsl(var(--secondary) / 0.5);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+}
+.coffee-card-place h3 {
+  margin: 0 0 4px;
+  color: hsl(var(--muted-foreground));
+  font:
+    12px / 16px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.coffee-card-place p {
+  margin: 0;
+}
+.coffee-card-place b {
+  font-weight: 600;
+}
+.coffee-card-place .coffee-card-place-text {
+  color: hsl(var(--muted-foreground));
+}
+
+@media (max-width: 1100px) {
+  .coffee-card-stats div {
+    padding: 8px 10px;
+  }
+  .coffee-card-stats dd {
+    font-size: 13px;
+  }
 }
 @media (max-width: 700px) {
-  .katana-story.coffee-card {
+  .case-story.coffee-card {
     max-height: 45vh;
+  }
+  .coffee-card-bean {
+    width: 44px;
+    height: 44px;
+  }
+  .coffee-card-stats {
+    grid-template-columns: 1fr;
+  }
+  .coffee-card-stats div + div {
+    border-top: 1px solid hsl(var(--border));
+    border-left: 0;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .coffee-card-actions .coffee-card-link {
+  .coffee-card-tabs [role="tab"] {
     transition: none;
+  }
+  .coffee-card-note {
+    animation: none;
   }
 }
