@@ -70,13 +70,17 @@ import {
 } from "@/lib/world/camera.ts";
 import type { CherrySpot } from "@/lib/world/cherry.ts";
 import { cherryShot } from "@/lib/world/cherry-shot.ts";
+import {
+  cinematicEntry,
+  cinematicLeaveAt,
+  type ShotPose,
+} from "@/lib/world/cinematic.ts";
 import { cloudLayout, cloudShapes } from "@/lib/world/clouds.ts";
 import {
   coffeeLeaveAt,
   coffeeShotAt,
   coffeeShotProgress,
   coffeeShotShift,
-  type ShotPose,
 } from "@/lib/world/coffee-shot.ts";
 import {
   type GalleryItemId,
@@ -462,7 +466,13 @@ function SceneCanvas({
       />
       {/* The dream truck in the garage (dream-truck T1): not critical either. */}
       <Suspense fallback={null}>
-        <Truck focused={galleryCase === "truck"} onInspect={desk?.onInspect} />
+        <Truck
+          focused={galleryCase === "truck"}
+          onInspect={desk?.onInspect}
+          hours={hours}
+          power={power}
+          reducedMotion={reducedMotion}
+        />
       </Suspense>
     </Canvas>
   );
@@ -798,7 +808,7 @@ function WorldLighting({ hours }: { hours: number }) {
 
 const { ACTION } = CameraControlsImpl;
 
-type Pose = { position: Vector3Tuple; target: Vector3Tuple };
+type Pose = { position: Vector3Tuple; target: Vector3Tuple; fov: number };
 
 /** A desk thing's cinematic move: its path in and out, timing and slide. */
 interface CinematicShot {
@@ -967,32 +977,39 @@ function GuidedCamera({
     lastShot.current = shot;
     const shotShift = (item: CinematicShot) =>
       galleryStory ? item.shift(viewportWidth, aspect) : 0;
+    // The pose the camera is drawn at (dream-truck T3). camera-controls
+    // hands back a running transition's end by default, and a cinematic
+    // move started from that cut there first.
+    const live = (): ShotPose => ({
+      eye: current
+        .getPosition(new Vector3(), false)
+        .toArray() as ShotPose["eye"],
+      target: current
+        .getTarget(new Vector3(), false)
+        .toArray() as ShotPose["target"],
+      fov: camera.fov,
+    });
     if (focus || galleryCase) {
       // Saved once per visit: resizing re-frames the close-up only.
       saved.current ??= {
         position: current.getPosition(new Vector3()).toArray(),
         target: current.getTarget(new Vector3()).toArray(),
+        fov: camera.fov,
       };
       if (shot && !focus) {
-        shotFrom.current ??= {
-          eye: saved.current.position as ShotPose["eye"],
-          target: saved.current.target as ShotPose["target"],
-          fov: camera.fov,
-        };
-        // From the room on arrival; from wherever the camera is when it
-        // goes from one desk shot straight to another.
-        const from: ShotPose =
-          cinematic && left
-            ? {
-                eye: current
-                  .getPosition(new Vector3())
-                  .toArray() as ShotPose["eye"],
-                target: current
-                  .getTarget(new Vector3())
-                  .toArray() as ShotPose["target"],
-                fov: camera.fov,
-              }
-            : shotFrom.current;
+        // Every move starts where the camera is: the room, another
+        // close-up, or a move still under way. Leaving goes back to the
+        // room pose the visit began in.
+        const entry = cinematicEntry(
+          live(),
+          shotFrom.current ?? {
+            eye: saved.current.position as ShotPose["eye"],
+            target: saved.current.target as ShotPose["target"],
+            fov: saved.current.fov,
+          },
+        );
+        shotFrom.current = entry.back;
+        const { from } = entry;
         const shift = shotShift(shot);
         const place = (t: number) => {
           const pose = shot.shotAt(t, from, shift);
@@ -1042,10 +1059,13 @@ function GuidedCamera({
     shotFrom.current = null;
     if (left && animate && back && to) {
       const shift = shotShift(left);
+      const leaving = live();
       const start = performance.now();
       let frame = requestAnimationFrame(function step(now) {
         const t = left.progress((now - start) / 1000, false, true);
-        const pose = left.leaveAt(t, to, shift);
+        const pose = cinematicLeaveAt(t, leaving, to, (u) =>
+          left.leaveAt(u, to, shift),
+        );
         lens.focus(pose.fov);
         current.setLookAt(...pose.eye, ...pose.target, false);
         invalidate();

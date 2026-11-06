@@ -10,22 +10,27 @@ import {
 import { mergeParts } from "@/components/world/House";
 import {
   easeToward,
+  floorStripParts,
   GARAGE_BARS,
   GARAGE_LIGHT_FIXTURES,
   GARAGE_LIGHTS,
   garageLightLevel,
+  garageShowroomLevel,
   gridParts,
 } from "@/lib/world/garage-lights.ts";
 import type { Part } from "@/lib/world/house.ts";
 
 /**
  * The garage's detailing-bay lights (dream-truck T2): the honeycomb LED
- * grid on the ceiling and the two low side bars as one emissive draw, with
- * four soft spots (two down from the grid, two across from the bars),
- * always mounted and at zero intensity while off, so turning them on never
- * recompiles a shader. The level eases over about 0.8 s toward
- * garageLightLevel: showroom in the truck's close-up, softer by night, off
- * by day or with the master power off; reduced motion jumps.
+ * grid on the ceiling, the two low side bars and the LED strip round the
+ * truck on the floor as one emissive draw, with four soft spots (two down
+ * from the grid, two across from the bars), plus the close-up's showroom
+ * set (T3: key, uplights, top light, rim). All always mounted and at zero
+ * intensity while off, so turning them on never recompiles a shader. Two
+ * levels ease over about 0.8 s: the bay's toward garageLightLevel (full in
+ * the truck's close-up, softer by night, off by day or with the master
+ * power off) and the showroom set's toward garageShowroomLevel (the
+ * close-up only); reduced motion jumps.
  */
 export default function GarageLights({
   hours,
@@ -56,7 +61,10 @@ export default function GarageLights({
       emissive: new Color(GARAGE_LIGHTS.color),
       emissiveIntensity: 0,
     });
-    const leds = new Mesh(mergeParts([...gridParts(), ...bars]), material);
+    const leds = new Mesh(
+      mergeParts([...gridParts(), ...bars, ...floorStripParts()]),
+      material,
+    );
     leds.name = "garage-leds";
     leds.castShadow = false;
     leds.receiveShadow = false;
@@ -76,27 +84,36 @@ export default function GarageLights({
   );
 
   const lights = useRef<(SpotLight | null)[]>([]);
-  const level = useRef(0);
-  const target = garageLightLevel(hours, power, inspecting);
+  const level = useRef({ bay: 0, showroom: 0 });
+  const bay = garageLightLevel(hours, power, inspecting);
+  const showroom = garageShowroomLevel(power, inspecting);
   // A new target wakes the demand frameloop.
   useEffect(() => {
-    if (target !== level.current) invalidate();
-  }, [target, invalidate]);
+    const { current } = level;
+    if (bay !== current.bay || showroom !== current.showroom) invalidate();
+  }, [bay, showroom, invalidate]);
   useFrame((_, delta) => {
     const before = level.current;
-    const now = easeToward(
-      before,
-      target,
-      Math.min(delta, 0.1),
-      GARAGE_LIGHTS.ramp,
-      reducedMotion,
-    );
-    if (now === before) return;
+    const step = (from: number, to: number) =>
+      easeToward(
+        from,
+        to,
+        Math.min(delta, 0.1),
+        GARAGE_LIGHTS.ramp,
+        reducedMotion,
+      );
+    const now = {
+      bay: step(before.bay, bay),
+      showroom: step(before.showroom, showroom),
+    };
+    if (now.bay === before.bay && now.showroom === before.showroom) return;
     level.current = now;
-    material.emissiveIntensity = GARAGE_LIGHTS.glow * now;
+    material.emissiveIntensity = GARAGE_LIGHTS.glow * now.bay;
     GARAGE_LIGHT_FIXTURES.forEach((fixture, i) => {
       const light = lights.current[i];
-      if (light) light.intensity = fixture.intensity * now;
+      if (light)
+        light.intensity =
+          fixture.intensity * now.bay + fixture.showroom * now.showroom;
     });
     invalidate();
   });

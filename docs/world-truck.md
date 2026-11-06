@@ -1,6 +1,6 @@
 # The dream truck in /world
 
-The owner's dream truck, a Ford F-150 Raptor, is parked nose out in the house's garage. The garage grew to hold it and works as a detailing bay. Click the truck to get a cinematic close-up and its card (odd/tasks/dream-truck.md, T1 and T2).
+The owner's dream truck, a Ford F-150 Raptor, is parked nose out in the house's garage. The garage grew to hold it and works as a detailing bay. Click the truck to get a cinematic close-up and its card (odd/tasks/dream-truck.md, T1 to T3).
 
 Ford and Raptor are trademarks of Ford Motor Company. This site has no affiliation with Ford.
 
@@ -13,7 +13,8 @@ Ford and Raptor are trademarks of Ford Motor Company. This site has no affiliati
 | Garage inside, door, nature clearing | `src/lib/world/garage.ts` |
 | Truck scale, parking spot, click box, card copy | `src/lib/world/truck.ts` |
 | Close-up camera and garage reveal | `src/lib/world/truck-shot.ts` |
-| LED grid, side bars, lights, door timing | `src/lib/world/garage-lights.ts` |
+| Cinematic move shared by every close-up | `src/lib/world/cinematic.ts` |
+| LED grid, side bars, floor strip, lights, door timing | `src/lib/world/garage-lights.ts` |
 | Truck in the scene | `src/components/world/Truck.tsx` |
 | LEDs and lights in the scene | `src/components/world/GarageLights.tsx` |
 | Card | `src/components/world/TruckCard.tsx`, `truck-card.css` |
@@ -47,22 +48,56 @@ A scale step of 0.02 more no longer fits.
 - **Eye:** 25° off the nose toward the left yard, 6.6 m out, 1.1 m above the garage floor. That is about bonnet height, so the shot is low.
 - **Lens:** fov 34. The whole truck sits left of the card at 1100 to 1920 px wide.
 - **Reveal:** while the shot plays, the garage's front wall (with its corner post, lantern and roller door), its left wall and its roof dissolve (`TRUCK_REVEAL`).
+- **Move:** the shared cinematic move (`cinematic.ts`), the same for the coffee mug, the keyboard, Cherry, the sign and the truck:
+  - It starts at the pose the camera is drawn at: the room, another close-up, or a move still under way. It never cuts to the home view first.
+  - About 3.8 s in and 3 s out, on a quintic ease that starts and lands at rest.
+  - A small sideways bow, half the old one. The lens change runs over the whole move.
+  - Closing before the move in has finished goes straight back from where the camera is.
+  - Reduced motion cuts.
 
 ## Detailing bay
 
-- **Ceiling grid:** a honeycomb LED grid hangs 1.88 m above the floor. It is 133 tubes plus a frame, in one draw with the side bars.
+- **Ceiling grid:** a honeycomb LED grid hangs 1.88 m above the floor. It is 133 tubes plus a frame, in one draw with the side bars and the floor strip.
 - **Side bars:** two low LED bars run along the side walls, 0.62 m above the floor and under the window sills.
+- **Floor strip:** a thin LED outline on the floor, 8 cm round the truck.
 - **Light colour:** daylight white, about 6000 K.
 - **Spots:** two from the ceiling and two from the side bars, all decay 0 and no shadows. Each spot's cutoff stops short of the main room and the yard. Area lights are not used, for the same reason as in `lights.ts`.
 
-| When | Lights | Door |
-| --- | --- | --- |
-| Truck close-up | Showroom level, at any hour | Up |
-| Night, 18:00 to 05:59 | 0.45 | Rolls down |
-| Day | Off | Up |
-| Master power off | Off, like the display cases | Unchanged |
+## Showroom light in the close-up
 
-The lights ramp in about 0.8 s and the door rolls in about 1.5 s. Reduced motion jumps straight to the end.
+The close-up dissolves the roof and two walls, and the bay's own spots then put almost nothing on the body (under 1 lx). So the close-up adds a showroom set lit like the display cases (T14).
+
+| Light | Where | Strength |
+| --- | --- | --- |
+| Key | High off the front-left corner, the camera's side, penumbra 0.8 | 38 |
+| Two uplights | At the floor past the dissolved left wall, under the front and back doors | 35 each |
+| Front uplight | On the apron, under the grille | 30 |
+| Top light | Over the bonnet from the right wall, every ray heading away from the main room | 37 |
+| Rim | Behind and above on the right, the camera's far side | 6 |
+
+All of them are spots with decay 0 and no shadows. None lights any point inside the main room; a test samples the whole room every 10 cm.
+
+The paint's reflections also rise to 0.6 in the close-up, the way the cases boost theirs at night (`garageTruckEnvIntensity`). Without that, the black paint shows only as a flat silhouette.
+
+On the truck's real surfaces, measured from the GLB:
+
+| | Average | Range |
+| --- | --- | --- |
+| Left flank | 26.8 lx | 21.7 to 33.2 |
+| Bonnet | 26.3 lx | 21.7 to 29.2 |
+| Front | 26.5 lx | 22.1 to 29.2 |
+| Floor, brightest point | 18.6 lx | |
+
+The display cases put about 23 lx on their items.
+
+| When | Bay | Showroom set and reflections | Door |
+| --- | --- | --- | --- |
+| Truck close-up | Full, at any hour | On | Up |
+| Night, 18:00 to 05:59 | 0.45 | Off | Rolls down |
+| Day | Off | Off | Up |
+| Master power off | Off, like the display cases | Off | Unchanged |
+
+The lights and the reflections ramp in about 0.8 s, and the door rolls in about 1.5 s. Reduced motion jumps straight to the end.
 
 ## Rebuild the model
 

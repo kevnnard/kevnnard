@@ -31,6 +31,7 @@ import {
   cherryShot,
   cherryView,
 } from "../../src/lib/world/cherry-shot.ts";
+import { CINEMATIC } from "../../src/lib/world/cinematic.ts";
 import {
   GALLERY_ORDER,
   isDeskItemId,
@@ -524,7 +525,8 @@ describe("Cherry's cinematic shot (dog-rig T3)", () => {
   });
 
   it("times like the coffee and keyboard shots; reduced motion cuts", () => {
-    assert.equal(CHERRY_SHOT.duration, 2.5);
+    assert.equal(CHERRY_SHOT.duration, CINEMATIC.duration);
+    assert.equal(CHERRY_SHOT.leaveDuration, CINEMATIC.leaveDuration);
     const shot = cherryShot(CHERRY_SPOTS[0]);
     assert.equal(shot.progress(0, true), 1);
     assert.equal(shot.progress(0, true, true), 1);

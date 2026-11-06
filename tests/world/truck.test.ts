@@ -7,6 +7,7 @@ import {
   poseToPosition,
 } from "../../src/lib/world/camera.ts";
 import { CHERRY_SPOTS } from "../../src/lib/world/cherry.ts";
+import { CINEMATIC } from "../../src/lib/world/cinematic.ts";
 import {
   type InspectItemId,
   isDeskItemId,
@@ -284,7 +285,8 @@ describe("dream truck close-up (truck-shot.ts)", () => {
   });
 
   it("times like the other cinematic shots; reduced motion cuts", () => {
-    assert.equal(TRUCK_SHOT.duration, 2.5);
+    assert.equal(TRUCK_SHOT.duration, CINEMATIC.duration);
+    assert.equal(TRUCK_SHOT.leaveDuration, CINEMATIC.leaveDuration);
     assert.ok(TRUCK_SHOT.leaveDuration < TRUCK_SHOT.duration);
     assert.equal(truckShotProgress(0, true), 1);
     assert.equal(truckShotProgress(0, true, true), 1);

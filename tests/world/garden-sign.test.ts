@@ -7,6 +7,7 @@ import {
   poseToPosition,
   type Vec3,
 } from "../../src/lib/world/camera.ts";
+import { CINEMATIC } from "../../src/lib/world/cinematic.ts";
 import {
   GALLERY_ORDER,
   isDeskItemId,
@@ -377,7 +378,8 @@ describe("garden sign close-up (sign-shot.ts)", () => {
   });
 
   it("times like the other cinematic shots; reduced motion cuts", () => {
-    assert.equal(SIGN_SHOT.duration, 2.5);
+    assert.equal(SIGN_SHOT.duration, CINEMATIC.duration);
+    assert.equal(SIGN_SHOT.leaveDuration, CINEMATIC.leaveDuration);
     assert.ok(SIGN_SHOT.leaveDuration < SIGN_SHOT.duration);
     assert.equal(signShotProgress(0, true), 1);
     assert.equal(signShotProgress(0, true, true), 1);

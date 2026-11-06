@@ -11,7 +11,12 @@
 
 import type { Vec3 } from "./camera.ts";
 import { type CherrySpot, cherryNose, cherryPlacement } from "./cherry.ts";
-import type { ShotPose } from "./coffee-shot.ts";
+import {
+  CINEMATIC,
+  cinematicPoseAt,
+  cinematicProgress,
+  type ShotPose,
+} from "./cinematic.ts";
 import { STORY_CARD } from "./gallery-camera.ts";
 
 export type { ShotPose };
@@ -32,14 +37,12 @@ export const CHERRY_SHOT = {
   /** Off her nose, toward the spot's lens side. */
   azimuth: 40 * DEG,
   fov: 28,
-  /** Seconds in, and back out to the room. */
-  duration: 2.5,
-  leaveDuration: 1.8,
+  /** Seconds in, and back out to the room (cinematic.ts). */
+  duration: CINEMATIC.duration,
+  leaveDuration: CINEMATIC.leaveDuration,
   /** Sideways bow at mid-move: a share of the horizontal travel, capped. */
-  arc: 0.12,
-  maxArc: 0.6,
-  /** The aim settles on her a little before the eye arrives. */
-  aimLead: 0.85,
+  arc: 0.06,
+  maxArc: 0.3,
 } as const;
 
 /** The shot's aim, the eye's offset from it and the final lens, at a spot. */
@@ -70,14 +73,6 @@ export function cherryView(spot: CherrySpot): {
 }
 
 const clamp01 = (t: number) => Math.min(1, Math.max(0, t));
-/** Cubic ease in and out: a slow start and a slow landing. */
-const ease = (t: number) =>
-  t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
-const mix = (a: Vec3, b: Vec3, s: number): Vec3 => [
-  a[0] + (b[0] - a[0]) * s,
-  a[1] + (b[1] - a[1]) * s,
-  a[2] + (b[2] - a[2]) * s,
-];
 
 /** A cinematic move, in WorldScene's shape (CINEMATIC_SHOTS). */
 export interface CherryShot {
@@ -114,45 +109,21 @@ export function cherryShot(spot: CherrySpot): CherryShot {
 
   /**
    * The pose `t` (0-1, clamped) of the way from `from` into the shot: the
-   * eye eases along the straight line, bowed sideways toward the side the
-   * shot looks from (most at mid-move, none at either end), the aim eases
-   * onto her a bit sooner and the lens narrows with the eye.
+   * shared move (cinematic.ts), bowed toward the side the shot looks from.
    */
-  const shotAt = (t: number, from: ShotPose, shift = 0): ShotPose => {
-    const end = shotEnd(shift);
-    const s = ease(clamp01(t));
-    const aim = ease(clamp01(t / CHERRY_SHOT.aimLead));
-    const eye = mix(from.eye, end.eye, s);
-    const travel = [end.eye[0] - from.eye[0], end.eye[2] - from.eye[2]];
-    const length = Math.hypot(travel[0], travel[1]);
-    if (length > 1e-6) {
-      let side = [-travel[1] / length, travel[0] / length];
-      if (side[0] * offset[0] + side[1] * offset[2] < 0)
-        side = [-side[0], -side[1]];
-      const bow =
-        Math.min(CHERRY_SHOT.maxArc, CHERRY_SHOT.arc * length) *
-        Math.sin(Math.PI * s);
-      eye[0] += side[0] * bow;
-      eye[2] += side[1] * bow;
-    }
-    return {
-      eye,
-      target: mix(from.target, end.target, aim),
-      fov: from.fov + (end.fov - from.fov) * s,
-    };
-  };
+  const shotAt = (t: number, from: ShotPose, shift = 0): ShotPose =>
+    cinematicPoseAt(t, from, shotEnd(shift), {
+      arc: CHERRY_SHOT.arc,
+      maxArc: CHERRY_SHOT.maxArc,
+      offset,
+    });
 
   return {
     shotAt,
     /** Leaving: the same path backwards, from the shot to `to`. */
     leaveAt: (t, to, shift = 0) => shotAt(1 - clamp01(t), to, shift),
-    progress: (elapsed, reduced, leaving = false) => {
-      if (reduced) return 1;
-      const duration = leaving
-        ? CHERRY_SHOT.leaveDuration
-        : CHERRY_SHOT.duration;
-      return clamp01(elapsed / duration);
-    },
+    progress: (elapsed, reduced, leaving = false) =>
+      cinematicProgress(elapsed, reduced, leaving),
     /**
      * How far to slide the shot (metres) so she sits at the centre of the
      * screen left of the card (its footprint): the card's share of the

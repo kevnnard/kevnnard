@@ -351,8 +351,8 @@ describe("keyboard shot (keyboard-card T2)", () => {
     );
   });
 
-  it("is a ~2.5 s eased dolly with a slight arc and a narrowing lens", () => {
-    assert.ok(KEYBOARD_SHOT.duration >= 2.2 && KEYBOARD_SHOT.duration <= 3);
+  it("is a calm ~3.8 s eased dolly with a slight arc and a narrowing lens", () => {
+    assert.ok(KEYBOARD_SHOT.duration >= 3.5 && KEYBOARD_SHOT.duration <= 4);
     const from = {
       eye: [2.2, 2.1, -0.2] as Vec3,
       target: [0.4, 1.2, -1] as Vec3,

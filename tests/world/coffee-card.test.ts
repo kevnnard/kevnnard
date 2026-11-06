@@ -404,7 +404,8 @@ describe("coffee shot (coffee-card T1)", () => {
   });
 
   it("is a slow eased dolly with a slight arc and a narrowing lens", () => {
-    assert.ok(COFFEE_SHOT.duration >= 2.2 && COFFEE_SHOT.duration <= 3);
+    // Calm (dream-truck T3): about 3.5-4 s.
+    assert.ok(COFFEE_SHOT.duration >= 3.5 && COFFEE_SHOT.duration <= 4);
     const from = {
       eye: [2.2, 2.1, -0.2] as Vec3,
       target: [0.4, 1.2, -1] as Vec3,

@@ -1,15 +1,22 @@
 // The garage as a detailing bay (dream-truck T2, S3, L2): a honeycomb LED
 // grid on the ceiling for wide, even light and a clean reflection on the
-// paint, two low LED bars along the side walls for the flanks, cool
-// daylight white. In the truck's close-up they ramp up to showroom level at
-// any hour; at night they come on by themselves, softer, and the garage
-// door rolls down, back up by day or for the close-up. The master power
-// switch turns them off like the display cases. Pure numbers; GarageLights
-// draws the LEDs and lights, House rolls the door.
+// paint, two low LED bars along the side walls for the flanks, an LED strip
+// round the truck on the floor, cool daylight white. In the truck's
+// close-up they ramp up to full level at any hour; at night they come on by
+// themselves, softer, and the garage door rolls down, back up by day or for
+// the close-up. The close-up dissolves the roof and the walls, so it also
+// brings a showroom set lit like the display cases (T14, T3): a soft key
+// from the camera's side, uplights from the floor at the left and the
+// front, a top light over the bonnet and a gentle rim from behind, about
+// the cases' 23 lx on the body, plus stronger reflections on the paint. The
+// master power switch turns everything off like the cases. Pure numbers;
+// GarageLights draws the LEDs and lights, Truck boosts its reflections,
+// House rolls the door.
 
 import { GARAGE_INTERIOR } from "./garage.ts";
 import { HOUSE, type Part, type Vec3 } from "./house.ts";
 import { nightLightsOn } from "./lights.ts";
+import { environmentIntensity } from "./palette.ts";
 import { TRUCK, truckBox } from "./truck.ts";
 
 const FLOOR = HOUSE.floorY;
@@ -25,6 +32,12 @@ export const GARAGE_LIGHTS = {
   night: 0.45,
   /** Seconds to ramp between levels. */
   ramp: 0.8,
+  /**
+   * Reflection strength on the truck's paint in the close-up: the scene's
+   * environment is 0.1 by day and 0.01 at night, which leaves black paint
+   * a flat silhouette (the cases boost theirs to 0.5 the same way).
+   */
+  envBoost: 0.6,
 } as const;
 
 /**
@@ -118,12 +131,47 @@ export const GARAGE_BARS: readonly { center: Vec3; size: Vec3 }[] = [
   size: [0.03, 0.04, 3.3] as Vec3,
 }));
 
+const BOX = truckBox();
+const MID_Z = (BOX.z0 + BOX.z1) / 2;
+const [TRUCK_X] = TRUCK.position;
+
+/**
+ * The LED strip on the floor: a thin outline 8 cm round the truck's
+ * footprint (mirrors included), inside the walls and short of the door,
+ * lit with the grid and the bars.
+ */
+export function floorStripParts(): Part[] {
+  const gap = 0.08;
+  const width = 0.03;
+  const height = 0.006;
+  const x0 = BOX.x0 - gap;
+  const x1 = BOX.x1 + gap;
+  const z0 = BOX.z0 - gap;
+  const z1 = BOX.z1 + gap;
+  const y = FLOOR + height / 2;
+  const strip = (center: Vec3, size: Vec3): Part => ({
+    shape: "box",
+    center,
+    size,
+    color: GARAGE_LIGHTS.color,
+    shade: 1,
+  });
+  return [
+    strip([(x0 + x1) / 2, y, z0], [x1 - x0 + width, height, width]),
+    strip([(x0 + x1) / 2, y, z1], [x1 - x0 + width, height, width]),
+    strip([x0, y, (z0 + z1) / 2], [width, height, z1 - z0]),
+    strip([x1, y, (z0 + z1) / 2], [width, height, z1 - z0]),
+  ];
+}
+
 export interface GarageLightFixture {
-  role: "ceiling" | "side";
+  role: "ceiling" | "side" | "key" | "uplight" | "top" | "rim";
   position: Vec3;
   target: Vec3;
-  /** At full level. */
+  /** With the bay at full level (close-up, or 0.45 of it by night). */
   intensity: number;
+  /** Added in the close-up only (garageShowroomLevel). */
+  showroom: number;
   angle: number;
   penumbra: number;
   /** Metres to zero: the light stays in the garage. */
@@ -133,15 +181,46 @@ export interface GarageLightFixture {
   castShadow: false;
 }
 
-const BOX = truckBox();
-const MID_Z = (BOX.z0 + BOX.z1) / 2;
-const [TRUCK_X] = TRUCK.position;
+/** A showroom spot: dark until the close-up, soft and even. */
+const showroomSpot = (
+  role: GarageLightFixture["role"],
+  position: Vec3,
+  target: Vec3,
+  showroom: number,
+  angle: number,
+  penumbra: number,
+  distance: number,
+): GarageLightFixture => ({
+  role,
+  position,
+  target,
+  intensity: 0,
+  showroom,
+  angle,
+  penumbra,
+  distance,
+  decay: 0,
+  castShadow: false,
+});
 
 /**
- * Two soft spots down from the grid over the truck's front and back
- * halves, cut off at the floor so none reaches the main room, and two low
- * fills from the side bars across the doors and flanks, each stopping short
- * of the opposite wall.
+ * The bay: two soft spots down from the grid over the truck's front and
+ * back halves, narrow enough (0.7 rad) that they stop at the floor short
+ * of the main room, and two low fills from the side bars across the doors
+ * and flanks, each stopping short of the opposite wall.
+ *
+ * The showroom set, for the close-up with the roof and walls gone (T3),
+ * tuned on the truck's real surfaces (TRUCK_SURFACES) to about 27 lx on the
+ * flank, the bonnet and the front, never under 21 nor over 33:
+ * - a soft key from the camera's side, high off the front-left corner;
+ * - two uplights at the floor out past the dissolved left wall, under the
+ *   front and back doors, and one on the apron under the grille;
+ * - a top light over the bonnet from the right, from inside the right wall
+ *   and only aimed away from it (every ray heads to -x), so it cannot reach
+ *   the main room however far it goes;
+ * - a gentle rim from behind and above on the right, the camera's far side.
+ * All decay 0 for even light without a hot spot by the lamp; every cutoff
+ * stops short of the main room (none lights a point inside it).
  */
 export const GARAGE_LIGHT_FIXTURES: readonly GarageLightFixture[] = [
   ...[-1.2, 1.2].map(
@@ -150,7 +229,8 @@ export const GARAGE_LIGHT_FIXTURES: readonly GarageLightFixture[] = [
       position: [TRUCK_X, GARAGE_GRID.y - 0.02, MID_Z + dz],
       target: [TRUCK_X, FLOOR, MID_Z + dz],
       intensity: 2.4,
-      angle: 1,
+      showroom: 0,
+      angle: 0.7,
       penumbra: 0.5,
       distance: 2.1,
       decay: 0,
@@ -163,6 +243,7 @@ export const GARAGE_LIGHT_FIXTURES: readonly GarageLightFixture[] = [
       position: [x + Math.sign(TRUCK_X - x) * 0.03, y, z],
       target: [TRUCK_X, y, z],
       intensity: 1.6,
+      showroom: 0,
       angle: 1.45,
       penumbra: 0.4,
       distance: 2,
@@ -170,7 +251,133 @@ export const GARAGE_LIGHT_FIXTURES: readonly GarageLightFixture[] = [
       castShadow: false,
     }),
   ),
+  showroomSpot(
+    "key",
+    [TRUCK_X - 0.96, FLOOR + 2, BOX.z1 + 0.54],
+    [TRUCK_X + 0.09, FLOOR + 0.85, MID_Z + 0.85],
+    38,
+    1.25,
+    0.8,
+    2.85,
+  ),
+  ...[1.5, -1.5].map((dz) =>
+    showroomSpot(
+      "uplight",
+      [TRUCK_X - 1.96, FLOOR + 0.07, MID_Z + dz],
+      [TRUCK_X - 0.9, FLOOR + 0.85, MID_Z + dz],
+      35,
+      1.35,
+      0.6,
+      3.2,
+    ),
+  ),
+  showroomSpot(
+    "uplight",
+    [TRUCK_X + 0.39, FLOOR + 0.07, BOX.z1 + 1.09],
+    [TRUCK_X, FLOOR + 0.85, BOX.z1 - 0.04],
+    30,
+    1,
+    0.6,
+    2.4,
+  ),
+  showroomSpot(
+    "top",
+    [HOUSE.garage.x1 - 0.05, FLOOR + 1.85, BOX.z1 - 0.06],
+    [TRUCK_X - 0.06, FLOOR + 1.15, MID_Z + 1.1],
+    37,
+    0.75,
+    0.6,
+    3.85,
+  ),
+  showroomSpot(
+    "rim",
+    [HOUSE.garage.x1 - 0.15, FLOOR + 2.15, BOX.z0 - 0.04],
+    [TRUCK_X - 0.46, FLOOR + 1.25, MID_Z + 0.8],
+    6,
+    0.4,
+    0.8,
+    6,
+  ),
 ];
+
+/**
+ * Points on the truck's paint the showroom set is tuned and tested on,
+ * measured from dream-truck.glb at its 0.82 scale: the left flank (doors
+ * and fenders sit at x -3.24 to -3.45), the bonnet's top (1.25 to 1.35 m,
+ * z 1.4 to 2.25) and the grille (z 2.42 in the middle, 2.22 at the
+ * corners), each with its outward normal.
+ */
+export const TRUCK_SURFACES: Record<
+  "flank" | "hood" | "front",
+  readonly { point: Vec3; normal: Vec3 }[]
+> = {
+  flank: [0.45, 0.7, 0.95].flatMap((y) =>
+    [-2.2, -1.65, -1.1, -0.55, 0, 0.55, 1.1, 1.65, 2.2].map((z) => ({
+      point: [TRUCK_X - 0.78, FLOOR + y, z] as Vec3,
+      normal: [-1, 0, 0] as Vec3,
+    })),
+  ),
+  hood: [-0.66, 0, 0.66].flatMap((dx) =>
+    [1.4, 1.75, 2.1].map((z) => ({
+      point: [TRUCK_X + dx, FLOOR + 1.15, z] as Vec3,
+      normal: [0, 1, 0] as Vec3,
+    })),
+  ),
+  front: [-0.66, -0.31, 0, 0.34, 0.64].flatMap((dx) =>
+    [0.45, 0.75, 1.05].map((y) => ({
+      point: [
+        TRUCK_X + dx,
+        FLOOR + y,
+        BOX.z1 - 0.036 - (0.2 * Math.abs(dx)) / 0.66,
+      ] as Vec3,
+      normal: [0, 0, 1] as Vec3,
+    })),
+  ),
+};
+
+const smoothstep = (edge0: number, edge1: number, x: number) => {
+  const t = Math.min(1, Math.max(0, (x - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
+};
+
+/**
+ * Light (lux, as three.js computes it) the garage puts on `point` facing
+ * `normal` (null: any way it faces), with the bay at `bay` and the showroom
+ * set at `showroom`: each spot's cone and penumbra (smoothstep between the
+ * outer and inner cosines), its decay and its cutoff window, and the cosine
+ * on the surface.
+ */
+export function garageIlluminance(
+  point: Vec3,
+  normal: Vec3 | null,
+  bay: number,
+  showroom: number,
+): number {
+  let total = 0;
+  for (const f of GARAGE_LIGHT_FIXTURES) {
+    const power = f.intensity * bay + f.showroom * showroom;
+    if (power <= 0) continue;
+    const l = f.position.map((v, i) => v - point[i]);
+    const d = Math.hypot(...l);
+    const axis = f.target.map((v, i) => v - f.position[i]);
+    const length = Math.hypot(...axis);
+    const angleCos =
+      -l.reduce((sum, v, i) => sum + v * axis[i], 0) / (d * length);
+    const spot = smoothstep(
+      Math.cos(f.angle),
+      Math.cos(f.angle * (1 - f.penumbra)),
+      angleCos,
+    );
+    if (spot <= 0) continue;
+    let falloff = 1 / Math.max(d ** f.decay, 0.01);
+    if (f.distance > 0) falloff *= Math.max(0, 1 - (d / f.distance) ** 4) ** 2;
+    const facing = normal
+      ? Math.max(0, l.reduce((sum, v, i) => sum + v * normal[i], 0) / d)
+      : 1;
+    total += power * spot * falloff * facing;
+  }
+  return total;
+}
 
 /**
  * 0-1 level of the garage lights: off with the master power off (like the
@@ -185,6 +392,24 @@ export function garageLightLevel(
   if (!power) return 0;
   if (inspecting) return 1;
   return nightLightsOn(hours) ? GARAGE_LIGHTS.night : 0;
+}
+
+/** 0-1 level of the showroom set: the truck's close-up only, power on. */
+export function garageShowroomLevel(
+  power: boolean,
+  inspecting: boolean,
+): number {
+  return power && inspecting ? 1 : 0;
+}
+
+/**
+ * Reflection strength for the truck's paint: the scene's own outside the
+ * close-up; with the showroom set at `level`, `level * envBoost` of it,
+ * never below the scene's (displayCaseEnvIntensity's rule, at any hour).
+ */
+export function garageTruckEnvIntensity(level: number, hours: number): number {
+  const scene = environmentIntensity(hours);
+  return Math.min(1, Math.max(scene, level * GARAGE_LIGHTS.envBoost));
 }
 
 /** The roller door's motion: seconds from open to closed. */
