@@ -109,7 +109,7 @@ export const CASE_STORIES: Record<DisplayItemId, CaseStory | null> & {
   katana: {
     kicker: "WALL · KATANA",
     title: "Blossom Katana",
-    lede: "I love Eastern culture, Japanese culture above all.",
+    lede: "Japanese culture pulls me in, above all its feudal era, the age of the samurai. Ghost of Tsushima is my favorite game, and these katanas are my nod to that love of the East.",
     credit: {
       text: "3D model by",
       name: "Mitchell Bekke",

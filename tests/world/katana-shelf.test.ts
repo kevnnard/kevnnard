@@ -331,7 +331,7 @@ describe("katana inspection and story (katana-wall-shelf T5)", () => {
     assert.equal(story.kicker, "WALL · KATANA");
     assert.equal(
       story.lede,
-      "I love Eastern culture, Japanese culture above all.",
+      "Japanese culture pulls me in, above all its feudal era, the age of the samurai. Ghost of Tsushima is my favorite game, and these katanas are my nod to that love of the East.",
     );
     assert.deepEqual(story.credit, {
       text: "3D model by",
