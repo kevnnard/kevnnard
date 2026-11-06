@@ -2,13 +2,15 @@
 // dock, their titles and the "Continue" row. Pure data for tv-screen.ts.
 // Real covers come from the generated tv-covers.ts (TMDB posters, IGDB game
 // covers, shipped locally); each title's motif is the drawn fallback.
-// No YouTube ids yet, so nothing here loads a third-party embed.
+// What a title plays (YouTube channel ids, Twitch logins, trailers) is in
+// the generated tv-media.ts; nothing here loads a third-party embed.
 
 export type TvAppId =
   | "movies"
   | "games"
   | "videos"
   | "channels"
+  | "live"
   | "anime"
   | "highlights"
   | "radio";
@@ -273,6 +275,24 @@ export const TV_APPS: readonly TvApp[] = [
     })),
   },
   {
+    // Twitch streams the owner follows (S8, S9); more when he names them.
+    id: "live",
+    label: "Live",
+    sample: false,
+    titles: [
+      ["Gentleman Programming", "split"],
+      ["midudev", "ring"],
+      ["melenitasdev", "dots"],
+    ].map(([title, motif]) => ({
+      id: `live-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+      app: "live" as const,
+      title,
+      meta: "Twitch channel · live when they stream",
+      caption: "Live · Twitch",
+      motif: motif as CoverMotif,
+    })),
+  },
+  {
     id: "anime",
     label: "Anime",
     sample: true,
@@ -368,6 +388,7 @@ export function appCount(app: TvApp): string {
   const n = app.titles.length;
   if (app.id === "videos") return `${n} clip${n === 1 ? "" : "s"}`;
   if (app.id === "channels") return `${n} channel${n === 1 ? "" : "s"}`;
+  if (app.id === "live") return `${n} on Twitch`;
   return `${n} pick${n === 1 ? "" : "s"}`;
 }
 

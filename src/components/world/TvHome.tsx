@@ -14,7 +14,8 @@ import "./tv-home.css";
  * the terminal's (TerminalMonitor.tsx). It carries the same items as named
  * buttons and the owner's muted clip as a native video, and holds keyboard
  * focus on the remote's position, so the screen draws its ring there.
- * Arrows move, Enter selects (again to open or play), Esc leaves.
+ * Arrows move, Enter selects (again to open or play), Esc closes the
+ * player (TvPlayer.tsx) if one is open, then leaves.
  */
 export default function TvHome({
   state,
@@ -38,26 +39,30 @@ export default function TvHome({
 }) {
   const root = useRef<HTMLElement>(null);
   const current = tvRegionId(state.pos);
+  const playing = Boolean(state.player);
 
-  // Keyboard focus follows the remote: on open, on arrows, on screen clicks.
+  // Keyboard focus follows the remote: on open, on arrows, on screen clicks,
+  // and back from the player; the player's Back takes it while it plays.
   useEffect(() => {
+    if (playing) return;
     const active = document.activeElement;
     if (active && active !== document.body && !root.current?.contains(active))
       return;
     root.current
       ?.querySelector<HTMLElement>(`[data-region="${current}"]`)
       ?.focus({ preventScroll: true });
-  }, [current, state.app, state.opened]);
+  }, [current, state.app, state.opened, playing]);
 
-  // One listener for the open TV: Esc leaves from anywhere, arrows and
-  // Enter drive the remote from its items or after a click on the screen.
-  const keys = useRef({ current, onPress, onMove, onClose });
-  keys.current = { current, onPress, onMove, onClose };
+  // One listener for the open TV: Esc closes the player, then leaves, from
+  // anywhere; arrows and Enter drive the remote from its items or after a
+  // click on the screen.
+  const keys = useRef({ current, onPress, onMove });
+  keys.current = { current, onPress, onMove };
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        keys.current.onClose();
+        keys.current.onPress("escape");
         return;
       }
       if (event.altKey || event.ctrlKey || event.metaKey) return;
@@ -154,7 +159,12 @@ export default function TvHome({
           </button>
         )}
         {hero.secondary && (
-          <button type="button" disabled>
+          <button
+            type="button"
+            data-region="secondary"
+            disabled={!hero.secondaryReady}
+            onClick={() => onPress("secondary")}
+          >
             {hero.secondary}
           </button>
         )}
@@ -174,6 +184,16 @@ export default function TvHome({
           />
         )}
       </section>
+      {layout.player && (
+        <section aria-label="Playing on the TV">
+          <p>
+            Playing: {layout.player.title}. {layout.player.credit}.
+          </p>
+          <button type="button" onClick={() => onPress("player:close")}>
+            Close the player
+          </button>
+        </section>
+      )}
       <section aria-label={layout.coversHeading}>
         <h3>{layout.coversHeading}</h3>
         {layout.sampleTag && <p>{layout.sampleTag}</p>}

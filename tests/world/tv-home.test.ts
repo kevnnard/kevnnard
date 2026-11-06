@@ -23,6 +23,7 @@ import {
   type TvTitle,
   tvTitle,
 } from "../../src/lib/world/tv-library.ts";
+import { TV_TRAILERS, TV_YOUTUBE } from "../../src/lib/world/tv-media.ts";
 import {
   initialTvHome,
   TV_SCREEN_H,
@@ -55,7 +56,7 @@ const titled = (appId: string, title: string): TvTitle => {
 const allTitles = TV_APPS.flatMap((entry) => entry.titles);
 
 describe("TV library content (tv-home-screen T2, S1, S3)", () => {
-  it("lists the seven apps of the chosen artboard, in order", () => {
+  it("lists the apps of the chosen artboard and Live, in order", () => {
     assert.deepEqual(
       TV_APPS.map((entry) => entry.label),
       [
@@ -63,6 +64,7 @@ describe("TV library content (tv-home-screen T2, S1, S3)", () => {
         "Games",
         "My videos",
         "Channels",
+        "Live",
         "Anime",
         "Highlights",
         "Lo-fi radio",
@@ -127,13 +129,20 @@ describe("TV library content (tv-home-screen T2, S1, S3)", () => {
     assert.equal(titled("games", "Hitman").films?.length, 8);
   });
 
-  it("lists the owner's channels, still without any embed", () => {
+  it("lists the owner's YouTube channels and Twitch streamers", () => {
     const channels = app("channels");
     assert.equal(channels.sample, false);
     assert.deepEqual(
       channels.titles.map((entry) => entry.title),
       ["midudev", "Gentleman Programming", "Fazt", "Dalto", "Theo (t3.gg)"],
     );
+    const live = app("live");
+    assert.equal(live.sample, false);
+    assert.deepEqual(
+      live.titles.map((entry) => entry.title),
+      ["Gentleman Programming", "midudev", "melenitasdev"],
+    );
+    assert.ok(live.titles.every((entry) => entry.app === "live"));
   });
 
   it("marks only the rows still without the owner's picks as samples", () => {
@@ -183,6 +192,7 @@ describe("TV library content (tv-home-screen T2, S1, S3)", () => {
   it("counts each app for the dock", () => {
     assert.equal(appCount(app("videos")), "1 clip");
     assert.equal(appCount(app("channels")), "5 channels");
+    assert.equal(appCount(app("live")), "3 on Twitch");
     assert.equal(appCount(app("games")), "4 picks");
     assert.equal(appCount(app("radio")), "Five lo-fi loops");
   });
@@ -305,7 +315,7 @@ describe("TV home screen on the panel (tv-home-screen T3, S6)", () => {
 
   it("shows the idle preview: dock, Ghost of Tsushima and a cover row", () => {
     const layout = tvScreenLayout(initialTvHome(), IDLE);
-    assert.equal(layout.dock.length, 7);
+    assert.equal(layout.dock.length, 8);
     assert.equal(layout.hero.title, "Ghost of Tsushima");
     assert.match(layout.hero.kicker, /Games · my favourite/);
     assert.equal(layout.coversHeading, "Games");
@@ -329,7 +339,7 @@ describe("TV home screen on the panel (tv-home-screen T3, S6)", () => {
 
   it("hit-tests the drawn items from the screen's UV", () => {
     const layout = tvScreenLayout(initialTvHome(), ACTIVE);
-    for (const id of ["back", "dock:0", "dock:6", "cover:1", "continue:0"]) {
+    for (const id of ["back", "dock:0", "dock:7", "cover:1", "continue:0"]) {
       const [x, y] = center(layout, id);
       assert.equal(tvHitAt(layout, x, y), id);
     }
@@ -379,7 +389,7 @@ describe("TV home screen on the panel (tv-home-screen T3, S6)", () => {
     );
     assert.equal(tvHomeAction(clip.state, "primary").effect, "clip");
     assert.equal(tvHomeAction(clip.state, "continue:0").effect, "clip");
-    const radio = press(initialTvHome(), "dock:6");
+    const radio = press(initialTvHome(), "dock:7");
     assert.equal(
       tvScreenLayout(radio.state, ACTIVE).hero.primary,
       "Play on the speakers",
@@ -394,19 +404,121 @@ describe("TV home screen on the panel (tv-home-screen T3, S6)", () => {
     assert.equal(tvHomeAction(radio.state, "primary").effect, "music");
   });
 
-  it("keeps trailers and channels as coming soon, and Back leaves", () => {
-    const layout = tvScreenLayout(initialTvHome(), ACTIVE);
-    assert.equal(
-      layout.hero.secondary,
-      "Watch trailer · YouTube · coming soon",
+  it("plays a film's or game's trailer from its secondary button", () => {
+    const ghost = initialTvHome();
+    const layout = tvScreenLayout(ghost, ACTIVE);
+    assert.equal(layout.hero.secondary, "Watch trailer · YouTube");
+    assert.equal(layout.hero.secondaryReady, true);
+    assert.equal(layout.player, null, "nothing plays before a press");
+    const { state, effect } = tvHomeAction(ghost, "secondary");
+    assert.equal(effect, null);
+    assert.deepEqual(state.player?.media, {
+      kind: "trailer",
+      youtube: TV_TRAILERS["ghost-of-tsushima"].youtube,
+    });
+    const playing = tvScreenLayout(state, ACTIVE).player;
+    assert.ok(playing);
+    assert.equal(playing.platform, "YouTube");
+    assert.equal(playing.title, "Ghost of Tsushima · trailer");
+    // An entry of an opened collection plays its own trailer.
+    const azkaban = press(initialTvHome(), "dock:0", "cover:0", "cover:0");
+    const entry = press(azkaban.state, "cover:3", "secondary").state;
+    assert.deepEqual(entry.player?.media, {
+      kind: "trailer",
+      youtube:
+        TV_TRAILERS[
+          "harry-potter/harry-potter-and-the-prisoner-of-azkaban-2004"
+        ].youtube,
+    });
+    // A closed collection opens instead; it has no trailer of its own.
+    const closed = press(initialTvHome(), "dock:0").state;
+    assert.equal(tvScreenLayout(closed, ACTIVE).hero.secondary, null);
+    assert.equal(tvHomeAction(closed, "secondary").state.player, null);
+  });
+
+  it("plays a channel's uploads, and its live stream as a second option", () => {
+    const channel = press(initialTvHome(), "dock:3").state;
+    const layout = tvScreenLayout(channel, ACTIVE);
+    assert.equal(layout.hero.title, "midudev");
+    assert.equal(layout.hero.primary, "Play latest uploads · YouTube");
+    assert.equal(layout.hero.secondary, "Live now · YouTube");
+    const { channelId } = TV_YOUTUBE["channel-midudev"];
+    const uploads = press(channel, "primary").state;
+    assert.deepEqual(uploads.player?.media, { kind: "uploads", channelId });
+    const player = tvScreenLayout(uploads, ACTIVE).player;
+    assert.ok(player);
+    assert.match(player.credit, /midudev/);
+    assert.deepEqual(
+      player.options.map((option) => [option.id, option.current]),
+      [
+        ["player:uploads", true],
+        ["player:live", false],
+      ],
     );
-    assert.equal(tvHomeAction(initialTvHome(), "secondary").effect, null);
-    const channel = press(initialTvHome(), "dock:3");
+    const live = press(uploads, "player:live").state;
+    assert.deepEqual(live.player?.media, { kind: "live", channelId });
+    assert.deepEqual(press(channel, "secondary").state.player?.media, {
+      kind: "live",
+      channelId,
+    });
+    // Pressing the picked channel's cover again plays it too.
     assert.equal(
-      tvScreenLayout(channel.state, ACTIVE).hero.secondary,
-      "Open channel · YouTube · coming soon",
+      press(channel, "cover:0", "cover:0").state.player?.media.kind,
+      "uploads",
     );
+  });
+
+  it("plays a Twitch channel from the Live app, muted", () => {
+    const live = press(initialTvHome(), "dock:4").state;
+    const layout = tvScreenLayout(live, ACTIVE);
+    assert.equal(layout.coversHeading, "Live");
+    assert.equal(layout.hero.title, "Gentleman Programming");
+    assert.equal(layout.hero.primary, "Watch on Twitch · muted");
+    assert.equal(layout.hero.secondary, null);
+    const { state } = press(live, "primary");
+    assert.deepEqual(state.player?.media, {
+      kind: "twitch",
+      login: "gentleman_programming",
+    });
+    const player = tvScreenLayout(state, ACTIVE).player;
+    assert.equal(player?.platform, "Twitch");
+    assert.deepEqual(player?.options, []);
+  });
+
+  it("closes the player first on Esc, then leaves the TV", () => {
+    const playing = press(initialTvHome(), "secondary").state;
+    assert.ok(playing.player);
+    const first = tvHomeAction(playing, "escape");
+    assert.equal(first.effect, null, "Esc closes only the player");
+    assert.equal(first.state.player, null);
+    assert.equal(first.state.hero.id, "ghost-of-tsushima", "home as it was");
+    assert.equal(tvHomeAction(first.state, "escape").effect, "exit");
+    assert.equal(tvHomeAction(playing, "player:close").state.player, null);
+    assert.equal(tvMove(playing, "ArrowLeft"), null, "the remote waits");
+    // Another item on the screen or the companion closes it too.
+    assert.equal(press(playing, "dock:0").state.player, null);
     assert.equal(tvHomeAction(initialTvHome(), "back").effect, "exit");
+  });
+
+  it("keeps Highlights as coming soon, with nothing to play", () => {
+    const highlights = press(initialTvHome(), "dock:6").state;
+    const layout = tvScreenLayout(highlights, ACTIVE);
+    assert.equal(layout.hero.secondary, "Watch on YouTube · coming soon");
+    assert.equal(layout.hero.secondaryReady, false);
+    assert.equal(tvHomeAction(highlights, "secondary").state.player, null);
+  });
+
+  it("renders no player in any state reached without a play press", () => {
+    const states = [
+      initialTvHome(),
+      ...TV_APPS.map((_, col) => press(initialTvHome(), `dock:${col}`).state),
+    ];
+    for (const state of states)
+      for (const options of [IDLE, ACTIVE])
+        assert.equal(tvScreenLayout(state, options).player, null);
+    // Idle in the room the player never shows, even if it was open.
+    const playing = press(initialTvHome(), "secondary").state;
+    assert.equal(tvScreenLayout(playing, IDLE).player, null);
   });
 
   it("moves the remote with the arrows and keeps the ring in view", () => {
@@ -421,7 +533,7 @@ describe("TV home screen on the panel (tv-home-screen T3, S6)", () => {
       layout.regions.some((r) => r.id === "cover:0"),
       false,
     );
-    assert.deepEqual(tvMove(state, "ArrowUp")?.pos, { row: 0, col: 6 });
+    assert.deepEqual(tvMove(state, "ArrowUp")?.pos, { row: 0, col: 7 });
     assert.equal(tvMove(state, "Enter"), null);
   });
 
@@ -493,7 +605,7 @@ describe("Real covers on the TV screen (tv-home-screen T7, S7)", () => {
   });
 
   it("keeps the drawn motif where no cover exists", () => {
-    for (const appId of ["channels", "anime", "highlights", "radio"]) {
+    for (const appId of ["channels", "live", "anime", "highlights", "radio"]) {
       const appCol = TV_APPS.findIndex((entry) => entry.id === appId);
       const layout = tvScreenLayout(
         press(initialTvHome(), `dock:${appCol}`).state,
@@ -659,6 +771,28 @@ describe("TV wiring (T3)", () => {
       screen + read("src/lib/world/tv-screen.ts"),
       /Sample picks · replace with yours/,
     );
+  });
+
+  it("plays YouTube and Twitch on the TV's glass only after a press (T8)", () => {
+    const player = read("src/components/world/TvPlayer.tsx");
+    const playerCss = read("src/components/world/tv-player.css");
+    // The one iframe lives in TvPlayer, built from the pinned media.
+    assert.equal(player.match(/<iframe/g)?.length, 1);
+    assert.match(
+      player,
+      /tvEmbedSrc\(view\.media, window\.location\.hostname\)/,
+    );
+    assert.match(player, /referrerPolicy="strict-origin-when-cross-origin"/);
+    assert.match(player, /data-region="player:close"/);
+    assert.doesNotMatch(player, /https?:/, "URLs come from tv-media.ts");
+    // Framed on the panel, mounted only while the close-up plays something.
+    assert.match(screen, /\{active && layout\.player && \(\s*<Html/);
+    assert.match(screen, /<TvPlayer/);
+    assert.match(screen, /transform/);
+    assert.match(playerCss, /\.tv-player \{/);
+    // Esc goes through the remote: the player first, then the room.
+    assert.match(home, /keys\.current\.onPress\("escape"\)/);
+    assert.match(worldApp, /if \(effect === "exit"\) leaveTv\(\)/);
   });
 
   it("draws covers from a decoded image cache, with a scrim under the title", () => {

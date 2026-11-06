@@ -4,7 +4,9 @@
 // 1600 x 896 canvas. Pure data for TvScreen.tsx (drawing and clicks on the
 // panel) and TvHome.tsx (the keyboard companion). Covers are the shipped
 // TMDB and IGDB images of tv-covers.ts (T7, S7); the drawn motif stays where
-// there is none, and under an image until it loads.
+// there is none, and under an image until it loads. What plays (T8, S8-S10):
+// YouTube channels, trailers and Twitch streams from tv-media.ts, in the
+// player TvPlayer.tsx frames on the glass, only once a press opens it.
 
 import { coverKey, TV_COVERS } from "./tv-covers.ts";
 import { moveRemote, type RemotePosition } from "./tv-focus.ts";
@@ -23,6 +25,13 @@ import {
   tvApp,
   tvTitle,
 } from "./tv-library.ts";
+import {
+  TV_TRAILERS,
+  TV_TWITCH,
+  TV_YOUTUBE,
+  type TvMedia,
+  type TvTrailer,
+} from "./tv-media.ts";
 
 /** Layout pixels of the screen: the glass's 1 x 0.56 m at 1600 px/m. */
 export const TV_SCREEN_W = 1600;
@@ -63,6 +72,28 @@ export interface TvHomeState {
   /** The hero's title id, and the picked entry of an opened collection. */
   hero: { id: string; entry?: number };
   pos: RemotePosition;
+  /** What the TV plays over its home screen, after a press; null for none. */
+  player: TvPlayerState | null;
+}
+
+/** A video or stream on the TV: whose it is and what plays. */
+export interface TvPlayerState {
+  /** The library title it belongs to. */
+  id: string;
+  /** The picked entry of a collection, for its trailer. */
+  entry?: number;
+  media: TvMedia;
+}
+
+/** The player as TvPlayer.tsx shows it. */
+export interface TvPlayerView {
+  media: TvMedia;
+  platform: "YouTube" | "Twitch";
+  title: string;
+  /** Who the content belongs to, and where it plays from. */
+  credit: string;
+  /** Switches between a channel's uploads and its live stream. */
+  options: { id: string; label: string; current: boolean }[];
 }
 
 /** What a press asks of the world beyond the screen. */
@@ -117,6 +148,8 @@ export interface TvHero {
   note: { label: string; text: string } | null;
   primary: string | null;
   secondary: string | null;
+  /** The secondary button plays something; "coming soon" otherwise. */
+  secondaryReady: boolean;
   motif: CoverMotif;
   /** The title's or picked entry's shipped cover; null for the clip. */
   cover: string | null;
@@ -144,6 +177,8 @@ export interface TvScreenLayout {
   /** The region under the remote's focus ring, while active. */
   ring: string | null;
   hint: string;
+  /** The open player, only while the TV is in use. */
+  player: TvPlayerView | null;
 }
 
 type Cover =
@@ -170,8 +205,50 @@ export function initialTvHome(): TvHomeState {
     opened: null,
     hero: { id: featured.id },
     pos: { row: COVERS, col: tvApp(featured.app).titles.indexOf(featured) },
+    player: null,
   };
 }
+
+/** The pinned trailer of a single film or game, or of a collection's entry. */
+export function tvTrailer(title: TvTitle, entry?: TvEntry): TvTrailer | null {
+  if (title.films && !entry) return null;
+  const key = entry ? coverKey(title.id, entry) : title.id;
+  return Object.hasOwn(TV_TRAILERS, key) ? TV_TRAILERS[key] : null;
+}
+
+const heroTitle = (state: TvHomeState) => tvTitle(state.hero.id);
+const heroEntry = (state: TvHomeState) =>
+  state.hero.entry === undefined
+    ? undefined
+    : heroTitle(state).films?.[state.hero.entry];
+
+/** What the hero's primary button plays: a channel's uploads or a stream. */
+function primaryMedia(state: TvHomeState): TvMedia | null {
+  const { id } = heroTitle(state);
+  if (Object.hasOwn(TV_YOUTUBE, id))
+    return { kind: "uploads", channelId: TV_YOUTUBE[id].channelId };
+  if (Object.hasOwn(TV_TWITCH, id))
+    return { kind: "twitch", login: TV_TWITCH[id].login };
+  return null;
+}
+
+/** What the secondary button plays: a channel's live stream or a trailer. */
+function secondaryMedia(state: TvHomeState): TvMedia | null {
+  const title = heroTitle(state);
+  if (Object.hasOwn(TV_YOUTUBE, title.id))
+    return { kind: "live", channelId: TV_YOUTUBE[title.id].channelId };
+  if (title.app !== "movies" && title.app !== "games") return null;
+  const trailer = tvTrailer(title, heroEntry(state));
+  return trailer ? { kind: "trailer", youtube: trailer.youtube } : null;
+}
+
+const play = (state: TvHomeState, media: TvMedia | null): TvHomeState =>
+  media
+    ? {
+        ...state,
+        player: { id: state.hero.id, entry: state.hero.entry, media },
+      }
+    : state;
 
 function coversOf(state: TvHomeState): Cover[] {
   if (state.opened) {
@@ -200,6 +277,8 @@ const rowLengths = (state: TvHomeState) => [
 
 /** One arrow press on the remote; null for any other key. */
 export function tvMove(state: TvHomeState, key: string): TvHomeState | null {
+  // While a video plays the remote waits; Esc closes it first.
+  if (state.player) return null;
   const pos = moveRemote(state.pos, key, rowLengths(state));
   return pos ? { ...state, pos } : null;
 }
@@ -208,7 +287,7 @@ export function tvMove(state: TvHomeState, key: string): TvHomeState | null {
 export const tvRegionId = ({ row, col }: RemotePosition) =>
   `${ROWS[row]}:${col}`;
 
-type Primary = "open" | "clip" | "music" | null;
+type Primary = "open" | "clip" | "music" | "play" | null;
 
 function primaryOf(state: TvHomeState): Primary {
   const title = tvTitle(state.hero.id);
@@ -220,6 +299,7 @@ function primaryOf(state: TvHomeState): Primary {
     return "open";
   if (title.video) return "clip";
   if (title.app === "radio") return "music";
+  if (primaryMedia(state)) return "play";
   return null;
 }
 
@@ -236,10 +316,13 @@ function runPrimary(state: TvHomeState): {
         opened: title.id,
         hero: { id: title.id },
         pos: { row: COVERS, col: 1 },
+        player: null,
       },
       effect: null,
     };
   }
+  if (primary === "play")
+    return { state: play(state, primaryMedia(state)), effect: null };
   return { state, effect: primary };
 }
 
@@ -247,17 +330,45 @@ function runPrimary(state: TvHomeState): {
  * Pressing a region (a click on the panel, Enter or a companion button):
  * a dock app switches the cover row; a cover is picked into the hero, and
  * pressed again where the remote already sits it runs the hero's primary
- * action (open the collection, play the clip, play the radio); the back
- * cover closes a collection; Back leaves. Trailers and channels are
- * "coming soon" and do nothing.
+ * action (open the collection, play the clip, play the radio, play a
+ * channel's uploads or a Twitch stream); the secondary button plays a
+ * trailer or a channel's live stream; the back cover closes a collection;
+ * Back leaves. Esc ("escape") closes an open player first, then leaves;
+ * any other press closes the player too. Highlights stay "coming soon".
  */
 export function tvHomeAction(
+  state: TvHomeState,
+  id: string,
+): { state: TvHomeState; effect: TvEffect } {
+  const closed = { state: { ...state, player: null }, effect: null };
+  if (id === "escape") return state.player ? closed : { state, effect: "exit" };
+  if (id === "player:close") return closed;
+  if (id === "player:uploads" || id === "player:live") {
+    const { player } = state;
+    if (!player || !Object.hasOwn(TV_YOUTUBE, player.id))
+      return { state, effect: null };
+    const { channelId } = TV_YOUTUBE[player.id];
+    const kind = id === "player:live" ? "live" : "uploads";
+    return {
+      state: { ...state, player: { ...player, media: { kind, channelId } } },
+      effect: null,
+    };
+  }
+  const out = pressRegion(state, id);
+  return state.player && out.state.player === state.player
+    ? { state: { ...out.state, player: null }, effect: out.effect }
+    : out;
+}
+
+function pressRegion(
   state: TvHomeState,
   id: string,
 ): { state: TvHomeState; effect: TvEffect } {
   const same = { state, effect: null };
   if (id === "back") return { state, effect: "exit" };
   if (id === "primary") return runPrimary(state);
+  if (id === "secondary")
+    return { state: play(state, secondaryMedia(state)), effect: null };
   const [name, index] = id.split(":");
   const row = ROWS.indexOf(name as (typeof ROWS)[number]);
   const col = Number(index);
@@ -274,7 +385,13 @@ export function tvHomeAction(
     if (!app) return same;
     const hero = app.titles.find((title) => title.favourite) ?? app.titles[0];
     return {
-      state: { app: app.id, opened: null, hero: { id: hero.id }, pos },
+      state: {
+        app: app.id,
+        opened: null,
+        hero: { id: hero.id },
+        pos,
+        player: null,
+      },
       effect: null,
     };
   }
@@ -361,6 +478,7 @@ function heroOf(
         : "Paused · five local lo-fi loops on the shelf speakers"
       : titleMeta(title);
   const primary = primaryOf(state);
+  const secondary = secondaryMedia(state);
   return {
     kicker,
     title: entry ? entry.title : title.title,
@@ -383,15 +501,20 @@ function heroOf(
             ? options.music.playing
               ? "Pause the speakers"
               : "Play on the speakers"
-            : null,
+            : primary === "play"
+              ? primaryMedia(state)?.kind === "twitch"
+                ? "Watch on Twitch · muted"
+                : "Play latest uploads · YouTube"
+              : null,
     secondary:
-      title.app === "channels"
-        ? "Open channel · YouTube · coming soon"
-        : title.app === "highlights"
-          ? "Watch on YouTube · coming soon"
-          : title.app === "videos" || radio
-            ? null
-            : "Watch trailer · YouTube · coming soon",
+      secondary?.kind === "live"
+        ? "Live now · YouTube"
+        : secondary?.kind === "trailer"
+          ? "Watch trailer · YouTube"
+          : title.app === "highlights"
+            ? "Watch on YouTube · coming soon"
+            : null,
+    secondaryReady: Boolean(secondary),
     motif: title.motif,
     cover: title.video ? null : tvCoverSrc(title, entry),
     video: title.video?.src ?? null,
@@ -415,7 +538,9 @@ export function tvScreenLayout(
     h: BACK.h,
   };
 
-  const dockW = (TV_SCREEN_W - 2 * PAD - 6 * DOCK_BOX.gap) / 7;
+  const dockW =
+    (TV_SCREEN_W - 2 * PAD - (TV_APPS.length - 1) * DOCK_BOX.gap) /
+    TV_APPS.length;
   const dock = TV_APPS.map((entry, col) => ({
     id: `dock:${col}`,
     x: PAD + col * (dockW + DOCK_BOX.gap),
@@ -590,10 +715,54 @@ export function tvScreenLayout(
       ...covers.filter((cover) => cover.visible),
       ...continued.filter((cover) => cover.visible),
     ],
-    ring: options.active ? tvRegionId(state.pos) : null,
+    ring: options.active && !state.player ? tvRegionId(state.pos) : null,
     hint: options.active
       ? "← → ↑ ↓ move · Enter select, again to open or play · Esc back to the room"
       : "Kevnnard TV · Click or tap the TV to use it",
+    player: options.active && state.player ? playerView(state.player) : null,
+  };
+}
+
+/** The open player's heading, credit and options. */
+function playerView(player: TvPlayerState): TvPlayerView {
+  const { media } = player;
+  const title = tvTitle(player.id);
+  if (media.kind === "twitch") {
+    const channel = TV_TWITCH[player.id];
+    return {
+      media,
+      platform: "Twitch",
+      title: `${channel.name} · live on Twitch`,
+      credit: `Twitch · twitch.tv/${channel.login} · Twitch shows its own screen when offline`,
+      options: [],
+    };
+  }
+  if (media.kind === "trailer") {
+    const entry =
+      player.entry === undefined ? undefined : title.films?.[player.entry];
+    const trailer = tvTrailer(title, entry);
+    return {
+      media,
+      platform: "YouTube",
+      title: `${entry?.title ?? title.title} · trailer`,
+      credit: `YouTube · ${trailer?.channel ?? "YouTube"} · “${trailer?.name ?? "Trailer"}”`,
+      options: [],
+    };
+  }
+  const channel = TV_YOUTUBE[player.id];
+  return {
+    media,
+    platform: "YouTube",
+    title: `${channel.name} · ${media.kind === "live" ? "live now" : "latest uploads"}`,
+    credit: `YouTube · @${channel.handle} · their videos, their channel`,
+    options: [
+      {
+        id: "player:uploads",
+        label: "Latest uploads",
+        current: media.kind === "uploads",
+      },
+      { id: "player:live", label: "Live now", current: media.kind === "live" },
+    ],
   };
 }
 

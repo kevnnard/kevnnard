@@ -609,7 +609,7 @@ describe("IGDB attribution (tv-home-screen T5, S7)", () => {
     const services = (credits() as WorldCredits).services ?? [];
     assert.deepEqual(
       services.map((entry) => entry.id),
-      ["tmdb", "igdb"],
+      ["tmdb", "igdb", "youtube", "twitch"],
     );
     const igdb = services[1];
     assert.equal(igdb.name, "IGDB");
@@ -635,6 +635,8 @@ describe("IGDB attribution (tv-home-screen T5, S7)", () => {
       [
         ["Film posters", "TMDB", "https://www.themoviedb.org"],
         ["Game covers", "IGDB", "https://www.igdb.com"],
+        ["Videos on the TV", "YouTube", "https://www.youtube.com"],
+        ["Live streams on the TV", "Twitch", "https://www.twitch.tv"],
       ],
     );
     const dialog = readFileSync(

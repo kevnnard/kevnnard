@@ -1,0 +1,98 @@
+/*
+ * The TV's player (tv-home-screen T8): a page framed on the living-room
+ * TV's glass by TvScreen.tsx (drei <Html transform>), sized in CSS pixels
+ * of the page and scaled onto the panel. design/system.md dark tokens.
+ */
+.tv-player {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #09090b;
+  color: #fafafa;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.tv-player-bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 16px;
+  height: 56px;
+  padding: 0 20px;
+  border-bottom: 1px solid rgba(212, 212, 216, 0.2);
+}
+
+.tv-player-bar nav {
+  display: flex;
+  gap: 8px;
+}
+
+.tv-player-bar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid rgba(212, 212, 216, 0.2);
+  border-radius: 6px;
+  background: transparent;
+  color: #fafafa;
+  font:
+    500 16px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  cursor: pointer;
+}
+
+.tv-player-bar button[aria-pressed="true"] {
+  border-color: #fafafa;
+  background: #fafafa;
+  color: #09090b;
+}
+
+.tv-player-bar button:focus-visible {
+  outline: 3px solid #d4d4d8;
+  outline-offset: 2px;
+}
+
+.tv-player-bar kbd {
+  padding: 1px 6px;
+  border: 1px solid rgba(212, 212, 216, 0.2);
+  border-radius: 4px;
+  color: #d4d4d8;
+  font: inherit;
+  font-size: 14px;
+}
+
+.tv-player-title {
+  flex: 1;
+  margin: 0;
+  overflow: hidden;
+  font-size: 20px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tv-player iframe {
+  display: block;
+  flex: 1;
+  width: 100%;
+  border: 0;
+  background: #000;
+}
+
+.tv-player-credit {
+  flex: none;
+  margin: 0;
+  padding: 8px 20px;
+  overflow: hidden;
+  color: #a1a1aa;
+  font:
+    14px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -769,10 +769,14 @@ function writeCredits(films, games) {
     count: games,
     script: "scripts/prepare-tv-covers.mjs",
   };
-  const services = (credits.services ?? []).filter(
-    (entry) => entry.id !== "tmdb" && entry.id !== "igdb",
-  );
-  credits.services = [...services, tmdbCredit, igdbCredit];
+  // In place, so the TV's player entries (prepare-tv-media.mjs) keep theirs.
+  const services = credits.services ?? [];
+  for (const credit of [tmdbCredit, igdbCredit]) {
+    const at = services.findIndex((entry) => entry.id === credit.id);
+    if (at >= 0) services[at] = credit;
+    else services.push(credit);
+  }
+  credits.services = services;
   writeFileSync(CREDITS, `${JSON.stringify(credits, null, 2)}\n`);
 }
 

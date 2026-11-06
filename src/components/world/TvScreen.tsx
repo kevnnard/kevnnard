@@ -1,3 +1,4 @@
+import { Html } from "@react-three/drei";
 import { type ThreeEvent, useThree } from "@react-three/fiber";
 import {
   type RefObject,
@@ -31,11 +32,26 @@ import {
   tvScreenLayout,
   tvUvToCanvas,
 } from "@/lib/world/tv-screen.ts";
+import TvPlayer from "./TvPlayer";
 
 /** Texture pixels per layout pixel: 2400 x 1344, crisp from the close-up. */
 const RESOLUTION = 1.5;
 /** Pointer travel past which a press is an orbit drag (screen px). */
 const CLICK_SLOP = 6;
+/**
+ * The player's page (T8) in CSS pixels, scaled onto the glass: drei maps
+ * 1 px to distanceFactor / 400 m, so the page covers the screen exactly.
+ */
+const PLAYER_PAGE = {
+  width: 1280,
+  height: Math.round((1280 * TV_SCREEN.height) / TV_SCREEN.width),
+  distanceFactor: (400 * TV_SCREEN.width) / 1280,
+  position: [
+    TV_SCREEN.center[0],
+    TV_SCREEN.center[1],
+    TV_SCREEN.center[2] + 0.001,
+  ] as [number, number, number],
+};
 const SANS = 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif';
 // design/system.md dark tokens, as the artboard uses them.
 const C = {
@@ -590,7 +606,8 @@ export function drawTvScreen(
     ctx.stroke(new Path2D(ICONS[app.app]));
     ctx.restore();
     ctx.textAlign = "left";
-    ctx.font = `600 19px ${SANS}`;
+    // Eight apps share the row (T8): 18 px keeps "Movies & Series" whole.
+    ctx.font = `600 18px ${SANS}`;
     ctx.fillStyle = app.current ? C.bg : C.fg;
     ctx.fillText(fit(ctx, app.label, area.w - 30), area.x + 15, area.y + 64);
     ctx.font = `14px ${MONO}`;
@@ -640,7 +657,7 @@ export function drawTvScreen(
     let x = area.x + 18;
     if (primary && hero.primary === "Open collection")
       x += kbd(ctx, "Enter", x, mid, C.bg) + 10;
-    ctx.globalAlpha = primary ? 1 : 0.5;
+    ctx.globalAlpha = primary || hero.secondaryReady ? 1 : 0.5;
     ctx.font = `${primary ? "600 " : ""}17px ${SANS}`;
     ctx.fillStyle = primary ? C.bg : C.fg;
     ctx.fillText(
@@ -731,7 +748,8 @@ export function drawTvScreen(
  * until the camera holds it. It redraws only when what it shows changes,
  * and each frame only while the owner's muted clip plays. Idle, clicking
  * it from the room (nothing of the living room in the way) enters; active,
- * the ray's UV picks the drawn item (tvHitAt).
+ * the ray's UV picks the drawn item (tvHitAt). A video or stream (T8)
+ * plays in TvPlayer, framed on the same glass, only once a press opens it.
  */
 export default function TvScreen({
   control,
@@ -850,6 +868,17 @@ export default function TvScreen({
     if (!active) element.style.cursor = hover ? "pointer" : "";
   }, [active, hover, element]);
 
+  // The player's page takes the pointer while it plays; drei's blending
+  // punches its hole in the canvas, which gets its events back after.
+  const playing = active && Boolean(layout.player);
+  useLayoutEffect(() => {
+    if (!playing) return;
+    element.style.pointerEvents = "none";
+    return () => {
+      element.style.pointerEvents = "";
+    };
+  }, [element, playing]);
+
   const raycaster = useMemo(() => new Raycaster(), []);
   const reachable = (event: ThreeEvent<PointerEvent | MouseEvent>) => {
     if (!canEnter) return false;
@@ -864,40 +893,64 @@ export default function TvScreen({
   };
 
   return (
-    <mesh
-      name="living-tv-screen"
-      position={TV_SCREEN.center}
-      geometry={geometry}
-      material={material}
-      onPointerOver={(event) => {
-        if (!active) setHovered(reachable(event));
-      }}
-      onPointerMove={(event) => {
-        if (!active) {
-          setHovered(reachable(event));
-          return;
-        }
-        const id = regionAt(event);
-        element.style.cursor = id && id !== "secondary" ? "pointer" : "";
-      }}
-      onPointerOut={() => {
-        setHovered(false);
-        if (active) element.style.cursor = "";
-      }}
-      onClick={(event) => {
-        if (control?.focused) {
-          // The close-up owns the screen: clicks never reach the room.
-          event.stopPropagation();
-          if (!active || event.delta > CLICK_SLOP) return;
+    <>
+      <mesh
+        name="living-tv-screen"
+        position={TV_SCREEN.center}
+        geometry={geometry}
+        material={material}
+        onPointerOver={(event) => {
+          if (!active) setHovered(reachable(event));
+        }}
+        onPointerMove={(event) => {
+          if (!active) {
+            setHovered(reachable(event));
+            return;
+          }
           const id = regionAt(event);
-          if (id) control.onPress(id);
-          return;
-        }
-        if (event.delta > CLICK_SLOP || !reachable(event)) return;
-        event.stopPropagation();
-        setHovered(false);
-        control?.onEnter?.();
-      }}
-    />
+          element.style.cursor =
+            id && (id !== "secondary" || layout.hero.secondaryReady)
+              ? "pointer"
+              : "";
+        }}
+        onPointerOut={() => {
+          setHovered(false);
+          if (active) element.style.cursor = "";
+        }}
+        onClick={(event) => {
+          if (control?.focused) {
+            // The close-up owns the screen: clicks never reach the room.
+            event.stopPropagation();
+            if (!active || event.delta > CLICK_SLOP) return;
+            const id = regionAt(event);
+            if (id) control.onPress(id);
+            return;
+          }
+          if (event.delta > CLICK_SLOP || !reachable(event)) return;
+          event.stopPropagation();
+          setHovered(false);
+          control?.onEnter?.();
+        }}
+      />
+      {active && layout.player && (
+        <Html
+          transform
+          occlude="blending"
+          geometry={
+            <planeGeometry args={[TV_SCREEN.width, TV_SCREEN.height]} />
+          }
+          distanceFactor={PLAYER_PAGE.distanceFactor}
+          position={PLAYER_PAGE.position}
+          pointerEvents="auto"
+        >
+          <TvPlayer
+            view={layout.player}
+            width={PLAYER_PAGE.width}
+            height={PLAYER_PAGE.height}
+            onPress={(id) => control?.onPress(id)}
+          />
+        </Html>
+      )}
+    </>
   );
 }
