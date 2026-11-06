@@ -16,7 +16,7 @@ import {
   type Texture,
 } from "three";
 import GardenSign from "@/components/world/GardenSign";
-import { mergeParts } from "@/components/world/House";
+import { mergeParts, NO_REVEAL } from "@/components/world/House";
 import { type DeskControl, setupMaterial } from "@/components/world/Setup";
 import type { SurfaceMaps } from "@/components/world/surfaces";
 import { cutaway } from "@/lib/world/cutaway.ts";
@@ -42,6 +42,7 @@ import {
   STONE,
   signParts,
 } from "@/lib/world/garden.ts";
+import { HOUSE_FOCUS, type HouseGroup } from "@/lib/world/house.ts";
 import { boxUv } from "@/lib/world/textures.ts";
 
 type Owned = { materials: Material[]; textures: Texture[] };
@@ -148,6 +149,7 @@ export default function Garden({
   power = true,
   reducedMotion = false,
   desk,
+  reveal = NO_REVEAL,
 }: {
   hours: number;
   maps?: SurfaceMaps;
@@ -156,6 +158,8 @@ export default function Garden({
   reducedMotion?: boolean;
   /** The inspect control: the sign opens its close-up through it. */
   desk?: DeskControl;
+  /** House groups dissolved whatever the camera, as House gets them. */
+  reveal?: readonly HouseGroup[];
 }) {
   const { invalidate } = useThree();
   const { group, lanternGroups, lanterns, owned } = useMemo(() => {
@@ -266,7 +270,7 @@ export default function Garden({
     camera.current[0] = position.x;
     camera.current[1] = position.y;
     camera.current[2] = position.z;
-    const fades = cutaway(camera.current);
+    const fades = cutaway(camera.current, HOUSE_FOCUS, reveal);
     for (const [wall, parent] of lanternGroups)
       parent.visible = fades[wall] < LANTERN_HIDE;
   });

@@ -745,14 +745,18 @@ def kept_credits(credits, previous):
     # scripts/prepare-wall-katana.mjs; the desk mug is AoBlue_Moon's Jack
     # Skellington cup (coffee-card T3), derived by scripts/prepare-desk-mug.mjs;
     # Cherry is 3D Creator's Miniature Pinscher (dog-rig T3), rigged and
-    # animated by scripts/prepare-dog.mjs.
+    # animated by scripts/prepare-dog.mjs; the dream truck is Outlaw Games'
+    # Ford F150 Raptor (CC BY-NC 4.0, accepted by the owner for this
+    # non-commercial world: dream-truck S2), derived by
+    # scripts/prepare-truck.mjs.
     credits = dict(credits)
     gallery_files = {"models/display-offroad-helmet.glb",
                      "models/display-football-helmet.glb",
                      "models/display-jordan-1.glb",
                      "models/wall-katana.glb",
                      "models/desk-mug.glb",
-                     "models/cherry.glb"}
+                     "models/cherry.glb",
+                     "models/dream-truck.glb"}
     gallery_assets = [asset for asset in previous.get("assets", [])
                       if asset["file"] in gallery_files]
     if gallery_assets:

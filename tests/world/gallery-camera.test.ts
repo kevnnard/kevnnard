@@ -187,7 +187,7 @@ describe("story framing (collection-display-models T12)", () => {
     // so are Cherry's (dog-rig T3) and the garden sign's (garden-sign T2).
     assert.match(
       app,
-      /galleryStory=\{\s*galleryCase === "cherry" \|\|\s*galleryCase === "sign" \|\|\s*deskProduct !== null \|\|\s*deskStory !== null \|\|\s*\(caseStory !== null && storyOpen\)\s*\}/,
+      /galleryStory=\{\s*galleryCase === "cherry" \|\|\s*galleryCase === "sign" \|\|\s*galleryCase === "truck" \|\|\s*deskProduct !== null \|\|\s*deskStory !== null \|\|\s*\(caseStory !== null && storyOpen\)\s*\}/,
     );
     assert.match(app, /open=\{storyOpen\}/);
     assert.match(app, /onOpenChange=\{setStoryOpen\}/);

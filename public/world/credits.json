@@ -174,6 +174,20 @@
         "url": "https://sketchfab.com/3d-models/5db9e974fb344f39b9d1baafbdbe264c",
         "quote": "Sketchfab API (dog-rig L5): \"Dog (Miniature Pinscher \u5c0f\u9e7f\u72ac)\", uid 5db9e974fb344f39b9d1baafbdbe264c, by \"3D Creator\" (https://sketchfab.com/3DChuang-Ke-Ji), license CC Attribution (CC BY 4.0), published 2026-06-14; 65,480 faces, source archive 24,696,473 bytes, identical to the downloaded zip; Creative Commons Attribution 4.0"
       }
+    },
+    {
+      "id": "sketchfab-outlaw-games-ford-f150-raptor",
+      "pack": "Ford F150 Raptor (Sketchfab)",
+      "author": "Outlaw Games\u2122",
+      "authorUrl": "https://sketchfab.com/Outlaw_Games",
+      "license": "CC-BY-NC-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
+      "source": "https://sketchfab.com/3d-models/ford-f150-raptor-5bde9684bf6d40e0902ee8e482ad1063",
+      "licenseEvidence": {
+        "url": "https://sketchfab.com/3d-models/ford-f150-raptor-5bde9684bf6d40e0902ee8e482ad1063",
+        "quote": "Asset extras of the downloaded GLB (dream-truck L1): title \"Ford F150 Raptor\", author \"Outlaw Games\u2122 (https://sketchfab.com/Outlaw_Games)\", license \"CC-BY-NC-4.0 (http://creativecommons.org/licenses/by-nc/4.0/)\", source \"https://sketchfab.com/3d-models/ford-f150-raptor-5bde9684bf6d40e0902ee8e482ad1063\". Non-commercial terms accepted by the owner for this personal world (dream-truck S2)."
+      },
+      "note": "Ford and Raptor are trademarks of Ford Motor Company. This site is not affiliated with, endorsed or sponsored by Ford Motor Company; no affiliation."
     }
   ],
   "assets": [
@@ -917,6 +931,27 @@
           "url": "https://sketchfab.com/3d-models/5db9e974fb344f39b9d1baafbdbe264c",
           "bytes": 24696473,
           "sha256": "51c00e2139ae94cb1a208375f03ea78f1fb44c78f28b1b790c11a840c8fa277f"
+        }
+      ]
+    },
+    {
+      "file": "models/dream-truck.glb",
+      "asset": "Ford F150 Raptor (the owner's dream truck; Ford and Raptor are trademarks of Ford Motor Company, no affiliation)",
+      "pack": "sketchfab-outlaw-games-ford-f150-raptor",
+      "author": "Outlaw Games\u2122",
+      "license": "CC-BY-NC-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-nc/4.0/",
+      "source": "https://sketchfab.com/3d-models/ford-f150-raptor-5bde9684bf6d40e0902ee8e482ad1063",
+      "bytes": 909536,
+      "sha256": "faafbdd2ca471746095132f6e094e76d62580e93588e87775205bb4bb6c2f4c4",
+      "triangles": 45971,
+      "changes": "Decimated and compressed for the web: by scripts/prepare-truck.mjs with glTF-Transform, the police gear (radar, dash camera, console, siren, radio whip), the invisible livery and lightbar decals, the dash dials and the door speaker grilles dropped; the steered front wheels straightened and the mirrored driver's door skin rewound; one UV set, untextured materials merged by look (body paint, trim, chrome, lamps, tyres) without the specular and clearcoat extensions; meshes joined per material and simplified with meshoptimizer from 479,053 to 45,971 triangles; turned nose to +z and scaled to the real truck's 5.9 m length; then geometry meshopt-compressed and the textures re-encoded as WebP at 1024 px at most.",
+      "note": "Ford and Raptor are trademarks of Ford Motor Company. This site is not affiliated with, endorsed or sponsored by Ford Motor Company; no affiliation.",
+      "sourceFiles": [
+        {
+          "url": "https://sketchfab.com/3d-models/ford-f150-raptor-5bde9684bf6d40e0902ee8e482ad1063",
+          "bytes": 43526340,
+          "sha256": "a0a16985fe6490ec9cd05f5fed49fa5659d3302a6e7fc9a66751d1f3c06f72f5"
         }
       ]
     }

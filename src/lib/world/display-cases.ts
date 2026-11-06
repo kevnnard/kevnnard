@@ -130,17 +130,22 @@ export const GALLERY_ORDER: readonly GalleryItemId[] = [
 /**
  * Things outside the collection the inspection camera frames too, so never
  * on its rail: the desk things (keyboard-card T1), Cherry in the yard
- * (dog-rig T3) and the garden sign (garden-sign T2).
+ * (dog-rig T3), the garden sign (garden-sign T2) and the dream truck in the
+ * garage (dream-truck T1).
  */
-export type DeskItemId = "keyboard" | "coffee" | "cherry" | "sign";
+export type DeskItemId = "keyboard" | "coffee" | "cherry" | "sign" | "truck";
 
 /** Anything the inspection camera can frame: the gallery or the desk. */
 export type InspectItemId = GalleryItemId | DeskItemId;
 
-/** Whether an inspected item is one of the desk things, Cherry or the sign. */
+/** Whether an inspected item is one of the desk things, Cherry, the sign or the truck. */
 export function isDeskItemId(id: InspectItemId): id is DeskItemId {
   return (
-    id === "keyboard" || id === "coffee" || id === "cherry" || id === "sign"
+    id === "keyboard" ||
+    id === "coffee" ||
+    id === "cherry" ||
+    id === "sign" ||
+    id === "truck"
   );
 }
 

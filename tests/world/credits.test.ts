@@ -16,6 +16,7 @@ import { DISPLAY_MODEL_FILES } from "../../src/lib/world/display-cases.ts";
 import { KATANA_MODEL } from "../../src/lib/world/katana-shelf.ts";
 import { MODEL_FILES, PROP_FILES } from "../../src/lib/world/models.ts";
 import { BRUNO_CHAIR, BRUNO_MAPS } from "../../src/lib/world/setup.ts";
+import { TRUCK_MODEL } from "../../src/lib/world/truck.ts";
 import { TV_COVERS } from "../../src/lib/world/tv-covers.ts";
 import {
   creditSections,
@@ -81,6 +82,7 @@ describe("credits.json (S4: every author is credited, even CC0)", () => {
         ...DISPLAY_MODEL_FILES,
         KATANA_MODEL.url,
         CHERRY_MODEL.url,
+        TRUCK_MODEL.url,
       ]
         .map((url) => url.replace("/world/", ""))
         .sort(),
@@ -97,6 +99,35 @@ describe("credits.json (S4: every author is credited, even CC0)", () => {
       assert.ok(entry.asset.trim(), `${entry.file} asset`);
       assert.ok(entry.sourceFiles.length > 0, `${entry.file} source files`);
     }
+  });
+
+  it("accepts CC BY-NC 4.0 only for the owner's dream truck (dream-truck S2)", () => {
+    const truck = credits().assets.find(
+      (entry) => entry.file === "models/dream-truck.glb",
+    );
+    assert.ok(truck, "credited");
+    assert.equal(truck.license, "CC-BY-NC-4.0");
+    assert.ok(licenseAllowed(truck));
+    assert.match(
+      truck.asset,
+      /Ford and Raptor are trademarks of Ford Motor Company/,
+    );
+    assert.match(
+      (truck as typeof truck & { note?: string }).note ?? "",
+      /no affiliation/,
+    );
+    // Any other non-commercial asset is still refused.
+    assert.equal(
+      licenseAllowed({
+        ...truck,
+        source: "https://sketchfab.com/3d-models/another-car-0123456789abcdef",
+      }),
+      false,
+    );
+    assert.equal(
+      licenseAllowed({ ...truck, sourceFiles: [], license: "CC-BY-NC-SA-4.0" }),
+      false,
+    );
   });
 
   it("records the shipped bytes and hash, so a re-export cannot drift from its credit", () => {

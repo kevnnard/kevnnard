@@ -64,6 +64,7 @@ import {
   spanColumn,
   terminalLayout,
 } from "@/lib/world/terminal-layout.ts";
+import { TRUCK_STORY } from "@/lib/world/truck.ts";
 import {
   initialTvHome,
   tvClock,
@@ -97,6 +98,7 @@ import SignCard from "./SignCard";
 import SpeakerBar from "./SpeakerBar";
 import type { SpeakerControl } from "./SpeakerZone";
 import TerminalMonitor, { TERMINAL_CONTENT } from "./TerminalMonitor";
+import TruckCard from "./TruckCard";
 import TvHome from "./TvHome";
 import type { TvControl } from "./TvScreen";
 import { useCardPresence } from "./useCardPresence";
@@ -941,6 +943,12 @@ export default function WorldApp() {
     SIGN_PROFILE,
     reducedMotion,
   );
+  // The dream truck's card (dream-truck T1), opened from the garage.
+  const truckCards = useCardPresence(
+    cardsShown && galleryCase === "truck" ? "truck" : null,
+    TRUCK_STORY,
+    reducedMotion,
+  );
 
   if (!webgl) {
     return (
@@ -1000,6 +1008,7 @@ export default function WorldApp() {
               galleryStory={
                 galleryCase === "cherry" ||
                 galleryCase === "sign" ||
+                galleryCase === "truck" ||
                 deskProduct !== null ||
                 deskStory !== null ||
                 (caseStory !== null && storyOpen)
@@ -1106,6 +1115,15 @@ export default function WorldApp() {
           status={GARDEN_SIGN.status}
           onClose={() => setGalleryCase(null)}
           onPortfolio={enter}
+          state={card.state}
+          onMotionEnd={card.onMotionEnd}
+        />
+      ))}
+      {truckCards.map((card) => (
+        <TruckCard
+          key={card.key}
+          story={card.value}
+          onClose={() => setGalleryCase(null)}
           state={card.state}
           onMotionEnd={card.onMotionEnd}
         />

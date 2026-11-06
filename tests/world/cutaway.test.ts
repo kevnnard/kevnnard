@@ -36,8 +36,10 @@ describe("zoom-driven house cutaway (T4c, S7)", () => {
       [Math.PI, ["main-back", "garage-back"]],
       [-Math.PI / 2, ["main-left", "garage-left"]],
     ];
+    // Just inside the walls' full fade (CUTAWAY.wall.gone): from 5 m the
+    // grown garage's left wall (dream-truck T1) was nearly edge-on.
     for (const [azimuth, facing] of quadrants) {
-      const fades = at(azimuth, 5, 1.2);
+      const fades = at(azimuth, 5.9, 1.2);
       for (const wall of WALLS)
         if (facing.includes(wall.id))
           assert.ok(fades[wall.group] > 0.9, `${wall.id} at ${azimuth}`);
@@ -56,6 +58,24 @@ describe("zoom-driven house cutaway (T4c, S7)", () => {
     for (let a = 0; a < 2 * Math.PI; a += Math.PI / 6)
       for (const distance of [4, 6, 10, 40])
         assert.equal(at(a, distance, 0.4).base, 0);
+  });
+
+  it("dissolves only the revealed groups, whatever the camera (dream-truck T1)", () => {
+    const reveal: HouseGroup[] = ["garage-front", "garage-left", "garage-roof"];
+    for (let a = 0; a < 2 * Math.PI; a += Math.PI / 4)
+      for (const distance of [5, 25]) {
+        const camera = poseToPosition({ azimuth: a, polar: 1.1, distance });
+        const plain = cutaway(camera);
+        const shown = cutaway(camera, HOUSE_FOCUS, reveal);
+        for (const group of HOUSE_GROUPS)
+          assert.equal(
+            shown[group],
+            reveal.includes(group) ? 1 : plain[group],
+            `${group} at ${a}, ${distance}`,
+          );
+        // No reveal list: exactly as before.
+        assert.deepEqual(cutaway(camera, HOUSE_FOCUS, []), plain);
+      }
   });
 
   it("returns fades in 0..1 and rejects non-finite cameras", () => {

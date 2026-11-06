@@ -19,6 +19,16 @@ export const PERMISSION_LICENSE =
 const PERMISSION_AUTHOR = "Bruno Simon";
 const PERMISSION_REPOSITORY = "/brunosimon/my-room-in-3d/";
 
+/**
+ * The owner's dream truck, "Ford F150 Raptor" by Outlaw Games™, is CC BY-NC
+ * 4.0: the owner accepted its non-commercial terms for this personal,
+ * non-commercial world (odd/tasks/dream-truck.md S2). Accepted for that one
+ * model only; every other non-commercial asset is still refused.
+ */
+export const NONCOMMERCIAL_LICENSE = "CC-BY-NC-4.0";
+const NONCOMMERCIAL_SOURCE =
+  "https://sketchfab.com/3d-models/ford-f150-raptor-5bde9684bf6d40e0902ee8e482ad1063";
+
 /** Official distribution hosts only: the packs' own sites and repositories. */
 export const OFFICIAL_HOSTS: readonly string[] = [
   "github.com",
@@ -131,7 +141,10 @@ function permittedUrl(url: string): boolean {
   );
 }
 
-/** An allowed open license, or the permission license for its one author and repository. */
+/**
+ * An allowed open license, the permission license for its one author and
+ * repository, or the dream truck's non-commercial license for that model.
+ */
 export function licenseAllowed(entry: {
   license: string;
   author: string;
@@ -139,6 +152,13 @@ export function licenseAllowed(entry: {
   sourceFiles?: SourceFile[];
 }): boolean {
   if (ALLOWED_LICENSES.includes(entry.license)) return true;
+  if (entry.license === NONCOMMERCIAL_LICENSE)
+    return (
+      entry.source === NONCOMMERCIAL_SOURCE &&
+      (entry.sourceFiles ?? []).every(
+        (file) => file.url === NONCOMMERCIAL_SOURCE,
+      )
+    );
   return (
     entry.license === PERMISSION_LICENSE &&
     entry.author === PERMISSION_AUTHOR &&

@@ -160,10 +160,10 @@ const DOOR_MOUNT = { drop: 0, reach: 1.6, out: 0, scale: 1 } as const;
 export const LANTERN_MOUNTS: Record<LanternId, LanternMount> = {
   lanternLeft: { wall: "main-front", u: DOOR_MID - 0.54, ...DOOR_MOUNT },
   lanternRight: { wall: "main-front", u: DOOR_MID + 0.54, ...DOOR_MOUNT },
-  // On the front face of the garage's outer corner post (x -3.03, 0.24 m
-  // round, 0.05 m proud of the planks), at 0.8 scale so the cage clears the
-  // garage door trim and the low eave; aimed in across the driveway. The
-  // inner corner post is boxed in by the main house's left wall.
+  // On the front face of the garage's outer corner post (0.24 m round,
+  // 0.05 m proud of the planks), at 0.8 scale so the cage clears the
+  // garage door trim; aimed out across the apron in front of the door, near
+  // its outer edge, wherever the garage reaches (dream-truck T1 grew it).
   lanternGarage: {
     wall: "garage-front",
     u: HOUSE.garage.x0 + HOUSE.wall / 2,
@@ -171,7 +171,7 @@ export const LANTERN_MOUNTS: Record<LanternId, LanternMount> = {
     reach: 0.8,
     out: 0.12 - HOUSE.wall / 2,
     scale: 0.8,
-    aim: [-2.55, 1.35],
+    aim: [(HOUSE.driveway.x0 + HOUSE.driveway.x1) / 2, HOUSE.driveway.z1 - 0.1],
   },
   // Between the two back windows.
   lanternBack: { wall: "main-back", u: 0.55, ...DOOR_MOUNT },

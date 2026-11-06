@@ -1,5 +1,6 @@
 // Original procedural wooden house for the island pad (T4a, S6): one spacious
-// main volume, kept empty for later items, plus a garage on its left side.
+// main volume, kept empty for later items, plus a garage on its left side,
+// grown to hold the owner's dream truck (dream-truck T1).
 // Walls are horizontal planks laid around real window and door openings, so
 // the sun and moon light shines through the glass onto the floor. Pure
 // numbers; House.tsx merges the parts into a few meshes per material.
@@ -86,8 +87,6 @@ interface Volume extends Rect {
 }
 
 const FLOOR_Y = PAD.height + 0.1;
-/** The driveway's end: the pad's front before S22 grew it 0.2 m, kept so the garage side is unchanged. */
-const DRIVEWAY_END = 2;
 
 export const HOUSE = {
   seed: 11,
@@ -106,23 +105,33 @@ export const HOUSE = {
     rise: 1.15,
     overhang: { x0: 0.22, x1: 0.22, z0: 0.22, z1: 0.22 },
   } satisfies Volume,
+  // Grown for the dream truck (dream-truck T1): 0.7 m wider toward the
+  // left yard, back flush with the house and 2.3 m further out front, past
+  // the pad's edge, walls as tall as the main house's (they were 1.45 m).
+  // It was x -3.1..-1.25, z -2.45..0.55.
   garage: {
-    x0: -3.1,
+    x0: -3.8,
     x1: -1.25,
-    z0: -2.45,
-    z1: 0.55,
-    height: 1.45,
+    z0: -2.75,
+    z1: 2.85,
+    height: 1.95,
     rise: 0.6,
-    // No overhang on the right: that side leans on the main house.
-    overhang: { x0: 0.18, x1: 0, z0: 0.18, z1: 0.18 },
+    // No overhang on the right: that side leans on the main house. A short
+    // one on the left keeps the eave clear of the yard's nearest tree.
+    overhang: { x0: 0.1, x1: 0, z0: 0.18, z1: 0.18 },
   } satisfies Volume,
   porch: { x0: 0.04, x1: 0.96, z0: 1.5, z1: 2.06 },
-  driveway: { x0: -2.95, x1: -1.42, z0: 0.55, z1: DRIVEWAY_END },
+  // A short apron in front of the garage door, on the grass.
+  driveway: { x0: -3.65, x1: -1.42, z0: 2.85, z1: 3.65 },
 } as const;
 
-/** Middle of the house and garage, a little above the floor: the camera target. */
+/**
+ * Middle of the house and the garage it had, a little above the floor: the
+ * camera target. Pinned where it was before the garage grew (dream-truck
+ * T1), so the home view and the cutaway stay as they were.
+ */
 export const HOUSE_FOCUS: Vec3 = [
-  (HOUSE.garage.x0 + HOUSE.main.x1) / 2,
+  (-3.1 + HOUSE.main.x1) / 2,
   FLOOR_Y + 1.2,
   (HOUSE.main.z0 + HOUSE.main.z1) / 2,
 ];
@@ -234,7 +243,11 @@ export const WALLS: readonly Wall[] = [
     from: G.x0,
     to: G.x1,
     height: G.height,
-    openings: [{ kind: "garage", u0: -2.88, u1: -1.5, v0: 0, v1: 1.15 }],
+    // Wide and high enough for the dream truck (dream-truck T1), the same
+    // 0.15 m from the corner post's axis and 0.25 m from the house as before.
+    openings: [
+      { kind: "garage", u0: G.x0 + W / 2 + 0.15, u1: -1.5, v0: 0, v1: 1.78 },
+    ],
   },
   {
     id: "garage-left",
@@ -246,7 +259,7 @@ export const WALLS: readonly Wall[] = [
     to: G.z1 - W,
     height: G.height,
     gable: gable(G),
-    openings: [pane(-1.3, -0.7, 0.6, 1.1)],
+    openings: [pane(-1.7, -1.1, 0.8, 1.4), pane(0.9, 1.5, 0.8, 1.4)],
   },
   {
     id: "garage-back",
@@ -260,6 +273,24 @@ export const WALLS: readonly Wall[] = [
     openings: [],
   },
 ];
+
+/**
+ * The garage's right side where it runs past the main house's front
+ * (dream-truck T1): planks and a gable slice up to the garage roof. Drawn
+ * and faded with the garage front; the cutaway reads the front wall.
+ */
+export const GARAGE_SIDE: Wall = {
+  id: "garage-right",
+  group: "garage-front",
+  axis: "z",
+  at: G.x1 - W / 2,
+  side: 1,
+  from: M.z1,
+  to: G.z1 - W,
+  height: G.height,
+  gable: gable(G),
+  openings: [],
+};
 
 const roofRect = (volume: Volume, id: string) => ({
   id,
@@ -289,21 +320,24 @@ export interface Plank {
 
 /**
  * The gable above the eave, as one sloped outline in (u, v): eave corners,
- * the slope clipped at both wall ends, and the ridge apex. Counter-clockwise;
- * null for walls without a gable.
+ * the slope clipped at both wall ends, and the ridge apex when the wall
+ * spans it. Counter-clockwise; null for walls without a gable.
  */
 export function gablePanel(wall: Wall): [number, number][] | null {
   if (!wall.gable) return null;
   const { center, half, rise } = wall.gable;
   const slope = (u: number) =>
     wall.height + rise * (1 - Math.abs(u - center) / half);
-  return [
+  const outline: [number, number][] = [
     [wall.from, wall.height],
     [wall.to, wall.height],
     [wall.to, slope(wall.to)],
-    [center, wall.height + rise],
-    [wall.from, slope(wall.from)],
   ];
+  // A wall that stops short of the ridge has no apex (GARAGE_SIDE).
+  if (center > wall.from && center < wall.to)
+    outline.push([center, wall.height + rise]);
+  outline.push([wall.from, slope(wall.from)]);
+  return outline;
 }
 
 /**
@@ -484,29 +518,17 @@ function doorParts(wall: Wall, o: Opening, wood: Part[]) {
   );
 }
 
-/** Wide sectional door: four horizontal panels with raised strips. */
+/**
+ * The garage door, rolled up and open (dream-truck T1): the truck shows
+ * through it. Trim round the opening and the roll's drum on the inside,
+ * behind the header.
+ */
 function garageDoorParts(wall: Wall, o: Opening, wood: Part[]) {
   const { trim, garageDoor } = HOUSE_COLORS;
   const du = o.u1 - o.u0;
   const dv = o.v1 - o.v0;
   const um = (o.u0 + o.u1) / 2;
   const depth = W + 0.05;
-  const panels = 4;
-  const ph = dv / panels;
-  for (let i = 0; i < panels; i++) {
-    const v = o.v0 + ph * (i + 0.5);
-    const shade = i % 2 === 0 ? 1 : 0.95;
-    wood.push(
-      onWall(wall, [um, v, -0.01], [du, ph, 0.06], garageDoor, shade),
-      onWall(
-        wall,
-        [um, v, 0.025],
-        [du - 0.16, ph * 0.42, 0.015],
-        garageDoor,
-        shade * 1.05,
-      ),
-    );
-  }
   wood.push(
     onWall(
       wall,
@@ -526,13 +548,55 @@ function garageDoorParts(wall: Wall, o: Opening, wood: Part[]) {
       [du + 2 * FRAME + 0.04, FRAME, depth + 0.02],
       trim,
     ),
-    onWall(
-      wall,
-      [um, o.v0 + ph * 0.5, 0.04],
-      [0.22, 0.04, 0.03],
-      HOUSE_COLORS.ridge,
-    ),
+    {
+      ...onWall(
+        wall,
+        [um, o.v1 + 0.08, -(W / 2 + 0.08)],
+        [du, 0.14, 0.14],
+        garageDoor,
+        0.95,
+      ),
+      shape: "round",
+      rotation: [0, 0, Math.PI / 2],
+      size: [0.14, du, 0.14],
+    },
   );
+}
+
+/**
+ * The garage's roller door let all the way down (dream-truck T2): ribbed
+ * slats filling the opening, a bottom rail and a handle. House.tsx hangs it
+ * from the opening's head in the garage front's group and rolls it up and
+ * down by scaling it from there; it is never part of houseMeshes.
+ */
+export function garageDoorCurtain(): Part[] {
+  const wall = WALLS.find((w) => w.id === "garage-front");
+  const o = wall?.openings.find((opening) => opening.kind === "garage");
+  if (!wall || !o) throw new Error("the garage has no door");
+  const { garageDoor, ridge, trim } = HOUSE_COLORS;
+  const du = o.u1 - o.u0;
+  const um = (o.u0 + o.u1) / 2;
+  const slats = 10;
+  const rail = 0.06;
+  const ph = (o.v1 - o.v0 - rail) / slats;
+  const parts: Part[] = [];
+  for (let i = 0; i < slats; i++) {
+    const v = o.v0 + rail + ph * (i + 0.5);
+    parts.push(
+      onWall(
+        wall,
+        [um, v, -0.01],
+        [du, ph, 0.05],
+        garageDoor,
+        i % 2 === 0 ? 1 : 0.94,
+      ),
+    );
+  }
+  parts.push(
+    onWall(wall, [um, o.v0 + rail / 2, -0.005], [du, rail, 0.06], trim),
+    onWall(wall, [um, o.v0 + rail + 0.12, 0.025], [0.22, 0.04, 0.03], ridge),
+  );
+  return parts;
 }
 
 /** Planks, base and top boards, and whatever fills each opening. */
@@ -774,12 +838,19 @@ export function houseMeshes(
   ) as unknown as Record<HouseGroup, HouseMeshes>;
   for (const wall of WALLS)
     wallParts(wall, random, meshes[wall.group].wood, meshes[wall.group].glass);
+  wallParts(
+    GARAGE_SIDE,
+    random,
+    meshes[GARAGE_SIDE.group].wood,
+    meshes[GARAGE_SIDE.group].glass,
+  );
 
   const { porch, driveway } = HOUSE;
   meshes.base.wood.push(
     flat(grow(M, 0.05), PAD.height, FLOOR_Y, HOUSE_COLORS.plinth),
-    flat(grow(G, 0.05), PAD.height, FLOOR_Y, HOUSE_COLORS.plinth, 0.97),
-    flat(driveway, PAD.height, PAD.height + 0.03, HOUSE_COLORS.driveway),
+    // The garage and its apron reach past the pad: down to the grass.
+    flat(grow(G, 0.05), 0, FLOOR_Y, HOUSE_COLORS.plinth, 0.97),
+    flat(driveway, 0, 0.04, HOUSE_COLORS.driveway),
     flat(
       { ...porch, z1: porch.z1 - 0.2 },
       PAD.height,
@@ -804,9 +875,11 @@ export function houseMeshes(
     post(M.x1 - W / 2, M.z0 + W / 2, M.height),
     post(M.x0 + W / 2, M.z1 - W / 2, M.height),
     post(G.x0 + W / 2, G.z0 + W / 2, G.height),
-    post(G.x0 + W / 2, G.z1 - W / 2, G.height),
     post(G.x1 + 0.02, G.z1 - W / 2, G.height),
   );
+  // The front-left post carries the garage lantern: it dissolves with the
+  // front wall, so the truck's close-up sees past it (dream-truck T1).
+  meshes["garage-front"].wood.push(post(G.x0 + W / 2, G.z1 - W / 2, G.height));
   meshes["garage-roof"].wood.push(...roofParts(G, random));
   meshes.base.wood.push(post(M.x1 - W / 2, M.z1 - W / 2, M.height));
   meshes["main-roof"].wood.push(...roofParts(M, random));

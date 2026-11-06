@@ -112,11 +112,22 @@ const smoothstep = (edge0: number, edge1: number, x: number) => {
   return t * t * (3 - 2 * t);
 };
 
-/** Fade per house group: 0 intact, 1 gone. Throws a RangeError for non-finite input. */
+/**
+ * Fade per house group: 0 intact, 1 gone. `reveal` dissolves its groups
+ * whatever the camera: the dream truck's close-up opens the garage that way
+ * (dream-truck T1). Throws a RangeError for non-finite input.
+ */
 export function cutaway(
   camera: Point,
   focus: Point = HOUSE_FOCUS,
+  reveal: readonly HouseGroup[] = [],
 ): Record<HouseGroup, number> {
+  const fades = facingFades(camera, focus);
+  for (const group of reveal) fades[group] = 1;
+  return fades;
+}
+
+function facingFades(camera: Point, focus: Point): Record<HouseGroup, number> {
   if (![...camera, ...focus].every(Number.isFinite))
     throw new RangeError("Camera position must be finite");
   const distance = Math.hypot(

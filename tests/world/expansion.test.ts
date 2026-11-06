@@ -85,7 +85,9 @@ describe("house extension toward the entrance (T10, S22)", () => {
     assert.equal(main?.z1, 1.5 + HOUSE.main.overhang.z1);
   });
 
-  it("keeps the garage's geometry, door and roof exactly as before", () => {
+  // dream-truck T1 grew the garage on purpose, for the owner's dream truck:
+  // these are its new numbers, locked the same way.
+  it("keeps the grown garage's geometry, door and roof as recorded", () => {
     assert.deepEqual(
       {
         x0: HOUSE.garage.x0,
@@ -95,32 +97,32 @@ describe("house extension toward the entrance (T10, S22)", () => {
         height: HOUSE.garage.height,
         rise: HOUSE.garage.rise,
       },
-      { x0: -3.1, x1: -1.25, z0: -2.45, z1: 0.55, height: 1.45, rise: 0.6 },
+      { x0: -3.8, x1: -1.25, z0: -2.75, z1: 2.85, height: 1.95, rise: 0.6 },
     );
     const door = WALLS.find((w) => w.id === "garage-front")?.openings[0];
     assert.deepEqual(door, {
       kind: "garage",
-      u0: -2.88,
+      u0: -3.58,
       u1: -1.5,
       v0: 0,
-      v1: 1.15,
+      v1: 1.78,
     });
     const meshes = houseMeshes();
     const expected = {
-      "garage-front": "d4e8d188eaa8057a",
-      "garage-left": "e85744763a8b8b46",
-      "garage-back": "bd7b141469fd4832",
-      "garage-roof": "ca4a05c70e04a24f",
+      "garage-front": "ff50747d870505a0",
+      "garage-left": "047bf387482baf9e",
+      "garage-back": "28db6f749f8315ae",
+      "garage-roof": "bcea71e7d62956ff",
     } as const;
     for (const [group, digest] of Object.entries(expected)) {
       const { wood, glass } = meshes[group as keyof typeof expected];
       assert.equal(hash([...wood, ...glass]), digest, group);
     }
     assert.deepEqual(HOUSE.driveway, {
-      x0: -2.95,
+      x0: -3.65,
       x1: -1.42,
-      z0: 0.55,
-      z1: 2,
+      z0: 2.85,
+      z1: 3.65,
     });
   });
 
@@ -148,8 +150,14 @@ describe("house extension toward the entrance (T10, S22)", () => {
     assert.ok(Math.abs(PAD.center[1] + PAD.halfZ - 2.2) < EPS, "front 2.20");
     assert.equal(PAD.halfX, 3.8);
     assert.equal(PAD.center[0], 0.5);
+    // On the pad, or on the grown garage's own ground (dream-truck T1).
+    const garage = ["garage", "driveway"];
     for (const rect of HOUSE_FOOTPRINT)
-      assert.ok(onPad(rect.x1, rect.z1) && onPad(rect.x0, rect.z1), rect.id);
+      assert.ok(
+        garage.includes(rect.id) ||
+          (onPad(rect.x1, rect.z1) && onPad(rect.x0, rect.z1)),
+        rect.id,
+      );
   });
 
   it("keeps the camera focus on the house: it follows half the extension", () => {
@@ -215,8 +223,9 @@ describe("house extension toward the entrance (T10, S22)", () => {
     const face = 1.5;
     for (const id of ["lanternLeft", "lanternRight"] as const)
       assert.ok(LANTERN_FIXTURES[id].position[2] > face, id);
+    // On the grown garage's front (dream-truck T1), 0.14 m proud of it.
     assert.ok(
-      Math.abs(LANTERN_FIXTURES.lanternGarage.position[2] - 0.69) < 0.1,
+      Math.abs(LANTERN_FIXTURES.lanternGarage.position[2] - 2.99) < 0.1,
     );
     assert.ok(LANTERN_FIXTURES.lanternBack.position[2] < HOUSE.main.z0);
   });

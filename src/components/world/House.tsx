@@ -1,4 +1,4 @@
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import {
   BackSide,
@@ -24,8 +24,13 @@ import {
   type SurfaceMaps,
 } from "@/components/world/surfaces";
 import { cutaway, DITHER_GLSL, shadowShell } from "@/lib/world/cutaway.ts";
+import { GARAGE_DOOR } from "@/lib/world/garage.ts";
+import { easeToward, GARAGE_DOOR_MOTION } from "@/lib/world/garage-lights.ts";
 import {
+  garageDoorCurtain,
+  HOUSE,
   HOUSE_COLORS,
+  HOUSE_FOCUS,
   HOUSE_GROUPS,
   type HouseGroup,
   houseMeshes,
@@ -230,6 +235,9 @@ export function mergeParts(
   return geometry;
 }
 
+/** No group dissolved beyond the camera's own cutaway. */
+export const NO_REVEAL: readonly HouseGroup[] = [];
+
 interface FadeGroup {
   object: Object3D;
   fade: { value: number };
@@ -243,15 +251,24 @@ interface FadeGroup {
  * stays, cast by an invisible shell, so light still enters only through the
  * window and door openings (S21). With `maps`
  * the planks, floor and roofs are textured (T4e); without, they stay flat.
+ * `reveal` dissolves its groups whatever the camera, easing like the rest:
+ * the dream truck's close-up opens the garage (dream-truck T1). `door`
+ * rolls the garage's roller door down (1) or up (0) over about 1.5 s, at
+ * once with reduced motion (dream-truck T2); it hangs in the garage front's
+ * group, so it fades with the front wall and its reveal.
  */
 export default function House({
   reducedMotion,
   maps,
+  reveal = NO_REVEAL,
+  door = 0,
 }: {
   reducedMotion: boolean;
   maps?: SurfaceMaps;
+  reveal?: readonly HouseGroup[];
+  door?: number;
 }) {
-  const { group, materials, fades } = useMemo(() => {
+  const { group, materials, fades, curtain } = useMemo(() => {
     const wood = new MeshStandardMaterial({
       vertexColors: true,
       roughness: 0.9,
@@ -310,9 +327,29 @@ export default function House({
     // A sibling of the fading groups: hiding them never hides the shell.
     const { shell, materials: blockers } = shadowShell(solids);
     house.add(shell);
+    // The roller door, hung from the opening's head: scaled down from there
+    // it rolls up into the drum. Rolled up, it hides.
+    const head = HOUSE.floorY + GARAGE_DOOR.v1;
+    const front = fading.get("garage-front");
+    const curtainGeometry = mergeParts(garageDoorCurtain());
+    curtainGeometry.translate(0, -head, 0);
+    const curtainMaterial = cutawayMaterial(wood, front?.fade ?? { value: 0 });
+    owned.push(curtainMaterial);
+    const curtain = new Mesh(curtainGeometry, curtainMaterial);
+    curtain.name = `${HOUSE_NAMES["garage-front"]}-door`;
+    curtain.position.y = head;
+    curtain.receiveShadow = true;
+    curtain.visible = false;
+    front?.object.add(curtain);
     const materials: Material[] = [...owned, ...blockers];
-    return { group: house, materials, fades: fading };
+    return { group: house, materials, fades: fading, curtain };
   }, [maps]);
+
+  const wake = useThree((state) => state.invalidate);
+  // A new reveal or door target wakes the demand frameloop, the camera at
+  // rest.
+  useEffect(() => wake(), [reveal, door, wake]);
+  const closed = useRef(door);
 
   const position = useRef<[number, number, number]>([0, 0, 0]);
   useFrame(({ camera, invalidate }, delta) => {
@@ -320,7 +357,7 @@ export default function House({
     position.current[0] = x;
     position.current[1] = y;
     position.current[2] = z;
-    const targets = cutaway(position.current);
+    const targets = cutaway(position.current, HOUSE_FOCUS, reveal);
     const step = reducedMotion ? 1 : 1 - Math.exp(-EASE * delta);
     let moving = false;
     for (const [name, group] of fades) {
@@ -331,6 +368,18 @@ export default function House({
       if (fade.value !== target) moving = true;
       object.visible = fade.value < HIDDEN;
     }
+    closed.current = easeToward(
+      closed.current,
+      door,
+      delta,
+      GARAGE_DOOR_MOTION.duration,
+      reducedMotion,
+    );
+    if (closed.current !== door) moving = true;
+    // Eased in and out along the steady motion.
+    const c = closed.current;
+    curtain.scale.y = Math.max(c * c * (3 - 2 * c), 1e-3);
+    curtain.visible = c > 0;
     // Demand frameloop: keep rendering only while a fade is still easing.
     if (moving) invalidate();
   });

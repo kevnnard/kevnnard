@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { flowerLayout } from "../../src/lib/world/flowers.ts";
+import { clearOfGarage } from "../../src/lib/world/garage.ts";
+import { clearOfGarden } from "../../src/lib/world/garden.ts";
 import * as houseModule from "../../src/lib/world/house.ts";
 import {
   HOUSE,
@@ -123,9 +125,14 @@ describe("stylized wooden house (T4a, S6)", () => {
       const parts = [...meshes[wall.group].wood, ...meshes[wall.group].glass];
       assert.ok(parts.length > 0, wall.id);
       const normal = wall.axis === "x" ? 2 : 0;
+      // The garage front also draws the garage's side past the main house
+      // (dream-truck T1), on its own plane.
+      const side = (part: (typeof parts)[number]) =>
+        wall.group === houseModule.GARAGE_SIDE.group &&
+        Math.abs(part.center[0] - houseModule.GARAGE_SIDE.at) < 0.2;
       for (const part of parts)
         assert.ok(
-          Math.abs(part.center[normal] - wall.at) < 0.2,
+          Math.abs(part.center[normal] - wall.at) < 0.2 || side(part),
           `${wall.id} part off its wall`,
         );
     }
@@ -147,8 +154,12 @@ describe("stylized wooden house (T4a, S6)", () => {
     assert.ok(!WALLS.some((wall) => wall.group === "base"));
   });
 
-  it("fits the house, garage, roof overhang and driveway on the pad", () => {
-    for (const rect of HOUSE_FOOTPRINT)
+  it("fits the house, roof overhang and porch on the pad; the grown garage on its own ground", () => {
+    // The garage and its apron reach past the pad (dream-truck T1): they
+    // stand on the grass, cleared of nature (clearOfGarage).
+    for (const rect of HOUSE_FOOTPRINT.filter(
+      (r) => r.id !== "garage" && r.id !== "driveway",
+    ))
       for (const [x, z] of [
         [rect.x0, rect.z0],
         [rect.x0, rect.z1],
@@ -163,10 +174,14 @@ describe("stylized wooden house (T4a, S6)", () => {
   });
 
   it("keeps trees, rocks, tufts and flowers clear of the footprint", () => {
-    const layout = islandLayout(ISLAND.seed);
+    // Cleared as WorldScene clears them.
+    const nature = clearOfGarden(islandLayout(ISLAND.seed));
     const items = [
-      ...layout.map((item) => item.position),
-      ...flowerLayout(layout, ISLAND.seed).map((item) => item.position),
+      ...clearOfGarage(nature).map((item) => item.position),
+      ...clearOfGarage(
+        clearOfGarden(flowerLayout(nature, ISLAND.seed), 0.06),
+        0.06,
+      ).map((item) => item.position),
     ];
     for (const [x, , z] of items)
       for (const rect of HOUSE_FOOTPRINT)
