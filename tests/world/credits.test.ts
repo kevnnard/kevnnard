@@ -15,6 +15,7 @@ import {
 import { DISPLAY_MODEL_FILES } from "../../src/lib/world/display-cases.ts";
 import { KATANA_MODEL } from "../../src/lib/world/katana-shelf.ts";
 import { MODEL_FILES, PROP_FILES } from "../../src/lib/world/models.ts";
+import { PATRONUS } from "../../src/lib/world/patronus.ts";
 import { BRUNO_CHAIR, BRUNO_MAPS } from "../../src/lib/world/setup.ts";
 import { TV_COVERS } from "../../src/lib/world/tv-covers.ts";
 import { WAND_MODEL } from "../../src/lib/world/wand.ts";
@@ -83,6 +84,7 @@ describe("credits.json (S4: every author is credited, even CC0)", () => {
         KATANA_MODEL.url,
         CHERRY_MODEL.url,
         WAND_MODEL.url,
+        PATRONUS.lion,
       ]
         .map((url) => url.replace("/world/", ""))
         .sort(),
@@ -759,5 +761,48 @@ describe("Elder Wand credit (patronus T1)", () => {
     );
     const gallery = script.match(/gallery_files = \{([^}]*)\}/)?.[1] ?? "";
     assert.match(gallery, /elder-wand\.glb/);
+  });
+});
+
+describe("patronus lion credit (patronus T2)", () => {
+  it("credits keh's Lion under CC BY 4.0, from the pinned download", () => {
+    const data = credits();
+    const entry = data.assets.find(
+      (asset) => asset.file === "models/patronus-lion.glb",
+    ) as
+      | (Credits["assets"][number] & { bytes?: number; sha256?: string })
+      | undefined;
+    assert.ok(entry, "credited");
+    assert.equal(entry.author, "keh");
+    assert.equal(entry.license, "CC-BY-4.0");
+    assert.equal(
+      entry.source,
+      "https://sketchfab.com/3d-models/c14548c4ac994b9981dbd31eb049e5a7",
+    );
+    assert.deepEqual(
+      entry.sourceFiles.map((file) => file.sha256),
+      ["6eefa46861f47435f4a23111e877be11ccffaab49b1be0c273d24ab8cc2be7d2"],
+    );
+    const shipped = readFileSync(new URL("models/patronus-lion.glb", PUBLIC));
+    assert.equal(entry.bytes, shipped.length);
+    assert.equal(
+      entry.sha256,
+      createHash("sha256").update(shipped).digest("hex"),
+    );
+    const pack = data.packs.find((item) => item.id === entry.pack);
+    assert.equal(pack?.authorUrl, "https://sketchfab.com/keh");
+    const script = readFileSync(
+      new URL("../../scripts/prepare-world.py", import.meta.url),
+      "utf8",
+    );
+    const gallery = script.match(/gallery_files = \{([^}]*)\}/)?.[1] ?? "";
+    assert.match(gallery, /patronus-lion\.glb/);
+    assert.match(
+      readFileSync(
+        new URL("../../scripts/prepare-patronus.mjs", import.meta.url),
+        "utf8",
+      ),
+      /6eefa46861f47435f4a23111e877be11ccffaab49b1be0c273d24ab8cc2be7d2/,
+    );
   });
 });

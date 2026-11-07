@@ -71,6 +71,7 @@ import {
 import type { CherrySpot } from "@/lib/world/cherry.ts";
 import { cherryShot } from "@/lib/world/cherry-shot.ts";
 import {
+  CINEMATIC,
   cinematicEntry,
   cinematicLeaveAt,
   type ShotPose,
@@ -147,6 +148,9 @@ import {
 } from "@/lib/world/truck-shot.ts";
 import { tvCameraFocus } from "@/lib/world/tv-focus.ts";
 import {
+  WAND_CHASE,
+  WAND_START,
+  wandChaseAt,
   wandLeaveAt,
   wandShotAt,
   wandShotProgress,
@@ -392,6 +396,7 @@ function SceneCanvas({
         onArrive={focus && closeUp === "terminal" ? onMonitorArrive : undefined}
         onTvArrive={tv?.onArrive}
         cherrySpot={cherrySpot}
+        wandCast={wandCast}
       />
       <Island />
       {/* Flat materials until the texture maps arrive (T4e). */}
@@ -890,6 +895,7 @@ function GuidedCamera({
   onArrive,
   onTvArrive,
   cherrySpot,
+  wandCast = 0,
 }: {
   reducedMotion: boolean;
   home: number;
@@ -901,6 +907,8 @@ function GuidedCamera({
   onTvArrive?: () => void;
   /** Where Cherry stands today: her shot is built for it. */
   cherrySpot: CherrySpot;
+  /** The Elder Wand's casts this visit: each plays the chase (patronus T2). */
+  wandCast?: number;
 }) {
   const controls = useRef<CameraControls>(null);
   const camera = useThree((state) => state.camera) as PerspectiveCamera;
@@ -1111,6 +1119,56 @@ function GuidedCamera({
     closeUp,
     lens,
   ]);
+
+  // The patronus chase (patronus T2, S3): every cast of the Elder Wand,
+  // on arrival and on Cast again, leaves the close-up for the wide room
+  // view, follows the run and comes back (wand-shot.ts). Its clock starts
+  // as the spell's does (Wand.tsx). Leaving the wand cancels it, before the
+  // move out to the room starts from wherever it had got to.
+  const chaseView = useRef({ aspect, shift: 0 });
+  useEffect(() => {
+    chaseView.current = {
+      aspect,
+      shift: galleryStory ? wandShotShift(viewportWidth, aspect) : 0,
+    };
+  }, [aspect, galleryStory, viewportWidth]);
+  useEffect(() => {
+    const current = controls.current;
+    if (galleryCase !== "wand" || !current) return;
+    const wait = wandCast === 0 && !reducedMotion ? CINEMATIC.duration : 0;
+    const spellAt = performance.now() / 1000 + wait;
+    const end = WAND_CHASE.returnAt + (reducedMotion ? 0 : WAND_CHASE.back);
+    let from: ShotPose | null = null;
+    let frame = requestAnimationFrame(function step() {
+      const t = Math.min(end, performance.now() / 1000 - spellAt);
+      if (t >= WAND_CHASE.leave && from === null)
+        from = {
+          eye: current
+            .getPosition(new Vector3(), false)
+            .toArray() as ShotPose["eye"],
+          target: current
+            .getTarget(new Vector3(), false)
+            .toArray() as ShotPose["target"],
+          fov: camera.fov,
+        };
+      const { aspect: ratio, shift } = chaseView.current;
+      const pose =
+        from &&
+        wandChaseAt(t, {
+          from,
+          back: wandShotAt(1, WAND_START, shift),
+          reducedMotion,
+          aspect: ratio,
+        });
+      if (pose) {
+        lens.focus(pose.fov);
+        current.setLookAt(...pose.eye, ...pose.target, false);
+        invalidate();
+      }
+      if (t < end) frame = requestAnimationFrame(step);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [galleryCase, wandCast, reducedMotion, camera, lens, invalidate]);
 
   // Disabled controls hand touch gestures back to the browser; on the
   // terminal a touch drag scrolls the screen instead (MonitorScreen).

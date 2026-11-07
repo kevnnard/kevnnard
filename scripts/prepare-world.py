@@ -746,7 +746,8 @@ def kept_credits(credits, previous):
     # Skellington cup (coffee-card T3), derived by scripts/prepare-desk-mug.mjs;
     # Cherry is 3D Creator's Miniature Pinscher (dog-rig T3), rigged and
     # animated by scripts/prepare-dog.mjs; the Elder Wand is Heniqueish's
-    # (patronus T1), derived by scripts/prepare-wand.mjs.
+    # (patronus T1), derived by scripts/prepare-wand.mjs, and its patronus
+    # is keh's Lion (patronus T2), derived by scripts/prepare-patronus.mjs.
     credits = dict(credits)
     gallery_files = {"models/display-offroad-helmet.glb",
                      "models/display-football-helmet.glb",
@@ -754,7 +755,8 @@ def kept_credits(credits, previous):
                      "models/wall-katana.glb",
                      "models/desk-mug.glb",
                      "models/cherry.glb",
-                     "models/elder-wand.glb"}
+                     "models/elder-wand.glb",
+                     "models/patronus-lion.glb"}
     gallery_assets = [asset for asset in previous.get("assets", [])
                       if asset["file"] in gallery_files]
     if gallery_assets:

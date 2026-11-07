@@ -4,10 +4,9 @@
 // (past the cases, round the sofa, between the coffee table and the TV)
 // and dissolves into particles, about 3.6 s in all. It reads from a
 // distance: translucent, additive, a fresnel rim, wisps trailing, a slight
-// flicker (Patronus.tsx). The silhouette is a placeholder until the owner's
-// lion ("Lion" by keh, Sketchfab, CC BY 4.0) is prepared by
-// scripts/prepare-patronus.mjs; then `lion` names its file. Not under
-// reduced motion. Pure numbers.
+// flicker (Patronus.tsx). The body is the owner's lion ("Lion" by keh,
+// Sketchfab, CC BY 4.0), prepared by scripts/prepare-patronus.mjs (patronus
+// T2). Not under reduced motion. Pure numbers.
 
 import type { Vec3 } from "./house.ts";
 import { HOUSE } from "./house.ts";
@@ -25,13 +24,17 @@ export const PATRONUS = {
   fadeIn: 0.25,
   /** The last seconds, dissolving into particles. */
   dissolve: 0.7,
-  /** Body length and shoulder height, metres: smaller than life, for the room. */
-  length: 0.9,
-  height: 0.55,
+  /**
+   * The lion's height to the top of its mane, metres: about 1 m at the
+   * shoulder (keh's lion has its shoulder joint at 0.674 of its height),
+   * 2.75 m from nose to tail tip; under the walls' top.
+   */
+  lionHeight: 1.48,
+  lionShoulder: 118.7 / 176.2,
   color: "#bcd8ff",
   rim: "#eef6ff",
-  /** The prepared lion, once it ships; null plays the placeholder. */
-  lion: null as string | null,
+  /** The prepared lion (scripts/prepare-patronus.mjs). */
+  lion: "/world/models/patronus-lion.glb",
 } as const;
 
 /**
@@ -148,3 +151,20 @@ export function patronusAt(t: number): PatronusState | null {
   const opacity = smooth(time / PATRONUS.fadeIn) * (1 - 0.9 * dissolve);
   return { position, heading, scale, opacity, dissolve, time };
 }
+
+/**
+ * The run's bounding box (world), over the curve itself: the chase camera
+ * (wand-shot.ts) frames it.
+ */
+export const PATRONUS_BOUNDS: { min: Vec3; max: Vec3 } = (() => {
+  const min: Vec3 = [Infinity, Infinity, Infinity];
+  const max: Vec3 = [-Infinity, -Infinity, -Infinity];
+  for (const { u } of TABLE) {
+    const p = curveAt(u);
+    for (let k = 0; k < 3; k++) {
+      min[k] = Math.min(min[k], p[k]);
+      max[k] = Math.max(max[k], p[k]);
+    }
+  }
+  return { min, max };
+})();

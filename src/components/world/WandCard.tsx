@@ -1,7 +1,8 @@
-import { type AnimationEvent, useEffect, useRef } from "react";
+import { type AnimationEvent, useEffect, useRef, useState } from "react";
 import type { CardState } from "@/lib/world/card-motion.ts";
 import { CINEMATIC } from "@/lib/world/cinematic.ts";
 import { SPELL, type WandStory } from "@/lib/world/wand.ts";
+import { wandChaseCard } from "@/lib/world/wand-shot.ts";
 import "./case-story.css";
 import "./wand-card.css";
 
@@ -13,7 +14,9 @@ import "./wand-card.css";
  * once more and "Back to room" leaves, taking focus as the card opens. No
  * images. The words also show briefly over the scene, left of the card,
  * as the spell plays (`cast` counts the casts; the first waits for the
- * camera to arrive).
+ * camera to arrive). While the camera chases the patronus (patronus T2)
+ * the card fades nearly away, still there to hover, focus or press Back to
+ * room, and returns as the camera heads back.
  */
 export default function WandCard({
   story,
@@ -38,6 +41,19 @@ export default function WandCard({
   useEffect(() => back.current?.focus({ preventScroll: true }), []);
   const [w0, w1] = SPELL.words;
   const delay = (cast === 0 && !reducedMotion ? CINEMATIC.duration : 0) + w0;
+  const [chasing, setChasing] = useState(false);
+  useEffect(() => {
+    const wait = cast === 0 && !reducedMotion ? CINEMATIC.duration : 0;
+    const { hide, show } = wandChaseCard();
+    const timers = [
+      window.setTimeout(() => setChasing(true), (wait + hide) * 1000),
+      window.setTimeout(() => setChasing(false), (wait + show) * 1000),
+    ];
+    setChasing(false);
+    return () => {
+      for (const timer of timers) window.clearTimeout(timer);
+    };
+  }, [cast, reducedMotion]);
 
   return (
     <>
@@ -45,6 +61,7 @@ export default function WandCard({
         className="case-story wand-card"
         aria-labelledby="wand-card-title"
         data-state={state}
+        data-chase={chasing ? "" : undefined}
         inert={state === "leaving"}
         onAnimationEnd={onMotionEnd}
       >

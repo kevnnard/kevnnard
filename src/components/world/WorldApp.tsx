@@ -50,6 +50,7 @@ import {
   rangeReach,
 } from "@/lib/world/speaker-range.ts";
 import { bindMusicResume } from "@/lib/world/speaker-resume.ts";
+import { spellSound } from "@/lib/world/spell-sound.ts";
 import {
   type BufferId,
   terminalKeydown,
@@ -263,7 +264,11 @@ export default function WorldApp() {
   // The Elder Wand's casts this visit (patronus T1): 0 plays on arrival,
   // Cast again adds one; leaving the wand starts the count over.
   const [wandCast, setWandCast] = useState(0);
-  const castWand = useCallback(() => setWandCast((n) => n + 1), []);
+  // Cast again unlocks the spell's sounds inside its click (spell-sound.ts).
+  const castWand = useCallback(() => {
+    spellSound.unlock();
+    setWandCast((n) => n + 1);
+  }, []);
   useEffect(() => {
     if (galleryCase !== "wand") setWandCast(0);
   }, [galleryCase]);

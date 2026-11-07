@@ -98,18 +98,32 @@ describe("ghost lion patronus (patronus T1)", () => {
     assert.ok(Math.abs(diff) < 0.2);
   });
 
-  it("plays a placeholder now, the lion once its file ships", () => {
-    const lion = existsSync(
-      new URL("../../public/world/models/patronus-lion.glb", import.meta.url),
+  it("is keh's lion, drawn in the ghost material, about 1 m at the shoulder", () => {
+    assert.equal(PATRONUS.lion, "/world/models/patronus-lion.glb");
+    const file = new URL(
+      "../../public/world/models/patronus-lion.glb",
+      import.meta.url,
     );
-    assert.equal(
-      PATRONUS.lion,
-      lion ? "/world/models/patronus-lion.glb" : null,
+    assert.ok(existsSync(file));
+    const bytes = readFileSync(file);
+    assert.ok(bytes.length < 400_000, "small: no textures");
+    const json = JSON.parse(
+      bytes.toString("utf8", 20, 20 + bytes.readUInt32LE(12)),
+    );
+    assert.equal(json.images?.length ?? 0, 0, "textures dropped");
+    assert.equal(json.skins?.length, 1, "rigged");
+    assert.equal(json.animations?.length, 1, "its clip kept");
+    const shoulder = PATRONUS.lionHeight * PATRONUS.lionShoulder;
+    assert.ok(shoulder > 0.9 && shoulder < 1.15, `shoulder ${shoulder}`);
+    assert.ok(
+      FLOOR + PATRONUS.lionHeight < HOUSE.floorY + HOUSE.main.height,
+      "under the walls' top",
     );
     const view = source("src/components/world/Patronus.tsx");
     assert.match(view, /PatronusModel/);
     assert.match(view, /AdditiveBlending/);
     assert.match(view, /fresnel/i);
     assert.match(view, /AnimationMixer/);
+    assert.doesNotMatch(view, /placeholder/i, "no placeholder left");
   });
 });

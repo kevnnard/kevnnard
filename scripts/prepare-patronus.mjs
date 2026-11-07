@@ -7,29 +7,32 @@
 //   GLTF_TRANSFORM_CLI=<cached @gltf-transform/cli 4.5.1 package dir> \
 //     node scripts/prepare-patronus.mjs <source.glb | source.gltf>
 //
-// The owner downloads it from Sketchfab (it needs a login); copy it, or the
-// extracted archive, to a fresh cache directory first: downloads are
-// untrusted. Nothing is downloaded and nothing is installed. Until the
-// source bytes are pinned below the script only prints their sha256 and
-// stops; pin it, run again, then set PATRONUS.lion
-// (src/lib/world/patronus.ts) to "/world/models/patronus-lion.glb" and
-// credit the file in public/world/credits.json (and gallery_files in
-// scripts/prepare-world.py).
+// The owner downloaded it from Sketchfab (lion.glb, 561,132 bytes, asset
+// extras: "Lion" by keh, CC-BY-4.0, one skin, one clip "Take 001"); copy it
+// to a fresh cache directory first: downloads are untrusted. Nothing is
+// downloaded and nothing is installed. PATRONUS.lion
+// (src/lib/world/patronus.ts) names the result, credited in
+// public/world/credits.json (and gallery_files in scripts/prepare-world.py).
 //
 // 1. Verify the source bytes.
-// 2. Optimize with the CLI: meshopt geometry, the rig and its clip kept,
-//    textures (unused: the runtime draws it in the ghost material) shrunk
-//    to 256 px WebP, no simplification, no joining (the skinned mesh stays
-//    whole), no GPU instancing.
+// 2. With glTF Transform's core (beside the CLI): drop the texture, its
+//    image and the UVs (the runtime draws the lion in the ghost material,
+//    which needs neither), and pin the hip's sideways and forward sway in
+//    the clip to its first key, so the lion stays on the run's path and
+//    only bobs; written next to the source as lion-ghost.glb.
+// 3. Optimize that with the CLI: meshopt geometry, the rig and its clip
+//    kept, no simplification, no joining (the skinned mesh stays whole), no
+//    GPU instancing.
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-/** Pinned once the owner's download is here; null until then. */
-const SOURCE_SHA256 = null;
+/** The owner's download (patronus T2). */
+const SOURCE_SHA256 =
+  "6eefa46861f47435f4a23111e877be11ccffaab49b1be0c273d24ab8cc2be7d2";
 const TARGET = join(ROOT, "public/world/models/patronus-lion.glb");
 
 if (!process.argv[2])
@@ -37,12 +40,6 @@ if (!process.argv[2])
 const source = resolve(process.argv[2]);
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const digest = sha256(readFileSync(source));
-if (SOURCE_SHA256 === null) {
-  process.stdout.write(
-    `source ${source} sha256 ${digest}: pin it as SOURCE_SHA256, then run again\n`,
-  );
-  process.exit(2);
-}
 if (digest !== SOURCE_SHA256)
   throw new Error(`unexpected source ${source}: sha256 ${digest}`);
 
@@ -55,15 +52,51 @@ const cliPackage = JSON.parse(
 if (cliPackage.version !== "4.5.1")
   throw new Error(`need @gltf-transform/cli 4.5.1, got ${cliPackage.version}`);
 
+const { NodeIO } = await import(
+  pathToFileURL(join(cliDir, "../core/dist/index.js")).href
+);
+const io = new NodeIO();
+const document = await io.read(source);
+const root = document.getRoot();
+for (const material of root.listMaterials()) material.setBaseColorTexture(null);
+for (const texture of root.listTextures()) texture.dispose();
+for (const mesh of root.listMeshes())
+  for (const primitive of mesh.listPrimitives()) {
+    const uv = primitive.getAttribute("TEXCOORD_0");
+    primitive.setAttribute("TEXCOORD_0", null);
+    if (uv && uv.listParents().length === 1) uv.dispose();
+  }
+// The hip's translation: local x is sideways and local y forward (the
+// root bone turns it upright); local z, the height, keeps its bob.
+let pinned = 0;
+for (const animation of root.listAnimations())
+  for (const channel of animation.listChannels()) {
+    if (
+      channel.getTargetNode()?.getName() !== "b_Hip_01" ||
+      channel.getTargetPath() !== "translation"
+    )
+      continue;
+    const output = channel.getSampler().getOutput();
+    const values = output.getArray().slice();
+    for (let i = 0; i < values.length; i += 3) {
+      values[i] = values[0];
+      values[i + 1] = values[1];
+    }
+    output.setArray(values);
+    pinned++;
+  }
+if (pinned !== 1) throw new Error(`expected one hip track, got ${pinned}`);
+const ghost = join(dirname(source), "lion-ghost.glb");
+await io.write(ghost, document);
+
 const cli = spawnSync(
   process.execPath,
   [
     join(cliDir, "bin/cli.js"),
     "optimize",
-    source,
+    ghost,
     TARGET,
-    ...["--compress", "meshopt", "--texture-compress", "webp"],
-    ...["--texture-size", "256", "--simplify", "false", "--join", "false"],
+    ...["--compress", "meshopt", "--simplify", "false", "--join", "false"],
     ...["--instance", "false", "--palette", "false"],
   ],
   { stdio: "inherit" },

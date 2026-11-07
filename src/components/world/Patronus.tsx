@@ -8,7 +8,6 @@ import {
   BufferAttribute,
   BufferGeometry,
   CanvasTexture,
-  CapsuleGeometry,
   Color,
   Group,
   Mesh,
@@ -17,7 +16,6 @@ import {
   Points,
   PointsMaterial,
   ShaderMaterial,
-  SphereGeometry,
   Vector3,
 } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
@@ -30,10 +28,10 @@ import {
 
 /**
  * What the ghost effect drives (patronus T1): an object facing +z with its
- * feet at y 0, about PATRONUS.length long, every mesh wearing the ghost
+ * feet at y 0, PATRONUS.lionHeight tall, every mesh wearing the ghost
  * material; `update` animates it (a gait, an AnimationMixer); `sample`
- * picks a point on its body (world) for the wisps. The placeholder and the
- * prepared lion both implement it, so the lion slots in.
+ * picks a point on its body (world) for the wisps. The prepared lion
+ * implements it.
  */
 export interface PatronusModel {
   object: Object3D;
@@ -120,88 +118,14 @@ function ghostMaterial(): ShaderMaterial {
   });
 }
 
-/**
- * The placeholder: a simple procedural lion-ish quadruped (body, mane,
- * head, four legs, a tail) with a running gait. Read from a distance only.
- */
-function placeholderModel(material: ShaderMaterial): PatronusModel {
-  const root = new Group();
-  root.name = "patronus-placeholder";
-  const L = PATRONUS.length;
-  const H = PATRONUS.height;
-  const owned: BufferGeometry[] = [];
-  const add = (geometry: BufferGeometry, parent: Object3D = root) => {
-    owned.push(geometry);
-    const mesh = new Mesh(geometry, material);
-    parent.add(mesh);
-    return mesh;
-  };
-  const body = new Group();
-  root.add(body);
-  const torso = add(new SphereGeometry(0.5, 20, 14), body);
-  torso.scale.set(0.27 * L, 0.36 * H, 0.62 * L);
-  torso.position.set(0, 0.64 * H, 0);
-  const mane = add(new SphereGeometry(0.5, 18, 12), body);
-  mane.scale.set(0.34 * L, 0.6 * H, 0.3 * L);
-  mane.position.set(0, 0.8 * H, 0.3 * L);
-  const head = add(new SphereGeometry(0.5, 16, 12), body);
-  head.scale.set(0.2 * L, 0.32 * H, 0.24 * L);
-  head.position.set(0, 0.84 * H, 0.44 * L);
-  const legs: Group[] = [];
-  const leg = new CapsuleGeometry(0.045 * L, 0.42 * H, 4, 8);
-  leg.translate(0, -0.21 * H - 0.045 * L, 0);
-  for (const [x, z] of [
-    [-0.09, 0.24],
-    [0.09, 0.24],
-    [-0.09, -0.24],
-    [0.09, -0.24],
-  ]) {
-    const hip = new Group();
-    hip.position.set(x * L, 0.62 * H, z * L);
-    body.add(hip);
-    hip.add(new Mesh(leg, material));
-    legs.push(hip);
-  }
-  owned.push(leg);
-  const tail = new Group();
-  tail.position.set(0, 0.72 * H, -0.3 * L);
-  body.add(tail);
-  const tailMesh = add(new CapsuleGeometry(0.018 * L, 0.32 * L, 3, 6), tail);
-  tailMesh.rotation.x = -1.1;
-  tailMesh.position.set(0, 0.06 * L, -0.15 * L);
-  const point = new Vector3();
-  return {
-    object: root,
-    update: (_delta, state) => {
-      // A gallop: legs paired front and back, body bobbing with them.
-      const phase = state.time * Math.PI * 2 * 2.4;
-      legs.forEach((hip, i) => {
-        const front = i < 2;
-        const offset = (front ? 0 : Math.PI) + (i % 2) * 0.5;
-        hip.rotation.x = Math.sin(phase + offset) * 0.75;
-      });
-      body.position.y = Math.abs(Math.sin(phase)) * 0.04 * H;
-      body.rotation.x = Math.sin(phase) * 0.06;
-      tail.rotation.x = Math.sin(phase * 0.5) * 0.3;
-    },
-    sample: (out) => {
-      const pick = [torso, mane, head][Math.floor(Math.random() * 3)];
-      point.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
-      return out.copy(pick.localToWorld(point));
-    },
-    dispose: () => {
-      for (const geometry of owned) geometry.dispose();
-    },
-  };
-}
-
 const loaderOptions = (loader: GLTFLoader) =>
   loader.setMeshoptDecoder(MeshoptDecoder);
 
 /**
  * The prepared lion (scripts/prepare-patronus.mjs): every mesh in the
- * ghost material, its run (or walk) clip played by an AnimationMixer,
- * scaled to PATRONUS.length and stood on y 0, facing +z.
+ * ghost material, its run (or walk, or only) clip played by an
+ * AnimationMixer, scaled to PATRONUS.lionHeight tall (about 1 m at the
+ * shoulder) and stood on y 0, facing +z as authored.
  */
 function useLionModel(url: string, material: ShaderMaterial): PatronusModel {
   const gltf = useLoader(GLTFLoader, url, loaderOptions);
@@ -218,7 +142,7 @@ function useLionModel(url: string, material: ShaderMaterial): PatronusModel {
     });
     const box = new Box3().setFromObject(lion);
     const size = box.getSize(new Vector3());
-    const scale = PATRONUS.length / Math.max(size.x, size.z, 1e-6);
+    const scale = PATRONUS.lionHeight / Math.max(size.y, 1e-6);
     const root = new Group();
     root.name = "patronus-lion";
     lion.scale.setScalar(scale);
@@ -421,7 +345,7 @@ function PatronusRun({
       if (light.current) {
         light.current.position.set(
           state.position[0],
-          state.position[1] + PATRONUS.height * 0.6,
+          state.position[1] + PATRONUS.lionHeight * 0.6,
           state.position[2],
         );
         light.current.intensity = 0.7 * state.opacity;
@@ -449,13 +373,6 @@ function PatronusRun({
   );
 }
 
-function Placeholder({ castAt }: { castAt: RefObject<number | null> }) {
-  const material = useMemo(() => ghostMaterial(), []);
-  const model = useMemo(() => placeholderModel(material), [material]);
-  useEffect(() => () => material.dispose(), [material]);
-  return <PatronusRun model={model} material={material} castAt={castAt} />;
-}
-
 function Lion({
   url,
   castAt,
@@ -470,9 +387,8 @@ function Lion({
 }
 
 /**
- * The patronus (patronus T1): the prepared lion once its file ships
- * (PATRONUS.lion), the placeholder until then (and while it loads). Off
- * under reduced motion.
+ * The patronus (patronus T1, T2): keh's lion (PATRONUS.lion), nothing
+ * while it loads. Off under reduced motion.
  */
 export default function Patronus({
   castAt,
@@ -482,11 +398,9 @@ export default function Patronus({
   reducedMotion: boolean;
 }) {
   if (reducedMotion) return null;
-  const lion = PATRONUS.lion;
-  if (!lion) return <Placeholder castAt={castAt} />;
   return (
-    <Suspense fallback={<Placeholder castAt={castAt} />}>
-      <Lion url={lion} castAt={castAt} />
+    <Suspense fallback={null}>
+      <Lion url={PATRONUS.lion} castAt={castAt} />
     </Suspense>
   );
 }

@@ -187,6 +187,19 @@
         "url": "https://sketchfab.com/3d-models/elder-wand-37cee9fb76494799b743aea2fe41fd26",
         "quote": "Sketchfab download (GLB, Sketchfab-12.67.0), asset extras: \"author\": \"Heniqueish (https://sketchfab.com/Heniqueish)\", \"license\": \"CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)\", \"source\": \"https://sketchfab.com/3d-models/elder-wand-37cee9fb76494799b743aea2fe41fd26\", \"title\": \"Elder Wand\"; Creative Commons Attribution 4.0"
       }
+    },
+    {
+      "id": "sketchfab-keh-lion",
+      "pack": "Lion (Sketchfab)",
+      "author": "keh",
+      "authorUrl": "https://sketchfab.com/keh",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "source": "https://sketchfab.com/3d-models/c14548c4ac994b9981dbd31eb049e5a7",
+      "licenseEvidence": {
+        "url": "https://sketchfab.com/3d-models/c14548c4ac994b9981dbd31eb049e5a7",
+        "quote": "Sketchfab download (GLB, Sketchfab-12.67.0), asset extras: \"author\": \"keh (https://sketchfab.com/keh)\", \"license\": \"CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)\", \"source\": \"https://sketchfab.com/3d-models/lion-c14548c4ac994b9981dbd31eb049e5a7\", \"title\": \"Lion\"; Creative Commons Attribution 4.0"
+      }
     }
   ],
   "assets": [
@@ -951,6 +964,27 @@
           "url": "https://sketchfab.com/3d-models/elder-wand-37cee9fb76494799b743aea2fe41fd26",
           "bytes": 21284084,
           "sha256": "0c1fc4f8e5ea652fe60207cf4ba1f3c35a522727b9bdd0e3d355951902671c0f"
+        }
+      ]
+    },
+    {
+      "file": "models/patronus-lion.glb",
+      "asset": "Lion (the Elder Wand's ghostly patronus)",
+      "pack": "sketchfab-keh-lion",
+      "author": "keh",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "source": "https://sketchfab.com/3d-models/c14548c4ac994b9981dbd31eb049e5a7",
+      "bytes": 78524,
+      "sha256": "13eccf23a6f6d8a593eea096a931cc48a5603c53783ba4597b03dbe1a9b318ae",
+      "triangles": 4380,
+      "changes": "Geometry, rig and its one clip kept (no simplification); its texture, image and UVs dropped and the hip's sideways and forward sway in the clip pinned to its first key, then meshopt-compressed with glTF-Transform by scripts/prepare-patronus.mjs; drawn at runtime in an original translucent silver-blue ghost material with particles, about 1 m at the shoulder.",
+      "note": "Harry Potter and Expecto Patronum belong to Warner Bros. and J.K. Rowling; fan tribute, no affiliation.",
+      "sourceFiles": [
+        {
+          "url": "https://sketchfab.com/3d-models/c14548c4ac994b9981dbd31eb049e5a7",
+          "bytes": 561132,
+          "sha256": "6eefa46861f47435f4a23111e877be11ccffaab49b1be0c273d24ab8cc2be7d2"
         }
       ]
     }

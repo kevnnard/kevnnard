@@ -106,3 +106,13 @@
     line-height: 38px;
   }
 }
+
+/* While the camera follows the patronus (patronus T2), the card fades
+   nearly away; it is still there to hover, focus or press. `filter` leaves
+   the card motion's opacity animation alone. */
+.wand-card {
+  transition: filter 450ms ease;
+}
+.wand-card[data-chase]:not(:hover, :has(:focus-visible)) {
+  filter: opacity(0.08);
+}

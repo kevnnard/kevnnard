@@ -22,6 +22,7 @@ import Patronus, { GhostParticles } from "@/components/world/Patronus";
 import { CINEMATIC } from "@/lib/world/cinematic.ts";
 import { canEnterMonitor } from "@/lib/world/monitor.ts";
 import { SHELF, shelfToWorld } from "@/lib/world/shelf.ts";
+import { spellSound } from "@/lib/world/spell-sound.ts";
 import {
   SPELL,
   WAND,
@@ -133,6 +134,8 @@ export default function Wand({
     const at = performance.now() / 1000 + wait;
     spellAt.current = at;
     runAt.current = at;
+    // Its sounds follow the run: a patronus already out keeps its whoosh.
+    spellSound.cast(wait);
     invalidate();
   }, [focused, cast, reducedMotion, invalidate]);
 
@@ -259,6 +262,8 @@ export default function Wand({
           if (event.delta > CLICK_SLOP || !reachable(event)) return;
           event.stopPropagation();
           element.style.cursor = "";
+          // The spell's sounds unlock inside this click (spell-sound.ts).
+          spellSound.unlock();
           onInspect?.("wand");
         }}
         onPointerOver={(event) => {
