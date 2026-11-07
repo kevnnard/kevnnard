@@ -184,10 +184,11 @@ describe("story framing (collection-display-models T12)", () => {
       "utf8",
     );
     // Desk things' product cards are always open (keyboard-card T1), and
-    // so are Cherry's (dog-rig T3) and the garden sign's (garden-sign T2).
+    // so are Cherry's (dog-rig T3), the garden sign's (garden-sign T2), the
+    // garage's (dream-truck T4) and the Elder Wand's (patronus T1).
     assert.match(
       app,
-      /galleryStory=\{\s*galleryCase === "cherry" \|\|\s*galleryCase === "sign" \|\|\s*galleryCase === "truck" \|\|\s*deskProduct !== null \|\|\s*deskStory !== null \|\|\s*\(caseStory !== null && storyOpen\)\s*\}/,
+      /galleryStory=\{\s*galleryCase === "cherry" \|\|\s*galleryCase === "sign" \|\|\s*galleryCase === "truck" \|\|\s*galleryCase === "wand" \|\|\s*deskProduct !== null \|\|\s*deskStory !== null \|\|\s*\(caseStory !== null && storyOpen\)\s*\}/,
     );
     assert.match(app, /open=\{storyOpen\}/);
     assert.match(app, /onOpenChange=\{setStoryOpen\}/);

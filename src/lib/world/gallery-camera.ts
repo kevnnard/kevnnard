@@ -16,6 +16,7 @@ import { KEYBOARD_VIEW } from "./keyboard-shot.ts";
 import { SHELF_VIEW } from "./shelf.ts";
 import { SIGN_VIEW } from "./sign-shot.ts";
 import { TRUCK_VIEW } from "./truck-shot.ts";
+import { WAND_VIEW } from "./wand-shot.ts";
 
 /** Eye height above the model's centre: level with it, just over the middle. */
 const EYE_LIFT = 0.05;
@@ -66,13 +67,14 @@ function galleryView(id: GalleryItemId): {
 
 /**
  * Any inspected thing's view: a gallery item's, a desk thing's, the
- * garden sign's, the garage door's, or Cherry's at her first spot (the scene frames her at
+ * garden sign's, the garage door's, the wand's, or Cherry's at her first spot (the scene frames her at
  * the day's spot through cherry-shot.ts).
  */
 function inspectView(id: InspectItemId): ReturnType<typeof galleryView> {
   if (id === "coffee") return COFFEE_VIEW;
   if (id === "sign") return SIGN_VIEW;
   if (id === "truck") return TRUCK_VIEW;
+  if (id === "wand") return WAND_VIEW;
   if (id === "cherry") return cherryView(CHERRY_SPOTS[0]);
   return isDeskItemId(id) ? KEYBOARD_VIEW : galleryView(id);
 }

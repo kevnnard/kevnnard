@@ -59,6 +59,7 @@ import type { SpeakerControl } from "@/components/world/SpeakerZone";
 import { pastelMaterial, useSurfaceMaps } from "@/components/world/surfaces";
 import Truck from "@/components/world/Truck";
 import type { TvControl } from "@/components/world/TvScreen";
+import Wand from "@/components/world/Wand";
 import type { RGB } from "@/lib/room/day-cycle.ts";
 import { outdoorLevel, SHELTER } from "@/lib/world/ambient-sound.ts";
 import {
@@ -145,6 +146,12 @@ import {
   truckShotShift,
 } from "@/lib/world/truck-shot.ts";
 import { tvCameraFocus } from "@/lib/world/tv-focus.ts";
+import {
+  wandLeaveAt,
+  wandShotAt,
+  wandShotProgress,
+  wandShotShift,
+} from "@/lib/world/wand-shot.ts";
 import { normalizeWheel, wheelDolly } from "@/lib/world/wheel.ts";
 import {
   bindWorldContextLoss,
@@ -220,6 +227,8 @@ interface WorldSceneProps {
   desk?: DeskControl;
   /** Its story card is open: frame the model left of it (T12). */
   galleryStory?: boolean;
+  /** The Elder Wand's casts this visit: Cast again adds one (patronus T1). */
+  wandCast?: number;
   onInspectCase?: (id: GalleryItemId) => void;
 }
 
@@ -325,6 +334,7 @@ function SceneCanvas({
   galleryStory = false,
   onInspectCase,
   desk,
+  wandCast = 0,
   tracker,
   onOutdoor,
 }: Omit<WorldSceneProps, "onReady" | "onProgress"> & {
@@ -461,6 +471,16 @@ function SceneCanvas({
       </Suspense>
       {/* The closed garage door's click target (dream-truck T4). */}
       <Truck focused={galleryCase === "truck"} onInspect={desk?.onInspect} />
+      {/* The Elder Wand on the collection shelf, its spell and patronus
+          (patronus T1): its mesh suspends on its own. */}
+      <Wand
+        hours={hours}
+        power={power}
+        focused={galleryCase === "wand"}
+        cast={wandCast}
+        reducedMotion={reducedMotion}
+        onInspect={desk?.onInspect}
+      />
     </Canvas>
   );
 }
@@ -812,8 +832,8 @@ interface CinematicShot {
 /**
  * The desk things approached by an eased dolly with an arc and a narrowing
  * lens, played in and out: the coffee mug (coffee-card T1), the keyboard
- * (keyboard-card T2), the garden sign (garden-sign T2) and the closed garage
- * door (dream-truck T4). Cherry's (dog-rig T3) depends on the day's spot, so
+ * (keyboard-card T2), the garden sign (garden-sign T2), the closed garage
+ * door (dream-truck T4) and the Elder Wand (patronus T1). Cherry's (dog-rig T3) depends on the day's spot, so
  * GuidedCamera builds it with cherryShot.
  */
 const CINEMATIC_SHOTS: Partial<Record<InspectItemId, CinematicShot>> = {
@@ -840,6 +860,12 @@ const CINEMATIC_SHOTS: Partial<Record<InspectItemId, CinematicShot>> = {
     leaveAt: truckLeaveAt,
     progress: truckShotProgress,
     shift: truckShotShift,
+  },
+  wand: {
+    shotAt: wandShotAt,
+    leaveAt: wandLeaveAt,
+    progress: wandShotProgress,
+    shift: wandShotShift,
   },
 };
 

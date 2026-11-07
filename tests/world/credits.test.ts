@@ -17,6 +17,7 @@ import { KATANA_MODEL } from "../../src/lib/world/katana-shelf.ts";
 import { MODEL_FILES, PROP_FILES } from "../../src/lib/world/models.ts";
 import { BRUNO_CHAIR, BRUNO_MAPS } from "../../src/lib/world/setup.ts";
 import { TV_COVERS } from "../../src/lib/world/tv-covers.ts";
+import { WAND_MODEL } from "../../src/lib/world/wand.ts";
 import {
   creditSections,
   type WorldCredits,
@@ -81,6 +82,7 @@ describe("credits.json (S4: every author is credited, even CC0)", () => {
         ...DISPLAY_MODEL_FILES,
         KATANA_MODEL.url,
         CHERRY_MODEL.url,
+        WAND_MODEL.url,
       ]
         .map((url) => url.replace("/world/", ""))
         .sort(),
@@ -712,5 +714,50 @@ describe("Cherry's credit (dog-rig T3)", () => {
     assert.ok((entry.triangles ?? 0) > 0);
     const pack = data.packs.find((item) => item.id === entry.pack);
     assert.equal(pack?.authorUrl, "https://sketchfab.com/3DChuang-Ke-Ji");
+  });
+});
+
+describe("Elder Wand credit (patronus T1)", () => {
+  it("credits Heniqueish's Elder Wand under CC BY 4.0, with the fan-tribute note", () => {
+    const data = credits();
+    const entry = data.assets.find(
+      (asset) => asset.file === "models/elder-wand.glb",
+    ) as
+      | (Credits["assets"][number] & {
+          note?: string;
+          bytes?: number;
+          sha256?: string;
+        })
+      | undefined;
+    assert.ok(entry, "credited");
+    assert.equal(entry.author, "Heniqueish");
+    assert.equal(entry.license, "CC-BY-4.0");
+    assert.equal(
+      entry.source,
+      "https://sketchfab.com/3d-models/elder-wand-37cee9fb76494799b743aea2fe41fd26",
+    );
+    assert.deepEqual(
+      entry.sourceFiles.map((file) => file.sha256),
+      ["0c1fc4f8e5ea652fe60207cf4ba1f3c35a522727b9bdd0e3d355951902671c0f"],
+    );
+    assert.equal(
+      entry.note,
+      "Harry Potter, the Elder Wand and Expecto Patronum belong to Warner Bros. and J.K. Rowling; fan tribute, no affiliation.",
+    );
+    const shipped = readFileSync(new URL("models/elder-wand.glb", PUBLIC));
+    assert.equal(entry.bytes, shipped.length);
+    assert.equal(
+      entry.sha256,
+      createHash("sha256").update(shipped).digest("hex"),
+    );
+    assert.ok(shipped.length < 1_000_000, "under 1 MB");
+    const pack = data.packs.find((item) => item.id === entry.pack);
+    assert.equal(pack?.authorUrl, "https://sketchfab.com/Heniqueish");
+    const script = readFileSync(
+      new URL("../../scripts/prepare-world.py", import.meta.url),
+      "utf8",
+    );
+    const gallery = script.match(/gallery_files = \{([^}]*)\}/)?.[1] ?? "";
+    assert.match(gallery, /elder-wand\.glb/);
   });
 });

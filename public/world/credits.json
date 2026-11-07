@@ -174,6 +174,19 @@
         "url": "https://sketchfab.com/3d-models/5db9e974fb344f39b9d1baafbdbe264c",
         "quote": "Sketchfab API (dog-rig L5): \"Dog (Miniature Pinscher \u5c0f\u9e7f\u72ac)\", uid 5db9e974fb344f39b9d1baafbdbe264c, by \"3D Creator\" (https://sketchfab.com/3DChuang-Ke-Ji), license CC Attribution (CC BY 4.0), published 2026-06-14; 65,480 faces, source archive 24,696,473 bytes, identical to the downloaded zip; Creative Commons Attribution 4.0"
       }
+    },
+    {
+      "id": "sketchfab-heniqueish-elder-wand",
+      "pack": "Elder Wand (Sketchfab)",
+      "author": "Heniqueish",
+      "authorUrl": "https://sketchfab.com/Heniqueish",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "source": "https://sketchfab.com/3d-models/elder-wand-37cee9fb76494799b743aea2fe41fd26",
+      "licenseEvidence": {
+        "url": "https://sketchfab.com/3d-models/elder-wand-37cee9fb76494799b743aea2fe41fd26",
+        "quote": "Sketchfab download (GLB, Sketchfab-12.67.0), asset extras: \"author\": \"Heniqueish (https://sketchfab.com/Heniqueish)\", \"license\": \"CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)\", \"source\": \"https://sketchfab.com/3d-models/elder-wand-37cee9fb76494799b743aea2fe41fd26\", \"title\": \"Elder Wand\"; Creative Commons Attribution 4.0"
+      }
     }
   ],
   "assets": [
@@ -917,6 +930,27 @@
           "url": "https://sketchfab.com/3d-models/5db9e974fb344f39b9d1baafbdbe264c",
           "bytes": 24696473,
           "sha256": "51c00e2139ae94cb1a208375f03ea78f1fb44c78f28b1b790c11a840c8fa277f"
+        }
+      ]
+    },
+    {
+      "file": "models/elder-wand.glb",
+      "asset": "Elder Wand (a wand, shown on the collection shelf)",
+      "pack": "sketchfab-heniqueish-elder-wand",
+      "author": "Heniqueish",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "source": "https://sketchfab.com/3d-models/elder-wand-37cee9fb76494799b743aea2fe41fd26",
+      "bytes": 369404,
+      "sha256": "ed490f439d2ee6753b25d121e3aabb7e8a88cc7941ca03d8db713b76924c48d4",
+      "triangles": 8040,
+      "changes": "Shipped as authored (geometry, material and textures unchanged; no simplification): geometry meshopt-compressed and the three textures re-encoded as WebP at 1024 px with glTF-Transform by scripts/prepare-wand.mjs; scaled to 38 cm and laid on an original dark wooden stand on the collection shelf at runtime, with an original tip glow and patronus effect.",
+      "note": "Harry Potter, the Elder Wand and Expecto Patronum belong to Warner Bros. and J.K. Rowling; fan tribute, no affiliation.",
+      "sourceFiles": [
+        {
+          "url": "https://sketchfab.com/3d-models/elder-wand-37cee9fb76494799b743aea2fe41fd26",
+          "bytes": 21284084,
+          "sha256": "0c1fc4f8e5ea652fe60207cf4ba1f3c35a522727b9bdd0e3d355951902671c0f"
         }
       ]
     }

@@ -72,6 +72,7 @@ import {
   tvMove,
   tvScreenLayout,
 } from "@/lib/world/tv-screen.ts";
+import { WAND_STORY } from "@/lib/world/wand.ts";
 import { presentWorldLoad } from "@/lib/world/world-load-presentation.ts";
 import type { WorldLoadState } from "@/lib/world/world-loading.ts";
 import {
@@ -102,6 +103,7 @@ import TruckCard from "./TruckCard";
 import TvHome from "./TvHome";
 import type { TvControl } from "./TvScreen";
 import { useCardPresence } from "./useCardPresence";
+import WandCard from "./WandCard";
 import WorldMenu, { type GuideActions } from "./WorldMenu";
 
 // Loaded only after WebGL is confirmed, so three.js never ships to clients that can't use it.
@@ -258,6 +260,13 @@ export default function WorldApp() {
   // other case; while open the camera frames left of it (T12).
   const [hiddenStory, setHiddenStory] = useState<InspectItemId | null>(null);
   const storyOpen = hiddenStory === null || hiddenStory !== galleryCase;
+  // The Elder Wand's casts this visit (patronus T1): 0 plays on arrival,
+  // Cast again adds one; leaving the wand starts the count over.
+  const [wandCast, setWandCast] = useState(0);
+  const castWand = useCallback(() => setWandCast((n) => n + 1), []);
+  useEffect(() => {
+    if (galleryCase !== "wand") setWandCast(0);
+  }, [galleryCase]);
   const setStoryOpen = useCallback(
     (open: boolean) => setHiddenStory(open ? null : galleryCase),
     [galleryCase],
@@ -949,6 +958,12 @@ export default function WorldApp() {
     GARAGE_STORY,
     reducedMotion,
   );
+  // The Elder Wand's card (patronus T1), opened from the collection shelf.
+  const wandCards = useCardPresence(
+    cardsShown && galleryCase === "wand" ? "wand" : null,
+    WAND_STORY,
+    reducedMotion,
+  );
 
   if (!webgl) {
     return (
@@ -1009,6 +1024,7 @@ export default function WorldApp() {
                 galleryCase === "cherry" ||
                 galleryCase === "sign" ||
                 galleryCase === "truck" ||
+                galleryCase === "wand" ||
                 deskProduct !== null ||
                 deskStory !== null ||
                 (caseStory !== null && storyOpen)
@@ -1019,6 +1035,7 @@ export default function WorldApp() {
                   : undefined
               }
               desk={deskControl}
+              wandCast={wandCast}
             />
           </Suspense>
         </div>
@@ -1123,6 +1140,18 @@ export default function WorldApp() {
         <TruckCard
           key={card.key}
           story={card.value}
+          onClose={() => setGalleryCase(null)}
+          state={card.state}
+          onMotionEnd={card.onMotionEnd}
+        />
+      ))}
+      {wandCards.map((card) => (
+        <WandCard
+          key={card.key}
+          story={card.value}
+          cast={wandCast}
+          reducedMotion={reducedMotion}
+          onCast={castWand}
           onClose={() => setGalleryCase(null)}
           state={card.state}
           onMotionEnd={card.onMotionEnd}
