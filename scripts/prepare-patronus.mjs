@@ -1,28 +1,34 @@
 #!/usr/bin/env node
-// Derive public/world/models/patronus-lion.glb from keh's "Lion"
-// (Sketchfab, CC BY 4.0, https://sketchfab.com/3d-models/c14548c4ac994b9981dbd31eb049e5a7;
-// 4,380 triangles, one animation), the patronus's body (patronus T1, S2).
+// Derive public/world/models/patronus-lion.glb from Walter Araujo's
+// "Lion run" (Sketchfab, CC BY 4.0,
+// https://sketchfab.com/3d-models/lion-run-1e846f8989b44d26874e2482e0f90876;
+// 19,154 triangles, a 37-joint rig and one in-place gallop, "rig|run"), the
+// patronus's body (patronus T7, which replaced keh's "Lion").
 //
 // Usage:
 //   GLTF_TRANSFORM_CLI=<cached @gltf-transform/cli 4.5.1 package dir> \
-//     node scripts/prepare-patronus.mjs <source.glb | source.gltf>
+//     node scripts/prepare-patronus.mjs <source.glb>
 //
-// The owner downloaded it from Sketchfab (lion.glb, 561,132 bytes, asset
-// extras: "Lion" by keh, CC-BY-4.0, one skin, one clip "Take 001"); copy it
-// to a fresh cache directory first: downloads are untrusted. Nothing is
-// downloaded and nothing is installed. PATRONUS.lion
-// (src/lib/world/patronus.ts) names the result, credited in
-// public/world/credits.json (and gallery_files in scripts/prepare-world.py).
+// The owner downloaded it from Sketchfab (lion_run.glb, 5,350,248 bytes,
+// asset extras: "Lion run" by Walter Araujo, CC-BY-4.0); copy it to a fresh
+// cache directory first: downloads are untrusted. Nothing is downloaded and
+// nothing is installed. PATRONUS.lion (src/lib/world/patronus.ts) names the
+// result, credited in public/world/credits.json (and gallery_files in
+// scripts/prepare-world.py).
 //
 // 1. Verify the source bytes.
 // 2. With glTF Transform's core (beside the CLI): drop the texture, its
-//    image and the UVs (the runtime draws the lion in the ghost material,
-//    which needs neither), and pin the hip's sideways and forward sway in
-//    the clip to its first key, so the lion stays on the run's path and
-//    only bobs; written next to the source as lion-ghost.glb.
+//    image, the UVs and the normals (the runtime draws the lion in the ghost
+//    material, which needs no texture, and recomputes smooth normals for its
+//    rim); without the flat normals the vertices weld, from about 56,000 to
+//    a few thousand, so the mesh can be simplified. Written next to the
+//    source as lion-ghost.glb.
+//    The gallop only rotates bones (no root motion), so the lion stays on
+//    the run's path with nothing pinned.
 // 3. Optimize that with the CLI: meshopt geometry, the rig and its clip
-//    kept, no simplification, no joining (the skinned mesh stays whole), no
-//    GPU instancing.
+//    kept, simplified to about half its triangles (a glowing ghost seen
+//    across the room needs no more), no joining (the skinned mesh stays
+//    whole), no GPU instancing.
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
@@ -30,13 +36,13 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-/** The owner's download (patronus T2). */
+/** The owner's download (patronus T7). */
 const SOURCE_SHA256 =
-  "6eefa46861f47435f4a23111e877be11ccffaab49b1be0c273d24ab8cc2be7d2";
+  "0f0d870212c30e79ca45fed40d4404a37416aee7937da1dc6c1925528c7f7c2d";
 const TARGET = join(ROOT, "public/world/models/patronus-lion.glb");
 
 if (!process.argv[2])
-  throw new Error("usage: prepare-patronus.mjs <source.glb | source.gltf>");
+  throw new Error("usage: prepare-patronus.mjs <source.glb>");
 const source = resolve(process.argv[2]);
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const digest = sha256(readFileSync(source));
@@ -62,30 +68,13 @@ for (const material of root.listMaterials()) material.setBaseColorTexture(null);
 for (const texture of root.listTextures()) texture.dispose();
 for (const mesh of root.listMeshes())
   for (const primitive of mesh.listPrimitives()) {
-    const uv = primitive.getAttribute("TEXCOORD_0");
-    primitive.setAttribute("TEXCOORD_0", null);
-    if (uv && uv.listParents().length === 1) uv.dispose();
-  }
-// The hip's translation: local x is sideways and local y forward (the
-// root bone turns it upright); local z, the height, keeps its bob.
-let pinned = 0;
-for (const animation of root.listAnimations())
-  for (const channel of animation.listChannels()) {
-    if (
-      channel.getTargetNode()?.getName() !== "b_Hip_01" ||
-      channel.getTargetPath() !== "translation"
-    )
-      continue;
-    const output = channel.getSampler().getOutput();
-    const values = output.getArray().slice();
-    for (let i = 0; i < values.length; i += 3) {
-      values[i] = values[0];
-      values[i + 1] = values[1];
+    for (const name of ["TEXCOORD_0", "NORMAL"]) {
+      const attribute = primitive.getAttribute(name);
+      primitive.setAttribute(name, null);
+      if (attribute && attribute.listParents().length === 1)
+        attribute.dispose();
     }
-    output.setArray(values);
-    pinned++;
   }
-if (pinned !== 1) throw new Error(`expected one hip track, got ${pinned}`);
 const ghost = join(dirname(source), "lion-ghost.glb");
 await io.write(ghost, document);
 
@@ -96,7 +85,15 @@ const cli = spawnSync(
     "optimize",
     ghost,
     TARGET,
-    ...["--compress", "meshopt", "--simplify", "false", "--join", "false"],
+    ...["--compress", "meshopt", "--join", "false"],
+    ...[
+      "--simplify",
+      "true",
+      "--simplify-ratio",
+      "0.5",
+      "--simplify-error",
+      "0.01",
+    ],
     ...["--instance", "false", "--palette", "false"],
   ],
   { stdio: "inherit" },

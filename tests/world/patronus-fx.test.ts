@@ -25,7 +25,7 @@ it("replays the clip from the spell clock rather than accumulating prior casts",
     new URL("../../src/components/world/Patronus.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(source, /mixer\.setTime\(\(state\.time \* 0\.75\) % 3\.4\)/);
+  assert.match(source, /mixer\.setTime\(\s*\(state\.time \* PATRONUS\.gait\)/);
   assert.doesNotMatch(source, /mixer\.update\(delta\)/);
 });
 

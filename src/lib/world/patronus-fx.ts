@@ -33,7 +33,7 @@ export function streamPoint(
 ): Vec3 {
   if (u <= 0) return [...WAND_TIP];
   if (u >= 1) return [end[0], end[1], end[2]];
-  const radius = Math.sin(Math.PI * u) * 0.09;
+  const radius = Math.sin(Math.PI * u) * 0.04;
   const phase = u * Math.PI * 5 - time * 4 + (strand * Math.PI * 2) / 3;
   return [
     WAND_TIP[0] + (end[0] - WAND_TIP[0]) * u + Math.cos(phase) * radius,

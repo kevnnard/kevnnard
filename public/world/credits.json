@@ -189,16 +189,16 @@
       }
     },
     {
-      "id": "sketchfab-keh-lion",
-      "pack": "Lion (Sketchfab)",
-      "author": "keh",
-      "authorUrl": "https://sketchfab.com/keh",
+      "id": "sketchfab-walteraraujo-lion-run",
+      "pack": "Lion run (Sketchfab)",
+      "author": "Walter Araujo",
+      "authorUrl": "https://sketchfab.com/walteraraujo",
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-      "source": "https://sketchfab.com/3d-models/c14548c4ac994b9981dbd31eb049e5a7",
+      "source": "https://sketchfab.com/3d-models/lion-run-1e846f8989b44d26874e2482e0f90876",
       "licenseEvidence": {
-        "url": "https://sketchfab.com/3d-models/c14548c4ac994b9981dbd31eb049e5a7",
-        "quote": "Sketchfab download (GLB, Sketchfab-12.67.0), asset extras: \"author\": \"keh (https://sketchfab.com/keh)\", \"license\": \"CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)\", \"source\": \"https://sketchfab.com/3d-models/lion-c14548c4ac994b9981dbd31eb049e5a7\", \"title\": \"Lion\"; Creative Commons Attribution 4.0"
+        "url": "https://sketchfab.com/3d-models/lion-run-1e846f8989b44d26874e2482e0f90876",
+        "quote": "Sketchfab download (GLB), asset extras: \"author\": \"Walter Araujo (https://sketchfab.com/walteraraujo)\", \"license\": \"CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)\", \"source\": \"https://sketchfab.com/3d-models/lion-run-1e846f8989b44d26874e2482e0f90876\", \"title\": \"Lion run\"; Creative Commons Attribution 4.0"
       }
     }
   ],
@@ -969,22 +969,22 @@
     },
     {
       "file": "models/patronus-lion.glb",
-      "asset": "Lion (the Elder Wand's ghostly patronus)",
-      "pack": "sketchfab-keh-lion",
-      "author": "keh",
+      "asset": "Lion run (the Elder Wand's ghostly patronus)",
+      "pack": "sketchfab-walteraraujo-lion-run",
+      "author": "Walter Araujo",
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-      "source": "https://sketchfab.com/3d-models/c14548c4ac994b9981dbd31eb049e5a7",
-      "bytes": 78524,
-      "sha256": "13eccf23a6f6d8a593eea096a931cc48a5603c53783ba4597b03dbe1a9b318ae",
-      "triangles": 4380,
-      "changes": "Geometry, rig and its one clip kept (no simplification); its texture, image and UVs dropped and the hip's sideways and forward sway in the clip pinned to its first key, then meshopt-compressed with glTF-Transform by scripts/prepare-patronus.mjs; drawn at runtime in an original translucent silver-blue ghost material with particles, about 1 m at the shoulder.",
+      "source": "https://sketchfab.com/3d-models/lion-run-1e846f8989b44d26874e2482e0f90876",
+      "bytes": 78136,
+      "sha256": "7aba452ffc9e88e94e634efe234c9944bf4110044e5afa393cc3f9d4c2e0409b",
+      "triangles": 9567,
+      "changes": "Rig and its one gallop clip kept; its texture, image, UVs and flat normals dropped so the vertices weld, then simplified to about half its triangles and meshopt-compressed with glTF-Transform by scripts/prepare-patronus.mjs; drawn at runtime in an original translucent silver ghost material with smooth recomputed normals, about 0.7 m tall.",
       "note": "Harry Potter and Expecto Patronum belong to Warner Bros. and J.K. Rowling; fan tribute, no affiliation.",
       "sourceFiles": [
         {
-          "url": "https://sketchfab.com/3d-models/c14548c4ac994b9981dbd31eb049e5a7",
-          "bytes": 561132,
-          "sha256": "6eefa46861f47435f4a23111e877be11ccffaab49b1be0c273d24ab8cc2be7d2"
+          "url": "https://sketchfab.com/3d-models/lion-run-1e846f8989b44d26874e2482e0f90876",
+          "bytes": 5350248,
+          "sha256": "0f0d870212c30e79ca45fed40d4404a37416aee7937da1dc6c1925528c7f7c2d"
         }
       ]
     }

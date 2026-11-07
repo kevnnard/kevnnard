@@ -83,13 +83,13 @@ The spoken "Expecto Patronum" is a 3.5 s clip from the Harry Potter films (Warne
 
 ## Flowing light and mist (T3, T4)
 
-`patronus-fx.ts` provides smooth formation, stream and dissolve envelopes. `PatronusFx.tsx` draws four light filaments from the actual wand tip to the lion's chest, so a beam links the wand and the patronus while it forms and runs off (until about 2.8 s). Big, dim, short-lived sprites over the body work as a bloom-like aura. The lion's material uses metre-scale moving light bands and a soft Fresnel rim; the previous rapid flicker and scale-dependent glitter are removed. Larger, dimmer soft particles supply mist around the body, while fine sparks drift upward at the end. Surface particles sample the animated skin, not the undeformed mesh. Particle pools are bounded and disposed on unmount. Reduced motion keeps its existing static tip glow without particles or the lion.
+`patronus-fx.ts` provides smooth formation, stream and dissolve envelopes. `PatronusFx.tsx` draws four thin light filaments from the actual wand tip to the lion's chest, so a beam links the wand and the patronus while it forms and runs off (until about 2.8 s). The earlier blotchy blue aura is gone: the glow is the silver rim, fine trailing wisps and a faint mist. The lion's material uses metre-scale moving light bands and a soft Fresnel rim; the previous rapid flicker and scale-dependent glitter are removed. Larger, dimmer soft particles supply mist around the body, while fine sparks drift upward at the end. Surface particles sample the animated skin, not the undeformed mesh. Particle pools are bounded and disposed on unmount. Reduced motion keeps its existing static tip glow without particles or the lion.
 
 ## The patronus
 
 The ghost material is additive and translucent. Its Fresnel rim and slowly moving internal light dissolve smoothly by noise, without a strobe. Wisps trail off the body and burst out as it dissolves. A faint light follows it across the floor.
 
-The body is keh's lion. It is 1.15 m tall to the top of its mane, about 0.78 m at the shoulder and about 2.1 m from nose to tail tip, so it reads clearly without filling the room. It is drawn in the ghost material, facing +z as authored. Its one clip ("Take 001", 8 s) is sampled from the spell clock through an AnimationMixer. Each recast resets to the same first frames instead of accumulating into the later rearing sequence. The run is long and calm, so the stride plays at 0.75× and loops the clip's opening 3.4 s; the clip rears up after about 6 s. The hip's sideways and forward sway is pinned in the file, so the lion stays on the path and only bobs.
+The body is Walter Araujo's "Lion run". It is 0.7 m tall to the top of its head, about the size of a big dog, drawn in the ghost material with smooth recomputed normals, facing +z as authored. Its one clip ("rig|run") is a single 0.4 s in-place gallop stride with no root motion; it loops at `PATRONUS.gait` (0.45, about 0.9 s per stride), sampled from the spell clock so every cast starts on the same stride.
 
 It runs about 7 m in 7 s, along a Catmull-Rom curve through these points. All points after the second are at floor level, y = 0.19:
 
@@ -99,12 +99,12 @@ That route leaps off the shelf, passes in front of the display cases, goes aroun
 
 ## The lion
 
-"Lion" by keh (https://sketchfab.com/keh), https://sketchfab.com/3d-models/c14548c4ac994b9981dbd31eb049e5a7, CC BY 4.0.
+"Lion run" by Walter Araujo (https://sketchfab.com/walteraraujo), https://sketchfab.com/3d-models/lion-run-1e846f8989b44d26874e2482e0f90876, CC BY 4.0. It replaced keh's "Lion" (patronus T7), whose only clip was a pounce rather than a run.
 
 | | Value |
 | --- | --- |
-| Source | `lion.glb` from Sketchfab: 561,132 bytes, sha256 `6eefa468…e7d2`, 4,380 triangles, 28 joints, clip "Take 001" |
-| Shipped | 78,524 bytes, sha256 `13eccf23…18ae`. Meshopt geometry, no texture and no UVs |
+| Source | `lion_run.glb` from Sketchfab: 5,350,248 bytes, sha256 `0f0d8702…7c2d`, 19,154 triangles, 37 joints, clip "rig\|run" (0.4 s) |
+| Shipped | 78,136 bytes, about 9,570 triangles. Texture, UVs and flat normals dropped so the vertices weld, then simplified to about half and meshopt-compressed |
 
 To rebuild it, copy the download to a fresh cache directory, then run:
 

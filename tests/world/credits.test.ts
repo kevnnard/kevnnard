@@ -765,7 +765,7 @@ describe("Elder Wand credit (patronus T1)", () => {
 });
 
 describe("patronus lion credit (patronus T2)", () => {
-  it("credits keh's Lion under CC BY 4.0, from the pinned download", () => {
+  it("credits Walter Araujo's Lion run under CC BY 4.0, from the pinned download", () => {
     const data = credits();
     const entry = data.assets.find(
       (asset) => asset.file === "models/patronus-lion.glb",
@@ -773,15 +773,15 @@ describe("patronus lion credit (patronus T2)", () => {
       | (Credits["assets"][number] & { bytes?: number; sha256?: string })
       | undefined;
     assert.ok(entry, "credited");
-    assert.equal(entry.author, "keh");
+    assert.equal(entry.author, "Walter Araujo");
     assert.equal(entry.license, "CC-BY-4.0");
     assert.equal(
       entry.source,
-      "https://sketchfab.com/3d-models/c14548c4ac994b9981dbd31eb049e5a7",
+      "https://sketchfab.com/3d-models/lion-run-1e846f8989b44d26874e2482e0f90876",
     );
     assert.deepEqual(
       entry.sourceFiles.map((file) => file.sha256),
-      ["6eefa46861f47435f4a23111e877be11ccffaab49b1be0c273d24ab8cc2be7d2"],
+      ["0f0d870212c30e79ca45fed40d4404a37416aee7937da1dc6c1925528c7f7c2d"],
     );
     const shipped = readFileSync(new URL("models/patronus-lion.glb", PUBLIC));
     assert.equal(entry.bytes, shipped.length);
@@ -789,8 +789,12 @@ describe("patronus lion credit (patronus T2)", () => {
       entry.sha256,
       createHash("sha256").update(shipped).digest("hex"),
     );
+    assert.ok(
+      !data.packs.some((item) => item.id === "sketchfab-keh-lion"),
+      "the retired lion is no longer credited",
+    );
     const pack = data.packs.find((item) => item.id === entry.pack);
-    assert.equal(pack?.authorUrl, "https://sketchfab.com/keh");
+    assert.equal(pack?.authorUrl, "https://sketchfab.com/walteraraujo");
     const script = readFileSync(
       new URL("../../scripts/prepare-world.py", import.meta.url),
       "utf8",
@@ -802,7 +806,7 @@ describe("patronus lion credit (patronus T2)", () => {
         new URL("../../scripts/prepare-patronus.mjs", import.meta.url),
         "utf8",
       ),
-      /6eefa46861f47435f4a23111e877be11ccffaab49b1be0c273d24ab8cc2be7d2/,
+      /0f0d870212c30e79ca45fed40d4404a37416aee7937da1dc6c1925528c7f7c2d/,
     );
   });
 });

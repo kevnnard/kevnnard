@@ -747,7 +747,7 @@ def kept_credits(credits, previous):
     # Cherry is 3D Creator's Miniature Pinscher (dog-rig T3), rigged and
     # animated by scripts/prepare-dog.mjs; the Elder Wand is Heniqueish's
     # (patronus T1), derived by scripts/prepare-wand.mjs, and its patronus
-    # is keh's Lion (patronus T2), derived by scripts/prepare-patronus.mjs.
+    # is Walter Araujo's Lion run (patronus T7), derived by scripts/prepare-patronus.mjs.
     credits = dict(credits)
     gallery_files = {"models/display-offroad-helmet.glb",
                      "models/display-football-helmet.glb",

@@ -141,6 +141,10 @@ function useLionModel(url: string, material: ShaderMaterial): PatronusModel {
         const mesh = node as Mesh;
         mesh.material = material;
         mesh.frustumCulled = false;
+        // The prepared lion ships without its flat normals (they kept its
+        // vertices from welding); smooth ones give the ghost a soft rim.
+        if (!mesh.geometry.getAttribute("normal"))
+          mesh.geometry.computeVertexNormals();
         meshes.push(mesh);
       }
     });
@@ -166,11 +170,12 @@ function useLionModel(url: string, material: ShaderMaterial): PatronusModel {
     const point = new Vector3();
     return {
       object: root,
-      // Recasts must replay the same gait, not continue into the clip's
-      // later rearing/pounce sequence. The spell clock is authoritative.
-      // A slower, looping stride over the clip's opening gait: the run is
-      // long and calm now, and the clip rears up after ~6 s.
-      update: (_delta, state) => mixer.setTime((state.time * 0.75) % 3.4),
+      // The gallop loops at PATRONUS.gait, replayed from the spell clock so
+      // every cast starts on the same stride.
+      update: (_delta, state) =>
+        mixer.setTime(
+          (state.time * PATRONUS.gait) % Math.max(clip?.duration ?? 1, 1e-3),
+        ),
       sample: (out) => {
         const mesh = meshes[Math.floor(Math.random() * meshes.length)];
         const position = mesh?.geometry.getAttribute("position");
@@ -310,11 +315,8 @@ function PatronusRun({
   castAt: RefObject<number | null>;
 }) {
   const invalidate = useThree((state) => state.invalidate);
-  const wisps = useMemo(() => new GhostParticles(700, 0.085, PATRONUS.rim), []);
-  const mist = useMemo(() => new GhostParticles(140, 0.5, "#3b5f8f"), []);
-  // A soft aura: big, dim, short-lived sprites on the body read as bloom.
-  const aura = useMemo(() => new GhostParticles(220, 0.6, "#24497a"), []);
-  const auraCarry = useRef(0);
+  const wisps = useMemo(() => new GhostParticles(400, 0.03, PATRONUS.rim), []);
+  const mist = useMemo(() => new GhostParticles(80, 0.22, "#22344d"), []);
   const carry = useRef(0);
   const mistCarry = useRef(0);
   const light = useRef<PointLight>(null);
@@ -324,10 +326,9 @@ function PatronusRun({
     () => () => {
       wisps.dispose();
       mist.dispose();
-      aura.dispose();
       model.dispose();
     },
-    [wisps, mist, aura, model],
+    [wisps, mist, model],
   );
   useEffect(() => invalidate(), [invalidate]);
   useFrame((frame, delta) => {
@@ -348,7 +349,7 @@ function PatronusRun({
       material.uniforms.uDissolve.value = state.dissolve;
       material.uniforms.uTime.value = now;
       // Wisps trail off the body; a burst as it dissolves.
-      carry.current += (160 + 260 * state.dissolve) * Math.min(delta, 0.05);
+      carry.current += (50 + 200 * state.dissolve) * Math.min(delta, 0.05);
       while (carry.current >= 1) {
         carry.current--;
         model.sample(tmp);
@@ -359,14 +360,7 @@ function PatronusRun({
         );
         wisps.emit(tmp, drift, 1 + Math.random() * 0.8);
       }
-      auraCarry.current += 420 * state.opacity * Math.min(delta, 0.05);
-      while (auraCarry.current >= 1) {
-        auraCarry.current--;
-        model.sample(tmp);
-        drift.set(0, 0, 0);
-        aura.emit(tmp, drift, 0.3);
-      }
-      mistCarry.current += 70 * envelope.mist * Math.min(delta, 0.05);
+      mistCarry.current += 25 * envelope.mist * Math.min(delta, 0.05);
       while (mistCarry.current >= 1) {
         mistCarry.current--;
         model.sample(tmp);
@@ -391,15 +385,13 @@ function PatronusRun({
     }
     const particles = wisps.update(Math.min(delta, 0.05));
     const fog = mist.update(Math.min(delta, 0.05), 0.08);
-    const glow = aura.update(Math.min(delta, 0.05), 0);
-    if (state || particles || fog || glow) frame.invalidate();
+    if (state || particles || fog) frame.invalidate();
   });
   return (
     <>
       <primitive object={model.object} />
       <primitive object={wisps.points} />
       <primitive object={mist.points} />
-      <primitive object={aura.points} />
       {/* Always mounted, zero when it is not out: no shader recompiles. */}
       <pointLight
         ref={light}
@@ -426,7 +418,7 @@ function Lion({
 }
 
 /**
- * The patronus (patronus T1, T2): keh's lion (PATRONUS.lion), nothing
+ * The patronus (patronus T1, T2): Walter Araujo's galloping lion (PATRONUS.lion), nothing
  * while it loads. Off under reduced motion.
  */
 export default function Patronus({

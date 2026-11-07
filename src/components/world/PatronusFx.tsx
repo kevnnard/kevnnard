@@ -30,7 +30,7 @@ export default function PatronusFx({
     const material = new PointsMaterial({
       map: texture,
       color: "#d9eeff",
-      size: 0.1,
+      size: 0.035,
       transparent: true,
       opacity: 0,
       blending: AdditiveBlending,
@@ -38,7 +38,7 @@ export default function PatronusFx({
     });
     const points = new Points(geometry, material);
     points.frustumCulled = false;
-    const mist = new GhostParticles(90, 0.35, "#4a74a8");
+    const mist = new GhostParticles(60, 0.16, "#22344d");
     return {
       points,
       positions,
@@ -64,7 +64,7 @@ export default function PatronusFx({
     const t =
       castAt.current === null ? -1 : performance.now() / 1000 - castAt.current;
     const envelope = patronusFxAt(t, reducedMotion);
-    fx.material.opacity = envelope.stream * 0.9;
+    fx.material.opacity = envelope.stream * 0.65;
     fx.points.visible = envelope.stream > 0;
     if (envelope.stream > 0) {
       const target = patronusAt(

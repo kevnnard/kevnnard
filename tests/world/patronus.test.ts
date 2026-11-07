@@ -98,7 +98,7 @@ describe("ghost lion patronus (patronus T1)", () => {
     assert.ok(Math.abs(diff) < 0.2);
   });
 
-  it("is keh's lion, drawn in the ghost material, under 1 m at the shoulder", () => {
+  it("is a galloping lion about 0.7 m tall, drawn in the ghost material", () => {
     assert.equal(PATRONUS.lion, "/world/models/patronus-lion.glb");
     const file = new URL(
       "../../public/world/models/patronus-lion.glb",
@@ -106,17 +106,20 @@ describe("ghost lion patronus (patronus T1)", () => {
     );
     assert.ok(existsSync(file));
     const bytes = readFileSync(file);
-    assert.ok(bytes.length < 400_000, "small: no textures");
+    assert.ok(bytes.length < 600_000, "small: no textures");
     const json = JSON.parse(
       bytes.toString("utf8", 20, 20 + bytes.readUInt32LE(12)),
     );
     assert.equal(json.images?.length ?? 0, 0, "textures dropped");
     assert.equal(json.skins?.length, 1, "rigged");
-    assert.equal(json.animations?.length, 1, "its clip kept");
-    const shoulder = PATRONUS.lionHeight * PATRONUS.lionShoulder;
+    assert.deepEqual(
+      json.animations?.map((clip: { name: string }) => clip.name),
+      ["rig|run"],
+      "its gallop kept",
+    );
     assert.ok(
-      shoulder > 0.7 && shoulder < 0.9,
-      `room-sized: shoulder ${shoulder}`,
+      PATRONUS.lionHeight >= 0.6 && PATRONUS.lionHeight <= 0.8,
+      `the size of a big dog: ${PATRONUS.lionHeight} m`,
     );
     assert.ok(
       FLOOR + PATRONUS.lionHeight < HOUSE.floorY + HOUSE.main.height,
@@ -128,5 +131,9 @@ describe("ghost lion patronus (patronus T1)", () => {
     assert.match(view, /fresnel/i);
     assert.match(view, /AnimationMixer/);
     assert.doesNotMatch(view, /placeholder/i, "no placeholder left");
+    // The gallop loops at a pace matched to the run, replayed from the
+    // spell clock; the blue blotch aura is gone.
+    assert.match(view, /PATRONUS\.gait/);
+    assert.doesNotMatch(view, /aura/);
   });
 });

@@ -4,7 +4,7 @@
 // (past the cases, round the sofa, between the coffee table and the TV)
 // and dissolves into particles, about 3.6 s in all. It reads from a
 // distance: translucent, additive, a fresnel rim, wisps trailing, a slight
-// flicker (Patronus.tsx). The body is the owner's lion ("Lion" by keh,
+// flicker (Patronus.tsx). The body is the owner's lion ("Lion run" by Walter Araujo,
 // Sketchfab, CC BY 4.0), prepared by scripts/prepare-patronus.mjs (patronus
 // T2). Not under reduced motion. Pure numbers.
 
@@ -25,12 +25,16 @@ export const PATRONUS = {
   /** The last seconds, dissolving into particles. */
   dissolve: 1.2,
   /**
-   * The lion's height to the top of its mane, metres: about 1 m at the
-   * shoulder (keh's lion has its shoulder joint at 0.674 of its height),
-   * 2.75 m from nose to tail tip; under the walls' top.
+   * The lion's height to the top of its head, metres: about the size of a
+   * big dog, small enough to run through the room without filling it.
    */
-  lionHeight: 1.15,
-  lionShoulder: 118.7 / 176.2,
+  lionHeight: 0.7,
+  /**
+   * The gallop's pace: clip seconds per second of the run. The clip is one
+   * 0.4 s stride; at 0.45 a stride takes about 0.9 s, a dreamy, slightly
+   * slowed gallop that roughly matches the lion's 1 m/s along the path.
+   */
+  gait: 0.45,
   color: "#bcd8ff",
   rim: "#eef6ff",
   /** The prepared lion (scripts/prepare-patronus.mjs). */
