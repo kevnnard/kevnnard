@@ -1,0 +1,79 @@
+{
+  "sounds": [
+    {
+      "id": "swish",
+      "author": "pyranostudios",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source": "https://opengameart.org/content/air-whoosh",
+      "sourceFile": "https://opengameart.org/sites/default/files/whoosh2_0.wav",
+      "sourceSha256": "d3fbff5bb78b289af16b2dfa29083f07ef83b0cbaff4514c48dfda16d082b468",
+      "licenseEvidence": {
+        "url": "https://opengameart.org/content/air-whoosh",
+        "quote": "License(s): CC0"
+      },
+      "files": [
+        {
+          "file": "/world/audio/spell/swish.ogg",
+          "bytes": 9032,
+          "sha256": "b2e7b07a688643f018b884e6d26562ca2400182c68e4803c4a39ce369b2d65b9"
+        },
+        {
+          "file": "/world/audio/spell/swish.mp3",
+          "bytes": 8507,
+          "sha256": "a8bce6d109fe66a67bf45938a0e2647f54cbc50c0dece0c901f7f2d1fde149fc"
+        }
+      ]
+    },
+    {
+      "id": "burst",
+      "author": "JaggedStone",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source": "https://opengameart.org/content/magic-spell-sfx",
+      "sourceFile": "https://opengameart.org/sites/default/files/magical_4.ogg",
+      "sourceSha256": "b7862d109b4013dfb2a389a10f8917203beb0efc458444bc5a1b8ada605cc118",
+      "licenseEvidence": {
+        "url": "https://opengameart.org/content/magic-spell-sfx",
+        "quote": "License(s): CC0"
+      },
+      "files": [
+        {
+          "file": "/world/audio/spell/burst.ogg",
+          "bytes": 17724,
+          "sha256": "e150a5bf68745a3354fb0c3c3d0d1611a62c3dcb75c7c57f5f995b6ee2e890b0"
+        },
+        {
+          "file": "/world/audio/spell/burst.mp3",
+          "bytes": 29510,
+          "sha256": "91ce7794e1b3bf396a6c414ab213c1328aecf58e8e4162564624bbaf39fdc49d"
+        }
+      ]
+    },
+    {
+      "id": "ambience",
+      "author": "JaggedStone",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source": "https://opengameart.org/content/magic-spell-sfx",
+      "sourceFile": "https://opengameart.org/sites/default/files/magical_7_0.ogg",
+      "sourceSha256": "2817da4f5df69ff993baffd6594a2f2a069f85ee2a02019f97db2246e350a76b",
+      "licenseEvidence": {
+        "url": "https://opengameart.org/content/magic-spell-sfx",
+        "quote": "License(s): CC0"
+      },
+      "files": [
+        {
+          "file": "/world/audio/spell/ambience.ogg",
+          "bytes": 16462,
+          "sha256": "acb0f4159d7c6a2c296cf3dd76d22caa1288ddb63f244edac76adc37a0de9b33"
+        },
+        {
+          "file": "/world/audio/spell/ambience.mp3",
+          "bytes": 26062,
+          "sha256": "07af1598846af2c327e87d67c188ebac8e1c7119ddf3f45ad77695b5d61f5d89"
+        }
+      ]
+    }
+  ]
+}

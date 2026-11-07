@@ -94,7 +94,9 @@ describe("curated world credits", () => {
 
   it("credits the four CC0 ambient sounds with author, license and source", () => {
     const data = shipped();
-    const ambient = creditSections(data).ambient;
+    const ambient = creditSections(data).ambient.filter((sound) =>
+      sound.file.includes("/ambient/"),
+    );
     assert.equal(ambient.length, 4);
     assert.deepEqual(
       ambient.map((sound) => sound.name),
