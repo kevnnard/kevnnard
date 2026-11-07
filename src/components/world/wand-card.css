@@ -15,14 +15,72 @@
 }
 
 .wand-card-line {
-  margin: 10px 0;
-  padding-left: 14px;
+  margin: 8px 0;
+  padding-left: 12px;
   border-left: 2px solid rgb(186 214 255 / 0.55);
-  font-size: 14px;
-  line-height: 21px;
+  font-size: 13px;
+  line-height: 19px;
+}
+/* Short screens scroll the card: a quiet dark scrollbar, not the default. */
+.case-story.wand-card {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(186 214 255 / 0.3) transparent;
 }
 .wand-card-line + .wand-card-line {
   margin-top: -6px;
+}
+
+/* The films (patronus T8): a small caps label over chips, oldest first. */
+.wand-card-label {
+  margin: 10px 0 4px;
+  color: hsl(var(--muted-foreground));
+  font-size: 11px;
+  line-height: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.wand-card-films {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.wand-card-films li {
+  padding: 2px 8px;
+  border: 1px solid rgb(186 214 255 / 0.35);
+  border-radius: var(--radius-md);
+  background: hsl(var(--background));
+  font-size: 12px;
+  line-height: 16px;
+}
+.wand-card-films span {
+  color: hsl(var(--muted-foreground));
+}
+
+/* Two facts: the wand and the charm. */
+.wand-card-lore {
+  display: grid;
+  gap: 4px;
+  margin: 10px 0 2px;
+  font-size: 12.5px;
+  line-height: 18px;
+}
+.wand-card-lore dt,
+.wand-card-lore dd {
+  display: inline;
+  margin: 0;
+}
+.wand-card-lore dt {
+  font-weight: 600;
+  color: #dceaff;
+}
+.wand-card-lore dt::after {
+  content: " ·";
+}
+.wand-card-lore dd {
+  color: hsl(var(--muted-foreground));
 }
 
 /* The words, over the left of the scene where the wand lies. */

@@ -197,7 +197,12 @@ export function wandSpellAt(t: number, reducedMotion: boolean): SpellState {
 export interface WandStory {
   kicker: string;
   title: string;
+  /** Why this corner exists: the owner is a fan. */
   lines: readonly string[];
+  filmsLabel: string;
+  films: readonly { title: string; year: number }[];
+  /** Short facts about the wand and the charm. */
+  lore: readonly { term: string; text: string }[];
   spell: string;
 }
 
@@ -205,8 +210,29 @@ export const WAND_STORY: WandStory = {
   kicker: "COLLECTION · ELDER WAND",
   title: "Expecto Patronum",
   lines: [
-    "Harry Potter has been part of my life since I was a kid.",
-    "My patronus is a lion.",
+    "Harry Potter has been part of my life since I was a kid: the books, the films, the music. I'm a big fan.",
+    "So this corner of my open world recreates one of its most iconic moments: the Elder Wand casting the Patronus Charm. My patronus is a lion.",
+  ],
+  filmsLabel: "The eight films",
+  films: [
+    { title: "Philosopher's Stone", year: 2001 },
+    { title: "Chamber of Secrets", year: 2002 },
+    { title: "Prisoner of Azkaban", year: 2004 },
+    { title: "Goblet of Fire", year: 2005 },
+    { title: "Order of the Phoenix", year: 2007 },
+    { title: "Half-Blood Prince", year: 2009 },
+    { title: "Deathly Hallows – Part 1", year: 2010 },
+    { title: "Deathly Hallows – Part 2", year: 2011 },
+  ],
+  lore: [
+    {
+      term: "The wand",
+      text: "The Elder Wand, the most powerful of the three Deathly Hallows.",
+    },
+    {
+      term: "The charm",
+      text: "Expecto Patronum conjures a guardian of silver light. Harry first casts a full one in Prisoner of Azkaban.",
+    },
   ],
   spell: "Expecto Patronum",
 };

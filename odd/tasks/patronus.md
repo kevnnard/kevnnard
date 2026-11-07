@@ -17,7 +17,10 @@ S7. "busca un sonido libre" -> no free recording exists (Freesound 0 results; ev
 
 S8. "el modelo del leon par aun mucho mas pequeno y la animacion no me comvence nada de nada"; answers: size "Más chico aún" (about 0.7 m); what fails: "El movimiento del león, El efecto de luz, Todo junto". Owner chose candidate 1, "Lion run" by Walter Araujo (CC BY 4.0), "va".
 
+S9. "uf claro que diferencia tan grande geniall si me gusta, ahora en la card agregemos mas info de la peleiculas que me gustan que soy faantico y por eso el esapcio y recreando algo icono en mi mundo abierto" (more on the card: the films, that the owner is a fan, why this space exists, recreating something iconic in the open world).
+
 ## Tasks
+T8 [S9] DONE (parent) — Card: why this corner exists, the eight films as chips with years, two facts (the wand, the charm). No favorite film claimed (not given).
 T7 [S8] DONE (parent) — Replace keh's pounce clip with Walter Araujo's in-place gallop (lion_run.glb, 5,350,248 B, sha256 0f0d8702…7c2d), 0.7 m tall, gait loop 0.45; drop the blue aura, thinner beam and wisps, faint mist.
 T6 [S7] DONE (parent) — Voice clip from ~/Downloads/8d82b5_Harry_Potter_Expecto_Patronum_Sound_Effect.mp3 (74,395 B, sha256 59fe9187…adc4), trimmed to voice.mp3 (42,362 B), played at the spell start, credited.
 T5 [S6] DONE (parent) — Lion down to 1.15 m (0.78 m shoulder). Film voice not shipped (copyright); the SPELL_VOICE hook stays null until the owner records or picks a licensed voice.
@@ -39,3 +42,5 @@ L6. Review boundaries: T3 audio is isolated in signed commit 8f43e1d (one cohesi
 L7. T4 evidence: headless swiftshader renders 1-2 fps, so wall-clock screenshots froze at the close-up (false negative). Virtual-time capture (design/.patronus/spell-sequence.jpg, t=1.4/2.6/4.2/6.0 s) shows the light burst at the shelf, the lion forming with aura, the wide chase and the larger lion running. Full suite 1214 pass, 0 fail, 1 AAC skip.
 
 L8. T7 evidence: virtual-time capture (design/.patronus/spell-sequence.jpg at 1.4/2.6/4.2/6.0 s) shows the 0.7 m silver lion leaping off the shelf and galloping past the cases and the coffee table, with a clean silver rim and fine wisps, no blue blotches. Full suite 1214 pass, 0 fail, 1 AAC skip.
+
+L9. T8 evidence: browser capture at 900x560 (design/.patronus/wand-card.jpg): story lines, eight film chips with years, the wand and charm facts, dark thin scrollbar; at that short height the buttons need a short scroll, taller screens fit it. Full suite 1214 pass.

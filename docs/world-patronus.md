@@ -8,7 +8,7 @@ Harry Potter, the Elder Wand and Expecto Patronum belong to Warner Bros. and J.K
 
 | What | File |
 | --- | --- |
-| Wand placement, stand, click box, accent light, spell timing, card copy | `src/lib/world/wand.ts` |
+| Wand placement, stand, click box, accent light, spell timing, card copy (why this corner exists, the eight films, two facts) | `src/lib/world/wand.ts` |
 | Close-up camera and the chase | `src/lib/world/wand-shot.ts` (uses `cinematic.ts`) |
 | Spell sounds | `src/lib/world/spell-sound.ts` |
 | Patronus path and timing | `src/lib/world/patronus.ts` |

@@ -10,7 +10,9 @@ import "./wand-card.css";
  * The Elder Wand's card (patronus T1), beside its close-up: Cherry's card
  * family (case-story.css supplies the panel, kicker, actions, focus rings,
  * card motion and the footprint the camera frames the wand left of). A
- * kicker, "Expecto Patronum" and two lines; "Cast again" plays the spell
+ * kicker, "Expecto Patronum", why the owner (a fan) built this corner, the
+ * eight films as chips and two facts about the wand and the charm (patronus
+ * T8); "Cast again" plays the spell
  * once more and "Back to room" leaves, taking focus as the card opens. No
  * images. The words also show briefly over the scene, left of the card,
  * as the spell plays (`cast` counts the casts; the first waits for the
@@ -74,6 +76,21 @@ export default function WandCard({
             {line}
           </p>
         ))}
+        <p className="wand-card-label">{story.filmsLabel}</p>
+        <ol className="wand-card-films">
+          {story.films.map((film) => (
+            <li key={film.title}>
+              {film.title} <span>{film.year}</span>
+            </li>
+          ))}
+        </ol>
+        <dl className="wand-card-lore">
+          {story.lore.map((fact) => (
+            <div key={fact.term}>
+              <dt>{fact.term}</dt> <dd>{fact.text}</dd>
+            </div>
+          ))}
+        </dl>
         <div className="case-story-actions">
           <button type="button" onClick={onCast}>
             Cast again
