@@ -79,7 +79,7 @@ Three local CC0 samples replace the procedural tones. Nothing is requested until
 
 Run `node scripts/prepare-spell-sounds.mjs` to fetch the pinned source bytes into a fresh repository cache directory and convert with ffmpeg. The script checks each source SHA-256 before processing. Outputs, hashes, license evidence and authors are in `public/world/audio/spell/manifest.json`; the authors and source links also appear in the menu's sound credits. Each codec file is under 30 KB.
 
-`SPELL_VOICE: string | null = null` disables the optional voice recording. No absent voice URL is fetched. To add a properly licensed recording, ship its local URL and configure this constant. The site has no shared sound-effect mute; the spell uses its own conservative gain, as before. Reduced motion changes visuals, not audio.
+The spoken "Expecto Patronum" is a 3.5 s clip from the Harry Potter films (Warner Bros.), trimmed past its lead-in whoosh by `scripts/prepare-spell-voice.mjs` (pinned source hash) into `public/world/audio/spell/voice.mp3`, 42 KB. It starts as the tip lights. The owner chose to ship it as a fan tribute and accepts the copyright risk; it is credited in the menu. To remove it, set `SPELL_VOICE` to `null` in `spell-sound.ts` and delete the file.
 
 ## Flowing light and mist (T3, T4)
 

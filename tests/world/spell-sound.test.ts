@@ -93,7 +93,7 @@ describe("spell sounds (patronus T3)", () => {
       PATRONUS.start,
       PATRONUS.start + PATRONUS.duration,
     ]);
-    assert.equal(plan.voice, null, "no voice clip ships");
+    assert.equal(plan.voice, 0, "the words start as the tip lights");
   });
 
   it("fades the ambience in, holds it, and lets it go as the patronus dissolves", () => {
@@ -152,7 +152,7 @@ describe("spell sounds (patronus T3)", () => {
     }
   });
 
-  it("loads the recordings in the click, never the absent voice clip", async () => {
+  it("loads the recordings and the voice in the click", async () => {
     const { context, started } = fakeContext();
     const requests: string[] = [];
     const sound = createSpellSound({
@@ -169,8 +169,8 @@ describe("spell sounds (patronus T3)", () => {
       SPELL_SAMPLES.ambience[0],
       SPELL_SAMPLES.burst[0],
       SPELL_SAMPLES.swish[0],
+      SPELL_VOICE,
     ]);
-    assert.ok(!requests.some((url) => /expecto-patronum/.test(url)));
     sound.cast(3.8);
     await tick();
     const names = started.map(
@@ -180,6 +180,7 @@ describe("spell sounds (patronus T3)", () => {
       SPELL_SAMPLES.ambience[0],
       SPELL_SAMPLES.burst[0],
       SPELL_SAMPLES.swish[0],
+      SPELL_VOICE,
     ]);
     const ambience = started.find(
       (s) => (s.buffer as { name: string }).name === SPELL_SAMPLES.ambience[0],
@@ -227,12 +228,19 @@ describe("spell sounds (patronus T3)", () => {
     await tick();
   });
 
-  it("keeps a typed hook for an optional voice clip, off by default", () => {
-    assert.equal(SPELL_VOICE, null);
-    assert.match(
-      source("src/lib/world/spell-sound.ts"),
-      /export const SPELL_VOICE: string \| null = null;/,
+  it("ships the spoken words as a small clip, credited to Warner Bros.", () => {
+    assert.equal(SPELL_VOICE, "/world/audio/spell/voice.mp3");
+    const file = new URL(`../../public${SPELL_VOICE}`, import.meta.url);
+    assert.ok(existsSync(file));
+    assert.ok(statSync(file).size < 100_000);
+    const credits = JSON.parse(
+      source("public/world/credits.json"),
+    ) as WorldCredits;
+    const entry = creditSections(credits).ambient.find(
+      (s) => s.file === SPELL_VOICE,
     );
+    assert.ok(entry, "voice visible in menu credits");
+    assert.match(entry.author, /Warner Bros\./);
   });
 
   it("is wired to the wand's click and its spell clock", () => {

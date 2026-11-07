@@ -1913,6 +1913,25 @@
           "sha256": "2817da4f5df69ff993baffd6594a2f2a069f85ee2a02019f97db2246e350a76b"
         }
       ]
+    },
+    {
+      "id": "spell-voice",
+      "event": "patronus voice",
+      "author": "Warner Bros. Pictures (Harry Potter film series)",
+      "license": "All rights reserved",
+      "licenseUrl": "https://www.warnerbros.com/terms-of-use",
+      "source": "https://soundfxcenter.com/download-sound/harry-potter-expecto-patronum-sound-effect/",
+      "file": "/world/audio/spell/voice.mp3",
+      "bytes": 42362,
+      "sha256": "0d6a757a9bab8c65dd71042fbb791a3e6641069b6363cc23177f13fcf3243912",
+      "note": "Harry Potter, the Elder Wand and Expecto Patronum belong to Warner Bros. and J.K. Rowling. A short clip used by the site owner as a fan tribute, with no affiliation; it is removed on request.",
+      "sourceFiles": [
+        {
+          "url": "https://soundfxcenter.com/download-sound/harry-potter-expecto-patronum-sound-effect/",
+          "bytes": 74395,
+          "sha256": "59fe9187dd96f9f91bf4f3272de26b6ebdbf023728bf8bdc77f1921b12e8adc4"
+        }
+      ]
     }
   ],
   "images": [

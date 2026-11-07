@@ -8,7 +8,11 @@ export const SPELL_SOUND = {
   burst: { gain: 0.6 },
   ambience: { gain: 0.18, fadeIn: 0.45, maxPan: 0.6, panRate: 20 },
 } as const;
-export const SPELL_VOICE: string | null = null;
+/**
+ * The spoken words: a short film clip the owner ships as a fan tribute
+ * (patronus T6, scripts/prepare-spell-voice.mjs); null turns it off.
+ */
+export const SPELL_VOICE: string | null = "/world/audio/spell/voice.mp3";
 export const SPELL_SAMPLES = {
   swish: ["/world/audio/spell/swish.ogg", "/world/audio/spell/swish.mp3"],
   burst: ["/world/audio/spell/burst.ogg", "/world/audio/spell/burst.mp3"],
@@ -22,7 +26,7 @@ export function spellSoundPlan() {
     swish: 0,
     burst: PATRONUS.start,
     ambience: [PATRONUS.start, PATRONUS.start + PATRONUS.duration] as const,
-    voice: SPELL_VOICE ? 0.35 : null,
+    voice: SPELL_VOICE ? 0 : null,
   };
 }
 const clamp = (t: number) => Math.min(1, Math.max(0, t));
