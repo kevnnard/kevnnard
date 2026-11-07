@@ -67,24 +67,29 @@ With reduced motion, the camera cuts to the wide view and holds still, then cuts
 
 While the camera chases, the card fades to 8% opacity. Hovering or keyboard focus brings it back, and it fully returns at 4.5 s. Back to room or Esc cancels the chase, and the camera eases to the room from wherever it was.
 
-## The sounds (T2)
+## The sounds (T3)
 
-The sounds are made with Web Audio. There are no audio files and no licences.
+Three local CC0 samples replace the procedural tones. Nothing is requested until the visitor clicks the wand or Cast again. OGG is preferred, MP3 is the fallback. A recast fades and stops the previous sounds.
 
-| Time (s) | Sound |
+| Time (s) | Sample and source |
 | --- | --- |
-| 0 | A 0.45 s swish: noise through a band-pass sweeping from 500 to 4200 Hz |
-| 0.9 | A chime: five detuned sine partials (C6 G6 C7 E7 G7) with an 8 ms attack, ringing for up to 2.4 s, then a damped feedback delay (0.21 s, feedback 0.5) |
-| 0.9 to 4.5 | A soft band of noise. It fades in over 0.4 s, pans with the run across the wide view, and fades out as the patronus dissolves |
-| 0.35 | The words, read from `public/world/audio/expecto-patronum.mp3` (or `.ogg`) if that file exists. None ships yet |
+| 0 | Swish from [Air whoosh by pyranostudios](https://opengameart.org/content/air-whoosh), trimmed to 0.65 s |
+| 0.9 | Burst from [Magic Spell SFX by JaggedStone](https://opengameart.org/content/magic-spell-sfx), `magical_4.ogg` |
+| 0.9 to 4.5 | Quiet, slowed and low-pass-filtered `magical_7_0.ogg` from the same pack, looping with a pan and dissolve fade |
 
-As with the lamp switch, the AudioContext is made inside the visitor's click: on the wand, or on Cast again. The site has no master volume or mute for sound effects, so these sounds have their own fixed level. They still play under reduced motion. A new cast stops the old one. Leaving the wand does not stop them, because a patronus already out finishes its run.
+Run `node scripts/prepare-spell-sounds.mjs` to fetch the pinned source bytes into a fresh repository cache directory and convert with ffmpeg. The script checks each source SHA-256 before processing. Outputs, hashes, license evidence and authors are in `public/world/audio/spell/manifest.json`; the authors and source links also appear in the menu's sound credits. Each codec file is under 30 KB.
+
+`SPELL_VOICE: string | null = null` disables the optional voice recording. No absent voice URL is fetched. To add a properly licensed recording, ship its local URL and configure this constant. The site has no shared sound-effect mute; the spell uses its own conservative gain, as before. Reduced motion changes visuals, not audio.
+
+## Flowing light and mist (T3)
+
+`patronus-fx.ts` provides smooth formation, stream and dissolve envelopes. `PatronusFx.tsx` draws three soft light filaments from the actual wand tip, opening into a small cloud as the lion forms. The lion's material uses metre-scale moving light bands and a soft Fresnel rim; the previous rapid flicker and scale-dependent glitter are removed. Larger, dimmer soft particles supply mist around the body, while fine sparks drift upward at the end. Surface particles sample the animated skin, not the undeformed mesh. Particle pools are bounded and disposed on unmount. Reduced motion keeps its existing static tip glow without particles or the lion.
 
 ## The patronus
 
-The ghost material is additive and translucent. It has a fresnel rim and flickers slightly, and it dissolves by noise. Wisps trail off the body and burst out as it dissolves. A faint light follows it across the floor.
+The ghost material is additive and translucent. Its Fresnel rim and slowly moving internal light dissolve smoothly by noise, without a strobe. Wisps trail off the body and burst out as it dissolves. A faint light follows it across the floor.
 
-The body is keh's lion. It is 1.48 m tall to the top of its mane, about 1 m at the shoulder and 2.75 m from nose to tail tip. It is drawn in the ghost material, facing +z as authored. Its one clip ("Take 001", 8 s) plays from the start through an AnimationMixer. The clip is not a clean gallop, and only its first 3.6 s play. The hip's sideways and forward sway is pinned in the file, so the lion stays on the path and only bobs.
+The body is keh's lion. It is 1.48 m tall to the top of its mane, about 1 m at the shoulder and 2.75 m from nose to tail tip. It is drawn in the ghost material, facing +z as authored. Its one clip ("Take 001", 8 s) is sampled from the spell clock through an AnimationMixer. Each recast resets to the same first frames instead of accumulating into the later rearing sequence. The clip is not a clean gallop, and only its first 3.6 s play. The hip's sideways and forward sway is pinned in the file, so the lion stays on the path and only bobs.
 
 It runs about 7 m in 3.6 s, along a Catmull-Rom curve through these points. All points after the second are at floor level, y = 0.19:
 

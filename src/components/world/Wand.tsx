@@ -34,6 +34,7 @@ import {
   wandSpellAt,
   wandStandParts,
 } from "@/lib/world/wand.ts";
+import PatronusFx from "./PatronusFx.tsx";
 
 /** Pointer travel (px) past which a press is a drag, not a click. */
 const CLICK_SLOP = 6;
@@ -166,7 +167,7 @@ export default function Wand({
     if (tipLight.current)
       tipLight.current.intensity = SPELL.light * spell.light;
     // The spark trail: off the tip, drifting up and out toward the room.
-    emitCarry.current += 140 * spell.sparks * delta;
+    emitCarry.current += 22 * spell.sparks * Math.min(delta, 0.05);
     while (emitCarry.current >= 1) {
       emitCarry.current -= 1;
       spray.set(
@@ -229,6 +230,7 @@ export default function Wand({
         />
       </mesh>
       <primitive object={sparks.points} />
+      <PatronusFx castAt={runAt} reducedMotion={reducedMotion} />
 
       {/* Always mounted, zero intensity when off: a changing light count
           recompiles every material's shader and stalls the render. */}

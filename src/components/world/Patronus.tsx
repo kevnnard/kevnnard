@@ -16,6 +16,7 @@ import {
   Points,
   PointsMaterial,
   ShaderMaterial,
+  SkinnedMesh,
   Vector3,
 } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
@@ -25,6 +26,7 @@ import {
   type PatronusState,
   patronusAt,
 } from "@/lib/world/patronus.ts";
+import { patronusFxAt } from "@/lib/world/patronus-fx.ts";
 
 /**
  * What the ghost effect drives (patronus T1): an object facing +z with its
@@ -43,6 +45,7 @@ export interface PatronusModel {
 const GHOST_VERTEX = /* glsl */ `
 #include <common>
 #include <skinning_pars_vertex>
+uniform float uModelScale;
 varying vec3 vNormalView;
 varying vec3 vViewDir;
 varying vec3 vLocal;
@@ -56,7 +59,7 @@ void main() {
   #include <project_vertex>
   vNormalView = normalize(transformedNormal);
   vViewDir = normalize(-mvPosition.xyz);
-  vLocal = transformed;
+  vLocal = transformed * uModelScale;
 }
 `;
 
@@ -66,6 +69,7 @@ uniform vec3 uRim;
 uniform float uOpacity;
 uniform float uDissolve;
 uniform float uTime;
+uniform float uFormation;
 varying vec3 vNormalView;
 varying vec3 vViewDir;
 varying vec3 vLocal;
@@ -86,17 +90,15 @@ float noise(vec3 x) {
     f.z);
 }
 void main() {
-  // Dissolve: noise eats the body from the edges in.
-  float n = noise(vLocal * 9.0 + uTime * 0.6);
-  if (n < uDissolve) discard;
-  // Fresnel rim: bright at the silhouette, faint where it faces the lens.
-  float fresnel = pow(1.0 - abs(dot(normalize(vNormalView), normalize(vViewDir))), 2.2);
-  float drift = 0.85 + 0.15 * noise(vLocal * 4.0 - vec3(0.0, uTime * 1.5, 0.0));
-  vec3 color = mix(uColor * 0.35, uRim, fresnel) * drift;
-  float edge = smoothstep(uDissolve, uDissolve + 0.08, n);
-  float alpha = (0.12 + 0.88 * fresnel) * uOpacity * edge;
-  // Additive: color times alpha is the light it adds.
-  gl_FragColor = vec4(color * alpha, alpha);
+  // Metre-scale flowing light: avoid centimetre-scale glitter and strobe.
+  float n = noise(vLocal * 2.6 - vec3(uTime * 0.18, uTime * 0.3, 0.0));
+  float threads = pow(0.5 + 0.5 * sin(vLocal.y * 13.0 + vLocal.z * 6.0 + n * 5.0 - uTime * 1.8), 6.0);
+  float fresnel = pow(1.0 - abs(dot(normalize(vNormalView), normalize(vViewDir))), 1.7);
+  float form = smoothstep(n - 0.18, n + 0.18, uFormation);
+  float dissolve = 1.0 - smoothstep(n - 0.18, n + 0.18, uDissolve);
+  vec3 color = mix(uColor * 0.45, uRim * 1.15, fresnel) + threads * uColor * 0.28;
+  float alpha = (0.11 + 0.65 * fresnel + 0.1 * threads) * uOpacity * form * dissolve;
+  gl_FragColor = vec4(color, alpha);
 }
 `;
 
@@ -111,6 +113,8 @@ function ghostMaterial(): ShaderMaterial {
       uOpacity: { value: 0 },
       uDissolve: { value: 0 },
       uTime: { value: 0 },
+      uFormation: { value: 0 },
+      uModelScale: { value: 0.01 },
     },
     transparent: true,
     depthWrite: false,
@@ -143,6 +147,7 @@ function useLionModel(url: string, material: ShaderMaterial): PatronusModel {
     const box = new Box3().setFromObject(lion);
     const size = box.getSize(new Vector3());
     const scale = PATRONUS.lionHeight / Math.max(size.y, 1e-6);
+    material.uniforms.uModelScale.value = scale;
     const root = new Group();
     root.name = "patronus-lion";
     lion.scale.setScalar(scale);
@@ -161,13 +166,16 @@ function useLionModel(url: string, material: ShaderMaterial): PatronusModel {
     const point = new Vector3();
     return {
       object: root,
-      update: (delta) => mixer.update(delta),
+      // Recasts must replay the same gait, not continue into the clip's
+      // later rearing/pounce sequence. The spell clock is authoritative.
+      update: (_delta, state) => mixer.setTime(state.time),
       sample: (out) => {
         const mesh = meshes[Math.floor(Math.random() * meshes.length)];
         const position = mesh?.geometry.getAttribute("position");
         if (!mesh || !position) return out.copy(root.getWorldPosition(point));
         const i = Math.floor(Math.random() * position.count);
         point.fromBufferAttribute(position, i);
+        if (mesh instanceof SkinnedMesh) mesh.applyBoneTransform(i, point);
         return out.copy(mesh.localToWorld(point));
       },
       dispose: () => mixer.stopAllAction(),
@@ -176,7 +184,7 @@ function useLionModel(url: string, material: ShaderMaterial): PatronusModel {
 }
 
 /** A soft round dot for the additive particles. */
-function dotTexture(): CanvasTexture | null {
+export function dotTexture(): CanvasTexture | null {
   if (typeof document === "undefined") return null;
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = 64;
@@ -301,15 +309,19 @@ function PatronusRun({
 }) {
   const invalidate = useThree((state) => state.invalidate);
   const wisps = useMemo(() => new GhostParticles(360, 0.05, PATRONUS.rim), []);
+  const mist = useMemo(() => new GhostParticles(100, 0.38, "#182e48"), []);
+  const carry = useRef(0);
+  const mistCarry = useRef(0);
   const light = useRef<PointLight>(null);
   const tmp = useMemo(() => new Vector3(), []);
   const drift = useMemo(() => new Vector3(), []);
   useEffect(
     () => () => {
       wisps.dispose();
+      mist.dispose();
       model.dispose();
     },
-    [wisps, model],
+    [wisps, mist, model],
   );
   useEffect(() => invalidate(), [invalidate]);
   useFrame((frame, delta) => {
@@ -324,23 +336,33 @@ function PatronusRun({
       root.scale.setScalar(state.scale);
       model.update(delta, state);
       root.updateMatrixWorld(true);
-      const flicker =
-        0.9 + 0.1 * Math.sin(now * 23) * Math.sin(now * 7.3 + 1.1);
-      material.uniforms.uOpacity.value = state.opacity * flicker;
+      const envelope = patronusFxAt(now - (start ?? now));
+      material.uniforms.uOpacity.value = state.opacity;
+      material.uniforms.uFormation.value = envelope.formation;
       material.uniforms.uDissolve.value = state.dissolve;
       material.uniforms.uTime.value = now;
       // Wisps trail off the body; a burst as it dissolves.
-      const count = Math.round(
-        (state.dissolve > 0 ? 260 * state.dissolve : 45) * delta * 2,
-      );
-      for (let i = 0; i < count; i++) {
+      carry.current += (55 + 160 * state.dissolve) * Math.min(delta, 0.05);
+      while (carry.current >= 1) {
+        carry.current--;
         model.sample(tmp);
         drift.set(
-          (Math.random() - 0.5) * 0.25,
-          0.1 + Math.random() * 0.25,
-          (Math.random() - 0.5) * 0.25,
+          (Math.random() - 0.5) * 0.18,
+          0.12 + state.dissolve * 0.45,
+          (Math.random() - 0.5) * 0.18,
         );
-        wisps.emit(tmp, drift, 0.6 + Math.random() * 0.6);
+        wisps.emit(tmp, drift, 0.8 + Math.random() * 0.6);
+      }
+      mistCarry.current += 55 * envelope.mist * Math.min(delta, 0.05);
+      while (mistCarry.current >= 1) {
+        mistCarry.current--;
+        model.sample(tmp);
+        drift.set(
+          -Math.sin(state.heading) * 0.12,
+          0.08,
+          -Math.cos(state.heading) * 0.12,
+        );
+        mist.emit(tmp, drift, 1.1);
       }
       if (light.current) {
         light.current.position.set(
@@ -354,13 +376,15 @@ function PatronusRun({
       root.visible = false;
       if (light.current) light.current.intensity = 0;
     }
-    const particles = wisps.update(delta);
-    if (state || particles) frame.invalidate();
+    const particles = wisps.update(Math.min(delta, 0.05));
+    const fog = mist.update(Math.min(delta, 0.05), 0.08);
+    if (state || particles || fog) frame.invalidate();
   });
   return (
     <>
       <primitive object={model.object} />
       <primitive object={wisps.points} />
+      <primitive object={mist.points} />
       {/* Always mounted, zero when it is not out: no shader recompiles. */}
       <pointLight
         ref={light}
