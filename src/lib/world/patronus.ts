@@ -17,19 +17,19 @@ const FLOOR = HOUSE.floorY + 0.04;
 export const PATRONUS = {
   /** Seconds after the spell began (wand.ts SPELL) that it bursts out. */
   start: 0.9,
-  duration: 3.6,
+  duration: 7,
   /** Grows from this share of its size over `grow` seconds at the tip. */
   burstScale: 0.25,
-  grow: 0.45,
-  fadeIn: 0.25,
+  grow: 0.9,
+  fadeIn: 0.5,
   /** The last seconds, dissolving into particles. */
-  dissolve: 0.7,
+  dissolve: 1.2,
   /**
    * The lion's height to the top of its mane, metres: about 1 m at the
    * shoulder (keh's lion has its shoulder joint at 0.674 of its height),
    * 2.75 m from nose to tail tip; under the walls' top.
    */
-  lionHeight: 1.48,
+  lionHeight: 1.85,
   lionShoulder: 118.7 / 176.2,
   color: "#bcd8ff",
   rim: "#eef6ff",

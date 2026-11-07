@@ -20,8 +20,8 @@ const source = (path: string) =>
 const FLOOR = HOUSE.floorY + 0.04;
 
 describe("ghost lion patronus (patronus T1)", () => {
-  it("runs for 3 to 4 seconds after the tip lights", () => {
-    assert.ok(PATRONUS.duration >= 3 && PATRONUS.duration <= 4);
+  it("stays on screen for 6 to 8 seconds, like a film patronus", () => {
+    assert.ok(PATRONUS.duration >= 6 && PATRONUS.duration <= 8);
     assert.ok(PATRONUS.start > 0 && PATRONUS.start < SPELL.words[1]);
     assert.equal(patronusAt(PATRONUS.start - 0.01), null);
     assert.equal(patronusAt(PATRONUS.start + PATRONUS.duration + 0.01), null);
@@ -114,7 +114,10 @@ describe("ghost lion patronus (patronus T1)", () => {
     assert.equal(json.skins?.length, 1, "rigged");
     assert.equal(json.animations?.length, 1, "its clip kept");
     const shoulder = PATRONUS.lionHeight * PATRONUS.lionShoulder;
-    assert.ok(shoulder > 0.9 && shoulder < 1.15, `shoulder ${shoulder}`);
+    assert.ok(
+      shoulder > 1.15 && shoulder < 1.4,
+      `larger than life: shoulder ${shoulder}`,
+    );
     assert.ok(
       FLOOR + PATRONUS.lionHeight < HOUSE.floorY + HOUSE.main.height,
       "under the walls' top",

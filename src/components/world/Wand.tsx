@@ -167,7 +167,7 @@ export default function Wand({
     if (tipLight.current)
       tipLight.current.intensity = SPELL.light * spell.light;
     // The spark trail: off the tip, drifting up and out toward the room.
-    emitCarry.current += 22 * spell.sparks * Math.min(delta, 0.05);
+    emitCarry.current += 90 * spell.sparks * Math.min(delta, 0.05);
     while (emitCarry.current >= 1) {
       emitCarry.current -= 1;
       spray.set(

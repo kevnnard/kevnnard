@@ -11,6 +11,9 @@ import {
 import { PATRONUS, patronusAt } from "@/lib/world/patronus.ts";
 import { patronusFxAt, streamPoint } from "@/lib/world/patronus-fx.ts";
 import { dotTexture, GhostParticles } from "./Patronus.tsx";
+
+const STREAM_POINTS = 384;
+
 /** Light flows from the actual tip into a soft cloud; never a solid laser. */
 export default function PatronusFx({
   castAt,
@@ -21,13 +24,13 @@ export default function PatronusFx({
 }) {
   const fx = useMemo(() => {
     const texture = dotTexture();
-    const positions = new Float32Array(192 * 3);
+    const positions = new Float32Array(STREAM_POINTS * 3);
     const geometry = new BufferGeometry();
     geometry.setAttribute("position", new BufferAttribute(positions, 3));
     const material = new PointsMaterial({
       map: texture,
       color: "#d9eeff",
-      size: 0.055,
+      size: 0.1,
       transparent: true,
       opacity: 0,
       blending: AdditiveBlending,
@@ -35,7 +38,7 @@ export default function PatronusFx({
     });
     const points = new Points(geometry, material);
     points.frustumCulled = false;
-    const mist = new GhostParticles(64, 0.25, "#172b40");
+    const mist = new GhostParticles(90, 0.35, "#4a74a8");
     return {
       points,
       positions,
@@ -61,15 +64,15 @@ export default function PatronusFx({
     const t =
       castAt.current === null ? -1 : performance.now() / 1000 - castAt.current;
     const envelope = patronusFxAt(t, reducedMotion);
-    fx.material.opacity = envelope.stream * 0.6;
+    fx.material.opacity = envelope.stream * 0.9;
     fx.points.visible = envelope.stream > 0;
     if (envelope.stream > 0) {
       const target = patronusAt(
         Math.max(PATRONUS.start + 0.1, Math.min(PATRONUS.start + 0.5, t)),
       )?.position ?? [0, 0.8, 0.6];
-      for (let i = 0; i < 192; i++) {
-        const u = ((i % 64) / 64 + t * 0.7) % 1;
-        const p = streamPoint(u, target, t, Math.floor(i / 64));
+      for (let i = 0; i < STREAM_POINTS; i++) {
+        const u = ((i % 96) / 96 + t * 0.9) % 1;
+        const p = streamPoint(u, target, t, Math.floor(i / 96));
         fx.positions.set(p, i * 3);
       }
       fx.geometry.attributes.position.needsUpdate = true;

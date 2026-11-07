@@ -18,7 +18,7 @@ export function patronusFxAt(t: number, reducedMotion = false) {
     dissolve,
     stream: reducedMotion
       ? 0
-      : smooth((t - 0.25) / 0.35) * (1 - smooth((t - 1.1) / 0.65)),
+      : smooth((t - 0.25) / 0.35) * (1 - smooth((t - 2.2) / 0.6)),
     mist: reducedMotion
       ? 0
       : smooth((t - PATRONUS.start) / 0.3) * (1 - smooth((t - 4.2) / 0.6)),
@@ -33,7 +33,7 @@ export function streamPoint(
 ): Vec3 {
   if (u <= 0) return [...WAND_TIP];
   if (u >= 1) return [end[0], end[1], end[2]];
-  const radius = Math.sin(Math.PI * u) * 0.045;
+  const radius = Math.sin(Math.PI * u) * 0.09;
   const phase = u * Math.PI * 5 - time * 4 + (strand * Math.PI * 2) / 3;
   return [
     WAND_TIP[0] + (end[0] - WAND_TIP[0]) * u + Math.cos(phase) * radius,

@@ -168,7 +168,9 @@ function useLionModel(url: string, material: ShaderMaterial): PatronusModel {
       object: root,
       // Recasts must replay the same gait, not continue into the clip's
       // later rearing/pounce sequence. The spell clock is authoritative.
-      update: (_delta, state) => mixer.setTime(state.time),
+      // A slower, looping stride over the clip's opening gait: the run is
+      // long and calm now, and the clip rears up after ~6 s.
+      update: (_delta, state) => mixer.setTime((state.time * 0.75) % 3.4),
       sample: (out) => {
         const mesh = meshes[Math.floor(Math.random() * meshes.length)];
         const position = mesh?.geometry.getAttribute("position");
@@ -308,8 +310,11 @@ function PatronusRun({
   castAt: RefObject<number | null>;
 }) {
   const invalidate = useThree((state) => state.invalidate);
-  const wisps = useMemo(() => new GhostParticles(360, 0.05, PATRONUS.rim), []);
-  const mist = useMemo(() => new GhostParticles(100, 0.38, "#182e48"), []);
+  const wisps = useMemo(() => new GhostParticles(700, 0.085, PATRONUS.rim), []);
+  const mist = useMemo(() => new GhostParticles(140, 0.5, "#3b5f8f"), []);
+  // A soft aura: big, dim, short-lived sprites on the body read as bloom.
+  const aura = useMemo(() => new GhostParticles(220, 0.6, "#24497a"), []);
+  const auraCarry = useRef(0);
   const carry = useRef(0);
   const mistCarry = useRef(0);
   const light = useRef<PointLight>(null);
@@ -319,9 +324,10 @@ function PatronusRun({
     () => () => {
       wisps.dispose();
       mist.dispose();
+      aura.dispose();
       model.dispose();
     },
-    [wisps, mist, model],
+    [wisps, mist, aura, model],
   );
   useEffect(() => invalidate(), [invalidate]);
   useFrame((frame, delta) => {
@@ -342,7 +348,7 @@ function PatronusRun({
       material.uniforms.uDissolve.value = state.dissolve;
       material.uniforms.uTime.value = now;
       // Wisps trail off the body; a burst as it dissolves.
-      carry.current += (55 + 160 * state.dissolve) * Math.min(delta, 0.05);
+      carry.current += (160 + 260 * state.dissolve) * Math.min(delta, 0.05);
       while (carry.current >= 1) {
         carry.current--;
         model.sample(tmp);
@@ -351,9 +357,16 @@ function PatronusRun({
           0.12 + state.dissolve * 0.45,
           (Math.random() - 0.5) * 0.18,
         );
-        wisps.emit(tmp, drift, 0.8 + Math.random() * 0.6);
+        wisps.emit(tmp, drift, 1 + Math.random() * 0.8);
       }
-      mistCarry.current += 55 * envelope.mist * Math.min(delta, 0.05);
+      auraCarry.current += 420 * state.opacity * Math.min(delta, 0.05);
+      while (auraCarry.current >= 1) {
+        auraCarry.current--;
+        model.sample(tmp);
+        drift.set(0, 0, 0);
+        aura.emit(tmp, drift, 0.3);
+      }
+      mistCarry.current += 70 * envelope.mist * Math.min(delta, 0.05);
       while (mistCarry.current >= 1) {
         mistCarry.current--;
         model.sample(tmp);
@@ -378,13 +391,15 @@ function PatronusRun({
     }
     const particles = wisps.update(Math.min(delta, 0.05));
     const fog = mist.update(Math.min(delta, 0.05), 0.08);
-    if (state || particles || fog) frame.invalidate();
+    const glow = aura.update(Math.min(delta, 0.05), 0);
+    if (state || particles || fog || glow) frame.invalidate();
   });
   return (
     <>
       <primitive object={model.object} />
       <primitive object={wisps.points} />
       <primitive object={mist.points} />
+      <primitive object={aura.points} />
       {/* Always mounted, zero when it is not out: no shader recompiles. */}
       <pointLight
         ref={light}

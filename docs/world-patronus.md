@@ -44,7 +44,7 @@ The spell starts when the camera arrives, CINEMATIC.duration after the click. "C
 | 0 to 0.45 | The tip's emissive bead, its additive halo and a small point light ramp up |
 | 0.15 to 1.5 | Silver-blue sparks trail off the tip |
 | 0.35 to 2.8 | "Expecto Patronum" shows over the scene, left of the card, in italic serif |
-| 0.9 to 4.5 | The patronus runs |
+| 0.9 to 7.9 | The patronus runs |
 | 3.6 to 5 | The glow settles to a faint ember |
 
 With reduced motion, the tip glows without changing, there are no particles and no patronus, and the words show without animation.
@@ -56,16 +56,16 @@ On every cast, the camera leaves the close-up so the run can be seen. The times 
 | Time (s) | Camera |
 | --- | --- |
 | 0.8 to 2.0 | Eases out (the shared quintic move) to the wide view |
-| 2.0 to 4.5 | Follows the patronus. The aim takes 45% of its offset, averaged over the last 0.6 s. The eye drifts 12% of it, level |
-| 4.5 to 6.0 | Eases back to the close-up |
+| 2.0 to 7.9 | Follows the patronus. The aim takes 45% of its offset, averaged over the last 0.6 s. The eye drifts 12% of it, level |
+| 7.9 to 9.4 | Eases back to the close-up |
 
 The wide view is built from the run's bounding box (`chaseWideView`). The eye is high in the room's front east corner, 35° down and 50° off +z, as close as fits the box with a 4% margin. It never goes past 15 cm inside the walls. At 16:9 it sits at (3.79, 2.88, 1.35) and looks at (1.47, 0.76, -0.59), fov 48. Narrow screens stop at the same wall, and the tracking keeps the patronus in view.
 
 The view turns at most 1.33 rad/s on the way out, 0.16 rad/s while tracking and 1.31 rad/s on the way back.
 
-With reduced motion, the camera cuts to the wide view and holds still, then cuts back at 4.5 s.
+With reduced motion, the camera cuts to the wide view and holds still, then cuts back at 7.9 s.
 
-While the camera chases, the card fades to 8% opacity. Hovering or keyboard focus brings it back, and it fully returns at 4.5 s. Back to room or Esc cancels the chase, and the camera eases to the room from wherever it was.
+While the camera chases, the card fades to 8% opacity. Hovering or keyboard focus brings it back, and it fully returns at 7.9 s. Back to room or Esc cancels the chase, and the camera eases to the room from wherever it was.
 
 ## The sounds (T3)
 
@@ -75,23 +75,23 @@ Three local CC0 samples replace the procedural tones. Nothing is requested until
 | --- | --- |
 | 0 | Swish from [Air whoosh by pyranostudios](https://opengameart.org/content/air-whoosh), trimmed to 0.65 s |
 | 0.9 | Burst from [Magic Spell SFX by JaggedStone](https://opengameart.org/content/magic-spell-sfx), `magical_4.ogg` |
-| 0.9 to 4.5 | Quiet, slowed and low-pass-filtered `magical_7_0.ogg` from the same pack, looping with a pan and dissolve fade |
+| 0.9 to 7.9 | Quiet, slowed and low-pass-filtered `magical_7_0.ogg` from the same pack, looping with a pan and dissolve fade |
 
 Run `node scripts/prepare-spell-sounds.mjs` to fetch the pinned source bytes into a fresh repository cache directory and convert with ffmpeg. The script checks each source SHA-256 before processing. Outputs, hashes, license evidence and authors are in `public/world/audio/spell/manifest.json`; the authors and source links also appear in the menu's sound credits. Each codec file is under 30 KB.
 
 `SPELL_VOICE: string | null = null` disables the optional voice recording. No absent voice URL is fetched. To add a properly licensed recording, ship its local URL and configure this constant. The site has no shared sound-effect mute; the spell uses its own conservative gain, as before. Reduced motion changes visuals, not audio.
 
-## Flowing light and mist (T3)
+## Flowing light and mist (T3, T4)
 
-`patronus-fx.ts` provides smooth formation, stream and dissolve envelopes. `PatronusFx.tsx` draws three soft light filaments from the actual wand tip, opening into a small cloud as the lion forms. The lion's material uses metre-scale moving light bands and a soft Fresnel rim; the previous rapid flicker and scale-dependent glitter are removed. Larger, dimmer soft particles supply mist around the body, while fine sparks drift upward at the end. Surface particles sample the animated skin, not the undeformed mesh. Particle pools are bounded and disposed on unmount. Reduced motion keeps its existing static tip glow without particles or the lion.
+`patronus-fx.ts` provides smooth formation, stream and dissolve envelopes. `PatronusFx.tsx` draws four light filaments from the actual wand tip to the lion's chest, so a beam links the wand and the patronus while it forms and runs off (until about 2.8 s). Big, dim, short-lived sprites over the body work as a bloom-like aura. The lion's material uses metre-scale moving light bands and a soft Fresnel rim; the previous rapid flicker and scale-dependent glitter are removed. Larger, dimmer soft particles supply mist around the body, while fine sparks drift upward at the end. Surface particles sample the animated skin, not the undeformed mesh. Particle pools are bounded and disposed on unmount. Reduced motion keeps its existing static tip glow without particles or the lion.
 
 ## The patronus
 
 The ghost material is additive and translucent. Its Fresnel rim and slowly moving internal light dissolve smoothly by noise, without a strobe. Wisps trail off the body and burst out as it dissolves. A faint light follows it across the floor.
 
-The body is keh's lion. It is 1.48 m tall to the top of its mane, about 1 m at the shoulder and 2.75 m from nose to tail tip. It is drawn in the ghost material, facing +z as authored. Its one clip ("Take 001", 8 s) is sampled from the spell clock through an AnimationMixer. Each recast resets to the same first frames instead of accumulating into the later rearing sequence. The clip is not a clean gallop, and only its first 3.6 s play. The hip's sideways and forward sway is pinned in the file, so the lion stays on the path and only bobs.
+The body is keh's lion. It is 1.85 m tall to the top of its mane, about 1.25 m at the shoulder and about 3.4 m from nose to tail tip: larger than life, like the film patronuses. It is drawn in the ghost material, facing +z as authored. Its one clip ("Take 001", 8 s) is sampled from the spell clock through an AnimationMixer. Each recast resets to the same first frames instead of accumulating into the later rearing sequence. The run is long and calm, so the stride plays at 0.75× and loops the clip's opening 3.4 s; the clip rears up after about 6 s. The hip's sideways and forward sway is pinned in the file, so the lion stays on the path and only bobs.
 
-It runs about 7 m in 3.6 s, along a Catmull-Rom curve through these points. All points after the second are at floor level, y = 0.19:
+It runs about 7 m in 7 s, along a Catmull-Rom curve through these points. All points after the second are at floor level, y = 0.19:
 
 `tip → (-0.35, 0.75, 0.62) → (0.35, 0.72) → (1.2, 0.42) → (1.55, -0.45) → (1.7, -1.3) → (2.1, -1.87) → (2.9, -1.88) → (3.5, -1.86) → (3.7, -1.5)`
 
