@@ -11,7 +11,10 @@ S4. "la animacion del expoecto pranomu horrible nada que ver el paratnotnus coom
 
 S5. "nose si deverda hiciste algo pero no se ve" + "ademas la aniamcion sde patronoues mira en la web dvideos como funciona el patranosun muy grande osea el modelo va muy rapiido deberia durar mas" (the T3 effects are not visible; film patronus is very big, the model moves too fast, it should last longer).
 
+S6. "muy muy grande el modelo debe ser mas chico y no escucho el encantanmiento conla voz de harry potter" (the lion is far too big, make it smaller; the owner wants the incantation in Harry Potter's film voice, which cannot ship: Warner Bros. audio is copyrighted).
+
 ## Tasks
+T5 [S6] DONE (parent) — Lion down to 1.15 m (0.78 m shoulder). Film voice not shipped (copyright); the SPELL_VOICE hook stays null until the owner records or picks a licensed voice.
 T4 [S5] DONE (parent) — Visible, film-like effect: beam tied from the wand to the lion, a bloom-like aura, brighter mist and trail; a larger-than-life lion (1.85 m, ~1.25 m shoulder) on a 7 s run with a slower looping stride.
 T3 [S4] DONE (parent continued after worker quota failure) — Film-like spell VFX (light stream from the tip, mist, the lion forming from light, glowing flowing ghost body, particle/mist trail, dissolve into rising sparks) and real CC0 sound effects downloaded without login (OpenGameArt/Kenney), credited in the menu.
 T2 [S3] DONE — During the spell, the camera pulls out of the wand close-up to a wide living-room view that follows the patronus run, then returns to the wand; wire the real lion as soon as it is in ~/Downloads.

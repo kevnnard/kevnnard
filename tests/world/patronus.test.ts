@@ -98,7 +98,7 @@ describe("ghost lion patronus (patronus T1)", () => {
     assert.ok(Math.abs(diff) < 0.2);
   });
 
-  it("is keh's lion, drawn in the ghost material, about 1 m at the shoulder", () => {
+  it("is keh's lion, drawn in the ghost material, under 1 m at the shoulder", () => {
     assert.equal(PATRONUS.lion, "/world/models/patronus-lion.glb");
     const file = new URL(
       "../../public/world/models/patronus-lion.glb",
@@ -115,8 +115,8 @@ describe("ghost lion patronus (patronus T1)", () => {
     assert.equal(json.animations?.length, 1, "its clip kept");
     const shoulder = PATRONUS.lionHeight * PATRONUS.lionShoulder;
     assert.ok(
-      shoulder > 1.15 && shoulder < 1.4,
-      `larger than life: shoulder ${shoulder}`,
+      shoulder > 0.7 && shoulder < 0.9,
+      `room-sized: shoulder ${shoulder}`,
     );
     assert.ok(
       FLOOR + PATRONUS.lionHeight < HOUSE.floorY + HOUSE.main.height,

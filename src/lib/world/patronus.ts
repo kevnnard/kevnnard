@@ -29,7 +29,7 @@ export const PATRONUS = {
    * shoulder (keh's lion has its shoulder joint at 0.674 of its height),
    * 2.75 m from nose to tail tip; under the walls' top.
    */
-  lionHeight: 1.85,
+  lionHeight: 1.15,
   lionShoulder: 118.7 / 176.2,
   color: "#bcd8ff",
   rim: "#eef6ff",
