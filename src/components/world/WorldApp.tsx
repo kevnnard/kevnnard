@@ -2,6 +2,7 @@ import {
   Component,
   lazy,
   type ReactNode,
+  type RefObject,
   Suspense,
   useCallback,
   useEffect,
@@ -124,6 +125,53 @@ function useMediaQuery(query: string) {
     return () => media.removeEventListener("change", update);
   }, [query]);
   return matches;
+}
+
+/** Gap between the stacked phone HUD rows, in px (scene-panel.css). */
+const HUD_GAP = 8;
+
+/**
+ * Stacked phone HUD (mobile-hud S1): Scene sits under the top buttons and the
+ * clock under Scene, one column. Their tops follow the measured heights, so a
+ * notice in the header or an open panel pushes the rows below it instead of
+ * covering them. scene-panel.css reads the two variables.
+ */
+function useHudStack(
+  root: RefObject<HTMLDivElement | null>,
+  stacked: boolean,
+  remount: unknown,
+) {
+  useLayoutEffect(() => {
+    const node = root.current;
+    if (!node) return;
+    if (!stacked) {
+      node.style.removeProperty("--hud-scene-top");
+      node.style.removeProperty("--hud-clock-top");
+      return;
+    }
+    if (remount === null) return;
+    const header = node.querySelector<HTMLElement>(":scope > header");
+    const scene = node.querySelector<HTMLElement>(":scope > .scene-panel");
+    const clock = node.querySelector<HTMLElement>(
+      ':scope > section[aria-label="Time of day"]',
+    );
+    const update = () => {
+      // The header's own bottom padding is the 16px edge, not a row gap.
+      const headerBottom = header
+        ? header.offsetHeight -
+          Number.parseFloat(getComputedStyle(header).paddingBottom)
+        : 0;
+      const sceneTop = headerBottom + HUD_GAP;
+      // Scene's max-height follows its top: set it before measuring Scene.
+      node.style.setProperty("--hud-scene-top", `${sceneTop}px`);
+      const clockTop = sceneTop + (scene ? scene.offsetHeight + HUD_GAP : 0);
+      node.style.setProperty("--hud-clock-top", `${clockTop}px`);
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    for (const part of [header, scene, clock]) if (part) observer.observe(part);
+    return () => observer.disconnect();
+  }, [root, stacked, remount]);
 }
 
 /**
@@ -278,6 +326,21 @@ export default function WorldApp() {
   );
   const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const narrow = useMediaQuery("(max-width: 767px)");
+  // Same breakpoint as the stacked HUD block in scene-panel.css.
+  const stacked = useMediaQuery("(max-width: 700px)");
+  // On a phone only one of Scene and the clock stays open (mobile-hud S1).
+  // The last one opened wins; `hudOpen` re-measures the stack when either
+  // actually opens or closes.
+  const [hudPanel, setHudPanel] = useState<"scene" | "clock" | null>(null);
+  const [hudOpen, setHudOpen] = useState({ scene: false, clock: false });
+  const sceneOpenChange = useCallback((open: boolean) => {
+    setHudOpen((rows) => ({ ...rows, scene: open }));
+    setHudPanel((panel) => (open ? "scene" : panel === "scene" ? null : panel));
+  }, []);
+  const clockOpenChange = useCallback((open: boolean) => {
+    setHudOpen((rows) => ({ ...rows, clock: open }));
+    setHudPanel((panel) => (open ? "clock" : panel === "clock" ? null : panel));
+  }, []);
   // Same shared clock and controller styles as /room, imported read-only.
   const clock = useRoomClock(reducedMotion);
   const [controllerStyle, setControllerStyle] = useState(() =>
@@ -499,6 +562,15 @@ export default function WorldApp() {
   // dispose, so a paused visit stays paused after a reload.
   const [musicEnabled, setMusicEnabled] = useState(storedMusic.enabled);
   const song = useSyncExternalStore(music.subscribe, music.getState);
+  // Re-measured once the panels mount, after a controller style switch and,
+  // in the same frame, when a panel or the music notice changes the rows.
+  useHudStack(
+    root,
+    stacked,
+    ready
+      ? [controllerStyle, hudOpen.scene, hudOpen.clock, song.error].join("|")
+      : null,
+  );
   useEffect(() => () => music.dispose(), [music]);
   useEffect(() => {
     const update = () => music.setHidden(document.hidden);
@@ -1058,7 +1130,7 @@ export default function WorldApp() {
         inert={
           !entered || focus || portrait || speakers || galleryCase !== null
         }
-        className={`pointer-events-none absolute inset-x-0 top-0 flex flex-wrap items-center justify-between gap-3 p-4${!entered || focus || portrait || speakers || galleryCase !== null ? " invisible" : ""}`}
+        className={`world-hud-header pointer-events-none absolute inset-x-0 top-0 flex flex-wrap items-center justify-between gap-3 p-4${!entered || focus || portrait || speakers || galleryCase !== null ? " invisible" : ""}`}
       >
         <a
           href="/"
@@ -1171,6 +1243,9 @@ export default function WorldApp() {
           style={controllerStyle}
           onStyleChange={chooseStyle}
           narrow={narrow}
+          stacked={stacked}
+          folded={stacked && hudPanel === "scene"}
+          onOpenChange={clockOpenChange}
         />
       )}
       {ready && (
@@ -1180,6 +1255,9 @@ export default function WorldApp() {
           narrow={narrow}
           controllerStyle={controllerStyle}
           power={power}
+          stacked={stacked}
+          folded={stacked && hudPanel === "clock"}
+          onOpenChange={sceneOpenChange}
           onChange={changeLight}
           onReset={resetLights}
           onPower={switchPower}

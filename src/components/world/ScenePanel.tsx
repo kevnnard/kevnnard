@@ -118,7 +118,9 @@ function LightRow({
  * darkens every artificial light at night; by day it is disabled.
  * The whole header row is one native disclosure button styled like the
  * compact day controller (world-hud-trigger, S1); closed, the panel shrinks
- * to that row.
+ * to that row. Stacked on a phone (mobile-hud S1), scene-panel.css places it
+ * under the top buttons and opens it downward; the app folds it while the
+ * clock is open.
  */
 export function ScenePanel({
   hours,
@@ -126,6 +128,9 @@ export function ScenePanel({
   narrow,
   controllerStyle,
   power = true,
+  stacked = false,
+  folded,
+  onOpenChange,
   onChange,
   onReset,
   onPower,
@@ -137,6 +142,11 @@ export function ScenePanel({
   controllerStyle: string;
   /** Master switch, separate from the per-light settings. */
   power?: boolean;
+  /** Phone stack: the stylesheet owns the position, no measured lift. */
+  stacked?: boolean;
+  /** Closes the cards, e.g. while the clock is open on a phone. */
+  folded?: boolean;
+  onOpenChange?: (open: boolean) => void;
   onChange: (id: LightId, patch: Partial<LightSetting>) => void;
   onReset: () => void;
   /** Flips the master; the app ignores it by day. */
@@ -144,6 +154,12 @@ export function ScenePanel({
 }) {
   // Starts folded to its header row so the scene stays clear.
   const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (folded) setOpen(false);
+  }, [folded]);
+  useEffect(() => {
+    onOpenChange?.(open);
+  }, [open, onOpenChange]);
   const [status, setStatus] = useState("");
   const [lift, setLift] = useState(EDGE);
   const rootRef = useRef<HTMLElement>(null);
@@ -204,11 +220,15 @@ export function ScenePanel({
       aria-labelledby={`${uid}-title`}
       className="scene-panel"
       data-open={open}
-      style={{
-        bottom: lift,
-        // Below the top action buttons (5rem), above the bottom offset.
-        maxHeight: `calc(100% - 5rem - ${lift}px)`,
-      }}
+      style={
+        stacked
+          ? undefined
+          : {
+              bottom: lift,
+              // Below the top action buttons (5rem), above the bottom offset.
+              maxHeight: `calc(100% - 5rem - ${lift}px)`,
+            }
+      }
     >
       <p role="status" aria-live="polite" className="sp-sr">
         {status}

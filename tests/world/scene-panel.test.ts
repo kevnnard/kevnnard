@@ -91,7 +91,12 @@ describe("scene panel (T6b UI fix)", () => {
     assert.match(globals, /--background: 240 10% 3\.9%;/);
     assert.match(globals, /--color-background: var\(--background\);/);
     assert.match(panel, /import "\.\/scene-panel\.css";/);
-    assert.doesNotMatch(css, /var\(--/, "no theme variables");
+    // Only the measured phone stack offsets (mobile-hud S1), never the theme.
+    assert.doesNotMatch(
+      css,
+      /var\(--(?!hud-(?:scene|clock)-top,)/,
+      "no theme variables",
+    );
     // Every className in the panel is one of the scoped sp-* classes, plus
     // the shared compact trigger of world-hud.css (S1).
     for (const [, names] of panel.matchAll(/className="([^"]+)"/g))

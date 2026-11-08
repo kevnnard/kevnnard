@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { localHours } from "@/lib/room/clock.ts";
 import type { ControllerStyle } from "@/lib/room/controller-style.ts";
 import {
@@ -68,13 +68,34 @@ function MinuteRange({
   );
 }
 
+/**
+ * Phone stack disclosure (mobile-hud S1): the app folds this console while
+ * the Scene panel is open and hears when it opens or closes.
+ */
+interface Disclosure {
+  folded?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
 /** Compact console: a corner instrument that collapses to a one-line pill. */
-function CompactConsole({ clock, settings, narrow }: ControllerProps) {
+function CompactConsole({
+  clock,
+  settings,
+  narrow,
+  folded,
+  onOpenChange,
+}: ControllerProps & Disclosure) {
   const rootRef = useRef<HTMLElement>(null);
   const rangeId = useId();
   const modeName = useId();
   // Starts collapsed on small screens so the room keeps the view.
   const [open, setOpen] = useState(!narrow);
+  useEffect(() => {
+    if (folded) setOpen(false);
+  }, [folded]);
+  useEffect(() => {
+    onOpenChange?.(open);
+  }, [open, onOpenChange]);
   useWheelHours(rootRef, clock.hours, clock.setHours);
   const time = formatHours(clock.hours);
   const phase = phaseAt(clock.hours);
@@ -91,6 +112,7 @@ function CompactConsole({ clock, settings, narrow }: ControllerProps) {
       ref={rootRef}
       aria-label="Time of day"
       className={cn(
+        "tc-compact",
         "absolute rounded-xl border border-zinc-800 bg-zinc-950/90 font-mono text-xs text-zinc-50 backdrop-blur",
         narrow ? "inset-x-3 bottom-3" : "bottom-4 left-4 w-[21rem]",
       )}
@@ -121,7 +143,7 @@ function CompactConsole({ clock, settings, narrow }: ControllerProps) {
             ▾
           </span>
         </summary>
-        <div className="grid gap-3.5 border-t border-zinc-800 px-4 pt-3 pb-4">
+        <div className="tc-body grid gap-3.5 border-t border-zinc-800 px-4 pt-3 pb-4">
           <dl className="grid grid-cols-[4.5rem_1fr] gap-y-1.5 tabular-nums">
             <dt className="uppercase tracking-widest text-zinc-400">Sim</dt>
             <dd>
@@ -213,7 +235,7 @@ function CompactConsole({ clock, settings, narrow }: ControllerProps) {
         </div>
       </details>
       {/* Outside the summary, so it stays reachable while collapsed. */}
-      <div className="absolute top-2 right-2">{settings}</div>
+      <div className="tc-settings absolute top-2 right-2">{settings}</div>
     </section>
   );
 }
@@ -391,39 +413,51 @@ const STYLES = {
   timeline: TimelineDock,
 } satisfies Record<ControllerStyle, (props: ControllerProps) => unknown>;
 
-interface TimeControllerProps {
+interface TimeControllerProps extends Disclosure {
   clock: RoomClock;
   style: ControllerStyle;
   onStyleChange: (style: ControllerStyle) => void;
   narrow: boolean;
+  /** Phone stack (mobile-hud S1): the controller sits at the top. */
+  stacked?: boolean;
 }
 
 /**
  * Renders the chosen controller design. Purely presentational: the clock lives
  * in RoomApp, so switching styles never resets time, mode or pause state. The
  * settings panel's open state lives here so it survives the style swap.
+ * Only the compact console folds, so only it takes the phone disclosure.
  */
 export function TimeController({
   clock,
   style,
   onStyleChange,
   narrow,
+  stacked = false,
+  folded,
+  onOpenChange,
 }: TimeControllerProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const Style = STYLES[style];
-  return (
-    <Style
-      clock={clock}
-      narrow={narrow}
-      settings={
-        <ControllerSettings
-          style={style}
-          onChange={onStyleChange}
-          open={settingsOpen}
-          onOpenChange={setSettingsOpen}
-          side={style === "orbital" ? "bottom" : "top"}
-        />
-      }
+  const settings = (
+    <ControllerSettings
+      style={style}
+      onChange={onStyleChange}
+      open={settingsOpen}
+      onOpenChange={setSettingsOpen}
+      // Stacked at the top of a phone, the panel opens down into the room.
+      side={stacked || style === "orbital" ? "bottom" : "top"}
     />
   );
+  if (style === "compact")
+    return (
+      <CompactConsole
+        clock={clock}
+        narrow={narrow}
+        settings={settings}
+        folded={folded}
+        onOpenChange={onOpenChange}
+      />
+    );
+  const Style = STYLES[style];
+  return <Style clock={clock} narrow={narrow} settings={settings} />;
 }

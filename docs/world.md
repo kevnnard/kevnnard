@@ -303,6 +303,15 @@ keyboard's side lights.
   button beside it. It starts folded, scrolls
   inside below the top buttons, and lifts above the day controller when that
   spans under it (narrow screens, timeline dock).
+- Phone stack (≤ 700 px, [mobile HUD](../odd/tasks/mobile-hud.md)): one
+  top column at the 16 px margins with 8 px gaps — Back to portfolio, Menu,
+  the music notice, Scene, then the day controller. `useHudStack` in
+  `WorldApp.tsx` measures the rows into `--hud-scene-top` and
+  `--hud-clock-top`, so an open panel pushes the rows below it. Scene opens
+  downward there, only one of Scene and the compact clock stays open, each
+  scrolls inside the screen, and touch targets are at least 44 px. The
+  stacked rules in `scene-panel.css` outrank the older fixed phone offsets
+  in `collection-rail.css`; wider screens keep the layout above.
 - Styling lives in `scene-panel.css` with literal colors. The shadcn theme
   tokens in `globals.css` are bare HSL triplets (`--background: 240 10%
   3.9%`) that `@theme inline` maps without `hsl()`, so `bg-background`,

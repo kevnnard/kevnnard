@@ -324,6 +324,113 @@
   outline-offset: 2px;
 }
 
+/*
+ * Stacked phone HUD (mobile-hud S1). Same breakpoint as `stacked` in
+ * WorldApp.tsx. One column at the 16px margins with 8px gaps: Back to
+ * portfolio and Menu (the header), Scene, then the clock. WorldApp measures
+ * the rows into --hud-scene-top and --hud-clock-top, so an open panel or the
+ * music notice pushes the rows below it; the fallbacks are the closed rows.
+ * Only one of Scene and the clock opens at a time, and each scrolls inside
+ * the screen. These selectors outrank collection-rail.css's older fixed
+ * phone offsets. Wide screens never match, so the desktop HUD is untouched.
+ */
+@media (max-width: 700px) {
+  .world-hud-header {
+    gap: 8px;
+  }
+
+  .world-hud-header > .world-hud-trigger {
+    width: 100%;
+  }
+
+  .world-entry-revealed > section.scene-panel {
+    top: var(--hud-scene-top, 120px);
+    bottom: auto !important;
+    left: 16px;
+    right: 16px;
+    width: auto;
+    max-width: none;
+    /* Leaves 8px, the folded clock (50px) and the 16px bottom edge. */
+    max-height: calc(100% - var(--hud-scene-top, 120px) - 74px);
+  }
+
+  /* Opens downward: the header row first, the cards below it. */
+  .scene-panel .sp-head {
+    order: -1;
+  }
+
+  .scene-panel .sp-body {
+    border-bottom: 0;
+    border-top: 1px solid #27272a;
+  }
+
+  .world-entry-revealed > section[aria-label="Time of day"] {
+    top: var(--hud-clock-top, 172px);
+    bottom: auto;
+    left: 16px;
+    right: 16px;
+    max-height: calc(100% - var(--hud-clock-top, 172px) - 16px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  /* The compact console scrolls its body instead, so the style popover
+     below its pill is never clipped. */
+  .world-entry-revealed > section[aria-label="Time of day"].tc-compact {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .tc-compact .tc-body {
+    max-height: calc(100dvh - var(--hud-clock-top, 172px) - 16px - 50px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  /* Touch targets: at least 44px on a phone. */
+  .tc-settings {
+    top: 3px;
+    right: 3px;
+  }
+
+  .tc-settings > div > button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .tc-body button,
+  .tc-body fieldset label {
+    min-height: 44px;
+  }
+
+  .tc-body fieldset label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .tc-body input[type="range"],
+  .scene-panel input[type="range"] {
+    height: 44px;
+  }
+
+  .scene-panel .sp-btn {
+    min-height: 44px;
+  }
+
+  .scene-panel input[type="color"] {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* The 20px switch keeps its look; its hit area grows to 44px. */
+  .scene-panel .sp-switch::after {
+    content: "";
+    position: absolute;
+    inset: -12px -4px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .scene-panel .sp-switch span {
     transition: none;
