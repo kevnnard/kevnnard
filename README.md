@@ -245,4 +245,4 @@ macOS menu bar replacement inspired by Polybar and Waybar. Faster window switchi
   </a>
 </p>
 
-<!-- last-sync: 2026-10-26T13:41:34Z -->
+<!-- last-sync: 2026-11-08T12:09:43Z -->
