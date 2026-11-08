@@ -44,8 +44,8 @@ The copy lives in `signCopy` (`garden-sign.ts`). Nothing else needs to change.
   The demand frameloop wakes for the flips only: a timer at each flip, then
   frames through it (`signTileWake`).
 - **Reduced motion:** there is no flip. The line changes every 9 s.
-- **"Based in":** this message and the city are left out until the owner
-  gives a city.
+- **"Based in Bogotá":** the fourth line. The card also shows "Based in
+  Bogotá, Colombia" and an Email link (`SIGN_PROFILE.city` and `.email`).
 
 ## The lantern
 

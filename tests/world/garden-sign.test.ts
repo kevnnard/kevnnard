@@ -105,14 +105,13 @@ describe("garden sign status (garden-sign T2)", () => {
 });
 
 describe("garden sign flip tiles", () => {
-  it("rotates exactly three messages from the site copy, no city yet", () => {
+  it("rotates four messages from the site copy, ending with the city", () => {
     assert.deepEqual(SIGN_MESSAGES, [
       "TypeScript full-stack",
       "Building Three Labs",
       "React · Next.js · NestJS",
+      "Based in Bogotá",
     ]);
-    for (const message of SIGN_MESSAGES)
-      assert.doesNotMatch(message, /based in/i);
   });
 
   it("holds each line 3 s and flips it briefly at the end", () => {
@@ -122,8 +121,9 @@ describe("garden sign flip tiles", () => {
     assert.deepEqual(signTile(1.5, false), { index: 0, scale: 1 });
     assert.deepEqual(signTile(3, false), { index: 1, scale: 1 });
     assert.deepEqual(signTile(6.2, false), { index: 2, scale: 1 });
+    assert.equal(signTile(9.1, false).index, 3);
     // Wraps back to the first.
-    assert.equal(signTile(9.1, false).index, 0);
+    assert.equal(signTile(12.1, false).index, 0);
     // The flip folds the old line shut, then opens the next one.
     const start = SIGN_FLIP.hold - SIGN_FLIP.flip;
     const closing = signTile(start + SIGN_FLIP.flip * 0.25, false);
@@ -301,9 +301,9 @@ describe("garden sign card content (no invented facts)", () => {
       assert.match(link.href, /^https:\/\//);
   });
 
-  it("leaves email and city empty until the owner gives them", () => {
-    assert.equal(SIGN_PROFILE.email, null);
-    assert.equal(SIGN_PROFILE.city, null);
+  it("shows the owner's email and city", () => {
+    assert.equal(SIGN_PROFILE.email, "kevnnard.labs@gmail.com");
+    assert.equal(SIGN_PROFILE.city, "Bogotá, Colombia");
     assert.ok(!("roles" in SIGN_PROFILE), "no Now block");
   });
 });
@@ -584,7 +584,7 @@ describe("garden sign wiring", () => {
     assert.match(card, /data-state=\{state\}/);
     assert.match(card, /inert=\{state === "leaving"\}/);
     assert.match(card, /onAnimationEnd=\{onMotionEnd\}/);
-    // Compact: no Now block, no email or city until given.
+    // Compact: no Now block; email and city render only when set.
     assert.doesNotMatch(card, />\s*Now\s*</i);
     assert.match(card, /profile\.email &&/);
     assert.match(card, /profile\.city &&/);

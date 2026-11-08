@@ -4,8 +4,7 @@
 // dark flip-tile strip that rotates one short line every 3 s; a status
 // lantern (green open, amber busy) that glows at night; a click target for
 // the cinematic close-up (sign-shot.ts) and the compact card's content,
-// all from the site's own copy. Email and city stay null until the owner
-// gives them. Pure numbers; GardenSign.tsx and SignCard.tsx render them.
+// all from the site's own copy plus the owner's email and city. Pure numbers; GardenSign.tsx and SignCard.tsx render them.
 
 import type { Vec3 } from "./camera.ts";
 import {
@@ -59,13 +58,13 @@ export const signCopy = (status: SignStatus): SignCopy => SIGN_COPY[status];
 
 /**
  * The one rotating line, from the site copy: the About summary's role, the
- * current role (Three Labs) and the core stack. "Based in" waits for the
- * owner's city.
+ * current role (Three Labs), the core stack and the owner's city.
  */
 export const SIGN_MESSAGES = [
   "TypeScript full-stack",
   "Building Three Labs",
   "React · Next.js · NestJS",
+  "Based in Bogotá",
 ] as const;
 
 /**
@@ -242,7 +241,7 @@ export interface SignProfile {
   stack: readonly string[];
   /** LinkedIn, GitHub (Footer), then the CVs (About), all external. */
   links: readonly TerminalLink[];
-  /** Not in the site copy yet: hidden until the owner gives them. */
+  /** From the owner; the card hides either one when null. */
   email: string | null;
   city: string | null;
 }
@@ -270,6 +269,6 @@ export const SIGN_PROFILE: SignProfile = {
     "Three.js",
   ],
   links: [...contact("LinkedIn"), ...contact("GitHub"), ...ABOUT.links],
-  email: null,
-  city: null,
+  email: "kevnnard.labs@gmail.com",
+  city: "Bogotá, Colombia",
 };
