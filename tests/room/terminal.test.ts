@@ -162,8 +162,8 @@ describe("static entry", () => {
     }
   });
 
-  it("links to /room without loading any 3d code", () => {
-    assert.match(index, /href="\/room"/);
+  it("links to /world without loading any 3d code", () => {
+    assert.match(index, /href="\/world"/);
     assert.doesNotMatch(index, /three|@react-three|components\/room|\.glb/);
   });
 });

@@ -267,6 +267,7 @@ export const SIGN_PROFILE: SignProfile = {
     "PostgreSQL",
     "Supabase",
     "AWS",
+    "Three.js",
   ],
   links: [...contact("LinkedIn"), ...contact("GitHub"), ...ABOUT.links],
   email: null,

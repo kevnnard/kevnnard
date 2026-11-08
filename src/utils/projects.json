@@ -86,6 +86,43 @@
     ]
   },
   {
+    "title": "Kevnnard World",
+    "description": "This portfolio as an explorable 3D home, open source. Built with Astro and React Three Fiber: a real-time day cycle, an interactive TV, a Neovim screen, a collection shelf with story cards and an Expecto Patronum easter egg. Models are prepared with Blender and glTF Transform, and every third-party asset is credited.",
+    "url": [
+      {
+        "icon": "GITHUB",
+        "url": "https://github.com/kevnnard/kevnnard",
+        "isSolid": true
+      }
+    ],
+    "isWorkInProgress": false,
+    "isOpenSource": true,
+    "isFeatured": true,
+    "status": "released",
+    "tags": [
+      {
+        "title": "Three.js",
+        "logo": "threedotjs"
+      },
+      {
+        "title": "React Three Fiber",
+        "logo": "react"
+      },
+      {
+        "title": "Astro",
+        "logo": "astro"
+      },
+      {
+        "title": "Blender",
+        "logo": "blender"
+      },
+      {
+        "title": "TypeScript",
+        "logo": "typescript"
+      }
+    ]
+  },
+  {
     "title": "dots",
     "description": "Cross-platform workstation provisioner and dotfiles backup engine written in Go. One-line bootstrap on a blank macOS or Linux machine, interactive Bubble Tea TUI dashboard, modular profiles (core, AI agents, mobile, infra), and a secret-sanitizing backup pipeline that snapshots configs to Git. Distributed via Homebrew tap.",
     "url": [
@@ -164,6 +201,47 @@
       {
         "title": "Accessibility API",
         "logo": "apple"
+      }
+    ]
+  },
+  {
+    "title": "Hotels Cheil",
+    "description": "Hotel management system, open source: an ASP.NET Core API, an Angular web app and Astro documentation, run together with Docker Compose.",
+    "url": [
+      {
+        "icon": "GITHUB",
+        "url": "https://github.com/kevnnard/hotels-cheil",
+        "isSolid": true
+      }
+    ],
+    "isWorkInProgress": false,
+    "isOpenSource": true,
+    "isFeatured": false,
+    "status": "completed",
+    "tags": [
+      {
+        "title": "C#",
+        "logo": "dotnet"
+      },
+      {
+        "title": "ASP.NET Core",
+        "logo": "dotnet"
+      },
+      {
+        "title": "Angular",
+        "logo": "angular"
+      },
+      {
+        "title": "TypeScript",
+        "logo": "typescript"
+      },
+      {
+        "title": "Astro",
+        "logo": "astro"
+      },
+      {
+        "title": "Docker",
+        "logo": "docker"
       }
     ]
   },

@@ -26,3 +26,6 @@ pnpm-debug.log*
 
 # Agent context (.pi/, .atl/), design/ and odd/ are shared with the project.
 # Do not ignore these directories: they preserve cross-machine context.
+
+# Python bytecode caches from the asset scripts
+__pycache__/

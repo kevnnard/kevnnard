@@ -7,9 +7,10 @@ const skillCategories = [
     skills: [
       { name: "TypeScript", logo: "typescript", level: "core" },
       { name: "JavaScript", logo: "javascript", level: "core" },
-      { name: "Python", logo: "python", level: "familiar" },
-      { name: "Go", logo: "go", level: "familiar" },
-      { name: "Swift", logo: "swift", level: "familiar" },
+      { name: "Python", logo: "python", level: "core" },
+      { name: "Go", logo: "go", level: "core" },
+      { name: "Swift", logo: "swift", level: "core" },
+      { name: "C#", logo: "dotnet", level: "core" },
     ],
   },
   {
@@ -20,6 +21,7 @@ const skillCategories = [
       { name: "Astro", logo: "astro", level: "core" },
       { name: "Tailwind", logo: "tailwindcss", level: "core" },
       { name: "Shadcn/ui", logo: "shadcnui", level: "core" },
+      { name: "Angular", logo: "angular", level: "core" },
     ],
   },
   {
@@ -29,15 +31,24 @@ const skillCategories = [
       { name: "NestJS", logo: "nestjs", level: "core" },
       { name: "GraphQL", logo: "graphql", level: "core" },
       { name: "Express", logo: "express", level: "core" },
-      { name: "Bun", logo: "bun", level: "familiar" },
+      { name: "Bun", logo: "bun", level: "core" },
+      { name: "ASP.NET Core", logo: "dotnet", level: "core" },
+    ],
+  },
+  {
+    title: "3D & Graphics",
+    skills: [
+      { name: "Three.js", logo: "threedotjs", level: "core" },
+      { name: "React Three Fiber", logo: "react", level: "core" },
+      { name: "Blender", logo: "blender", level: "core" },
     ],
   },
   {
     title: "Mobile",
     skills: [
       { name: "React Native", logo: "react", level: "core" },
-      { name: "SwiftUI", logo: "swift", level: "familiar" },
-      { name: "Flutter", logo: "flutter", level: "familiar" },
+      { name: "SwiftUI", logo: "swift", level: "core" },
+      { name: "Flutter", logo: "flutter", level: "core" },
     ],
   },
   {
@@ -46,7 +57,7 @@ const skillCategories = [
       { name: "PostgreSQL", logo: "postgresql", level: "core" },
       { name: "Supabase", logo: "supabase", level: "core" },
       { name: "MongoDB", logo: "mongodb", level: "core" },
-      { name: "Redis", logo: "redis", level: "familiar" },
+      { name: "Redis", logo: "redis", level: "core" },
     ],
   },
   {
@@ -55,7 +66,7 @@ const skillCategories = [
       { name: "Docker", logo: "docker", level: "core" },
       { name: "AWS", logo: "amazonwebservices", level: "core" },
       { name: "Vercel", logo: "vercel", level: "core" },
-      { name: "Kubernetes", logo: "kubernetes", level: "familiar" },
+      { name: "Kubernetes", logo: "kubernetes", level: "core" },
     ],
   },
 ];
@@ -71,7 +82,7 @@ const skillCategories = [
     <span>Skills & GitHub</span>
   </h2>
 
-  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
     {
       skillCategories.map((category) => (
         <div class="group p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] transition-all duration-300 hover:bg-white/[0.04] hover:border-emerald-500/20">

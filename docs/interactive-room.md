@@ -7,7 +7,7 @@ A browser-only 3D view of the original Blender room, linked from the static home
 
 | Piece | Path | Role |
 |-------|------|------|
-| Page | `src/pages/room.astro` | Full-screen shell, `client:only="react"` island, `<noscript>` link back to `/`. |
+| Page | none: `/room` redirects to `/world` (`astro.config.mjs`); the room components live on inside the world. |
 | Shell | `src/components/room/RoomApp.tsx` | WebGL check, lazy-loads the scene, view controls, Escape, loading/error fallbacks, mobile terminal. |
 | Scene | `src/components/room/RoomScene.tsx` | R3F canvas, glTF models, camera transitions, TV/PC screens, wall panels. |
 | Atmosphere | `src/components/room/RoomAtmosphere.tsx` | Sky dome, stars, moon, sun/moon key light, fill, accents, reflections and exposure. |

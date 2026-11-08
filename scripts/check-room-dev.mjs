@@ -15,6 +15,6 @@ const scene = await (await request("/src/components/room/RoomScene.tsx")).text()
 const dependencies = [...scene.matchAll(/from\s*["'](\/node_modules\/\.vite\/deps\/[^"']+)["']/g)].map((match) => match[1]);
 assert.ok(dependencies.length >= 5, "Expected Vite's transformed scene dependencies");
 for (const dependency of new Set(dependencies)) await request(dependency);
-for (const path of ["/", "/room", ...["office", "desk", "chair", "lounge"].map((name) => `/models/room/${name}.glb`)]) {
+for (const path of ["/", "/world", ...["office", "desk", "chair", "lounge"].map((name) => `/models/room/${name}.glb`)]) {
   await request(path);
 }
