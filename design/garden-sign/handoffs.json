@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "chosen": "01-wooden-board.html",
+  "handoffs": {
+    "01-wooden-board.html": {
+      "status": "implemented",
+      "queued": false,
+      "sentAt": "2026-11-06T18:21:43.675Z",
+      "startedAt": "2026-11-06T18:22:01.642Z",
+      "implementedAt": "2026-11-06T18:39:58.136Z",
+      "feature": "odd/tasks/garden-sign.md",
+      "note": "Wooden board with status lantern, flip-tile line and compact card; click the sign in the front garden.",
+      "previewUrl": "http://localhost:4321/world"
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "chosen": "01-tv-os-overlay.html",
+  "handoffs": {
+    "01-tv-os-overlay.html": {
+      "status": "implemented",
+      "queued": false,
+      "sentAt": "2026-11-06T02:37:46.791Z",
+      "startedAt": "2026-11-06T02:38:12.173Z",
+      "implementedAt": "2026-11-06T03:08:00.938Z",
+      "feature": "odd/tasks/tv-home-screen.md",
+      "note": "Click the TV in /world to open Kevnnard TV. Commits 0368416, da8497f, 979f398.",
+      "previewUrl": "http://127.0.0.1:4321/world"
+    }
+  }
+}
