@@ -1,0 +1,58 @@
+{
+  "generator": "scripts/prepare-cherry-photos.mjs",
+  "note": "The owner's own photos of Cherry; sources are not committed.",
+  "photos": [
+    {
+      "id": "cherry-patio",
+      "source": {
+        "file": "cheery-1.jpg",
+        "sha256": "e4674bba9fbbbc1eb36e5722555dd5547f86547a19ea4ad2e9b57b1c2afead7b",
+        "bytes": 883037,
+        "width": 4160,
+        "height": 3120
+      },
+      "outputs": [
+        {
+          "file": "cherry/cherry-patio-640.webp",
+          "width": 640,
+          "height": 480,
+          "bytes": 35144,
+          "sha256": "64aea2a70fb815eb052b6dfa4b4fc930976c9e5b00900b7d63f99abb4c5859df"
+        },
+        {
+          "file": "cherry/cherry-patio-1200.webp",
+          "width": 1200,
+          "height": 900,
+          "bytes": 101022,
+          "sha256": "bd3ca0ff14875d4e0666e1ec1f6246f15fea9a0db977302f2972247dfdbc2fdf"
+        }
+      ]
+    },
+    {
+      "id": "cherry-blanket",
+      "source": {
+        "file": "cherry-2.jpg",
+        "sha256": "02c25a5aae336b0afd9f16be127059f5eb18bc94f0d0e1c6f506f0c0407b8fd3",
+        "bytes": 1049201,
+        "width": 3120,
+        "height": 3900
+      },
+      "outputs": [
+        {
+          "file": "cherry/cherry-blanket-512.webp",
+          "width": 512,
+          "height": 640,
+          "bytes": 36582,
+          "sha256": "aefa641d01e1a3b5c823c02a4919cba7049efb5096f81054bab6be54fec7c0ab"
+        },
+        {
+          "file": "cherry/cherry-blanket-960.webp",
+          "width": 960,
+          "height": 1200,
+          "bytes": 97594,
+          "sha256": "f15568a8b1552c213eac0db9d891a3c5c528edc183672c404beb5353aa112259"
+        }
+      ]
+    }
+  ]
+}

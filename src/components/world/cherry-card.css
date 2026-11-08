@@ -63,6 +63,17 @@
   stroke-linejoin: round;
 }
 
+/* Her photos (cherry-photos T1): the family's media row (case-story.css),
+   the landscape one wide, the portrait one narrow, a faint rose ring. */
+.case-story-media.cherry-card-photos {
+  grid-template-columns: 1.5fr 1fr;
+  height: 176px;
+  margin-top: 12px;
+}
+.cherry-card-photos img {
+  box-shadow: 0 0 0 1px rgb(244 63 94 / 0.25);
+}
+
 /* The stats strip: three cells in a row, divided by hairlines. */
 .cherry-card-stats {
   /* compact (dog-rig S10) */
@@ -153,6 +164,9 @@
     width: 40px;
     height: 40px;
     margin-bottom: 6px;
+  }
+  .case-story-media.cherry-card-photos {
+    height: 128px;
   }
   .cherry-card-stats {
     grid-template-columns: 1fr;

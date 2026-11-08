@@ -284,10 +284,12 @@ export function houseBlocks(from: Vec3, to: Vec3): boolean {
   });
 }
 
-/** A photo or clip of her, once the owner sends them. */
+/** A photo or clip of her. */
 export interface CherryMedia {
   kind: "photo" | "clip";
   src: string;
+  /** A photo's widths, as an img srcset. */
+  srcSet?: string;
   alt: string;
   /** A clip's still. */
   poster?: string;
@@ -301,7 +303,7 @@ export interface CherryStory {
   stats: readonly { label: string; value: string }[];
   /** Her story, a paragraph each, in the owner's words. */
   story: readonly string[];
-  /** Photos and videos: none yet (null renders nothing). */
+  /** Photos and videos (null renders nothing). */
   media: readonly CherryMedia[] | null;
   /** A poem for her (dog-rig S9): stanzas of lines. */
   poem: { title: string; stanzas: readonly (readonly string[])[] };
@@ -320,7 +322,26 @@ export const CHERRY_STORY: CherryStory = {
     "Cherry has been by my side my whole life: more than nineteen years.",
     "Someday she will rest, and she will live on in my thoughts. I wish she never had to go, so I put her here, to keep her with me forever and never forget her.",
   ],
-  media: null,
+  // The owner's own photos (cherry-photos T1), prepared by
+  // scripts/prepare-cherry-photos.mjs; only her open card loads them.
+  media: [
+    {
+      kind: "photo",
+      src: "/world/cherry/cherry-patio-1200.webp",
+      srcSet:
+        "/world/cherry/cherry-patio-640.webp 640w, /world/cherry/cherry-patio-1200.webp 1200w",
+      alt: "Cherry, a black and tan Miniature Pinscher, in close-up profile on a sunny brick patio.",
+      focus: "50% 55%",
+    },
+    {
+      kind: "photo",
+      src: "/world/cherry/cherry-blanket-960.webp",
+      srcSet:
+        "/world/cherry/cherry-blanket-512.webp 512w, /world/cherry/cherry-blanket-960.webp 960w",
+      alt: "Cherry's face up close as she rests on a blanket, her big dark eyes looking up at the camera.",
+      focus: "50% 45%",
+    },
+  ],
   poem: {
     title: "For Cherry",
     stanzas: [

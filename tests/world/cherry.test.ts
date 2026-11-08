@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
+import { join, relative } from "node:path";
 import { describe, it } from "node:test";
+import { fileURLToPath } from "node:url";
 import { MeshoptDecoder } from "meshoptimizer/decoder";
 import {
   GUIDE,
@@ -641,8 +643,51 @@ describe("Cherry's cinematic shot (dog-rig T3)", () => {
 const source = (path: string) =>
   readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
 
+/** Every file under a repository directory, repository-relative, sorted. */
+const sourceFiles = (dir: string): string[] =>
+  readdirSync(new URL(`../../${dir}`, import.meta.url), {
+    recursive: true,
+    withFileTypes: true,
+  })
+    .filter((entry) => entry.isFile())
+    .map((entry) =>
+      relative(
+        fileURLToPath(new URL("../../", import.meta.url)),
+        join(entry.parentPath, entry.name),
+      ),
+    )
+    .sort();
+
+/** A WebP's size and its RIFF chunk ids. */
+function webpInfo(buffer: Buffer) {
+  assert.equal(buffer.toString("ascii", 0, 4), "RIFF");
+  assert.equal(buffer.toString("ascii", 8, 12), "WEBP");
+  const chunks: string[] = [];
+  let width = 0;
+  let height = 0;
+  for (let at = 12; at + 8 <= buffer.length; ) {
+    const id = buffer.toString("ascii", at, at + 4);
+    const size = buffer.readUInt32LE(at + 4);
+    const data = at + 8;
+    chunks.push(id);
+    if (id === "VP8X") {
+      width = 1 + buffer.readUIntLE(data + 4, 3);
+      height = 1 + buffer.readUIntLE(data + 7, 3);
+    } else if (id === "VP8 " && !width) {
+      width = buffer.readUInt16LE(data + 6) & 0x3fff;
+      height = buffer.readUInt16LE(data + 8) & 0x3fff;
+    } else if (id === "VP8L" && !width) {
+      const bits = buffer.readUInt32LE(data + 1);
+      width = 1 + (bits & 0x3fff);
+      height = 1 + ((bits >> 14) & 0x3fff);
+    }
+    at = data + size + (size % 2);
+  }
+  return { width, height, chunks };
+}
+
 describe("Cherry's card (dog-rig T3)", () => {
-  it("tells her story in the owner's words, with an empty media slot for now", () => {
+  it("tells her story in the owner's words", () => {
     assert.equal(CHERRY_STORY.name, "Cherry");
     assert.equal(CHERRY_STORY.kicker, "COMPANION · MINIATURE PINSCHER");
     assert.deepEqual(CHERRY_STORY.stats, [
@@ -654,8 +699,72 @@ describe("Cherry's card (dog-rig T3)", () => {
       "Cherry has been by my side my whole life: more than nineteen years.",
       "Someday she will rest, and she will live on in my thoughts. I wish she never had to go, so I put her here, to keep her with me forever and never forget her.",
     ]);
-    // The owner's photos and videos come later.
-    assert.equal(CHERRY_STORY.media, null);
+  });
+
+  it("shows the owner's two photos of her, described in English (cherry-photos S1, S3)", () => {
+    assert.deepEqual(CHERRY_STORY.media, [
+      {
+        kind: "photo",
+        src: "/world/cherry/cherry-patio-1200.webp",
+        srcSet:
+          "/world/cherry/cherry-patio-640.webp 640w, /world/cherry/cherry-patio-1200.webp 1200w",
+        alt: "Cherry, a black and tan Miniature Pinscher, in close-up profile on a sunny brick patio.",
+        focus: "50% 55%",
+      },
+      {
+        kind: "photo",
+        src: "/world/cherry/cherry-blanket-960.webp",
+        srcSet:
+          "/world/cherry/cherry-blanket-512.webp 512w, /world/cherry/cherry-blanket-960.webp 960w",
+        alt: "Cherry's face up close as she rests on a blanket, her big dark eyes looking up at the camera.",
+        focus: "50% 45%",
+      },
+    ]);
+  });
+
+  it("ships them as small WebPs with no metadata, recorded in a manifest (cherry-photos S2)", () => {
+    const manifest = JSON.parse(
+      readFileSync(new URL("cherry/manifest.json", PUBLIC), "utf8"),
+    );
+    assert.deepEqual(
+      manifest.photos.map(
+        (photo: { source: { sha256: string } }) => photo.source.sha256,
+      ),
+      [
+        "e4674bba9fbbbc1eb36e5722555dd5547f86547a19ea4ad2e9b57b1c2afead7b",
+        "02c25a5aae336b0afd9f16be127059f5eb18bc94f0d0e1c6f506f0c0407b8fd3",
+      ],
+    );
+    const outputs = new Map<string, { width: number; bytes: number }>(
+      manifest.photos.flatMap(
+        (photo: {
+          outputs: { file: string; width: number; bytes: number }[];
+        }) => photo.outputs.map((output) => [output.file, output]),
+      ),
+    );
+    for (const media of CHERRY_STORY.media ?? []) {
+      const candidates = (media.srcSet ?? "").split(", ").map((candidate) => {
+        const [src, w] = candidate.split(" ");
+        return { src, width: Number(w.slice(0, -1)) };
+      });
+      assert.ok(candidates.some((candidate) => candidate.src === media.src));
+      for (const { src, width } of candidates) {
+        const file = src.replace(/^\/world\//, "");
+        const buffer = readFileSync(new URL(file, PUBLIC));
+        const webp = webpInfo(buffer);
+        assert.equal(webp.width, width, src);
+        assert.ok(Math.max(webp.width, webp.height) <= 1200, src);
+        // No EXIF, XMP or ICC chunk survives: no GPS, camera or date.
+        assert.deepEqual(
+          webp.chunks.filter((chunk) => /EXIF|XMP|ICCP/.test(chunk)),
+          [],
+          src,
+        );
+        assert.ok(buffer.length <= (width > 700 ? 160_000 : 60_000), src);
+        assert.equal(outputs.get(file)?.bytes, buffer.length, src);
+        assert.equal(outputs.get(file)?.width, width, src);
+      }
+    }
   });
 
   it("closes with a poem for her, six stanzas of three lines (S9)", () => {
@@ -688,7 +797,7 @@ describe("Cherry's card (dog-rig T3)", () => {
     assert.equal(focus.fov, CHERRY_SHOT.fov);
   });
 
-  it("renders an iconic name, a drawn glyph, the stats, her story and Back to room, and no media yet", () => {
+  it("renders an iconic name, a drawn glyph, the stats, her story and Back to room", () => {
     const card = source("src/components/world/CherryCard.tsx");
     assert.match(card, /className="case-story cherry-card"/);
     assert.match(card, /case-story-kicker/);
@@ -696,9 +805,13 @@ describe("Cherry's card (dog-rig T3)", () => {
     assert.match(card, /<svg[\s\S]*?className="cherry-card-glyph"/);
     assert.match(card, /<dl className="cherry-card-stats"/);
     assert.match(card, /story\.story\.map/);
-    // No photos yet: nothing renders for the empty media slot, and no
-    // external images.
-    assert.doesNotMatch(card, /<img|<video|https?:\/\//);
+    // Her photos, local only, in the story family's media row.
+    assert.doesNotMatch(card, /<video|https?:\/\//);
+    assert.match(card, /className="case-story-media cherry-card-photos"/);
+    assert.match(card, /story\.media\.map\(/);
+    assert.match(card, /<img[\s\S]*?alt=\{media\.alt\}/);
+    assert.match(card, /srcSet=\{media\.srcSet\}/);
+    assert.match(card, /sizes="/);
     assert.match(card, /Back to room/);
     assert.match(card, /back\.current\?\.focus\(/);
     assert.match(card, /data-state=\{state\}/);
@@ -712,6 +825,20 @@ describe("Cherry's card (dog-rig T3)", () => {
     assert.match(css, /\.cherry-card-name\s*\{[^}]*letter-spacing/);
     assert.match(css, /prefers-reduced-motion/);
     assert.match(css, /@media \(max-width: 700px\)/);
+  });
+
+  it("loads her photos only once her card opens (cherry-photos S3)", () => {
+    const card = source("src/components/world/CherryCard.tsx");
+    assert.match(card, /<img[\s\S]*?loading="lazy"/);
+    assert.match(card, /<img[\s\S]*?decoding="async"/);
+    // The card mounts only while it is shown (useCardPresence), and nothing
+    // else names the photos: no preload, import or link on world entry.
+    const app = source("src/components/world/WorldApp.tsx");
+    assert.match(app, /cherryCards\.map\(/);
+    const naming = sourceFiles("src").filter((file) =>
+      source(file).includes("/world/cherry/"),
+    );
+    assert.deepEqual(naming, ["src/lib/world/cherry.ts"]);
   });
 });
 

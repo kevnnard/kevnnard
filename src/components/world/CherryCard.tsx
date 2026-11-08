@@ -28,8 +28,9 @@ function Paw() {
  * actions, focus rings and the footprint the camera frames her left of),
  * made iconic: her name set large and spaced with a soft glow and an
  * underline that draws in, a drawn paw with a heart, the stats strip and
- * her story in the owner's words. The photos and videos the owner will send
- * go in `story.media` (null for now: nothing renders). She is not part of
+ * her story in the owner's words. The owner's photos of her (`story.media`)
+ * sit in the family's media row under her name, lazy, so they load only
+ * once the card opens (it mounts only while shown). She is not part of
  * the collection, so there is no rail: "Back to room" leaves, and takes
  * focus as the card opens. It fades in and out like the other cards
  * (card-motion T1); leaving, it is inert, so it lets go of focus.
@@ -64,6 +65,26 @@ export default function CherryCard({
         </h2>
         <Paw />
       </div>
+      {story.media && story.media.length > 0 && (
+        <div
+          className="case-story-media cherry-card-photos"
+          data-count={story.media.length}
+          aria-label="Photos of Cherry"
+        >
+          {story.media.map((media) => (
+            <img
+              key={media.src}
+              src={media.src}
+              srcSet={media.srcSet}
+              sizes="(max-width: 700px) 60vw, 300px"
+              alt={media.alt}
+              style={{ objectPosition: media.focus }}
+              loading="lazy"
+              decoding="async"
+            />
+          ))}
+        </div>
+      )}
       <dl className="cherry-card-stats">
         {story.stats.map((stat) => (
           <div key={stat.label}>
