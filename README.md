@@ -139,6 +139,34 @@ macOS menu bar replacement inspired by Polybar and Waybar. Faster window switchi
 
 </td>
 </tr>
+<tr>
+<td width="50%">
+
+**[Kevnnard World](https://kevnnard.com/world)** `Released`
+
+This portfolio as an explorable 3D home, open source. Astro and React Three Fiber: a real-time day cycle, an interactive TV, a Neovim screen, a collection shelf with story cards and an Expecto Patronum easter egg. Models prepared with Blender and glTF Transform; every third-party asset credited.
+
+![Three.js](https://img.shields.io/badge/Three.js-05122A?style=flat&logo=threedotjs)
+![React Three Fiber](https://img.shields.io/badge/React_Three_Fiber-05122A?style=flat&logo=react)
+![Astro](https://img.shields.io/badge/Astro-05122A?style=flat&logo=astro)
+![Blender](https://img.shields.io/badge/Blender-05122A?style=flat&logo=blender)
+![TypeScript](https://img.shields.io/badge/TypeScript-05122A?style=flat&logo=typescript)
+
+</td>
+<td width="50%">
+
+**[Hotels Cheil](https://github.com/kevnnard/hotels-cheil)** `Completed`
+
+Hotel management system: an ASP.NET Core API, an Angular web app and Astro documentation, run together with Docker Compose.
+
+![C#](https://img.shields.io/badge/C%23-05122A?style=flat&logo=dotnet)
+![ASP.NET Core](https://img.shields.io/badge/ASP.NET_Core-05122A?style=flat&logo=dotnet)
+![Angular](https://img.shields.io/badge/Angular-05122A?style=flat&logo=angular)
+![TypeScript](https://img.shields.io/badge/TypeScript-05122A?style=flat&logo=typescript)
+![Docker](https://img.shields.io/badge/Docker-05122A?style=flat&logo=docker)
+
+</td>
+</tr>
 </table>
 
 ---
@@ -151,6 +179,10 @@ macOS menu bar replacement inspired by Polybar and Waybar. Faster window switchi
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-05122A?style=flat&logo=typescript)
 ![JavaScript](https://img.shields.io/badge/JavaScript-05122A?style=flat&logo=javascript)
+![Go](https://img.shields.io/badge/Go-05122A?style=flat&logo=go)
+![Swift](https://img.shields.io/badge/Swift-05122A?style=flat&logo=swift)
+![C#](https://img.shields.io/badge/C%23-05122A?style=flat&logo=dotnet)
+![Python](https://img.shields.io/badge/Python-05122A?style=flat&logo=python)
 
 </details>
 
@@ -163,6 +195,17 @@ macOS menu bar replacement inspired by Polybar and Waybar. Faster window switchi
 ![Astro](https://img.shields.io/badge/Astro-05122A?style=flat&logo=astro)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind-05122A?style=flat&logo=tailwindcss)
 ![Shadcn/ui](https://img.shields.io/badge/Shadcn/ui-05122A?style=flat&logo=shadcnui)
+![Angular](https://img.shields.io/badge/Angular-05122A?style=flat&logo=angular)
+
+</details>
+
+<details>
+<summary><strong>3D &amp; Graphics</strong></summary>
+<br/>
+
+![Three.js](https://img.shields.io/badge/Three.js-05122A?style=flat&logo=threedotjs)
+![React Three Fiber](https://img.shields.io/badge/React_Three_Fiber-05122A?style=flat&logo=react)
+![Blender](https://img.shields.io/badge/Blender-05122A?style=flat&logo=blender)
 
 </details>
 
@@ -174,6 +217,8 @@ macOS menu bar replacement inspired by Polybar and Waybar. Faster window switchi
 ![NestJS](https://img.shields.io/badge/NestJS-05122A?style=flat&logo=nestjs&logoColor=E0234E)
 ![GraphQL](https://img.shields.io/badge/GraphQL-05122A?style=flat&logo=graphql&logoColor=E10098)
 ![Express](https://img.shields.io/badge/Express-05122A?style=flat&logo=express)
+![ASP.NET Core](https://img.shields.io/badge/ASP.NET_Core-05122A?style=flat&logo=dotnet)
+![Bun](https://img.shields.io/badge/Bun-05122A?style=flat&logo=bun)
 
 </details>
 
@@ -182,6 +227,8 @@ macOS menu bar replacement inspired by Polybar and Waybar. Faster window switchi
 <br/>
 
 ![React Native](https://img.shields.io/badge/React_Native-05122A?style=flat&logo=react)
+![SwiftUI](https://img.shields.io/badge/SwiftUI-05122A?style=flat&logo=swift)
+![Flutter](https://img.shields.io/badge/Flutter-05122A?style=flat&logo=flutter)
 
 </details>
 
@@ -192,6 +239,7 @@ macOS menu bar replacement inspired by Polybar and Waybar. Faster window switchi
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-05122A?style=flat&logo=postgresql)
 ![MongoDB](https://img.shields.io/badge/MongoDB-05122A?style=flat&logo=mongodb)
 ![Supabase](https://img.shields.io/badge/Supabase-05122A?style=flat&logo=supabase)
+![Redis](https://img.shields.io/badge/Redis-05122A?style=flat&logo=redis)
 
 </details>
 
@@ -202,20 +250,6 @@ macOS menu bar replacement inspired by Polybar and Waybar. Faster window switchi
 ![Docker](https://img.shields.io/badge/Docker-05122A?style=flat&logo=docker)
 ![AWS](https://img.shields.io/badge/AWS-05122A?style=flat&logo=amazonwebservices)
 ![Vercel](https://img.shields.io/badge/Vercel-05122A?style=flat&logo=vercel)
-
-</details>
-
-<details>
-<summary><strong>Familiar</strong> · working knowledge</summary>
-<br/>
-
-![Python](https://img.shields.io/badge/Python-05122A?style=flat&logo=python)
-![Go](https://img.shields.io/badge/Go-05122A?style=flat&logo=go)
-![Swift](https://img.shields.io/badge/Swift-05122A?style=flat&logo=swift)
-![Bun](https://img.shields.io/badge/Bun-05122A?style=flat&logo=bun)
-![SwiftUI](https://img.shields.io/badge/SwiftUI-05122A?style=flat&logo=swift)
-![Flutter](https://img.shields.io/badge/Flutter-05122A?style=flat&logo=flutter)
-![Redis](https://img.shields.io/badge/Redis-05122A?style=flat&logo=redis)
 ![Kubernetes](https://img.shields.io/badge/Kubernetes-05122A?style=flat&logo=kubernetes)
 
 </details>
@@ -236,7 +270,7 @@ macOS menu bar replacement inspired by Polybar and Waybar. Faster window switchi
 ---
 
 <p align="center">
-  <sub>Built with Astro + React + Tailwind</sub>
+  <sub>Built with Astro + React + Tailwind · 3D world with Three.js and React Three Fiber</sub>
 </p>
 
 <p align="center">
