@@ -279,4 +279,4 @@ Hotel management system: an ASP.NET Core API, an Angular web app and Astro docum
   </a>
 </p>
 
-<!-- last-sync: 2026-11-13T12:11:16Z -->
+<!-- last-sync: 2026-11-14T12:09:43Z -->
