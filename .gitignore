@@ -24,8 +24,11 @@ pnpm-debug.log*
 # Regenerable code intelligence index
 .codegraph/
 
-# Agent context (.pi/, .atl/), design/ and odd/ are shared with the project.
-# Do not ignore these directories: they preserve cross-machine context.
+# Local agent context and design work: kept on disk, not in the repository
+.pi/
+.atl/
+design/
+odd/
 
 # Python bytecode caches from the asset scripts
 __pycache__/
