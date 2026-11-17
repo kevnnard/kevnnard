@@ -1,5 +1,25 @@
 [
   {
+    "isCurrent": true,
+    "title": "Software Engineer & Open Source Maintainer (Remote)",
+    "company": "Kevnnard Labs (personal open source brand)",
+    "location": "Worldwide",
+    "duration": "January 1st, 2021 – Present",
+    "description": "Kevnnard Labs is my personal open source brand: it is not a company and does not represent any company. Under it I publish my own open source tools and self-funded indie products, taking each one from idea to release — architecture, code, distribution and product. Recent work: devtrainer (daily coding practice with spaced repetition), english-teacher (an English teacher in the terminal), watts (electricity use and cost dashboard, in progress) and lgswitch (LG ultrawide input switching), all in Go and shipped through a Homebrew tap; plus private tools such as Jarvis (terminal focus assistant), Calls AI (native macOS live call assistant in Swift) and Trading (crypto charts terminal, in progress). Earlier projects include Mis Gastos – Mis Cuentas (iOS accounting app with real users), Smart Window (SwiftUI macOS, open source), dots and this 3D portfolio.",
+    "link": "https://github.com/kevnnard",
+    "tags": [
+      "Open Source",
+      "Go",
+      "Swift",
+      "TUI",
+      "TypeScript",
+      "React Native",
+      "Homebrew",
+      "AI",
+      "FULLSTACK"
+    ]
+  },
+  {
     "isCurrent": false,
     "icon": "https://cdn.shopify.com/s/files/1/0264/9161/7361/files/logo_omni.png?v=1655440904",
     "title": "Software Engineer - ( Remote )",
@@ -19,13 +39,13 @@
     ]
   },
   {
-    "isCurrent": true,
+    "isCurrent": false,
     "icon": "https://cdn.shopify.com/s/files/1/0264/9161/7361/files/logo_fox_racing_colombia.png?v=1655440904",
-    "title": "Lead Software Engineer & Founder (Remote)",
+    "title": "Lead Software Engineer & Co-founder (Remote)",
     "company": "Three Labs S.A.S.",
     "location": "Worldwide",
-    "duration": "January 1st, 2023 -",
-    "description": "Co-founder of THREE LABS S.A.S., a software agency built on a 5-person team (2 founders + 3 independent contractors). We ship end-to-end software products: custom SaaS platforms, mobile apps, e-commerce storefronts, and DevOps. Flagship products include Three Trackr (multi-carrier shipment tracking at app.threeelabs.com), Three Shopify (Shopify storefronts and integrations), Three X (clothing retail), and Grupor (inventory management). I lead technical direction across the stack: TypeScript, React, Next.js, and Astro on the frontend; NestJS, Node.js, and Express on the backend; PostgreSQL and Supabase for data; AWS for deployments. I also drive QA automation and testing strategy across mobile and web.",
+    "duration": "January 1st, 2023 - August 2026",
+    "description": "Co-founded THREE LABS S.A.S., a software agency built on a 5-person team (2 founders + 3 independent contractors). We shipped end-to-end software products: custom SaaS platforms, mobile apps, e-commerce storefronts, and DevOps. Flagship products include Three Trackr (multi-carrier shipment tracking at app.threeelabs.com), Three Shopify (Shopify storefronts and integrations), Three X (clothing retail), and Grupor (inventory management). I led technical direction across the stack: TypeScript, React, Next.js, and Astro on the frontend; NestJS, Node.js, and Express on the backend; PostgreSQL and Supabase for data; AWS for deployments. I also drove QA automation and testing strategy across mobile and web.",
     "link": "https://www.threeelabs.com",
     "tags": [
       "Mobile",
@@ -66,26 +86,6 @@
       "Development",
       "Shopify",
       "NextJS"
-    ]
-  },
-  {
-    "isCurrent": true,
-    "title": "Software Engineer & Founder (Remote)",
-    "company": "Kevnnard Labs",
-    "location": "Worldwide",
-    "duration": "January 1st, 2021 – Present",
-    "description": "Personal brand for open source work and self-funded indie products. I take ideas from concept to release — architecture, code, deployment, and product. Active projects: Mis Gastos – Mis Cuentas (iOS accounting app in production with real users), Smart PC (custom PC e-commerce), Smart Window (SwiftUI macOS, open source), and LumiWall (LED advertising platform, in progress).",
-    "link": "https://kevnnard.com",
-    "tags": [
-      "Mobile",
-      "Frontend",
-      "Backend",
-      "React Native",
-      "NextJS",
-      "Shopify",
-      "Devops",
-      "FULLSTACK",
-      "Freelance"
     ]
   }
 ]

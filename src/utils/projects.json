@@ -123,6 +123,350 @@
     ]
   },
   {
+    "title": "devtrainer",
+    "description": "Short daily practice sessions in your terminal, for programming, architecture and tooling. Spaced repetition, auto-graded questions, and code exercises that really run. 14 tracks, 106 concepts, 492 questions and 82 code exercises in 7 languages plus SQL, with FSRS scheduling, offline by default and an optional AI tutor. Install with brew install kevnnard/tap/devtrainer. PolyForm Strict 1.0.0.",
+    "url": [
+      {
+        "icon": "GITHUB",
+        "url": "https://github.com/kevnnard/devtrainer",
+        "isSolid": true
+      }
+    ],
+    "isWorkInProgress": false,
+    "isOpenSource": true,
+    "isFeatured": true,
+    "status": "released",
+    "tags": [
+      {
+        "title": "Go",
+        "logo": "go"
+      },
+      {
+        "title": "Bubble Tea v2",
+        "logo": "go"
+      },
+      {
+        "title": "Lip Gloss v2",
+        "logo": "go"
+      },
+      {
+        "title": "FSRS",
+        "logo": "anki"
+      },
+      {
+        "title": "SQLite",
+        "logo": "sqlite"
+      },
+      {
+        "title": "YAML",
+        "logo": "yaml"
+      },
+      {
+        "title": "Homebrew",
+        "logo": "homebrew"
+      },
+      {
+        "title": "Anthropic Claude",
+        "logo": "anthropic"
+      }
+    ]
+  },
+  {
+    "title": "english-teacher",
+    "description": "A personal English teacher in the terminal: spaced review of your own words, graded reading, writing with focused feedback, role-plays, fluency drills and quizzes. SM-2 spaced repetition, local speech-to-text with Whisper and voice with Piper TTS. v0.2.0, install with brew. PolyForm Strict 1.0.0.",
+    "url": [
+      {
+        "icon": "GITHUB",
+        "url": "https://github.com/kevnnard/english-teacher",
+        "isSolid": true
+      }
+    ],
+    "isWorkInProgress": false,
+    "isOpenSource": true,
+    "isFeatured": false,
+    "status": "released",
+    "tags": [
+      {
+        "title": "Go",
+        "logo": "go"
+      },
+      {
+        "title": "Bubble Tea v2",
+        "logo": "go"
+      },
+      {
+        "title": "Lip Gloss v2",
+        "logo": "go"
+      },
+      {
+        "title": "SQLite",
+        "logo": "sqlite"
+      },
+      {
+        "title": "Whisper",
+        "logo": "pytorch"
+      },
+      {
+        "title": "Piper TTS",
+        "logo": "onnx"
+      },
+      {
+        "title": "Homebrew",
+        "logo": "homebrew"
+      }
+    ]
+  },
+  {
+    "title": "Jarvis",
+    "description": "Your focus assistant in the terminal: pomodoro blocks, daily English and coding goals, a standing desk that moves with you, and a voice that keeps you on track. Classic 25/5 or deep 45/15 pomodoros, daily goals with english-teacher and devtrainer, sit/stand desk alternation, voice announcements in English or Spanish, a Waybar module and desktop notifications. macOS + Linux. Private repository, all rights reserved.",
+    "url": [],
+    "isWorkInProgress": false,
+    "isOpenSource": false,
+    "isPrivate": true,
+    "isFeatured": false,
+    "status": "released",
+    "tags": [
+      {
+        "title": "Go",
+        "logo": "go"
+      },
+      {
+        "title": "Bubble Tea",
+        "logo": "go"
+      },
+      {
+        "title": "Lip Gloss",
+        "logo": "go"
+      },
+      {
+        "title": "SQLite",
+        "logo": "sqlite"
+      },
+      {
+        "title": "WebSocket",
+        "logo": "socketdotio"
+      },
+      {
+        "title": "IMAP",
+        "logo": "minutemailer"
+      },
+      {
+        "title": "Python",
+        "logo": "python"
+      },
+      {
+        "title": "Shell",
+        "logo": "gnubash"
+      },
+      {
+        "title": "systemd",
+        "logo": "linux"
+      },
+      {
+        "title": "Waybar",
+        "logo": "wayland"
+      },
+      {
+        "title": "Anthropic Claude",
+        "logo": "anthropic"
+      },
+      {
+        "title": "Gemini",
+        "logo": "googlegemini"
+      },
+      {
+        "title": "Ollama",
+        "logo": "ollama"
+      },
+      {
+        "title": "Deepgram",
+        "logo": "deepgram"
+      },
+      {
+        "title": "ElevenLabs",
+        "logo": "elevenlabs"
+      },
+      {
+        "title": "Piper TTS",
+        "logo": "onnx"
+      }
+    ]
+  },
+  {
+    "title": "Calls AI",
+    "description": "A chat panel next to your English calls: what they say, in Spanish underneath, and one reply you can say next, at your English level. Live transcript, Spanish translation, B1-level reply suggestions and call history with Markdown export; works with Meet, Zoom, Teams and Slack. Signed and notarized macOS app (macOS 14.2+). Private repository.",
+    "url": [],
+    "isWorkInProgress": false,
+    "isOpenSource": false,
+    "isPrivate": true,
+    "isFeatured": false,
+    "status": "released",
+    "tags": [
+      {
+        "title": "Swift 6",
+        "logo": "swift"
+      },
+      {
+        "title": "SwiftUI",
+        "logo": "swift"
+      },
+      {
+        "title": "Core Audio",
+        "logo": "apple"
+      },
+      {
+        "title": "Deepgram",
+        "logo": "deepgram"
+      },
+      {
+        "title": "Anthropic Claude",
+        "logo": "anthropic"
+      },
+      {
+        "title": "SQLite",
+        "logo": "sqlite"
+      },
+      {
+        "title": "Python",
+        "logo": "python"
+      },
+      {
+        "title": "Shell",
+        "logo": "gnubash"
+      },
+      {
+        "title": "macOS",
+        "logo": "apple"
+      }
+    ]
+  },
+  {
+    "title": "Trading",
+    "description": "A private trading terminal for crypto: four live Binance charts side by side, with the studies that matter, right where you already work. EMA, VWAP, Bollinger Bands, volume profile, RSI, MACD and ATR, intervals from 1s to 1Y, paper mode only: it never places orders. Linux. Private repository, PolyForm Strict 1.0.0.",
+    "url": [],
+    "isWorkInProgress": true,
+    "isOpenSource": false,
+    "isPrivate": true,
+    "isFeatured": false,
+    "status": "in_progress",
+    "tags": [
+      {
+        "title": "Go",
+        "logo": "go"
+      },
+      {
+        "title": "Bubble Tea",
+        "logo": "go"
+      },
+      {
+        "title": "Lip Gloss",
+        "logo": "go"
+      },
+      {
+        "title": "WebSocket",
+        "logo": "socketdotio"
+      },
+      {
+        "title": "Binance API",
+        "logo": "binance"
+      },
+      {
+        "title": "systemd",
+        "logo": "linux"
+      },
+      {
+        "title": "Makefile",
+        "logo": "gnu"
+      }
+    ]
+  },
+  {
+    "title": "watts",
+    "description": "Terminal dashboard for electricity use and cost: live watts per device, today's energy, and your bill (macOS + Linux). Real sensors (Mac charger, Linux CPU/GPU), estimates for other devices and a background recorder. Install with brew install kevnnard/tap/watts. PolyForm Strict 1.0.0.",
+    "url": [
+      {
+        "icon": "GITHUB",
+        "url": "https://github.com/kevnnard/watts",
+        "isSolid": true
+      }
+    ],
+    "isWorkInProgress": true,
+    "isOpenSource": true,
+    "isFeatured": false,
+    "status": "in_progress",
+    "tags": [
+      {
+        "title": "Go",
+        "logo": "go"
+      },
+      {
+        "title": "Bubble Tea v2",
+        "logo": "go"
+      },
+      {
+        "title": "Lip Gloss v2",
+        "logo": "go"
+      },
+      {
+        "title": "SQLite",
+        "logo": "sqlite"
+      },
+      {
+        "title": "TOML",
+        "logo": "toml"
+      },
+      {
+        "title": "systemd",
+        "logo": "linux"
+      },
+      {
+        "title": "Homebrew",
+        "logo": "homebrew"
+      }
+    ]
+  },
+  {
+    "title": "lgswitch",
+    "description": "Switch an LG ultrawide's input (Mac USB-C, Linux DisplayPort, PS5 HDMI) from either machine, only when you ask. DDC/CI input switching (VCP 0xF4), a hotkey daemon and an SSH fallback. Install with brew install kevnnard/tap/lgswitch. PolyForm Strict 1.0.0.",
+    "url": [
+      {
+        "icon": "GITHUB",
+        "url": "https://github.com/kevnnard/lgswitch",
+        "isSolid": true
+      }
+    ],
+    "isWorkInProgress": false,
+    "isOpenSource": true,
+    "isFeatured": false,
+    "status": "released",
+    "tags": [
+      {
+        "title": "Go",
+        "logo": "go"
+      },
+      {
+        "title": "cgo / Carbon hotkeys",
+        "logo": "apple"
+      },
+      {
+        "title": "DDC/CI (m1ddc, ddcutil)",
+        "logo": "lg"
+      },
+      {
+        "title": "Homebrew",
+        "logo": "homebrew"
+      },
+      {
+        "title": "macOS",
+        "logo": "apple"
+      },
+      {
+        "title": "Linux",
+        "logo": "linux"
+      }
+    ]
+  },
+  {
     "title": "dots",
     "description": "Cross-platform workstation provisioner and dotfiles backup engine written in Go. One-line bootstrap on a blank macOS or Linux machine, interactive Bubble Tea TUI dashboard, modular profiles (core, AI agents, mobile, infra), and a secret-sanitizing backup pipeline that snapshots configs to Git. Distributed via Homebrew tap.",
     "url": [

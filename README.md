@@ -26,7 +26,7 @@
 </p>
 
 <p align="center">
-  <sub>Software Engineer with 6+ years shipping production web and mobile products. Specialized in TypeScript full-stack — Next.js, NestJS, React Native.</sub>
+  <sub>Software Engineer with 6+ years shipping production web and mobile products. Specialized in TypeScript full-stack — Next.js, NestJS, React Native — plus terminal tools in Go and native macOS apps in Swift.</sub>
 </p>
 
 ---
@@ -35,18 +35,18 @@
 
 <table>
 <tr>
-<td width="33%">
+<td width="25%">
 
-<a href="https://github.com/Three-Labss">
-  <img src="https://img.shields.io/badge/Three_Labs_S.A.S.-Lead_&_Founder-10b981?style=flat-square&logo=github&logoColor=10b981&labelColor=0d1117" alt="Three Labs" />
+<a href="https://github.com/kevnnard">
+  <img src="https://img.shields.io/badge/Kevnnard_Labs-Active-10b981?style=flat-square&logo=github&logoColor=10b981&labelColor=0d1117" alt="Kevnnard Labs" />
 </a>
 
-Software Agency (B2B) — Worldwide
+Personal open source brand — not a company and does not represent any company
 
-5-person team · apps in production with real clients
+Terminal tools in Go, native macOS apps in Swift, indie products
 
 </td>
-<td width="33%">
+<td width="25%">
 
 <a href="https://github.com/Gentleman-Programming">
   <img src="https://img.shields.io/badge/Gentleman_Programming-Contributor-F59E0B?style=flat-square&logo=github&logoColor=F59E0B&labelColor=0d1117" alt="Gentleman Programming" />
@@ -55,7 +55,18 @@ Software Agency (B2B) — Worldwide
 Open Source Tools
 
 </td>
-<td width="33%">
+<td width="25%">
+
+<a href="https://github.com/Three-Labss">
+  <img src="https://img.shields.io/badge/Three_Labs_S.A.S.-Past_Co--founder-6b7280?style=flat-square&logo=github&logoColor=6b7280&labelColor=0d1117" alt="Three Labs" />
+</a>
+
+Software Agency (B2B) — Worldwide
+
+January 2023 – August 2026
+
+</td>
+<td width="25%">
 
 <a href="https://github.com/ocmiworkerscomp">
   <img src="https://img.shields.io/badge/OCMI_Workers_Comp-Past_Contributor-6b7280?style=flat-square&logo=github&logoColor=6b7280&labelColor=0d1117" alt="OCMI" />
@@ -72,6 +83,8 @@ Ended August 2026 — Miami, FL
 ---
 
 ### Featured Projects
+
+<sub>A few highlights. The full list lives at <a href="https://kevnnard.com">kevnnard.com</a>.</sub>
 
 <table>
 <tr>
@@ -105,46 +118,12 @@ Multi-carrier shipment tracking SaaS in production with active e-commerce client
 
 </td>
 </tr>
-</table>
-
----
-
-### Open Source
-
-<table>
 <tr>
 <td width="50%">
 
-**[dots](https://github.com/kevnnard/dots)** `Released`
+**[Kevnnard World](https://kevnnard.com/world)** `Released` `Open Source`
 
-Cross-platform workstation provisioner and dotfiles backup engine in Go. One-line bootstrap on a blank macOS or Linux machine, interactive TUI dashboard, modular profiles (core, AI agents, mobile, infra), and a secret-sanitizing backup pipeline that snapshots configs to Git. Available via Homebrew tap.
-
-![Go](https://img.shields.io/badge/Go-05122A?style=flat&logo=go)
-![Bubble Tea](https://img.shields.io/badge/Bubble_Tea-05122A?style=flat&logo=go)
-![Homebrew](https://img.shields.io/badge/Homebrew-05122A?style=flat&logo=homebrew)
-![macOS](https://img.shields.io/badge/macOS-05122A?style=flat&logo=apple)
-![Linux](https://img.shields.io/badge/Linux-05122A?style=flat&logo=linux)
-
-</td>
-<td width="50%">
-
-**[Smart Window](https://github.com/kevnnard/smart-window)** `Released`
-
-macOS menu bar replacement inspired by Polybar and Waybar. Faster window switching with numbered tabs, keyboard shortcuts, and a tiling-WM-like workflow.
-
-![Swift](https://img.shields.io/badge/Swift-05122A?style=flat&logo=swift)
-![SwiftUI](https://img.shields.io/badge/SwiftUI-05122A?style=flat&logo=swift)
-![macOS](https://img.shields.io/badge/macOS-05122A?style=flat&logo=apple)
-![Homebrew](https://img.shields.io/badge/Homebrew-05122A?style=flat&logo=homebrew)
-
-</td>
-</tr>
-<tr>
-<td width="50%">
-
-**[Kevnnard World](https://kevnnard.com/world)** `Released`
-
-This portfolio as an explorable 3D home, open source. Astro and React Three Fiber: a real-time day cycle, an interactive TV, a Neovim screen, a collection shelf with story cards and an Expecto Patronum easter egg. Models prepared with Blender and glTF Transform; every third-party asset credited.
+This portfolio as an explorable 3D home. Astro and React Three Fiber: a real-time day cycle, an interactive TV, a Neovim screen and a collection shelf with story cards. Models prepared with Blender and glTF Transform; every third-party asset credited.
 
 ![Three.js](https://img.shields.io/badge/Three.js-05122A?style=flat&logo=threedotjs)
 ![React Three Fiber](https://img.shields.io/badge/React_Three_Fiber-05122A?style=flat&logo=react)
@@ -155,19 +134,30 @@ This portfolio as an explorable 3D home, open source. Astro and React Three Fibe
 </td>
 <td width="50%">
 
-**[Hotels Cheil](https://github.com/kevnnard/hotels-cheil)** `Completed`
+**[devtrainer](https://github.com/kevnnard/devtrainer)** `Released` `Open Source`
 
-Hotel management system: an ASP.NET Core API, an Angular web app and Astro documentation, run together with Docker Compose.
+Short daily practice sessions in your terminal, for programming, architecture and tooling. Spaced repetition (FSRS), auto-graded questions, and code exercises that really run. `brew install kevnnard/tap/devtrainer`
 
-![C#](https://img.shields.io/badge/C%23-05122A?style=flat&logo=dotnet)
-![ASP.NET Core](https://img.shields.io/badge/ASP.NET_Core-05122A?style=flat&logo=dotnet)
-![Angular](https://img.shields.io/badge/Angular-05122A?style=flat&logo=angular)
-![TypeScript](https://img.shields.io/badge/TypeScript-05122A?style=flat&logo=typescript)
-![Docker](https://img.shields.io/badge/Docker-05122A?style=flat&logo=docker)
+![Go](https://img.shields.io/badge/Go-05122A?style=flat&logo=go)
+![Bubble Tea](https://img.shields.io/badge/Bubble_Tea_v2-05122A?style=flat&logo=go)
+![SQLite](https://img.shields.io/badge/SQLite-05122A?style=flat&logo=sqlite)
+![YAML](https://img.shields.io/badge/YAML-05122A?style=flat&logo=yaml)
+![Homebrew](https://img.shields.io/badge/Homebrew-05122A?style=flat&logo=homebrew)
+![Anthropic Claude](https://img.shields.io/badge/Anthropic_Claude-05122A?style=flat&logo=anthropic)
 
 </td>
 </tr>
 </table>
+
+<p align="center">
+  <strong>More projects</strong> — english-teacher, Jarvis, Calls AI, watts, lgswitch, Trading, dots, Smart Window and others — live on the portfolio, along with the full stack and the 3D world.
+</p>
+
+<p align="center">
+  <a href="https://kevnnard.com">
+    <img src="https://img.shields.io/badge/See_all_projects-kevnnard.com-10b981?style=for-the-badge&logo=safari&logoColor=white&labelColor=0d1117" alt="See all projects at kevnnard.com" />
+  </a>
+</p>
 
 ---
 
@@ -183,6 +173,49 @@ Hotel management system: an ASP.NET Core API, an Angular web app and Astro docum
 ![Swift](https://img.shields.io/badge/Swift-05122A?style=flat&logo=swift)
 ![C#](https://img.shields.io/badge/C%23-05122A?style=flat&logo=dotnet)
 ![Python](https://img.shields.io/badge/Python-05122A?style=flat&logo=python)
+![Shell](https://img.shields.io/badge/Shell-05122A?style=flat&logo=gnubash)
+
+</details>
+
+<details>
+<summary><strong>Terminal &amp; CLI</strong></summary>
+<br/>
+
+![Bubble Tea](https://img.shields.io/badge/Bubble_Tea-05122A?style=flat&logo=go)
+![Lip Gloss](https://img.shields.io/badge/Lip_Gloss-05122A?style=flat&logo=go)
+![Homebrew](https://img.shields.io/badge/Homebrew-05122A?style=flat&logo=homebrew)
+![systemd](https://img.shields.io/badge/systemd-05122A?style=flat&logo=linux)
+![Waybar](https://img.shields.io/badge/Waybar-05122A?style=flat&logo=wayland)
+![Makefile](https://img.shields.io/badge/Makefile-05122A?style=flat&logo=gnu)
+![YAML](https://img.shields.io/badge/YAML-05122A?style=flat&logo=yaml)
+![TOML](https://img.shields.io/badge/TOML-05122A?style=flat&logo=toml)
+
+</details>
+
+<details>
+<summary><strong>AI &amp; Voice</strong></summary>
+<br/>
+
+![Anthropic Claude](https://img.shields.io/badge/Anthropic_Claude-05122A?style=flat&logo=anthropic)
+![Gemini](https://img.shields.io/badge/Gemini-05122A?style=flat&logo=googlegemini)
+![Ollama](https://img.shields.io/badge/Ollama-05122A?style=flat&logo=ollama)
+![Deepgram](https://img.shields.io/badge/Deepgram-05122A?style=flat&logo=deepgram)
+![ElevenLabs](https://img.shields.io/badge/ElevenLabs-05122A?style=flat&logo=elevenlabs)
+![Whisper](https://img.shields.io/badge/Whisper-05122A?style=flat&logo=pytorch)
+![Piper TTS](https://img.shields.io/badge/Piper_TTS-05122A?style=flat&logo=onnx)
+
+</details>
+
+<details>
+<summary><strong>Systems</strong></summary>
+<br/>
+
+![Core Audio](https://img.shields.io/badge/Core_Audio-05122A?style=flat&logo=apple)
+![cgo](https://img.shields.io/badge/cgo-05122A?style=flat&logo=go)
+![DDC/CI](https://img.shields.io/badge/DDC%2FCI-05122A?style=flat&logo=lg)
+![FSRS](https://img.shields.io/badge/FSRS-05122A?style=flat&logo=anki)
+![macOS](https://img.shields.io/badge/macOS-05122A?style=flat&logo=apple)
+![Linux](https://img.shields.io/badge/Linux-05122A?style=flat&logo=linux)
 
 </details>
 
@@ -219,6 +252,9 @@ Hotel management system: an ASP.NET Core API, an Angular web app and Astro docum
 ![Express](https://img.shields.io/badge/Express-05122A?style=flat&logo=express)
 ![ASP.NET Core](https://img.shields.io/badge/ASP.NET_Core-05122A?style=flat&logo=dotnet)
 ![Bun](https://img.shields.io/badge/Bun-05122A?style=flat&logo=bun)
+![WebSocket](https://img.shields.io/badge/WebSocket-05122A?style=flat&logo=socketdotio)
+![IMAP](https://img.shields.io/badge/IMAP-05122A?style=flat&logo=minutemailer)
+![Binance API](https://img.shields.io/badge/Binance_API-05122A?style=flat&logo=binance)
 
 </details>
 
@@ -239,6 +275,7 @@ Hotel management system: an ASP.NET Core API, an Angular web app and Astro docum
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-05122A?style=flat&logo=postgresql)
 ![MongoDB](https://img.shields.io/badge/MongoDB-05122A?style=flat&logo=mongodb)
 ![Supabase](https://img.shields.io/badge/Supabase-05122A?style=flat&logo=supabase)
+![SQLite](https://img.shields.io/badge/SQLite-05122A?style=flat&logo=sqlite)
 ![Redis](https://img.shields.io/badge/Redis-05122A?style=flat&logo=redis)
 
 </details>

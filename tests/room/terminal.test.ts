@@ -82,6 +82,19 @@ describe("runTerminalCommand", () => {
     assert.equal(runTerminalCommand("open nope", data).open, undefined);
   });
 
+  it("marks private repositories and never opens them", () => {
+    const listed = text(runTerminalCommand("projects", data).lines);
+    for (const title of ["Jarvis", "Trading", "Calls AI"]) {
+      const project = projects.find((p) => p.title === title);
+      assert.ok(project, title);
+      assert.equal(project.url.length, 0, `${title} has no repo link`);
+      assert.match(listed, new RegExp(`${title} \\[[a-z_]+, private\\]`));
+      const result = runTerminalCommand(`open ${title}`, data);
+      assert.equal(result.open, undefined);
+      assert.match(text(result.lines), /private repository/);
+    }
+  });
+
   it("refuses to open projects whose url is not http(s)", () => {
     const unsafe: TerminalData = {
       experience: [],

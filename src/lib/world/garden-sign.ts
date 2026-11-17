@@ -58,11 +58,12 @@ export const signCopy = (status: SignStatus): SignCopy => SIGN_COPY[status];
 
 /**
  * The one rotating line, from the site copy: the About summary's role, the
- * current role (Three Labs), the core stack and the owner's city.
+ * current role (Kevnnard Labs, the personal open source brand), the core
+ * stack and the owner's city.
  */
 export const SIGN_MESSAGES = [
   "TypeScript full-stack",
-  "Building Three Labs",
+  "Open source at Kevnnard Labs",
   "React · Next.js · NestJS",
   "Based in Bogotá",
 ] as const;
@@ -258,14 +259,14 @@ export const SIGN_PROFILE: SignProfile = {
   summary: ABOUT.summary,
   stack: [
     "TypeScript",
+    "Go",
+    "Swift",
     "React",
     "Next.js",
     "React Native",
-    "Node.js",
     "NestJS",
     "PostgreSQL",
-    "Supabase",
-    "AWS",
+    "SQLite",
     "Three.js",
   ],
   links: [...contact("LinkedIn"), ...contact("GitHub"), ...ABOUT.links],
