@@ -91,15 +91,15 @@ export const NVIM_HEALTH = { tests: 953 } as const;
 
 /** The site's real stack, at package.json's versions. */
 export const LAZY_PLUGINS = [
-  { name: "astro", label: "Astro", version: "7.3.3" },
-  { name: "@astrojs/react", label: "Astro React", version: "6.0.6" },
-  { name: "react", label: "React", version: "19.3.0" },
-  { name: "three", label: "Three.js", version: "0.186.1" },
+  { name: "astro", label: "Astro", version: "7.4.12" },
+  { name: "@astrojs/react", label: "Astro React", version: "7.1.9" },
+  { name: "react", label: "React", version: "19.3.1" },
+  { name: "three", label: "Three.js", version: "0.187.0" },
   { name: "@react-three/fiber", label: "React Three Fiber", version: "9.8.2" },
   { name: "@react-three/drei", label: "drei", version: "10.7.9" },
   { name: "meshoptimizer", label: "meshoptimizer", version: "1.3.0" },
-  { name: "@tailwindcss/vite", label: "Tailwind CSS", version: "4.3.3" },
-  { name: "@biomejs/biome", label: "Biome", version: "2.5.14" },
+  { name: "@tailwindcss/vite", label: "Tailwind CSS", version: "4.3.5" },
+  { name: "@biomejs/biome", label: "Biome", version: "2.6.8" },
   { name: "typescript", label: "TypeScript", version: "7.0.2" },
 ] as const;
 
