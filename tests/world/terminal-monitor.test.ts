@@ -86,7 +86,12 @@ describe("portfolio buffers (T16)", () => {
         project.links.map((l) => l.href),
         projects[i].url.map((u) => safeExternalUrl(u.url)).filter(Boolean),
       );
-      assert.ok(project.links.length > 0);
+      const isPrivate = "isPrivate" in projects[i] && projects[i].isPrivate;
+      // Private repositories show their stack, marked private, never a link.
+      if (isPrivate) {
+        assert.equal(project.links.length, 0, project.title);
+        assert.match(project.status, /private/, project.title);
+      } else assert.ok(project.links.length > 0, project.title);
       assert.ok(project.tags.length > 0);
     }
   });

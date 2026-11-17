@@ -5,6 +5,7 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { SIGN_PROFILE } from "../../src/lib/world/garden-sign.ts";
+import experience from "../../src/utils/experience.json" with { type: "json" };
 import projects from "../../src/utils/projects.json" with { type: "json" };
 
 const source = (path: string) =>
@@ -65,5 +66,92 @@ describe("portfolio launch", () => {
 
   it("chips Three.js on the garden sign inside the world (S5)", () => {
     assert.ok(SIGN_PROFILE.stack.includes("Three.js"));
+  });
+});
+
+// Portfolio new projects (odd/tasks/portfolio-new-projects.md).
+describe("portfolio new projects", () => {
+  const byTitle = (title: string) => projects.find((p) => p.title === title);
+
+  it("lists the seven new repositories, public ones linked (S1, S3)", () => {
+    for (const [title, repo] of [
+      ["devtrainer", "https://github.com/kevnnard/devtrainer"],
+      ["english-teacher", "https://github.com/kevnnard/english-teacher"],
+      ["lgswitch", "https://github.com/kevnnard/lgswitch"],
+      ["watts", "https://github.com/kevnnard/watts"],
+    ]) {
+      const project = byTitle(title);
+      assert.ok(project, title);
+      assert.equal(project.isOpenSource, true, title);
+      assert.ok(
+        project.url.some((u) => u.url === repo),
+        `${title} links ${repo}`,
+      );
+    }
+    for (const title of ["Trading", "watts"]) {
+      const project = byTitle(title);
+      assert.equal(project?.status, "in_progress", title);
+      assert.equal(project?.isWorkInProgress, true, title);
+    }
+  });
+
+  it("shows private repositories marked private, with no link (S6)", () => {
+    for (const title of ["Jarvis", "Trading", "Calls AI"]) {
+      const project = byTitle(title);
+      assert.ok(project, title);
+      assert.ok("isPrivate" in project && project.isPrivate === true, title);
+      assert.equal(project.isOpenSource, false, title);
+      assert.equal(project.url.length, 0, title);
+      assert.ok(project.tags.length > 0, title);
+    }
+    assert.match(
+      source("src/components/page/Projects.astro"),
+      /project\.isPrivate/,
+    );
+  });
+
+  it("adds the new languages and technologies to the stack (S2)", () => {
+    const skills = source("src/components/page/Skills.astro");
+    const readme = source("README.md");
+    for (const name of [
+      "Go",
+      "Swift",
+      "Python",
+      "Shell",
+      "Bubble Tea",
+      "SQLite",
+      "WebSocket",
+      "Core Audio",
+      "Deepgram",
+      "Anthropic Claude",
+      "FSRS",
+      "Homebrew",
+      "systemd",
+      "Binance API",
+    ]) {
+      assert.match(skills, new RegExp(`name: "${name}"`), name);
+      assert.ok(readme.includes(`![${name}]`), `README ${name}`);
+    }
+    for (const chip of ["Go", "Swift"])
+      assert.ok(SIGN_PROFILE.stack.includes(chip), chip);
+  });
+
+  it("keeps only Kevnnard Labs current, as an open source brand (S5)", () => {
+    const current = experience.filter((e) => e.isCurrent);
+    assert.equal(current.length, 1);
+    assert.match(current[0].company, /Kevnnard Labs/);
+    assert.match(current[0].description, /open source/);
+    assert.match(current[0].description, /does not represent any company/);
+    const three = experience.find((e) => e.company === "Three Labs S.A.S.");
+    assert.equal(three?.isCurrent, false);
+    assert.match(three?.duration ?? "", /August 2026$/);
+  });
+
+  it("keeps the README short and points to the portfolio (S4)", () => {
+    const readme = source("README.md");
+    assert.match(readme, /See all projects/);
+    assert.match(readme, /href="https:\/\/kevnnard\.com"/);
+    assert.doesNotMatch(readme, /^### Open Source$/m);
+    assert.doesNotMatch(readme, /Three_Labs_S\.A\.S\.-Lead/);
   });
 });

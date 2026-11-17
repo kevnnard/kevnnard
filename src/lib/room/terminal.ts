@@ -5,6 +5,8 @@ export interface RoomProject {
   title: string;
   description: string;
   status: string;
+  /** Private repository: shown with its stack, never linked. */
+  isPrivate?: boolean;
   url: { icon: string; url: string; isSolid: boolean }[];
   tags: { title: string; logo: string }[];
 }
@@ -98,7 +100,7 @@ const COMMANDS: Record<string, Handler> = {
       out(`${projects.length} projects — type "open <number>" to visit one:`),
       ...projects.map((p, i) =>
         out(
-          `${i + 1}. ${p.title} [${p.status}] — ${p.tags.map((t) => t.title).join(", ")}`,
+          `${i + 1}. ${p.title} [${p.status}${p.isPrivate ? ", private" : ""}] — ${p.tags.map((t) => t.title).join(", ")}`,
         ),
       ),
     ],
@@ -130,7 +132,16 @@ const COMMANDS: Record<string, Handler> = {
     const url = project.url
       .map((u) => safeExternalUrl(u.url))
       .find((u) => u !== null);
-    if (!url) return { lines: [err(`${project.title} has no public link.`)] };
+    if (!url)
+      return {
+        lines: [
+          err(
+            project.isPrivate
+              ? `${project.title} is a private repository: no public link.`
+              : `${project.title} has no public link.`,
+          ),
+        ],
+      };
     return {
       lines: [out(`Opening ${project.title} → ${url}`)],
       open: { title: project.title, url },

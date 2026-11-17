@@ -66,6 +66,14 @@ const getStatusConfig = (status: ProjectStatus) => {
                         Open Source
                       </Badge>
                     )}
+                    {"isPrivate" in project && project.isPrivate && (
+                      <Badge
+                        className="bg-amber-500/20 text-amber-400 border-amber-500/30"
+                        title="Private repository: no public link"
+                      >
+                        Private
+                      </Badge>
+                    )}
                   </div>
                 </div>
 

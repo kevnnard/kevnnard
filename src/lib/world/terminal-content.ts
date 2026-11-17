@@ -127,7 +127,7 @@ export function portfolioBuffers({ projects, experience }: MonitorData) {
     },
     projects: projects.map((p) => ({
       title: p.title,
-      status: p.status.replace(/_/g, " "),
+      status: `${p.status.replace(/_/g, " ")}${p.isPrivate ? " · private" : ""}`,
       description: p.description,
       tags: p.tags.map((t) => t.title),
       links: p.url.flatMap((u) => {

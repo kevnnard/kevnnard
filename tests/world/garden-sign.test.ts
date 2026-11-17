@@ -108,7 +108,7 @@ describe("garden sign flip tiles", () => {
   it("rotates four messages from the site copy, ending with the city", () => {
     assert.deepEqual(SIGN_MESSAGES, [
       "TypeScript full-stack",
-      "Building Three Labs",
+      "Open source at Kevnnard Labs",
       "React · Next.js · NestJS",
       "Based in Bogotá",
     ]);
