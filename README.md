@@ -316,4 +316,4 @@ Short daily practice sessions in your terminal, for programming, architecture an
   </a>
 </p>
 
-<!-- last-sync: 2026-11-17T12:11:43Z -->
+<!-- last-sync: 2026-11-18T12:11:18Z -->
